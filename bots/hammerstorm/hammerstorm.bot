@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="HammerstormBot"
+	description="bot_description_hammerstorm"
+	heroname="Hero_Hammerstorm"
+	rootlua="hammerstorm_main.lua"
+	defaultplayername="HammerBot"
+	precachepath="/heroes/hammerstorm/"
+/>

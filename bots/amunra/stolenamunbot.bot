@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="St0l3n_IDsAmunRatasticBot"
+	description="bot_description_ra"
+	rootlua="amunra_main.lua"
+	heroname="Hero_Ra"
+	defaultplayername="AmunRaBot"
+	precachepath="/heroes/ra/"
+/>

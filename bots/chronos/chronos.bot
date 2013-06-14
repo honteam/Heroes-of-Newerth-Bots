@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="ChronosBot"
+	description="bot_description_chronos"
+	heroname="Hero_Chronos"
+	rootlua="chronos_main.lua"
+	defaultplayername="ChronosBot"
+	precachepath="/heroes/chronos/"
+/>

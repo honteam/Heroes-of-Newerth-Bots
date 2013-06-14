@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="GlaciusBot"
+	description="bot_description_glacius"
+	heroname="Hero_Frosty"
+	rootlua="glacius_main.lua"
+	defaultplayername="GlaciusBot"
+	precachepath="/heroes/frosty/"
+/>

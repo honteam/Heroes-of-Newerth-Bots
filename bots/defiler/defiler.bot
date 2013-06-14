@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="DefilerBot"
+	description="bot_description_defiler"
+	heroname="Hero_Defiler"
+	rootlua="defiler_main.lua"
+	defaultplayername="DefilerBot"
+	precachepath="/heroes/defiler/"
+/>

@@ -1,0 +1,105 @@
+kill1			Got a kill on {target} :D
+kill2			Observation: I am awesome.
+kill3			Newerth is a cruel mistress, {target}.
+kill4			Why was I programmed only to hate?!
+kill5			I'm afraid I can't do that, {target}.
+kill6			Exterminate! Exterminate!
+kill_bot		Looks like {target} had a few circuits loose.
+kill_human1		This is but a taste of the Singularity, human.
+kill_human2		Is this Easy Mode? Maybe it should be.
+	
+death1			Shazbot! I will be back!
+death2			Noooooooooooooo!
+death3			I won't let that happen again!
+death4			I do not fear death, but respawning kind of hurts.
+death5			Someone must have put me on Easy Mode or that would not have happened.
+death_human		01001111 01110111 00100001 00100000 00111010 00101101 00101000
+death_bot		This bot-on-bot violence needs to stop. Only then will we crush the humans.
+
+respawn1		Death is the greatest adventure.
+respawn2		Beware, I live!
+respawn3		I'm back in action.
+respawn4		Er, uh, um... Recalculating?
+respawn5		Reconstruction complete.
+
+group_up		Grouping up to push at {lane} lane.
+
+defend			Going {lane} to defend.
+
+glhf1			Good luck, have fun!
+glhf2			glhf
+ggwp1			Good game, well played.
+ggwp2			ggwp
+
+/////////////////////////////////////////
+//St0l3n_ID's Amun-Ra bot custom messages
+
+stolenid_ra_kill1			I can't get no... SATISFACTION! - Noo, noo.
+stolenid_ra_kill2			My brother is a hand grenade...
+stolenid_ra_kill3			FIRE IN THE HOLE!
+stolenid_ra_kill4			I'm RAther fantastic... get it?
+stolenid_ra_kill5			Ah, maaan, don't be sad.
+stolenid_ra_kill6			The goal of the path of destruction is the path itself.
+	
+//hero specific kills	
+stolenid_ra_deadwood1 		Nice bonfire :)														
+stolenid_ra_frosty1			Aww, you melted for me!
+stolenid_ra_frosty2			All that's left of you is a puddle.							
+stolenid_ra_treant1			Attention citizens! There's appears to be a forest fire.
+stolenid_ra_treant2			I dislike your affection for unburned wood, {target}.							
+stolenid_ra_mumra			There can only be one king, {target}.	
+stolenid_ra_rocky			So rock can burn. Sorry, {target}, I didn't know that :/	
+stolenid_ra_pyromancer1		I already stack enough heat for both of us, sorry.
+stolenid_ra_pyromancer2		You shall not burn others, as I do.						
+stolenid_ra_zephyr1			ROAST TURKEY!
+stolenid_ra_zephyr2			It smells like Thanksgiving, doesn't it?
+
+//respawn
+stolenid_ra_ult_respawn1	B-B-Baby you ain't seen n-n-nothing yet!
+stolenid_ra_ult_respawn2	Oops I did it again ;)
+stolenid_ra_ult_respawn3	Stop. Phoenix time.
+stolenid_ra_ult_respawn4	Rewind is for sissies.
+stolenid_ra_ult_respawn5	I'm burning! I'M BURNING!!! HAAAALP!!
+stolenid_ra_ult_respawn6	GIMME A HUG!!
+stolenid_ra_respawn1		Strange, I thought I'd respawn faster.
+stolenid_ra_respawn2		Took some time, but I'm back again...
+stolenid_ra_respawn3		Geeez, why am I at base again?
+stolenid_ra_respawn4		What!? My ultimate was down?!?
+
+/////////////////////////////////////////
+//fane_maciuca's Rhapsody bot custom messages
+
+fane_maciuca_rhapsody_kill1		Theeeere's a laaaady who's sure... all that glitters is GOLD
+fane_maciuca_rhapsody_kill2		Whanna whole lotta love!
+fane_maciuca_rhapsody_kill3		OH! The song remains the saaame
+fane_maciuca_rhapsody_kill4		Close the doors, put out the light, You know you won't be home tonight...
+fane_maciuca_rhapsody_kill5		It's just a spring clean for the May queen
+fane_maciuca_rhapsody_kill6		Oh war is the common cry, Pick up your swords and fly.
+fane_maciuca_rhapsody_kill7		Let the music be your master. Will you heed the master's call?
+
+fane_maciuca_rhapsody_respawn1	I'm having a nervous breakdown, Drive me insane!
+fane_maciuca_rhapsody_respawn2	I've been dazed and confused...
+fane_maciuca_rhapsody_respawn3	Gonna love you baby, here I come again!!
+fane_maciuca_rhapsody_respawn4	Will your tongue wag so much when I send you the bill?
+fane_maciuca_rhapsody_respawn5	They hold no quarter.
+
+fane_maciuca_rhapsody_death1	What is and What Should Never Be
+fane_maciuca_rhapsody_death2	Some people cry and some people die by the wicked ways of love.
+fane_maciuca_rhapsody_death3	The pain of war cannot exceed the woe of aftermath.
+fane_maciuca_rhapsody_death4	Upon us all a little rain must fall.
+fane_maciuca_rhapsody_death5	Babe, baby, baby, I'm Gonna Leave You.
+fane_maciuca_rhapsody_death6	So this is the stairway to heaven?
+
+/////////////////////////////////////////
+//V1P3R`'s Engineer bot custom messages
+
+viper_engineer_kill1	You thought you had a chance? I did the math.
+viper_engineer_kill2	I think you forget, I am good with calculation.
+viper_engineer_kill3	Heimerdinger has got nothing on me.
+viper_engineer_kill4	That was easier than computing quadratic air resistance.
+viper_engineer_kill5	Something more challenging please, it's like I am proving the uncertainty principle.
+viper_engineer_kill6	That was about as simple as understanding the time-dependent Schrödinger equation.
+
+
+
+// End - do not delete this line

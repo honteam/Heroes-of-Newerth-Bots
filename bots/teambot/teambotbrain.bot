@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="DefaultTeamBotBrain"
+	description="A brain for the team!"
+	rootlua="teambotbrain.lua"
+/>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

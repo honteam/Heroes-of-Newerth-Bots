@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="PredatorBot"
+	description="bot_description_predator"
+	heroname="Hero_Predator"
+	rootlua="predator_main.lua"
+	defaultplayername="PredatorBot"
+	precachepath="/heroes/predator"
+/>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="MagmusBot"
+	description="bot_description_magmar"
+	heroname="Hero_Magmar"
+	rootlua="magmus_main.lua"
+	defaultplayername="MagmusBot"
+	precachepath="/heroes/magmar/"
+/>

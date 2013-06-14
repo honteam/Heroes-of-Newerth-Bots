@@ -1,0 +1,16 @@
+Here are our working code standards for LUA (they're basically hungarian):
+
+s - string
+b - boolean
+t - table
+n - number
+func - function
+unit - IUnitEntity (userdata)
+vec - CVec3f (userdata)
+abil - IEntityAbility (userdata)
+item - IEntityItem (userdata)
+bot - CBotBrain (userdata)
+tbot - CTeamBotBrain (userdata)
+node - CBotMetaDataNode (userdata)
+link - CBotMetaDataLink (userdata)
+idef - CItemDefinition (userdata)

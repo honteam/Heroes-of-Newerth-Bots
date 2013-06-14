@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="ArachnaBot"
+	description="bot_description_arachna"
+	heroname="Hero_Arachna"
+	rootlua="arachna_main.lua"
+	defaultplayername="ArachnaBot"
+	precachepath="/heroes/arachna/"
+/>

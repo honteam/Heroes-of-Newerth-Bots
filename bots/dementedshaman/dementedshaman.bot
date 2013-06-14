@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="DSBot"
+	description="bot_description_shaman"
+	heroname="Hero_Shaman"
+	rootlua="dementedshaman_main.lua"
+	defaultplayername="ShamanBot"
+	precachepath="/heroes/shaman/"
+/>

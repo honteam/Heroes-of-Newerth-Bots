@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="ForsakenArcherBot"
+	description="bot_description_forsaken_archer"
+	heroname="Hero_ForsakenArcher"
+	rootlua="forsakenarcher_main.lua"
+	defaultplayername="ForsakenBot"
+	precachepath="/heroes/forsaken_archer/"
+/>

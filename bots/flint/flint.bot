@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="FlintBot"
+	description="bot_description_flint_beastwood"
+	heroname="Hero_FlintBeastwood"
+	rootlua="flint_main.lua"
+	defaultplayername="FlintBot"
+	precachepath="/heroes/flint_beastwood/"
+/>
