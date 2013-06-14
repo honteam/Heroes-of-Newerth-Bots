@@ -12,8 +12,8 @@ How to Submit a Bot
 4. Please keep only files relevant to this bot (or library) on this branch. Do not add changes that are irrelevant to this specific development to this branch. It will slow down the submission process and may cause your submission to be rejected.
 5. On your bot branch on github, click 'Pull Request'. Make sure the request is made on the 'Heroes-of-Newerth-Bots Community' branch, not the Retail branch. Double check your files and changes, and provide some commentary if needed.
 6. Comments and suggestions will be made. Simply commit any relevant changes to this same branch to add those changes to the pull request.
-7. Once your changes are accepted by both a Bot team member, your changes will be added to the Community branch, and eventually moved into the Dev and Retail branches.
+7. Once your changes are accepted by a Bot team member, your changes will be added to the Community branch, and eventually moved into the Dev and Retail branches.
  
-Here is how code should flow between the branches:
+Here is how code will flow between the branches:
 
-[Codeflow](http://i.imgur.com/qsXW8ZV.jpg)
+![Codeflow](http://i.imgur.com/qsXW8ZV.jpg)
