@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<botname="RevBot"
-	description="Revenant is a ganker who specialises in lowering magic and physical armor while adding magical damage to allies."
-	heroname="Hero_Revenant"
-	rootlua="revenant_main.lua"
-	defaultplayername="RevenantBot"
-	precachepath="/heroes/revenant/"
-/>
