@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="WretchedHagBot"
+	description="Community Built Bot by DarkFire"
+	heroname="Hero_BabaYaga"
+	rootlua="WretchedHag_main.lua"
+	defaultplayername="WretchedHagBot"
+	precachepath="/heroes/babayaga/"
+/>
