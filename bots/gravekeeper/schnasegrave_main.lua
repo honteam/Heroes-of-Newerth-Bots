@@ -567,112 +567,6 @@ object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
  
  
- 
---------------------
--- Chat Functions: Copied from V1P3R` Engi Bot
---
---------------------
-object.killMessages = {}
-object.killMessages.General = {
-        "Don't worry. Soon you will be one of my lovely zombies!",
-        "Catch a corpse!",
-        "Rest in pieces.",
-        "And another happy customer!",  
-        "Whoops! Sorry, it was a mistake. Don't take it personal." ,
-        "To be continued!",
-        "Please call again later. The person you are calling is not avaible at the moment.",
-        "Once Upon a time there was a hero. The End."
-        }
-       
-object.deathMessages = {
-        "I will be back the day after tomorrow.",
-        "That's why, I always carry a tombstone.",
-        "More luck.",
-        "Finally, it's time to become hard and stiff.",
-        "Restarting."
-        }
-       
-        object.respawnMessages = {
-        "I will spit on your grave!",
-        "Welcome to Zombie-Land 3.0",
-        "Looks like I'm back, desu ne?",
-        "I need some fresh corpses",
-        "Time to get serious."
-        }
-       
-local function ProcessKillChatOverride(unitTarget, sTargetPlayerName)
-        local nCurrentTime = HoN.GetGameTime()
-        if nCurrentTime < core.nNextChatEventTime then
-                return
-        end  
-         
-        local nToSpamOrNotToSpam = random()
-                 
-        if(nToSpamOrNotToSpam < core.nKillChatChance) then
-                local nDelay = random(core.nChatDelayMin, core.nChatDelayMax)
-                local tHeroMessages = object.killMessages[unitTarget:GetTypeName()]
-         
-        local sTargetName = sTargetPlayerName or unitTarget:GetDisplayName()
-                if tHeroMessages ~= nil and random() <= 0.7 then
-                        local nMessage = random(#tHeroMessages)
-                        core.AllChat(format(tHeroMessages[nMessage], sTargetPlayerName), nDelay)
-                else
-                        local nMessage = random(#object.killMessages.General)
-                        core.AllChat(format(object.killMessages.General[nMessage], sTargetPlayerName), nDelay)
-                end
-        end
-         
-        core.nNextChatEventTime = nCurrentTime + core.nChatEventInterval
-end
-core.ProcessKillChat = ProcessKillChatOverride
- 
-local function ProcessDeathChatOverride(unitSource, sSourcePlayerName)
-        local nCurrentTime = HoN.GetGameTime()
-        if nCurrentTime < core.nNextChatEventTime then
-                return
-        end
-       
-        local nChance = random()
-        if core.bDebugChats then BotEcho("Death: "..nChance.." < "..core.nDeathChatChance.." is "..tostring(nChance < core.nDeathChatChance)) end
-        if nChance < core.nDeathChatChance then
-                local nDelay = random(core.nChatDelayMin, core.nChatDelayMax)
- 
-               
-                local nRand = random(1, #object.deathMessages)
-               
-                local sSourceName = sSourcePlayerName or unitSource:GetDisplayName()
-                if sSourceName == nil or sSourceName == "" then
-                        sSourceName = unitSource:GetTypeName()
-                end
-               
-                core.AllChatLocalizedMessage(object.deathMessages[nRand], {source=sSourceName}, nDelay)
-        end
-       
-        core.nNextChatEventTime = nCurrentTime + core.nChatEventInterval
-end
-core.ProcessDeathChat = ProcessDeathChatOverride
- 
-local function ProcessRespawnChatOverride()
-   local nCurrentTime = HoN.GetGameTime()
-        if nCurrentTime < core.nNextChatEventTime then
-                return
-        end
- 
-        local nChance = random()
-        if core.bDebugChats then BotEcho("Respawn: "..nChance.." < "..core.nRespawnChatChance.." is "..tostring(nChance < core.nRespawnChatChance)) end
-        if nChance < core.nRespawnChatChance and HoN.GetMatchTime() > 0 then
-                local nDelay = random(core.nChatDelayMin, core.nChatDelayMax)
-               
-                local nRand = random(1, #object.respawnMessages)
-               
-                core.AllChatLocalizedMessage(object.respawnMessages[nRand], nil, nDelay)
-        end
-       
-        core.nNextChatEventTime = nCurrentTime + core.nChatEventInterval
-end
-core.ProcessRespawnChat = ProcessRespawnChatOverride
- 
- 
 ----------------------
 -- altered vers for last hitting. Using Defiling Touch for Damage Amp
 -- credits base version: paradox870
@@ -829,8 +723,23 @@ local function AttackCreepsExecuteOverride(botBrain)
                 local abilDefilingTouch = skills.abilDefilingTouch
                 if abilDefilingTouch:GetLevel() > 0 and abilDefilingTouch:GetCharges() == 0 then
                         local tCorpses = HoN.GetUnitsInRadius(vecSelfPos, 400, core.UNIT_MASK_CORPSE + core.UNIT_MASK_UNIT)
-                        if core.NumberElements(tCorpses) > 0 and tCorpses[1] then
-                                vecDesiredPos = tCorpses[1]:GetPosition()
+                        if core.NumberElements(tCorpses) > 0 then
+                                local closestCorpse = nil
+                                local nClosestCorpseDistSq = 9999*9999
+                                for key, v in pairs(tCorpses) do
+                                        local vecCorpsePosition = v:GetPosition()
+                                        --"safe" corpses aren't toward the opponents.
+                                        if not behaviorLib.vecLaneForward or abs(core.RadToDeg(core.AngleBetween(vecCorpsePosition - vecSelfPos, -behaviorLib.vecLaneForward)) ) < 130 then
+                                                local nDistSq = Vector3.Distance2DSq(vecCorpsePosition, vecSelfPos)
+                                                if nDistSq < nClosestCorpseDistSq then
+                                                        closestCorpse = v
+                                                        nClosestCorpseDistSq = nDistSq
+                                                end
+                                        end
+                                end
+                                if closestCorpse then
+                                        vecDesiredPos = closestCorpse:GetPosition()
+                                end
                                 behaviorLib.MoveExecute(botBrain, vecDesiredPos)
                         end
                 end
@@ -864,8 +773,23 @@ local function CustomPositionSelfExecuteOverride(botBrain)
         local abilDefilingTouch = skills.abilDefilingTouch
         if abilDefilingTouch:GetLevel() > 0 and abilDefilingTouch:GetCharges() == 0 then
                 local tCorpses = HoN.GetUnitsInRadius(vecMyPosition, 400, core.UNIT_MASK_CORPSE + core.UNIT_MASK_UNIT)
-                if core.NumberElements(tCorpses) > 0 and tCorpses[1] then
-                        vecDesiredPos = tCorpses[1]:GetPosition()
+                if core.NumberElements(tCorpses) > 0 then
+                        local closestCorpse = nil
+                        local nClosestCorpseDistSq = 9999*9999
+                        for key, v in pairs(tCorpses) do
+                                local vecCorpsePosition = v:GetPosition()
+                                --"safe" corpses aren't toward the opponents.
+                                if not behaviorLib.vecLaneForward or abs(core.RadToDeg(core.AngleBetween(vecCorpsePosition - vecMyPosition, -behaviorLib.vecLaneForward)) ) < 130 then
+                                        local nDistSq = Vector3.Distance2DSq(vecCorpsePosition, vecMyPosition)
+                                        if nDistSq < nClosestCorpseDistSq then
+                                                closestCorpse = v
+                                                nClosestCorpseDistSq = nDistSq
+                                        end
+                                end
+                        end
+                        if closestCorpse then
+                                vecDesiredPos = closestCorpse:GetPosition()
+                        end
                 end
         end
        
@@ -889,7 +813,7 @@ behaviorLib.PositionSelfBehavior["Execute"] = CustomPositionSelfExecuteOverride
 --This function calculates how threatening an enemy hero is
 --return the thread value
 ---------------------------------------------------------------
-local function funcGetThreatOfEnemy (unitEnemy)
+local function funcGetThreatOfEnemy(unitEnemy)
         --no unit selected or is dead
         if not unitEnemy or not unitEnemy:IsAlive() then return 0 end
         local unitSelf = core.unitSelf
@@ -1347,5 +1271,63 @@ end
 object.ShopExecuteOld = behaviorLib.ShopExecute
 behaviorLib.ShopBehavior["Execute"] = funcShopExecuteOverride
  
+ 
+--####################################################################
+--####################################################################
+--#                                                                 ##
+--#   CHAT FUNCTIONSS                                               ##
+--#                                                                 ##
+--####################################################################
+--####################################################################
+
+object.tCustomKillKeys = {
+        "schnarchnase_grave_kill1",
+        "schnarchnase_grave_kill2",
+        "schnarchnase_grave_kill3",
+        "schnarchnase_grave_kill4",
+        "schnarchnase_grave_kill5",
+        "schnarchnase_grave_kill6",
+        "schnarchnase_grave_kill7",
+        "schnarchnase_grave_kill8"   }
+
+local function GetKillKeysOverride(unitTarget)
+        local tChatKeys = object.funcGetKillKeysOld(unitTarget)
+        core.InsertToTable(tChatKeys, object.tCustomKillKeys)
+        return tChatKeys
+end
+object.funcGetKillKeysOld = core.GetKillKeys
+core.GetKillKeys = GetKillKeysOverride
+
+
+object.tCustomRespawnKeys = {
+        "schnarchnase_grave_respawn1",
+        "schnarchnase_grave_respawn2",
+        "schnarchnase_grave_respawn3",
+        "schnarchnase_grave_respawn4",
+        "schnarchnase_grave_respawn5"        }
+
+local function GetRespawnKeysOverride()
+        local tChatKeys = object.funcGetRespawnKeysOld()
+        core.InsertToTable(tChatKeys, object.tCustomRespawnKeys)
+        return tChatKeys
+end
+object.funcGetRespawnKeysOld = core.GetRespawnKeys
+core.GetRespawnKeys = GetRespawnKeysOverride
+
+
+object.tCustomDeathKeys = {
+        "schnarchnase_grave_death1",
+        "schnarchnase_grave_death2",
+        "schnarchnase_grave_death3",
+        "schnarchnase_grave_death4",
+        "schnarchnase_grave_death5"  }
+        
+local function GetDeathKeysOverride(unitSource)
+        local tChatKeys = object.funcGetDeathKeysOld(unitSource)
+        core.InsertToTable(tChatKeys, object.tCustomDeathKeys)
+        return tChatKeys
+end
+object.funcGetDeathKeysOld = core.GetDeathKeys
+core.GetDeathKeys = GetDeathKeysOverride
  
 BotEcho('finished loading schnasegrave_main')
