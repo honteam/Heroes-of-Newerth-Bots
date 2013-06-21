@@ -1049,6 +1049,49 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.AttackCreepsBehavior)
 
 
 ----------------------------------
+--      AttackEnemyMinions
+--     
+--      Utility: 20.5 or 25 based on Minion-Health
+--      Execute: Attacks chosen minion like a creep
+----------------------------------
+function behaviorLib.attackEnemyMinionsUtility(botBrain)
+	local enemies = core.localUnits["Enemies"]
+	local weakestMinion = nil
+	local nMinionHP = 99999999
+ 
+	local utility = 0
+	for _, unit in pairs(enemies) do
+		if not unit:IsInvulnerable() and not unit:IsHero() and unit:GetOwnerPlayer() ~= nil then
+			local nHP = unit:GetHealth()
+			if nTempHP < nMinionHP then
+				weakestMinion = unit
+				nMinionHP = nTempHP
+			end
+		end
+	end
+	if weakestMinion ~= nil then
+		core.unitCreepTarget = weakestMinion
+		if nMinionHP <= core.unitSelf:GetAttackDamageMin() * (1 - weakestMinion:GetPhysicalResistance()) then
+			--minion lh > creep lh
+			utility = 25
+		else
+			--PositionSelf 20 and AttackCreeps 21
+			--positonSelf < minionHarass < creep lh || deny
+			utility = 20.5
+		end
+	end
+	return utility
+end
+ 
+behaviorLib.attackEnemyMinionsBehavior = {}
+behaviorLib.attackEnemyMinionsBehavior["Utility"] = behaviorLib.attackEnemyMinionsUtility
+behaviorLib.attackEnemyMinionsBehavior["Execute"] = behaviorLib.AttackCreepsExecute
+behaviorLib.attackEnemyMinionsBehavior["Name"] = "AttackEnemyMinions"
+tinsert(behaviorLib.tBehaviors, behaviorLib.attackEnemyMinionsBehavior)
+
+
+
+----------------------------------
 --	HarassHero behavior
 --
 --	Utility: 0-100 based on relative lethalities, calculated per team
