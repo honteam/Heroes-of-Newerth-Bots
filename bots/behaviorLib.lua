@@ -1160,9 +1160,9 @@ function behaviorLib.attackEnemyMinionsUtility(botBrain)
 	for _, unit in pairs(enemies) do
 		if not unit:IsInvulnerable() and not unit:IsHero() and unit:GetOwnerPlayer() ~= nil then
 			local nHP = unit:GetHealth()
-			if nTempHP < nMinionHP then
+			if nHP < nMinionHP then
 				weakestMinion = unit
-				nMinionHP = nTempHP
+				nMinionHP = nHP
 			end
 		end
 	end
