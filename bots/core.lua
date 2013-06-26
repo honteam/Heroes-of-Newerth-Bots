@@ -1548,23 +1548,28 @@ function core.GetLaneBreakdown(unit)
 	local inMid = -1
 	local inBot = -1		
 
-	local vTopPoint = core.GetFurthestPointOnPath(position, metadata.GetTopLane(), core.bTraverseForward)		
-	if vTopPoint then
-		topDist = Vector3.Distance2D(position, vTopPoint)
+	local vecTopPoint = core.GetFurthestPointOnPath(position, metadata.GetTopLane(), core.bTraverseForward)		
+	if vecTopPoint then
+		topDist = Vector3.Distance2D(position, vecTopPoint)
 	end
 	
-	local vMidPoint = core.GetFurthestPointOnPath(position, metadata.GetMiddleLane(), core.bTraverseForward)
-	if vMidPoint then
-		midDist = Vector3.Distance2D(position, vMidPoint)
+	local vecMidPoint = core.GetFurthestPointOnPath(position, metadata.GetMiddleLane(), core.bTraverseForward)
+	if vecMidPoint then
+		midDist = Vector3.Distance2D(position, vecMidPoint)
 	end
 	
-	local vBotPoint = core.GetFurthestPointOnPath(position, metadata.GetBottomLane(), core.bTraverseForward)
-	if vBotPoint then
-		botDist = Vector3.Distance2D(position, vBotPoint)
+	local vecBotPoint = core.GetFurthestPointOnPath(position, metadata.GetBottomLane(), core.bTraverseForward)
+	if vecBotPoint then
+		botDist = Vector3.Distance2D(position, vecBotPoint)
 	end
 	
 	--pick two lowest ones
 	local nBiggestDist = max(topDist, max(midDist, botDist))
+	
+	local nLowestDist = max(topDist, max(midDist, botDist))
+	if (nLowestDist>1200) then --clearly not in a lane.
+		return {top=0, mid=0, bot=0}, {top=vecTopPoint, mid=vecMidPoint, bot=vecBotPoint}
+	end
 	
 	if topDist == nBiggestDist then
 		topDist = 0
@@ -1593,14 +1598,14 @@ function core.GetLaneBreakdown(unit)
 	--BotEcho(format('%s Dists - top: %g  mid: %g  bot:%g  total:%g', unit:GetTypeName(), topDist, midDist, botDist, totalDist))
 	if bDebugLines then
 		core.DrawXPosition(position, 'red')
-		if vTopPoint then
-			core.DrawDebugArrow(position, position + Vector3.Normalize(vTopPoint - position) * inTop * lineLen, 'yellow')
+		if vecTopPoint then
+			core.DrawDebugArrow(position, position + Vector3.Normalize(vecTopPoint - position) * inTop * lineLen, 'yellow')
 		end
-		if vMidPoint then
-			core.DrawDebugArrow(position, position + Vector3.Normalize(vMidPoint - position) * inMid * lineLen, 'yellow')
+		if vecMidPoint then
+			core.DrawDebugArrow(position, position + Vector3.Normalize(vecMidPoint - position) * inMid * lineLen, 'yellow')
 		end
-		if vBotPoint then
-			core.DrawDebugArrow(position, position + Vector3.Normalize(vBotPoint - position) * inBot * lineLen, 'yellow')
+		if vecBotPoint then
+			core.DrawDebugArrow(position, position + Vector3.Normalize(vecBotPoint - position) * inBot * lineLen, 'yellow')
 		end
 	end
 	
