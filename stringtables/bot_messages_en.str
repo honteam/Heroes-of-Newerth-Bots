@@ -100,6 +100,30 @@ viper_engineer_kill4	That was easier than computing quadratic air resistance.
 viper_engineer_kill5	Something more challenging please, it's like I am proving the uncertainty principle.
 viper_engineer_kill6	That was about as simple as understanding the time-dependent Schrödinger equation.
 
+/////////////////////////////////////////
+//Schnarchnase's Gravekeeper bot custom messages
+
+schnarchnase_grave_kill1		Don't worry. Soon you will be one of my lovely zombies!
+schnarchnase_grave_kill2		Catch a corpse!
+schnarchnase_grave_kill3		Rest in pieces.
+schnarchnase_grave_kill4		And another happy customer!
+schnarchnase_grave_kill5		Whoops! Sorry, it was a mistake. Don't take it personal.
+schnarchnase_grave_kill6		To be continued!
+schnarchnase_grave_kill7		Please call again later. The person you are calling is not avaible at the moment.
+schnarchnase_grave_kill8 		Once Upon a time there was a hero. The End.
+
+schnarchnase_grave_respawn1		I will spit on your grave!
+schnarchnase_grave_respawn2		Welcome to Zombie-Land 3.0
+schnarchnase_grave_respawn3		Looks like I'm back, desu ne?
+schnarchnase_grave_respawn4		I need some fresh corpses
+schnarchnase_grave_respawn5		Time to get serious.
+
+schnarchnase_grave_death1		I will be back the day after tomorrow.
+schnarchnase_grave_death2		That's why, I always carry a tombstone.
+schnarchnase_grave_death3		More luck.
+schnarchnase_grave_death4		Finally, it's time to become hard and stiff.
+schnarchnase_grave_death5		Restarting.
+
 
 
 // End - do not delete this line
