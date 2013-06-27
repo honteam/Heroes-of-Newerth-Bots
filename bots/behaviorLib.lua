@@ -3606,3 +3606,41 @@ behaviorLib.ShopBehavior["Utility"] = behaviorLib.ShopUtility
 behaviorLib.ShopBehavior["Execute"] = behaviorLib.ShopExecute
 behaviorLib.ShopBehavior["Name"] = "Shop"
 tinsert(behaviorLib.tBehaviors, behaviorLib.ShopBehavior)
+
+---------------
+-- Pick Rune --
+---------------
+behaviorLib.runeToPick = nil
+
+-- 30 if there is rune within 1000 and we see it
+function behaviorLib.PickRuneUtility(botBrain)
+	local rune = core.teamBotBrain.GetNearestRune(core.unitSelf:GetPosition(), true)
+	if rune == nil or Vector3.Distance2DSq(rune.location, core.unitSelf:GetPosition()) > 1000*1000 then
+		return 0
+	end
+
+	behaviorLib.runeToPick = rune
+
+	return 30
+end
+
+function behaviorLib.pickRune(botBrain, rune)
+	if rune == nil or rune.location == nil or rune.picked then
+		return false
+	end
+	if not HoN.CanSeePosition(rune.location) or rune.unit == nil then
+		return behaviorLib.MoveExecute(botBrain, rune.location)
+	else
+		return core.OrderTouch(botBrain, core.unitSelf, rune.unit)
+	end
+end
+
+function behaviorLib.PickRuneExecute(botBrain)
+	return behaviorLib.pickRune(botBrain, behaviorLib.runeToPick)
+end
+
+behaviorLib.PickRuneBehavior = {}
+behaviorLib.PickRuneBehavior["Utility"] = behaviorLib.PickRuneUtility
+behaviorLib.PickRuneBehavior["Execute"] = behaviorLib.PickRuneExecute
+behaviorLib.PickRuneBehavior["Name"] = "Pick Rune"
+tinsert(behaviorLib.tBehaviors, behaviorLib.PickRuneBehavior)
