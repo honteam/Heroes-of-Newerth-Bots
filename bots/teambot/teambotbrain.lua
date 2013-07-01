@@ -195,13 +195,25 @@ function object:onthink(tGameVariables)
 	time = HoN.GetMatchTime()
 	if time and time > object.runeNextSpawnCheck then
 		object.runeNextSpawnCheck = object.runeNextSpawnCheck + 120000
+
+		local needsReset = true
+
 		for _,rune in pairs(object.runes) do
-			--something spawned
-			rune.picked = false
-			rune.unit = nil
-			rune.better = true
+			if rune.unit and rune.unit:GetTypeName() ~= "Powerup_Refresh" then
+				needsReset = false
+				break
+			end
 		end
-		object.checkRunes()
+
+		if needsReset then
+			for _,rune in pairs(object.runes) do
+				--something spawned
+				rune.picked = false
+				rune.unit = nil
+				rune.better = true
+			end
+			object.checkRunes()
+		end
 	end
 	if time and time > object.runeNextCheck then
 		object.runeNextCheck = object.runeNextCheck + object.runeCheckInterval
