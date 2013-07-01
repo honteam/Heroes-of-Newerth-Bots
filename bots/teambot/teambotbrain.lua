@@ -199,9 +199,13 @@ function object:onthink(tGameVariables)
 		local needsReset = true
 
 		for _,rune in pairs(object.runes) do
-			if rune.unit and rune.unit:GetTypeName() ~= "Powerup_Refresh" then
-				needsReset = false
-				break
+			if rune.unit then
+				if HoN.CanSeePosition(rune.location) then
+					if rune.unit:GetTypeName() ~= "Powerup_Refresh" then
+						needsReset = false
+						break
+					end
+				end
 			end
 		end
 
@@ -246,7 +250,7 @@ function object.checkRunes()
 end
 
 function object.GetNearestRune(pos, certain, prioritizeBetter)
-	--Certain: we want to be sure there is rune
+	--Certain: we can see it
 	certain = certain or false
 	--prioritizeBetter: we go for better if its not too faar
 	prioritizeBetter = prioritizeBetter or false
@@ -254,9 +258,9 @@ function object.GetNearestRune(pos, certain, prioritizeBetter)
 	local nearestRune = nil
 	local shortestDistanceSQ = 99999999
 	for _,rune in pairs(object.runes) do
-		if not certain or rune.unit ~= nil then
+		if not certain or HoN.CanSeePosition(rune.location) and rune.unit ~= nil  then
 			local distanceSQ = Vector3.Distance2DSq(rune.location, pos)
-			if rune.better and prioritizeBetter then
+			if rune.better and HoN.CanSeePosition(rune.location) and prioritizeBetter then
 				distanceSQ = distanceSQ - 2000*2000
 			end
 			if not rune.picked and distanceSQ < shortestDistanceSQ then
