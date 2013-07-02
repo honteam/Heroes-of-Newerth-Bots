@@ -260,8 +260,8 @@ function object.GetNearestRune(pos, certain, prioritizeBetter)
 	for _,rune in pairs(object.runes) do
 		if not certain or HoN.CanSeePosition(rune.location) and rune.unit ~= nil  then
 			local distanceSQ = Vector3.Distance2DSq(rune.location, pos)
-			if rune.better and HoN.CanSeePosition(rune.location) and prioritizeBetter then
-				distanceSQ = distanceSQ - 2000*2000
+			if prioritizeBetter and rune.unit and rune.unit ~= "Powerup_Refresh" and HoN.CanSeePosition(rune.location) then
+				distanceSQ = distanceSQ / 2
 			end
 			if not rune.picked and distanceSQ < shortestDistanceSQ then
 				nearestRune = rune
