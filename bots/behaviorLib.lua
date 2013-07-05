@@ -521,7 +521,6 @@ function behaviorLib.ShouldPort(botBrain, vecDesiredPosition)
 	
 	local idefPostHaste = HoN.GetItemDefinition("Item_PostHaste")
 	if idefPostHaste then
-		
 		local tPostHaste = core.InventoryContains(tInventory, idefPostHaste:GetName(), true)
 		if #tPostHaste > 0 then
 			itemPort = tPostHaste[1]
@@ -1151,32 +1150,41 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.AttackCreepsBehavior)
 --      Execute: Attacks chosen minion like a creep
 ----------------------------------
 function behaviorLib.attackEnemyMinionsUtility(botBrain)
-	local enemies = core.localUnits["Enemies"]
-	local weakestMinion = nil
+	local tEnemies = core.localUnits["Enemies"]
+	local unitWeakestMinion = nil
 	local nMinionHP = 99999999
- 
-	local utility = 0
-	for _, unit in pairs(enemies) do
+	
+	local nUtility = 0
+	for _, unit in pairs(tEnemies) do
 		if not unit:IsInvulnerable() and not unit:IsHero() and unit:GetOwnerPlayer() ~= nil then
-			local nHP = unit:GetHealth()
-			if nHP < nMinionHP then
-				weakestMinion = unit
-				nMinionHP = nHP
+			local nTempHP = unit:GetHealth()
+			if nTempHP < nMinionHP then
+				unitWeakestMinion = unit
+				nMinionHP = nTempHP
 			end
 		end
 	end
-	if weakestMinion ~= nil then
-		core.unitCreepTarget = weakestMinion
-		if nMinionHP <= core.unitSelf:GetAttackDamageMin() * (1 - weakestMinion:GetPhysicalResistance()) then
-			--minion lh > creep lh
-			utility = 25
-		else
-			--PositionSelf 20 and AttackCreeps 21
-			--positonSelf < minionHarass < creep lh || deny
-			utility = 20.5
+	
+	if unitWeakestMinion ~= nil then
+		core.unitCreepTarget = unitWeakestMinion
+		--minion lh > creep lh
+		local unitSelf = core.unitSelf
+		local nDistSq = Vector3.Distance2DSq(unitSelf:GetPosition(), unitWeakestMinion:GetPosition())
+		local nAttackRangeSq = core.GetAbsoluteAttackRangeToUnit(unitSelf, currentTarget, true)
+		
+		if nDistSq < nAttackRangeSq + 100 * 100 and unitSelf:IsAttackReady() then
+			if nMinionHP <= core.unitSelf:GetAttackDamageMin() * (1 - unitWeakestMinion:GetPhysicalResistance()) then
+				-- LastHit Minion
+				nUtility = 25
+			else
+				-- Harass Minion
+				-- PositionSelf 20 and AttackCreeps 21
+				-- positonSelf < minionHarass < creep lh || deny
+				nUtility = 20.5
+			end
 		end
 	end
-	return utility
+	return nUtility
 end
  
 behaviorLib.attackEnemyMinionsBehavior = {}
