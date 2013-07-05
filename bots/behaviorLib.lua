@@ -2208,9 +2208,11 @@ function behaviorLib.UseBatterySupplyUtility(botBrain)
 	local itemBatterySupply = behaviorLib.GetBatterySupplyFromInventory()
 	if itemBatterySupply and itemBatterySupply:CanActivate() then
 		local nCharges = itemBatterySupply:GetCharges()
+		local nBatterySupplyHealthFn=behaviorLib.BatterySupplyHealthUtilFn(nHealthMissing, nCharges)
+		local nBatterySupplyManaFn=behaviorLib.BatterySupplyManaUtilFn(nManaMissing, nCharges)
 		return max(
-			behaviorLib.BatterySupplyHealthUtilFn(nHealthMissing, nCharges) * .8 + behaviorLib.BatterySupplyManaUtilFn(nManaMissing, nCharges) * .2, --health
-			behaviorLib.BatterySupplyManaUtilFn(nManaMissing, nCharges) * .8 + behaviorLib.BatterySupplyHealthUtilFn(nHealthMissing, nCharges) * .2  --mana
+			nBatterySupplyHealthFn * .8 + nBatterySupplyManaFn * .2, --health
+			nBatterySupplyManaFn * .8 + nBatterySupplyHealthFn * .2  --mana
 			)
 	end
 	return 0
@@ -2393,9 +2395,11 @@ function behaviorLib.UseBottleUtility(botBrain)
 	local tInventory = unitSelf:GetInventory()
 	local tItemBottle = core.InventoryContains(tInventory, "Item_Bottle")
 	if #tItemBottle > 0 and not unitSelf:HasState("State_Bottle") and tItemBottle[1]:GetActiveModifierKey() ~= "bottle_empty" then
+		local nBottleHealthFn=behaviorLib.BottleHealthUtilFn(nHealthMissing, nHealthRegen)
+		local nBottleManaFn=behaviorLib.BottleManaUtilFn(nManaMissing, nManaRegen)
 		return max(
-			behaviorLib.BottleHealthUtilFn(nHealthMissing, nHealthRegen) * .8 + behaviorLib.BottleManaUtilFn(nManaMissing, nManaRegen) * .2, --health
-			behaviorLib.BottleManaUtilFn(nManaMissing, nManaRegen) * .8 + behaviorLib.BottleHealthUtilFn(nHealthMissing, nHealthRegen) * .2  --mana
+			nBottleHealthFn * .8 + nBottleManaFn * .2, --health
+			nBottleManaFn * .8 + nBottleHealthFn * .2  --mana
 			)
 	end
 	return 0
