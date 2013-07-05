@@ -1564,9 +1564,8 @@ function core.GetLaneBreakdown(unit)
 	end
 	
 	--pick two lowest ones
-	local nBiggestDist = max(topDist, max(midDist, botDist))
-	
-	local nLowestDist = max(topDist, max(midDist, botDist))
+	local nBiggestDist = max(topDist, midDist, botDist)
+	local nLowestDist = min(topDist, midDist, botDist)
 	if (nLowestDist>1200) then --clearly not in a lane.
 		return {top=0, mid=0, bot=0}, {top=vecTopPoint, mid=vecMidPoint, bot=vecBotPoint}
 	end

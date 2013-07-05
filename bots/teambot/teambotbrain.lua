@@ -1006,6 +1006,7 @@ local tValueMultipliers = {-3, -1, 1, 2, 3, 5, 5}
 
 
 local function validLanes(tNewCurrentLanes)	
+	--core.printTable(tNewCurrentLanes) --uncomment to see lane checking in progress
 	local nLong=0
 	local nMid=0
 	local nShort=0
@@ -1192,7 +1193,7 @@ function object:BuildLanes()
 	local tBottomLane = {}
 	local tJungle = {}
 	
-	local tPossibleLanes = {"Jungle", "Mid", "ShortSolo", "LongSolo", "ShortSupport", "LongSupport", "ShortCarry", "LongCarry"}
+	local tPossibleLanes = {"Mid", "ShortSolo", "LongSolo", "ShortSupport", "LongSupport", "ShortCarry", "LongCarry", "Jungle"}
 
 	-- Check for players already in lane
 	for nID, unitHero in pairs(self.tAllyHumanHeroes) do
@@ -1256,7 +1257,7 @@ function object:BuildLanes()
 	-- /Tutorial
 
 	object.lanePreferences={}
-	nHighestCombo=0
+	nHighestCombo=-500
 	-- Get preferences from bots.
 	if core.NumberElements(object.lanePreferences) < core.NumberElements(object.tBotsLeft) then
 		for _, unitHero in pairs(object.tBotsLeft) do
