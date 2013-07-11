@@ -1174,6 +1174,10 @@ function core.InventoryContains(inventory, val, bIgnoreRecipes, bIncludeStash)
     return tableOfThings
 end
 
+function core.IsLaneCreep(unit)
+	return string.find(unit:GetTypeName(), "Creep")
+end
+
 function core.IsCourier(unit)
 	return unit:IsUnitType("Courier")
 end
