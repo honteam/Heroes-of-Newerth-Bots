@@ -1175,7 +1175,7 @@ function core.InventoryContains(inventory, val, bIgnoreRecipes, bIncludeStash)
 end
 
 function core.IsLaneCreep(unit)
-	return string.find(unit:GetTypeName(), "Creep")
+	return (strfind(unit:GetTypeName(), "Creep") ~= nil)
 end
 
 function core.IsCourier(unit)

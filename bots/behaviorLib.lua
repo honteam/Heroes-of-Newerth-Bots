@@ -2216,12 +2216,12 @@ function behaviorLib.UseBatterySupplyUtility(botBrain)
 	local itemBatterySupply = behaviorLib.GetBatterySupplyFromInventory()
 	if itemBatterySupply and itemBatterySupply:CanActivate() then
 		local nCharges = itemBatterySupply:GetCharges()
-		local nBatterySupplyHealthFn=behaviorLib.BatterySupplyHealthUtilFn(nHealthMissing, nCharges)
-		local nBatterySupplyManaFn=behaviorLib.BatterySupplyManaUtilFn(nManaMissing, nCharges)
+		local nBatterySupplyHealthUtility = behaviorLib.BatterySupplyHealthUtilFn(nHealthMissing, nCharges)
+		local nBatterySupplyManaUtility = behaviorLib.BatterySupplyManaUtilFn(nManaMissing, nCharges)
 		return max(
-			nBatterySupplyHealthFn * .8 + nBatterySupplyManaFn * .2, --health
-			nBatterySupplyManaFn * .8 + nBatterySupplyHealthFn * .2  --mana
-			)
+			nBatterySupplyHealthUtility * .8 + nBatterySupplyManaUtility * .2, --health
+			nBatterySupplyManaUtility * .8 + nBatterySupplyHealthUtility * .2  --mana
+		)
 	end
 	return 0
 end
