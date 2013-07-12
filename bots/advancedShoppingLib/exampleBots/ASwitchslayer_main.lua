@@ -15,7 +15,7 @@ Tutorial Contents:
 
 There are two types for comments:
 1.'--' short explanations
-2. '--[[' and ']]--' for a detailed description
+2. '--[.[' and '--].]' for a detailed description
 
 Please jump to line 60.
 --]]
@@ -325,7 +325,7 @@ function object:onthinkOverride(tGameVariables)
 		--]]
 		--advShopping requesting wards function
 	   
-		local nNow = HoN.GetGameTime()
+		local nNow = HoN.GetMatchTime()
 		--buy new wards every 6 min (start at 2 minute mark)
 		if nNow >= object.nextWard then  
 				shopping.RequestConsumable ("Item_FlamingEye", 5)

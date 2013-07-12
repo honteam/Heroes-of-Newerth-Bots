@@ -68,6 +68,9 @@ Usage:
 		Override 
 			shopping.CheckItemBuild()
 	
+	Manually upgrade courier:
+		shopping.DoCourierUpgrade(courier, currentGold)
+		
 	Misc.:
 		shopping.SellBonusValue = 2000 --bonus sell value for desired items 
 		shopping.nMaxHealthTreshold = 1000 --max Health for buying potions
@@ -126,11 +129,12 @@ shopping.nextBuyTime = HoN.GetGameTime()
 shopping.buyInterval = 250 -- One Shopping Round per Behavior utility call 
 shopping.finishedBuying = true
 
+--Shopping Utility Values
+shopping.nShoppingUtilityValue = 30
+shopping.nShoppingPreGameUtilityValue = 100
+
 --item is not avaible for shopping, retry it at a later time (mainly puzzlebox)
 shopping.delayedItems = {}
-
---Give the bot extratime for shopping, delays the initial bot movement
-shopping.PreGameDelay = 1000 -- 1 second
 
 --developement only - set this to true in your botfiles, while in pre submission phase
 shopping.developeItemBuildSaver = false 
@@ -544,6 +548,31 @@ function shopping.CareAboutCourier()
 		shopping.BuyNewCourier = HoN.GetItemDefinition("Item_GroundFamiliar")
 	end		
 	
+end
+
+--function DoCourierUpgrade(courier, gold)
+--[[
+description:	Upgrade the courier, if the bot has enough gold
+parameters: 	courier: courier unit 
+				gold: current gold
+
+returns the remaining gold
+--]]
+function shopping.DoCourierUpgrade(courier, gold)
+	
+	local unitCourier = courier or shopping.GetCourier()
+	local nMyGold = gold or object:GetGold()
+	
+	if unitCourier and nMyGold >= 200 then
+		shopping.courierDoUpgrade = false
+		if courier:GetTypeName() == "Pet_GroundFamiliar" then
+			local courierUpgrade = courier:GetAbility(0)
+			core.OrderAbility(object, courierUpgrade)
+			nMyGold = nMyGold - 200
+		end
+	end
+	
+	return nMyGold
 end
 
 --function RequestConsumable
@@ -969,7 +998,7 @@ local function GetNextItem()
 		--care about ItemReservations?
 		if shopping.CheckItemReservation then
 			local teamBot = HoN.GetTeamBotBrain()
-			if teamBot and not teamBot.ReserveItem(name) then 
+			if teamBot and teamBot.ReserveItem and not teamBot.ReserveItem(name) then 
 				--item reservation failed,because it is already reserved
 				return GetNextItem()
 			end
@@ -1404,7 +1433,6 @@ end
 --			Shopping - Behavior 
 ----------------------------------------------------
 ----------------------------------------------------
-
 function shopping.ShopUtility(botBrain)
 
 	local utility = 0
@@ -1417,6 +1445,8 @@ function shopping.ShopUtility(botBrain)
 			shopping.bWaitForLaneDecision = false
 		end
 	end
+	
+	local nShoppingUtilityValue = HoN.GetMatchTime() > 0 and shopping.nShoppingUtilityValue or shopping.nShoppingPreGameUtilityValue
 	
 	local myGold = botBrain:GetGold()
 	
@@ -1449,14 +1479,7 @@ function shopping.ShopUtility(botBrain)
 		
 		--check if we have to upgrade courier
 		if shopping.courierDoUpgrade and myGold >= 200 then
-			if courier then
-				shopping.courierDoUpgrade = false
-				if courier:GetTypeName() == "Pet_GroundFamiliar" then
-					local courierUpgrade = courier:GetAbility(0)
-					core.OrderAbility(botBrain, courierUpgrade)
-					myGold = myGold - 200
-				end
-			end
+			myGold = shopping.DoCourierUpgrade(courier, myGold)
 		end
 	end
 	
@@ -1464,7 +1487,7 @@ function shopping.ShopUtility(botBrain)
 	if shopping.DoShopping and not shopping.PauseShopping then 
 		
 		if not behaviorLib.finishedBuying then
-			utility = 30
+			utility = nShoppingUtilityValue
 		end
 		
 		--if debugInfoShoppingBehavior then BotEcho("Check next item") end
@@ -1481,11 +1504,11 @@ function shopping.ShopUtility(botBrain)
 		
 			if myGold > nextItemDef:GetCost() then
 				if debugInfoShoppingBehavior then BotEcho("Enough gold to buy the item: "..nextItemDef:GetName()..". Current gold: "..tostring(myGold)) end	
-				utility = 30
+				utility = nShoppingUtilityValue
 				behaviorLib.finishedBuying = false
 				if bCanAccessStash then
 					if debugInfoShoppingBehavior then BotEcho("Hero can access shop") end
-					utility = 99						
+					utility = nShoppingUtilityValue * 3						
 				end				
 			end
 		else
@@ -1537,7 +1560,6 @@ function shopping.ShopExecute(botBrain)
 				shopping.PauseShopping = not bSuccess or not bStashOnly
 				
 			else
-				core.teamBotBrain.bPurchasedThisFrame = true
 				unitSelf:PurchaseRemaining(nextItemDef)
 		
 				local goldAmtAfter = botBrain:GetGold()
@@ -1709,27 +1731,6 @@ function shopping.FindItems(botBrain)
 end
 shopping.FindItemsOld = core.FindItems
 core.FindItems = shopping.FindItems
-
----------------------------------------------------
--- Downscale PreGameUtility (Better Shopping Experience)
----------------------------------------------------
-function shopping.PreGameUtility(botBrain)
-	if HoN:GetMatchTime() <= 0 then
-		return 29
-	end
-	return 0
-end
-behaviorLib.PreGameBehavior["Utility"] = shopping.PreGameUtility
-
-function shopping.PreGameExecute(botBrain)
-	if HoN.GetRemainingPreMatchTime() > core.teamBotBrain.nInitialBotMove - shopping.PreGameDelay then		
-		core.OrderHoldClamp(botBrain, core.unitSelf)
-	else
-		local vecTargetPos = behaviorLib.PositionSelfTraverseLane(botBrain)
-		core.OrderMoveToPosClamp(botBrain, core.unitSelf, vecTargetPos, false)
-	end
-end
-behaviorLib.PreGameBehavior["Execute"] = shopping.PreGameExecute
 
 ---------------------------------------------------
 --Further Courier Functions
@@ -2032,7 +2033,7 @@ end
 --generate new Reservation table in the teambot
 local function SetupReservation()
 	
-	local debugTeamBotBrain = true
+	local debugTeamBotBrain = false
 	local teamBot = HoN.GetTeamBotBrain()
 	
 	teamBot.bReservation = true
@@ -2062,7 +2063,7 @@ end
 --reserve an item, if possible
 local function ReserveItem (itemName)
 	
-	local debugTeamBotBrain = true
+	local debugTeamBotBrain = false
 	
 	if not itemName then return false end
 	
