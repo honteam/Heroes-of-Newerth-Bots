@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+<bot
+	name="RallyTestBot"
+	description="bot_description_magmar"
+	heroname="Hero_Rally"
+	rootlua="rally_test.lua"
+	defaultplayername="RallyTest"
+	precachepath="/heroes/rally/"
+/>
+-->

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="Schnasegrave"
+	description="Gravekeeper-Bot by Schnarchnase"
+	heroname="Hero_Taint"
+	rootlua="gravekeeper_Schnarchnase.lua"
+	defaultplayername="ZombieLord"
+	precachepath="/heroes/taint/"
+/>
