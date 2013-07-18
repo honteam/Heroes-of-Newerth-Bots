@@ -34,40 +34,9 @@
 local _G = getfenv(0)
 local object = _G.object
 
-object.myName = object:GetName()
-
-object.bRunLogic        = true
-object.bRunBehaviors    = true
-object.bUpdates         = true
-object.bUseShop         = true
-
-object.bRunCommands     = true 
-object.bMoveCommands    = true
-object.bAttackCommands  = true
-object.bAbilityCommands = true
-object.bOtherCommands   = true
-
-object.bReportBehavior = false
-object.bDebugUtility   = false
-object.bDebugExecute = false
-
-
-object.logger = {}
-object.logger.bWriteLog   = false
-object.logger.bVerboseLog = false
-
-object.core          = {}
-object.eventsLib     = {}
-object.metadata      = {}
-object.behaviorLib   = {}
-object.skills        = {}
+runfile "bots/templates/herobot.lua"
 
 --runfile "bots/Libraries/LibWarding/LibWarding.lua"
-runfile "bots/core.lua"
-runfile "bots/botbraincore.lua"
-runfile "bots/eventsLib.lua"
-runfile "bots/metadata.lua"
-runfile "bots/behaviorLib.lua"
 
 local core, eventsLib, behaviorLib, metadata, skills = object.core, object.eventsLib, object.behaviorLib, object.metadata, object.skills
 
@@ -113,16 +82,6 @@ behaviorLib.LaneItems  = {"Item_Marchers", "Item_Striders", "Item_Astrolabe"}
 behaviorLib.MidItems  = {"Item_Immunity" }
 behaviorLib.LateItems  = {"Item_BehemothsHeart", "Item_Damage9"}
 
-
--- skillbuild table, 0=q, 1=w, 2=e, 3=r, 4=attributeBoost
-object.tSkills = {
-	0, 1, 0, 1, 0, 
-	3, 0, 1, 1, 2, 
-	2, 2, 2, 3, 4, 
-	3, 4, 4, 4, 4, 
-	4, 4, 4, 4, 4
-}
-
 -- These are bonus agression points if a skill/item is available for use
 object.nStaccatoUp = 12
 object.nDanceInfernoUp = 8
@@ -152,25 +111,20 @@ object.nRetreatStunThreshold = 43		--used for the defensive stunning
 ------------------------------
 --     skills               --
 ------------------------------
+object.tSkills = {
+	0, 1, 0, 1, 0,
+	3, 0, 1, 1, 2,
+	2, 2, 2, 3, 4,
+	3
+}
 
-function object:SkillBuild()
+function object:SkillBuildAssignSkills()
 	local unitSelf = self.core.unitSelf
-	if  skills.abilStaccato == nil then
-		skills.abilStaccato = unitSelf:GetAbility(0)
-		skills.abilDanceInferno = unitSelf:GetAbility(1)
-		skills.abilHymn = unitSelf:GetAbility(2)
+	if not skills.abilStaccato then
+		skills.abilStaccato         = unitSelf:GetAbility(0)
+		skills.abilDanceInferno     = unitSelf:GetAbility(1)
+		skills.abilHymn             = unitSelf:GetAbility(2)
 		skills.abilProtectiveMelody = unitSelf:GetAbility(3)
-		skills.abilAttributeBoost = unitSelf:GetAbility(4)
-	end
-	
-	local nPoints = unitSelf:GetAbilityPointsAvailable()
-	if nPoints <= 0 then
-		return
-	end
-	
-	local nLevel = unitSelf:GetLevel()
-	for i = nLevel, (nLevel + nPoints) do
-		unitSelf:GetAbility( self.tSkills[i] ):LevelUp()
 	end
 end
 

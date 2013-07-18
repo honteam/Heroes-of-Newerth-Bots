@@ -38,39 +38,7 @@
 local _G = getfenv(0)
 local object = _G.object
 
-object.myName = object:GetName()
-
-object.bRunLogic		= true
-object.bRunBehaviors	= true
-object.bUpdates			= true
-object.bUseShop			= true
-
-object.bRunCommands		= true
-object.bMoveCommands	= true
-object.bAttackCommands	= true
-object.bAbilityCommands	= true
-object.bOtherCommands	= true
-
-object.bReportBehavior	= false
-object.bDebugUtility	= false
-object.bDebugExecute	= false
-
-
-object.logger = {}
-object.logger.bWriteLog = false
-object.logger.bVerboseLog = false
-
-object.core			= {}
-object.eventsLib	= {}
-object.metadata		= {}
-object.behaviorLib	= {}
-object.skills		= {}
-
-runfile "bots/core.lua"
-runfile "bots/botbraincore.lua"
-runfile "bots/eventsLib.lua"
-runfile "bots/metadata.lua"
-runfile "bots/behaviorLib.lua"
+runfile "bots/templates/herobot.lua"
 
 local core, eventsLib, behaviorLib, metadata, skills = object.core, object.eventsLib, object.behaviorLib, object.metadata, object.skills
 
@@ -96,36 +64,23 @@ object.onthinkOld = object.onthink
 object.onthink 	= object.onthinkOverride
 --]]
 
+--------------------------------
+-- Skills
+--------------------------------
 object.tSkills = {
 	0, 1, 1, 0, 1, -- Keg lvl 2 Turret lvl 3
 	3, 1, 0, 0, 4, -- Ultimate lvl 1 Keg lvl 4 Turret lvl 4 Attributes lvl 1
 	3, 2, 2, 2, 2, -- Ultimate lvl 2 Spider Mines lvl 4
-	3, 4, 4, 4, 4, -- Ultimate lvl 3 Attributes lvl 5
-	4, 4, 4, 4, 4, -- Attributes lvl 10
+	3              -- Ultimate lvl 3
 }
 
---------------------------------
--- Skills
---------------------------------
-function object:SkillBuild()
-local unitSelf = self.core.unitSelf
-
-	if skills.abilKeg == nil then
-		skills.abilKeg		= unitSelf:GetAbility(0)
-		skills.abilTurret	= unitSelf:GetAbility(1)
-		skills.abilSpiderMine	= unitSelf:GetAbility(2)
-		skills.abilEnergyField	= unitSelf:GetAbility(3)
-		skills.abilAttributeBoost	= unitSelf:GetAbility(4)
-	end
-
-	if unitSelf:GetAbilityPointsAvailable() <= 0 then
-		return
-	end
-
-	local nLev = unitSelf:GetLevel()
-	local nLevPts = unitSelf:GetAbilityPointsAvailable()
-	for i = nLev, (nLev + nLevPts) do
-		unitSelf:GetAbility( object.tSkills[i] ):LevelUp()
+function object:SkillBuildAssignSkills()
+	local unitSelf = self.core.unitSelf
+	if not skills.abilKeg then
+		skills.abilKeg         = unitSelf:GetAbility(0)
+		skills.abilTurret      = unitSelf:GetAbility(1)
+		skills.abilSpiderMine  = unitSelf:GetAbility(2)
+		skills.abilEnergyField = unitSelf:GetAbility(3)
 	end
 end
 

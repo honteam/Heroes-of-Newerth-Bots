@@ -4,38 +4,7 @@
 local _G = getfenv(0)
 local object = _G.object
 
-object.myName = object:GetName()
-
-object.bRunLogic 		= true
-object.bRunBehaviors	= true
-object.bUpdates 		= true
-object.bUseShop 		= true
-
-object.bRunCommands 	= true
-object.bMoveCommands 	= true
-object.bAttackCommands 	= true
-object.bAbilityCommands = true
-object.bOtherCommands 	= true
-
-object.bReportBehavior = false
-object.bDebugUtility = false
-object.bDebugExecute = false
-
-object.logger = {}
-object.logger.bWriteLog = false
-object.logger.bVerboseLog = false
-
-object.core 		= {}
-object.eventsLib 	= {}
-object.metadata 	= {}
-object.behaviorLib 	= {}
-object.skills 		= {}
-
-runfile "bots/core.lua"
-runfile "bots/botbraincore.lua"
-runfile "bots/eventsLib.lua"
-runfile "bots/metadata.lua"
-runfile "bots/behaviorLib.lua"
+runfile "bots/templates/herobot.lua"
 
 local core, eventsLib, behaviorLib, metadata, skills = object.core, object.eventsLib, object.behaviorLib, object.metadata, object.skills
 
@@ -55,36 +24,21 @@ object.heroName = 'Hero_Magmar'
 --------------------------------
 -- Skills
 --------------------------------
-function object:SkillBuild()
-	local unitSelf = self.core.unitSelf
+--Ult, Lava Surge, 1 in Steam Bath, 1 in stats, Volcanic Touch, Steam Bath, Stats
+object.tSkills = {
+	0, 1, 0, 4, 0,
+	3, 0, 2, 2, 2,
+	3, 2, 1, 1, 1,
+	3
+}
 
-	if  skills.abilLavaSurge == nil then
-		skills.abilLavaSurge		= unitSelf:GetAbility(0)
-		skills.abilSteamBath		= unitSelf:GetAbility(1)
-		skills.abilVolcanicTouch	= unitSelf:GetAbility(2)
-		skills.abilEruption			= unitSelf:GetAbility(3)
-		skills.abilAttributeBoost	= unitSelf:GetAbility(4)
-	end
-	
-	if unitSelf:GetAbilityPointsAvailable() <= 0 then
-		return
-	end
-	
-	--Ult, Lava Surge, 1 in Steam Bath, 1 in stats, Volcanic Touch, Steam Bath, Stats
-	if skills.abilEruption:CanLevelUp() then
-		skills.abilEruption:LevelUp()
-	elseif skills.abilLavaSurge:CanLevelUp() then
-		skills.abilLavaSurge:LevelUp()
-	elseif skills.abilSteamBath:GetLevel() < 1 then
-		skills.abilSteamBath:LevelUp()		
-	elseif skills.abilAttributeBoost:GetLevel() < 1 then
-		skills.abilAttributeBoost:LevelUp()
-	elseif skills.abilVolcanicTouch:CanLevelUp() then
-		skills.abilVolcanicTouch:LevelUp()
-	elseif skills.abilSteamBath:CanLevelUp() then
-		skills.abilSteamBath:LevelUp()
-	else
-		skills.abilAttributeBoost:LevelUp()
+function object:SkillBuildAssignSkills()
+	local unitSelf = self.core.unitSelf
+	if not skills.abilLavaSurge then
+		skills.abilLavaSurge     = unitSelf:GetAbility(0)
+		skills.abilSteamBath     = unitSelf:GetAbility(1)
+		skills.abilVolcanicTouch = unitSelf:GetAbility(2)
+		skills.abilEruption      = unitSelf:GetAbility(3)
 	end
 end
 

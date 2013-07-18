@@ -41,38 +41,7 @@ credits:
 local _G = getfenv(0)
 local object = _G.object
 
-object.myName = object:GetName()
-
-object.bRunLogic		= true
-object.bRunBehaviors    = true
-object.bUpdates		 = true
-object.bUseShop		 = true
-
-object.bRunCommands     = true
-object.bMoveCommands    = true
-object.bAttackCommands  = true
-object.bAbilityCommands = true
-object.bOtherCommands   = true
-
-object.bReportBehavior = false
-object.bDebugUtility = false
-object.bDebugExecute = false
-
-object.logger = {}
-object.logger.bWriteLog = false
-object.logger.bVerboseLog = false
-
-object.core	     = {}
-object.eventsLib	= {}
-object.metadata	 = {}
-object.behaviorLib      = {}
-object.skills	   = {}
-
-runfile "bots/core.lua"
-runfile "bots/botbraincore.lua"
-runfile "bots/eventsLib.lua"
-runfile "bots/metadata.lua"
-runfile "bots/behaviorLib.lua"
+runfile "bots/templates/herobot.lua"
 
 local core, eventsLib, behaviorLib, metadata, skills = object.core, object.eventsLib, object.behaviorLib, object.metadata, object.skills
 
@@ -92,45 +61,29 @@ object.heroName = 'Hero_Taint'
 --------------------------------
 -- Skills
 --------------------------------
-
 --[[
 Gravekeeper will max Stun first.
 At Level 2 he puts a pint into his Toss.
 Afterwards maxing his Corpse Explosion before finishing his Toss.
 Skills ZombieAcopalypse whenever possible.
 --]]
-function object:SkillBuild()
+object.tSkills = {
+	0, 2, 0, 1, 0,
+	3, 0, 1, 1, 1,
+	3, 2, 2, 2, 4,
+	3
+}
 
+function object:SkillBuildAssignSkills()
 	local unitSelf = self.core.unitSelf
-
-	if  skills.abilCorpseToss == nil then
-		skills.abilCorpseToss		= unitSelf:GetAbility(0)
+	if not skills.abilCorpseToss then
+		skills.abilCorpseToss       = unitSelf:GetAbility(0)
 		skills.abilCorpseExplosion  = unitSelf:GetAbility(1)
-		skills.abilDefilingTouch	= unitSelf:GetAbility(2)
-		skills.abilZombieApocalypse	= unitSelf:GetAbility(3)
-		skills.abilAttributeBoost	= unitSelf:GetAbility(4)
-		skills.abilTaunt			= unitSelf:GetAbility(8)
-	end
-
-	if unitSelf:GetAbilityPointsAvailable() <= 0 then
-		return
-	end
-
-	if skills.abilZombieApocalypse:CanLevelUp() then
-		skills.abilZombieApocalypse:LevelUp()
-	elseif skills.abilCorpseToss:CanLevelUp() then
-		skills.abilCorpseToss:LevelUp()
-	elseif skills.abilDefilingTouch:GetLevel() < 1 then
-		skills.abilDefilingTouch:LevelUp()
-	elseif skills.abilCorpseExplosion:CanLevelUp() then
-		skills.abilCorpseExplosion:LevelUp()
-	elseif skills.abilDefilingTouch:CanLevelUp() then
-		skills.abilDefilingTouch:LevelUp()
-	else
-		skills.abilAttributeBoost:LevelUp()
+		skills.abilDefilingTouch    = unitSelf:GetAbility(2)
+		skills.abilZombieApocalypse = unitSelf:GetAbility(3)
+		skills.abilTaunt            = unitSelf:GetAbility(8)
 	end
 end
-
 
 
 ---------------------------------------------------
@@ -231,7 +184,7 @@ local function AbilitiesUpUtility(hero)
 	if object.itemSheepstick and object.itemSheepstick:CanActivate() then
 		nUtility = nUtility + object.nSheepstickUp
 	end
-	
+
 	return nUtility
 end
 
@@ -276,17 +229,17 @@ object.tEnemyPosition = {}
 object.tEnemyPositionTimestamp = {}
 local function funcGetEnemyPosition(unitEnemy)
 
-	if not unitEnemy then 
+	if not unitEnemy then
 		--TODO: change this to nil and fix the rest of the code to recognize it as the failure case
-		return Vector3.Create(20000, 20000) 
+		return Vector3.Create(20000, 20000)
 	end
-	
+
 	local tEnemyPosition = object.tEnemyPosition
 	local tEnemyPositionTimestamp = object.tEnemyPositionTimestamp
 
-	if core.IsTableEmpty(tEnemyPosition) then	
+	if core.IsTableEmpty(tEnemyPosition) then
 		local tEnemyTeam = HoN.GetHeroes(core.enemyTeam)
-		
+
 		--vector beyond map
 		for x, hero in pairs(tEnemyTeam) do
 			--TODO: Also here
@@ -296,7 +249,7 @@ local function funcGetEnemyPosition(unitEnemy)
 	end
 
 	local nUniqueID = unitEnemy:GetUniqueID()
-	
+
 	--enemy visible?
 	if core.CanSeeUnit(object, unitEnemy) then
 		--update table
@@ -307,7 +260,7 @@ local function funcGetEnemyPosition(unitEnemy)
 	--return position, 10s memory
 	if tEnemyPositionTimestamp[nUniqueID] <= HoN.GetGameTime() + 10000 then
 		return tEnemyPosition[nUniqueID]
-	else	
+	else
 		--TODO: Also here
 		return Vector3.Create(20000, 20000)
 	end
@@ -320,7 +273,7 @@ local function CustomHarassUtilityFnOverride(hero)
 
 	--no target --> no harassment
 	local unitTarget = behaviorLib.heroTarget
-	if not unitTarget then 
+	if not unitTarget then
 		return 0
 	end
 
@@ -394,13 +347,13 @@ local function HarassHeroExecuteOverride(botBrain)
 	local abilCorpseToss = skills.abilCorpseToss
 	local abilZombieApocalypse = skills.abilZombieApocalypse
 	local abilCorpseExplosion =skills.abilCorpseExplosion
-	
+
 	--Sheepstick
 	if not bActionTaken and bCanSeeUnit then
 		local itemSheepstick = core.itemSheepstick
 		if itemSheepstick and not bTargetRooted then
 			if itemSheepstick:CanActivate() and nLastHarassUtility > object.nSheepstickThreshold then
-				local nRange = itemSheepstick:GetRange()					
+				local nRange = itemSheepstick:GetRange()
 				if nTargetDistanceSq < (nRange * nRange) then
 					bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, itemSheepstick, unitTarget)
 				end
@@ -438,14 +391,14 @@ local function HarassHeroExecuteOverride(botBrain)
 	end
 
 StartProfile('CorpseExplosion')
-	--Corpse Explosion	
-	if not bActionTaken then		
+	--Corpse Explosion
+	if not bActionTaken then
 		if abilCorpseExplosion:CanActivate() and nLastHarassUtility > botBrain.nCorpseExplosionThreshold then
 			--No zombies around and ultimate is down. Set required Corpses to 3
 			if (object.nApocalyseUseTime + 7500 < nNow and not abilZombieApocalypse:CanActivate()) then
 				object.nRequiredCorpses = 3
 			end
-			
+
 			local nRange = abilCorpseExplosion:GetRange()
 			if nTargetDistanceSq < (nRange * nRange) then
 				--looking for creep corpses (tCorpses) and summoned corpses (tPets) in range // no API = high costly
@@ -459,7 +412,7 @@ StartProfile('CorpseExplosion')
 						nNumberCorpses = nNumberCorpses + 1
 					end
 				end
-				
+
 				--enough corpses in range?
 				if nNumberCorpses >= object.nRequiredCorpses  then
 					bActionTaken = core.OrderAbilityPosition(botBrain, abilCorpseExplosion, vecTargetPosition)
@@ -470,7 +423,7 @@ StartProfile('CorpseExplosion')
 StopProfile()
 
 	--Taunting!!!
-	if not bActionTaken and bCanSeeUnit then		
+	if not bActionTaken and bCanSeeUnit then
 		local abilTaunt = skills.abilTaunt
 		if abilTaunt:CanActivate() and unitTarget:GetHealthPercent() < 0.3 then
 			local nRange = 500
@@ -557,7 +510,7 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 -- credits base version: paradox870
 ----------------
  local function funcValidateCreepTarget(nDamageMin, unitCreepTarget, tAttackingCreeps, tAttackingTowers)
-	if not unitCreepTarget then 
+	if not unitCreepTarget then
 		return
 	end
 
@@ -604,13 +557,13 @@ local function GetCreepAttackTarget(botBrain, unitEnemyCreep, unitAllyCreep) --c
 	local unitCreepTarget = nil
 
 	if unitEnemyCreep and core.CanSeeUnit(botBrain, unitEnemyCreep) then
-		local nDefileDamage = 0 
-		
+		local nDefileDamage = 0
+
 		--increase dmgMin
 		if (skills.abilDefilingTouch:GetCharges() > 0) then
 			nDefileDamage = skills.abilDefilingTouch:GetLevel() * 15
 		end
-		
+
 		local tAttackingCreeps = core.localUnits['AllyCreeps']
 		local tAttackingTowers = core.localUnits['AllyTowers']
 		unitCreepTarget = funcValidateCreepTarget(nDamageMin + nDefileDamage, unitEnemyCreep, tAttackingCreeps, tAttackingTowers)
@@ -838,11 +791,11 @@ local function funcGetThreatOfEnemy(unitEnemy)
 
 	--Range-Formula to increase threat: T(x) = (a*x +b) / (c*x+d); x: distance, T(x): threat
 	-- T(700²) = 2, T(1100²) = 1.5, T(2000²)= 0.75
-	local y = (3 * ((-1) * nDistanceSq + 112810000)) / 
-			  (4 * (  19 * nDistanceSq +  32810000))	
+	local y = (3 * ((-1) * nDistanceSq + 112810000)) /
+			  (4 * (  19 * nDistanceSq +  32810000))
 			  -- curse your magic numbers! you can totally represent the 0.75 <= y <= 2 portion with a linear function
 			  -- To see the graph, punch "graph y = (3 * ((-1) * x^2+ 112810000)) / (4 * (  19 * x^2 +  32810000))" into Google.
-	
+
 	nThreat = Clamp (y, 0.75, 2) * nThreat
 
 	return nThreat

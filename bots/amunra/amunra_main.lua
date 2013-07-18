@@ -6,38 +6,7 @@
 local _G = getfenv(0)
 local object = _G.object
 
-object.myName = object:GetName()
-
-object.bRunLogic 		= true
-object.bRunBehaviors	= true
-object.bUpdates 		= true
-object.bUseShop 		= true
-
-object.bRunCommands 	= true
-object.bMoveCommands 	= true
-object.bAttackCommands 	= true
-object.bAbilityCommands = true
-object.bOtherCommands 	= true
-
-object.bReportBehavior = false
-object.bDebugUtility = false
-object.bDebugExecute = false
-
-object.logger = {}
-object.logger.bWriteLog = false
-object.logger.bVerboseLog = false
-
-object.core 		= {}
-object.eventsLib 	= {}
-object.metadata 	= {}
-object.behaviorLib 	= {}
-object.skills 		= {}
-
-runfile "bots/core.lua"
-runfile "bots/botbraincore.lua"
-runfile "bots/eventsLib.lua"
-runfile "bots/metadata.lua"
-runfile "bots/behaviorLib.lua"
+runfile "bots/templates/herobot.lua"
 
 local core, eventsLib, behaviorLib, metadata, skills = object.core, object.eventsLib, object.behaviorLib, object.metadata, object.skills
 
@@ -71,38 +40,23 @@ object.onthink 	= object.onthinkOverride
 --------------------------------
 -- Skills
 --------------------------------
-function object:SkillBuild()
+-- automatically levels stats in the end
+-- stats have to be leveld manually if needed inbetween
+object.tSkills = {
+	0, 2, 1, 2, 0,
+	3, 0, 0, 2, 2,
+	3, 1, 1, 1, 4,
+	3
+}
+
+function object:SkillBuildAssignSkills()
 	local unitSelf = self.core.unitSelf
-	if  skills.abilMeteor == nil then
-		skills.abilMeteor = unitSelf:GetAbility(0)
-		skills.abilIgnite = unitSelf:GetAbility(1)
-		skills.abilAshes = unitSelf:GetAbility(2)
+	if not skills.abilMeteor then
+		skills.abilMeteor  = unitSelf:GetAbility(0)
+		skills.abilIgnite  = unitSelf:GetAbility(1)
+		skills.abilAshes   = unitSelf:GetAbility(2)
 		skills.abilRebirth = unitSelf:GetAbility(3)
-		skills.abilAttributeBoost = unitSelf:GetAbility(4)
 	end
-	if unitSelf:GetAbilityPointsAvailable() <= 0 then
-		return
-	end
-	
-	
-	-- automatically levels stats in the end
-	-- stats have to be leveld manually if needed inbetween
-	tSkills ={
-				0, 2, 1, 2, 0,
-				3, 0, 0, 2, 2,
-				3, 1, 1, 1, 4,
-				3
-			}
-	
-	local nLev = unitSelf:GetLevel()
-    local nLevPts = unitSelf:GetAbilityPointsAvailable()
-    --BotEcho(tostring(nLev + nLevPts))
-    for i = nLev, nLev+nLevPts do
-		local nSkill = tSkills[i]
-		if nSkill == nil then nSkill = 4 end
-		
-        unitSelf:GetAbility(nSkill):LevelUp()
-    end
 end
 
 ---------------------------------------------------

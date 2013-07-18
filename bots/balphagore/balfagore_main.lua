@@ -17,25 +17,19 @@
 ------------------------------------------
 local _G = getfenv(0)
 local object = _G.object
-object.myName = object:GetName()
-object.bRunLogic, object.bRunBehaviors, object.bUpdates, object.bUseShop, object.bRunCommands, object.bMoveCommands, object.bAttackCommands, object.bAbilityCommands, object.bOtherCommands = true
-object.logger = {}
-object.bReportBehavior, object.bDebugUtility, object.logger.bWriteLog, object.logger.bVerboseLog = false
-object.core 			= {}
-object.eventsLib		= {}
-object.metadata 		= {}
-object.behaviorLib  	= {}
-object.skills   		= {}
-runfile "bots/core.lua"
-runfile "bots/botbraincore.lua"
-runfile "bots/eventslib.lua"
-runfile "bots/metadata.lua"
-runfile "bots/behaviorlib.lua"
+
+runfile "bots/templates/herobot.lua"
+
 local core, eventsLib, behaviorLib, metadata, skills = object.core, object.eventsLib, object.behaviorLib, object.metadata, object.skills
-local print, ipairs, pairs, string, table, next, type, tinsert, tremove, tsort, format, tostring, tonumber, strfind, strsub 	= _G.print, _G.ipairs, _G.pairs, _G.string, _G.table, _G.next, _G.type, _G.table.insert, _G.table.remove, _G.table.sort, _G.string.format, _G.tostring, _G.tonumber, _G.string.find, _G.string.sub
-local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random, sqrt = _G.math.ceil, _G.math.floor, _G.math.pi, _G.math.tan, _G.math.atan, _G.math.atan2, _G.math.abs, _G.math.cos, _G.math.sin, _G.math.acos, _G.math.max, _G.math.random, _G.math.sqrt
+
+local print, ipairs, pairs, string, table, next, type, tinsert, tremove, tsort, format, tostring, tonumber, strfind, strsub
+	= _G.print, _G.ipairs, _G.pairs, _G.string, _G.table, _G.next, _G.type, _G.table.insert, _G.table.remove, _G.table.sort, _G.string.format, _G.tostring, _G.tonumber, _G.string.find, _G.string.sub
+local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
+	= _G.math.ceil, _G.math.floor, _G.math.pi, _G.math.tan, _G.math.atan, _G.math.atan2, _G.math.abs, _G.math.cos, _G.math.sin, _G.math.acos, _G.math.max, _G.math.random
+
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
+
 BotEcho('loading balfagore_main...')
  
 ---------------------------------
@@ -49,14 +43,6 @@ behaviorLib.StartingItems = {"Item_LoggersHatchet", "Item_GuardianRing", "2 Item
 behaviorLib.LaneItems = {"Item_ManaRegen3", "Item_Marchers", "Item_MysticVestments", "Item_EnhancedMarchers"}
 behaviorLib.MidItems = {"Item_Energizer", "Item_Pierce 3", "Item_SolsBulwark", "Item_DaemonicBreastplate"}
 behaviorLib.LateItems = {"Item_BehemothsHeart", 'Item_Damage9'}
- 
--- Skillbuild. 0 is Regurgitate, 1 is Demonic Pathogen, 2 is Corpse Conversion, 3 is Hell on Newerth, 4 is Attributes
-object.tSkills = {
-		2, 0, 2, 0, 2, 0,   	-- 1-6
-		2, 0, 3, 4, 3,  		-- 7-11
-		4, 4, 4, 4, 3,  		-- 12-16
-		4, 4, 4, 4, 4, 1, 1, 1, 1,  	--17-25
-}
  
 -- Bonus agression points if a skill / item is available for use
 object.nHellUp = 5
@@ -113,23 +99,22 @@ object.trapCircleRadius = {550, 450, 350}
 ------------------------------
 --  		Skills  		--
 ------------------------------
-function object:SkillBuild()
-		local unitSelf = self.core.unitSelf
-		if  skills.abilRegurgitate == nil then
-				skills.abilRegurgitate = unitSelf:GetAbility(0)--Barf
-				skills.abilDemonicPathogen = unitSelf:GetAbility(1)--Useless silence
-				skills.abilSpawnMinions = unitSelf:GetAbility(2)--Corpse pickup / Minions
-				skills.abilHellOnNewerth = unitSelf:GetAbility(3)--Ultimate
-				skills.abilAttributeBoost = unitSelf:GetAbility(4)--Stats
-		end
-		if unitSelf:GetAbilityPointsAvailable() <= 0 then
-				return
-		end
-		local nlev = unitSelf:GetLevel()
-		local nlevpts = unitSelf:GetAbilityPointsAvailable()
-		for i = nlev, nlev + nlevpts do
-				unitSelf:GetAbility( object.tSkills[i] ):LevelUp()
-		end
+-- Skillbuild. 0 is Regurgitate, 1 is Demonic Pathogen, 2 is Corpse Conversion, 3 is Hell on Newerth, 4 is Attributes
+object.tSkills = {
+	2, 0, 2, 0, 2, 0,   	-- 1-6
+	2, 0, 3, 4, 3,  		-- 7-11
+	4, 4, 4, 4, 3,  		-- 12-16
+	4, 4, 4, 4, 4, 1, 1, 1, 1,  	--17-25
+}
+
+function object:SkillBuildAssignSkills()
+	local unitSelf = self.core.unitSelf
+	if not skills.abilRegurgitate then
+		skills.abilRegurgitate     = unitSelf:GetAbility(0)--Barf
+		skills.abilDemonicPathogen = unitSelf:GetAbility(1)--Useless silence
+		skills.abilSpawnMinions    = unitSelf:GetAbility(2)--Corpse pickup / Minions
+		skills.abilHellOnNewerth   = unitSelf:GetAbility(3)--Ultimate
+	end
 end
  
 ------------------------------------------

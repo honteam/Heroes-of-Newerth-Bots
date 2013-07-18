@@ -4,45 +4,7 @@
 local _G = getfenv(0)
 local object = _G.object
 
-object.myName = object:GetName()
-
-object.bRunLogic 		= true
-object.bRunBehaviors	= true
-object.bUpdates 		= true
-object.bUseShop 		= true
-
-object.bRunCommands 	= true
-object.bMoveCommands 	= true
-object.bAttackCommands 	= true
-object.bAbilityCommands = true
-object.bOtherCommands 	= true
-
-object.bReportBehavior = false
-object.bDebugUtility = false
-object.bDebugExecute = false
-
---[[
-if object.myName == "Bot6" then
-	object.bDebugUtility = true
-end
---]]
-
-
-object.logger = {}
-object.logger.bWriteLog = false
-object.logger.bVerboseLog = false
-
-object.core 		= {}
-object.eventsLib 	= {}
-object.metadata 	= {}
-object.behaviorLib 	= {}
-object.skills 		= {}
-
-runfile "bots/core.lua"
-runfile "bots/botbraincore.lua"
-runfile "bots/eventsLib.lua"
-runfile "bots/metadata.lua"
-runfile "bots/behaviorLib.lua"
+runfile "bots/templates/herobot.lua"
 
 local core, eventsLib, behaviorLib, metadata, skills = object.core, object.eventsLib, object.behaviorLib, object.metadata, object.skills
 
@@ -63,35 +25,22 @@ object.heroName = 'Hero_Shaman'
 --------------------------------
 -- Skills
 --------------------------------
-function object:SkillBuild()
+--speicific level 1 skill
+--max in this order {healing wave, entangle, storm cloud, unbreakable, stats}
+object.tSkills = {
+	0, 2, 2, 0, 2,
+	0, 2, 0, 3, 1,
+	3, 1, 1, 1, 4,
+	3
+}
+
+function object:SkillBuildAssignSkills()
 	local unitSelf = self.core.unitSelf
-
-	if skills.abilEntangle == nil then
-		skills.abilEntangle			= unitSelf:GetAbility(0)
-		skills.abilUnbreakable		= unitSelf:GetAbility(1)
-		skills.abilHealingWave		= unitSelf:GetAbility(2)
-		skills.abilStormCloud		= unitSelf:GetAbility(3)
-		skills.abilAttributeBoost	= unitSelf:GetAbility(4)
-	end
-
-	if unitSelf:GetAbilityPointsAvailable() <= 0 then
-		return
-	end
-
-	--speicific level 1 skill
-	if skills.abilEntangle:GetLevel() < 1 then
-		skills.abilEntangle:LevelUp()
-	--max in this order {healing wave, entangle, storm cloud, unbreakable, stats}
-	elseif skills.abilHealingWave:CanLevelUp() then
-		skills.abilHealingWave:LevelUp()
-	elseif skills.abilEntangle:CanLevelUp() then
-		skills.abilEntangle:LevelUp()
-	elseif skills.abilStormCloud:CanLevelUp() then
-		skills.abilStormCloud:LevelUp()
-	elseif skills.abilUnbreakable:CanLevelUp() then
-		skills.abilUnbreakable:LevelUp()
-	else
-		skills.abilAttributeBoost:LevelUp()
+	if not skills.abilEntangle then
+		skills.abilEntangle    = unitSelf:GetAbility(0)
+		skills.abilUnbreakable = unitSelf:GetAbility(1)
+		skills.abilHealingWave = unitSelf:GetAbility(2)
+		skills.abilStormCloud  = unitSelf:GetAbility(3)
 	end
 end
 
