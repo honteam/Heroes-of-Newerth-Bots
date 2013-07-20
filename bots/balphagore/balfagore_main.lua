@@ -622,17 +622,6 @@ local function advancedThinkExecute(botBrain)
 						bActionTaken = core.OrderMoveToPos(botBrain, unitSelf, vecWellPos)
 				end
 		end
-		--remove invalid hatchet item.
-		if core.itemHatchet ~= nil and not core.itemHatchet:IsValid() then
-				core.itemHatchet = nil
-		end
-		--hatchet
-		if not bActionTaken and core.unitCreepTarget and core.itemHatchet and core.itemHatchet:CanActivate() and --can activate
-		  Vector3.Distance2DSq(unitSelf:GetPosition(), core.unitCreepTarget:GetPosition()) <= 600 * 600 and --in range of hatchet.
-		  unitSelf:GetBaseDamage() * (1-core.unitCreepTarget:GetPhysicalResistance()) > core.unitCreepTarget:GetHealth() and --low enough hp, killable
-		  string.find(core.unitCreepTarget:GetTypeName(), "Creep") then-- viable creep (this makes it ignore minions etc, some of which aren't hatchetable.)
-				botBrain:OrderItemEntity(core.itemHatchet.object or core.itemHatchet, core.unitCreepTarget.object or core.unitCreepTarget, false)--use hatchet.
-		end
 	   
 		return bActionTaken
 end
