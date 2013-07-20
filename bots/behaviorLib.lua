@@ -1146,36 +1146,6 @@ end
 function behaviorLib.AttackCreepsExecute(botBrain)
 	local bActionTaken = false
 	local unitSelf = core.unitSelf
-	local unitTarget = core.unitCreepTarget
-
-
-	-- The bot has no target/can not see the target
-	if not currentTarget or not core.CanSeeUnit(botBrain, currentTarget) then
-		return bActionTaken
-	end
-	local vecTargetPos = currentTarget:GetPosition()
-	local nDistSq = Vector3.Distance2DSq(unitSelf:GetPosition(), vecTargetPos)
-	local nAttackRangeSq = core.GetAbsoluteAttackRangeToUnit(unitSelf, currentTarget, true)
-
-	if nDistSq < nAttackRangeSq and unitSelf:IsAttackReady() then
-		--only attack when in nRange, so not to aggro towers/creeps until necessary, and move forward when attack is on cd
-		core.OrderAttackClamp(botBrain, unitSelf, currentTarget)
-	else
-		--BotEcho("MOVIN OUT")
-		local vecDesiredPos = core.AdjustMovementForTowerLogic(vecTargetPos)
-		core.OrderMoveToPosClamp(botBrain, unitSelf, vecDesiredPos, false)
-	end
-
--- Use Loggers Hatchet
-	if not bActionTaken then
-		local itemHatchet = core.itemHatchet
-		if itemHatchet and itemHatchet:CanActivate() and currentTarget:GetTeam() ~= unitSelf:GetTeam() and string.find(currentTarget:GetTypeName(), "Creep") and core.GetAttackSequenceProgress(unitSelf) ~= "windup" and nDistSq < 600 * 600 then
-			bActionTaken = botBrain:OrderItemEntity(itemHatchet.object or itemHatchet, currentTarget.object or currentTarget, false)
-		end
-	end
-end
-function AttackCreepsExecuteOverride(botBrain)
-	local unitSelf = core.unitSelf
 	local unitCreepTarget = core.unitCreepTarget
 
 	if unitCreepTarget and core.CanSeeUnit(botBrain, unitCreepTarget) then      
@@ -1183,22 +1153,23 @@ function AttackCreepsExecuteOverride(botBrain)
 		local vecSelfPos = unitSelf:GetPosition()
 		local vecTargetPos = unitCreepTarget:GetPosition()
 		local nDistSq = Vector3.Distance2DSq(vecSelfPos, vecTargetPos)
-		local nAttackRangeSq = core.GetAbsoluteAttackRangeToUnit(unitSelf, currentTarget, true)
+		local nAttackRangeSq = core.GetAbsoluteAttackRangeToUnit(unitSelf, unitCreepTarget, true)
 	
 		--Only attack if, by the time our attack reaches the target
 		-- the damage done by other sources brings the target's health
 		-- below our minimum damage, and we are in range and can attack right now
 		if nDistSq < nAttackRangeSq and unitSelf:IsAttackReady() then
-			core.OrderAttackClamp(botBrain, unitSelf, unitCreepTarget)
+			bActionTaken = core.OrderAttackClamp(botBrain, unitSelf, unitCreepTarget)
 
 		else
-			if (unitSelf:GetAttackType() == "melee") then
-				--If melee, move a little closer, to improve accuracy. We want to hover ~250 units away from the creep.
-				if (nDistSq > 250) then
+			if unitSelf:GetAttackType() == "melee" then
+				--If melee, move a little closer, to improve accuracy. We want to hover ~250 (250 * 250 = 62500) units away from the creep.
+				if nDistSq > 62500 then
 					local vecDesiredPos = core.AdjustMovementForTowerLogic(vecTargetPos)
 					core.OrderMoveToPosClamp(botBrain, unitSelf, vecDesiredPos, false)
 				end
-			else--If ranged, get within 50% of attack range if not already
+			else
+				--If ranged, get within 70% of attack range if not already
 				-- This will decrease travel time for the projectile
 				if (nDistSq > nAttackRangeSq * 0.5) then 
 					local vecDesiredPos = core.AdjustMovementForTowerLogic(vecTargetPos)
@@ -1210,12 +1181,12 @@ function AttackCreepsExecuteOverride(botBrain)
 			end
 		end
 	end
-	
-	-- Move towards creeps if out of range
-	if not bAtionTaken then
-		local vecDesiredPos = core.AdjustMovementForTowerLogic(vecTargetPos)
-		if vecDesiredPos then
-			bActionTaken = core.OrderMoveToPosClamp(botBrain, unitSelf, vecDesiredPos, false)
+
+	-- Use Loggers Hatchet
+	if not bActionTaken then
+		local itemHatchet = core.itemHatchet
+		if itemHatchet and itemHatchet:CanActivate() and currentTarget:GetTeam() ~= unitSelf:GetTeam() and core.IsLaneCreep(unitCreepTarget) and core.GetAttackSequenceProgress(unitSelf) ~= "windup" and nDistSq < 600 * 600 then
+			bActionTaken = botBrain:OrderItemEntity(itemHatchet.object or itemHatchet, unitCreepTarget.object or unitCreepTarget, false)
 		end
 	end
 	
