@@ -8,9 +8,13 @@
 --  |_| \_\ |_| |_| |_| |_| |_,     |______,  \____,     |__|	 -----
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
--- Rhapbot v1.0
+-- Rhapbot v1.1 
 
 -- By community member fane_maciuca
+
+--[[ Change Log: 
+(v1.1)	Changed the call to GroupCenter to use the faster, engine-side call
+--]]
 
 -- Note from fane_maciuca:
 -- I have a new respect for ASCII artists (a damn pain do the header here)
@@ -409,7 +413,7 @@ function AbilityPush(botBrain)
 
 	local vecCreepCenter, nCreeps = core.GetGroupCenter(core.localUnits["EnemyCreeps"])
 	
-	if vecCreepCenter == nil or nCreeps < nMinimumCreeps then 
+	if vecCreepCenter == nil or nCreeps == nil or nCreeps < nMinimumCreeps then 
 		return false
 	end
 	
@@ -462,30 +466,31 @@ behaviorLib.nHealTimeToLiveUtilityMul = 0.5
 -------------------------------------Also pops Shrunken, if available
 function ProtectiveMelodyExecute(botBrain)
 	local unitSelf = core.unitSelf
-	local tTargets = core.localUnits["AllyHeroes"]
+	local tTargets = core.CopyTable(core.localUnits["AllyHeroes"])
 	local nMyID    = unitSelf:GetUniqueID()
+	tTargets[nMyID] = nil
 	
-	for key, hero in pairs(tTargets) do
-		if hero:GetUniqueID() ~= nMyID then			
-			local vecAlliesCenter = core.GetGroupCenter(tTargets)
-			local vecMyPosition = unitSelf:GetPosition()
-			local abilUlt = skills.abilProtectiveMelody
-		
-			local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecAlliesCenter)
-						
-			local nRadius = abilUlt:GetTargetRadius()
-			local nHalfRadiusSq = nRadius * nRadius * 0.25
-			if nTargetDistanceSq <= nHalfRadiusSq then
-				local itemShrunkenHead = core.itemShrunkenHead
-				if itemShrunkenHead and itemShrunkenHead:CanActivate() then		--see if Shrunken can pop, then pop it
-					core.OrderItem(itemShrunkenHead)
-					return
-				end
-				core.OrderAbility(botBrain, abilUlt)		
-			else 
-				core.OrderMoveToPosClamp(botBrain, unitSelf, vecAlliesCenter)
+	local vecAlliesCenter = core.GetGroupCenter(tTargets)
+	local vecMyPosition = unitSelf:GetPosition()
+	local abilUlt = skills.abilProtectiveMelody
+
+	if vecAlliesCenter ~= nil then
+		local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecAlliesCenter)
+					
+		local nRadius = abilUlt:GetTargetRadius()
+		local nHalfRadiusSq = nRadius * nRadius * 0.25
+		if nTargetDistanceSq <= nHalfRadiusSq then
+			local itemShrunkenHead = core.itemShrunkenHead
+			if itemShrunkenHead and itemShrunkenHead:CanActivate() then		--see if Shrunken can pop, then pop it
+				core.OrderItem(itemShrunkenHead)
+				return
 			end
+			core.OrderAbility(botBrain, abilUlt)		
+		else 
+			core.OrderMoveToPosClamp(botBrain, unitSelf, vecAlliesCenter)
 		end
+	else
+		return false
 	end
 end
 
