@@ -22,7 +22,7 @@ local nSqrtTwo = math.sqrt(2)
 core.unitSelf = nil
 core.teamBotBrain = nil
 
-core.nextOrderTime = 0
+core.tNextOrderTimes = {}
 core.timeBetweenOrders = 250
 
 core.nHarassBonus = 0
@@ -819,6 +819,16 @@ function core.DecayBonus(botBrain)
 end
 
 ---------------------  Wrappers ---------------------
+function core.GetNextOrderTime(unit)
+	local nUID = unit:GetUniqueID()
+	return core.tNextOrderTimes[nUID] or 0
+end
+
+function core.SetNextOrderTime(unit, nTime)
+	local nUID = unit:GetUniqueID()
+	core.tNextOrderTimes[nUID] = nTime
+end
+
 function core.OrderAttack(botBrain, unit, unitTarget, bQueueCommand)
 	if object.bRunCommands == false or object.bAttackCommands == false then
 		return false
@@ -847,8 +857,8 @@ function core.OrderAttackClamp(botBrain, unit, unitTarget, bQueueCommand)
 	end
 	
 	local curTimeMS = HoN.GetGameTime()
-	--stagger updates so we don't have permajitter	
-	if curTimeMS < core.nextOrderTime then
+	--stagger updates so we don't have permajitter
+	if curTimeMS < core.GetNextOrderTime(unit) then
 		return true
 	end
 	
@@ -858,8 +868,8 @@ function core.OrderAttackClamp(botBrain, unit, unitTarget, bQueueCommand)
 	end
 	
 	botBrain:OrderEntity(unit.object or unit, "Attack", unitTarget.object or unitTarget, queue)
-	
-	core.nextOrderTime = curTimeMS + core.timeBetweenOrders
+
+	core.SetNextOrderTime(unit, curTimeMS + core.timeBetweenOrders)
 	return true
 end
 
@@ -867,16 +877,16 @@ function core.OrderMoveToUnitClamp(botBrain, unit, unitTarget, bInterruptAttacks
 	if object.bRunCommands == false or object.bMoveCommands == false then
 		return false
 	end
-	
-	--stagger updates so we don't have permajitter	
+
+	--stagger updates so we don't have permajitter
 	local curTimeMS = HoN.GetGameTime()
-	if curTimeMS < core.nextOrderTime then
+	if curTimeMS < core.GetNextOrderTime(unit) then
 		return true
 	end
 
 	core.OrderMoveToUnit(botBrain, unit, unitTarget, bInterruptAttacks, bQueueCommand)
-	
-	core.nextOrderTime = curTimeMS + core.timeBetweenOrders
+
+	core.SetNextOrderTime(unit, curTimeMS + core.timeBetweenOrders)
 	return true
 end
 
@@ -1002,14 +1012,14 @@ function core.OrderHoldClamp(botBrain, unit, bInterruptAttacks, bQueueCommand)
 	end
 	
 	local curTimeMS = HoN.GetGameTime()
-	--stagger updates so we don't have permajitter	
-	if curTimeMS < core.nextOrderTime then
+	--stagger updates so we don't have permajitter
+	if curTimeMS < core.GetNextOrderTime(unit) then
 		return true
 	end
 	
 	core.OrderHold(botBrain, unit, bInterruptAttacks, bQueueCommand)
-	
-	core.nextOrderTime = curTimeMS + core.timeBetweenOrders
+
+	core.SetNextOrderTime(unit, curTimeMS + core.timeBetweenOrders)
 	return true
 end
 
@@ -1077,15 +1087,15 @@ function core.OrderMoveToPosClamp(botBrain, unit, position, bInterruptAttacks, b
 	end
 
 	local curTimeMS = HoN.GetGameTime()
-	if curTimeMS < core.nextOrderTime then
+	if curTimeMS < core.GetNextOrderTime(unit) then
 		return true
 	end
 	
 	if Vector3.Distance2DSq(unit:GetPosition(), position) > core.distSqTolerance then
 		core.OrderMoveToPos(botBrain, unit, position, bInterruptAttacks, bQueueCommand)
 	end
-	
-	core.nextOrderTime = curTimeMS + core.timeBetweenOrders
+
+	core.SetNextOrderTime(unit, curTimeMS + core.timeBetweenOrders)
 	return true
 end
 
@@ -1095,13 +1105,13 @@ function core.OrderMoveToPosAndHoldClamp(botBrain, unit, position, bInterruptAtt
 	end
 	
 	local curTimeMS = HoN.GetGameTime()
-	if curTimeMS < core.nextOrderTime then
+	if curTimeMS < core.GetNextOrderTime(unit) then
 		return true
 	end
 	
 	core.OrderMoveToPosAndHold(botBrain, unit, position, bInterruptAttacks, bQueueCommand)
-	
-	core.nextOrderTime = curTimeMS + core.timeBetweenOrders
+
+	core.SetNextOrderTime(unit, curTimeMS + core.timeBetweenOrders)
 	return true
 end
 
@@ -1155,13 +1165,13 @@ function core.OrderAttackPositionClamp(botBrain, unit, position, bInterruptAttac
 	end
 	
 	local curTimeMS = HoN.GetGameTime()
-	if curTimeMS < core.nextOrderTime then
+	if curTimeMS < core.GetNextOrderTime(unit) then
 		return true
 	end
 	
 	core.OrderAttackPosition(botBrain, unit, position, bInterruptAttacks, bQueueCommand)
-	
-	core.nextOrderTime = curTimeMS + core.timeBetweenOrders
+
+	core.SetNextOrderTime(unit, curTimeMS + core.timeBetweenOrders)
 	return true
 end
 
@@ -1245,8 +1255,8 @@ function core.OrderItemEntityClamp(botBrain, unit, item, entity, bInterruptAttac
 	end
 
 	local curTimeMS = HoN.GetGameTime()
-	--stagger updates so we don't have permajitter	
-	if curTimeMS < core.nextOrderTime then
+	--stagger updates so we don't have permajitter
+	if curTimeMS < core.GetNextOrderTime(unit) then
 		return
 	end
 	
@@ -1256,8 +1266,8 @@ function core.OrderItemEntityClamp(botBrain, unit, item, entity, bInterruptAttac
 	end
 	
 	botBrain:OrderItemEntity(item.object or item, entity.object or entity, queue)
-	
-	core.nextOrderTime = curTimeMS + core.timeBetweenOrders
+
+	core.SetNextOrderTime(unit, curTimeMS + core.timeBetweenOrders)
 	return true
 end
 
@@ -1282,8 +1292,8 @@ function core.OrderItemClamp(botBrain, unit, item, bInterruptAttacks, bQueueComm
 	end
 
 	local curTimeMS = HoN.GetGameTime()
-	--stagger updates so we don't have permajitter	
-	if curTimeMS < core.nextOrderTime then
+	--stagger updates so we don't have permajitter
+	if curTimeMS < core.GetNextOrderTime(unit) then
 		return true
 	end
 	
@@ -1293,8 +1303,8 @@ function core.OrderItemClamp(botBrain, unit, item, bInterruptAttacks, bQueueComm
 	end
 	
 	botBrain:OrderItem(item.object or item, queue)
-	
-	core.nextOrderTime = curTimeMS + core.timeBetweenOrders
+
+	core.SetNextOrderTime(unit, curTimeMS + core.timeBetweenOrders)
 	return true
 end
 
