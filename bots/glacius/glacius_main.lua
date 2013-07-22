@@ -4,39 +4,7 @@
 local _G = getfenv(0)
 local object = _G.object
 
-object.myName = object:GetName()
-
-object.bRunLogic 		= true
-object.bRunBehaviors	= true
-object.bUpdates 		= true
-object.bUseShop 		= true
-
-object.bRunCommands 	= true
-object.bMoveCommands 	= true
-object.bAttackCommands 	= true
-object.bAbilityCommands = true
-object.bOtherCommands 	= true
-
-object.bReportBehavior = false
-object.bDebugUtility = false
-object.bDebugExecute = false
-
-
-object.logger = {}
-object.logger.bWriteLog = false
-object.logger.bVerboseLog = false
-
-object.core 		= {}
-object.eventsLib 	= {}
-object.metadata 	= {}
-object.behaviorLib 	= {}
-object.skills 		= {}
-
-runfile "bots/core.lua"
-runfile "bots/botbraincore.lua"
-runfile "bots/eventsLib.lua"
-runfile "bots/metadata.lua"
-runfile "bots/behaviorLib.lua"
+runfile "bots/templates/herobot.lua"
 
 local core, eventsLib, behaviorLib, metadata, skills = object.core, object.eventsLib, object.behaviorLib, object.metadata, object.skills
 
@@ -57,38 +25,23 @@ object.heroName = 'Hero_Frosty'
 --------------------------------
 -- Skills
 --------------------------------
-function object:SkillBuild()
-local unitSelf = self.core.unitSelf
+--speicific level 1 and two skills
+--max in this order {glacial downpour, chilling presence, ice imprisonment, tundra blast, stats}
+object.tSkills = {
+	0, 1, 2, 2, 2,
+	3, 2, 1, 1, 1,
+	3, 0, 0, 0, 4,
+	3
+}
 
-	if skills.abilTundraBlast == nil then
-		skills.abilTundraBlast		= unitSelf:GetAbility(0)
-		skills.abilIceImprisonment	= unitSelf:GetAbility(1)
-		skills.abilChillingPresence	= unitSelf:GetAbility(2)
-		skills.abilGlacialDownpour	= unitSelf:GetAbility(3)
-		skills.abilAttributeBoost	= unitSelf:GetAbility(4)
+function object:SkillBuildAssignSkills()
+	local unitSelf = self.core.unitSelf
+	if not skills.abilTundraBlast then
+		skills.abilTundraBlast      = unitSelf:GetAbility(0)
+		skills.abilIceImprisonment  = unitSelf:GetAbility(1)
+		skills.abilChillingPresence = unitSelf:GetAbility(2)
+		skills.abilGlacialDownpour  = unitSelf:GetAbility(3)
 	end
-
-	if unitSelf:GetAbilityPointsAvailable() <= 0 then
-		return
-	end
-	
-	--speicific level 1 and two skills
-	if skills.abilTundraBlast:GetLevel() < 1 then
-		skills.abilTundraBlast:LevelUp()
-	elseif skills.abilIceImprisonment:GetLevel() < 1 then
-		skills.abilIceImprisonment:LevelUp()
-	--max in this order {glacial downpour, chilling presence, ice imprisonment, tundra blast, stats}
-	elseif skills.abilGlacialDownpour:CanLevelUp() then
-		skills.abilGlacialDownpour:LevelUp()
-	elseif skills.abilChillingPresence:CanLevelUp() then
-		skills.abilChillingPresence:LevelUp()
-	elseif skills.abilIceImprisonment:CanLevelUp() then
-		skills.abilIceImprisonment:LevelUp()
-	elseif skills.abilTundraBlast:CanLevelUp() then
-		skills.abilTundraBlast:LevelUp()
-	else
-		skills.abilAttributeBoost:LevelUp()
-	end	
 end
 
 ---------------------------------------------------

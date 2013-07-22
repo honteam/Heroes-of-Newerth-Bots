@@ -15,39 +15,9 @@
  
 local _G = getfenv(0)
 local object = _G.object
- 
-object.myName = object:GetName()
- 
-object.bRunLogic = true
-object.bRunBehaviors = true
-object.bUpdates = true
-object.bUseShop = true
- 
-object.bRunCommands = true
-object.bMoveCommands = true
-object.bAttackCommands = true
-object.bAbilityCommands = true
-object.bOtherCommands = true
- 
-object.bReportBehavior = false
-object.bDebugUtility = false
- 
-object.logger = {}
-object.logger.bWriteLog = false
-object.logger.bVerboseLog = false
- 
-object.core = {}
-object.eventsLib = {}
-object.metadata = {}
-object.behaviorLib = {}
-object.skills = {}
- 
-runfile "bots/core.lua"
-runfile "bots/botbraincore.lua"
-runfile "bots/eventsLib.lua"
-runfile "bots/metadata.lua"
-runfile "bots/behaviorLib.lua"
- 
+
+runfile "bots/templates/herobot.lua"
+
 local core, eventsLib, behaviorLib, metadata, skills = object.core, object.eventsLib, object.behaviorLib, object.metadata, object.skills
  
 local print, ipairs, pairs, string, table, next, type, tinsert, tremove, tsort, format, tostring, tonumber, strfind, strsub
@@ -72,15 +42,6 @@ behaviorLib.StartingItems  = {"Item_PretendersCrown", "Item_MarkOfTheNovice", "I
 behaviorLib.LaneItems  = {"Item_Marchers", "Item_GraveLocket", "Item_Steamboots", "2 Item_Scarab", "Item_Silence"}
 behaviorLib.MidItems  = {"Item_Protect", "Item_GrimoireOfPower"}
 behaviorLib.LateItems  = {"Item_Intelligence7", "Item_Morph"}
- 
--- Skillbuild table, 0=q, 1=w, 2=e, 3=r, 4=attri
-object.tSkills = {
-        1, 2, 2, 0, 2,
-        3, 2, 0, 0, 0,
-        3, 1, 1, 1, 4,
-        3, 4, 4, 4, 4,
-        4, 4, 4, 4, 4
-}
  
 -- Bonus agression points if a skill/item is available for use
  
@@ -112,32 +73,27 @@ object.nSheepstickThreshold = 29
  
 behaviorLib.nCreepPushbackMul = 0.55
 behaviorLib.nPositionHeroInfluenceMul = 3.75
- 
+
 ------------------------------
 --          Skills          --
 ------------------------------
- 
-function object:SkillBuild()
-        local unitSelf = self.core.unitSelf
-        if  skills.abilHaunt == nil then
-                skills.abilHaunt = unitSelf:GetAbility(0)
-                skills.abilBlink = unitSelf:GetAbility(1)
-                skills.abilScream = unitSelf:GetAbility(2)
-                skills.abilBlast = unitSelf:GetAbility(3)
-                skills.abilAttributeBoost = unitSelf:GetAbility(4)
-        end
- 
-        local nPoints = unitSelf:GetAbilityPointsAvailable()
-        if nPoints <= 0 then
-                return
-        end
- 
-        local nLevel = unitSelf:GetLevel()
-        for i = nLevel, (nLevel + nPoints) do
-                unitSelf:GetAbility( self.tSkills[i] ):LevelUp()
-        end
+object.tSkills = {
+	1, 2, 2, 0, 2,
+	3, 2, 0, 0, 0,
+	3, 1, 1, 1, 4,
+	3
+}
+
+function object:SkillBuildAssignSkills()
+	local unitSelf = self.core.unitSelf
+	if not skills.abilHaunt then
+		skills.abilHaunt  = unitSelf:GetAbility(0)
+		skills.abilBlink  = unitSelf:GetAbility(1)
+		skills.abilScream = unitSelf:GetAbility(2)
+		skills.abilBlast  = unitSelf:GetAbility(3)
+	end
 end
- 
+
 ------------------------------------------
 --          FindItems Override          --
 ------------------------------------------

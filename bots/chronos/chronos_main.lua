@@ -4,38 +4,7 @@
 local _G = getfenv(0)
 local object = _G.object
 
-object.myName = object:GetName()
-
-object.bRunLogic 		= true
-object.bRunBehaviors	= true
-object.bUpdates 		= true
-object.bUseShop 		= true
-
-object.bRunCommands 	= true
-object.bMoveCommands 	= true
-object.bAttackCommands 	= true
-object.bAbilityCommands = true
-object.bOtherCommands 	= true
-
-object.bReportBehavior = false
-object.bDebugUtility = false
-object.bDebugExecute = false
-
-object.logger = {}
-object.logger.bWriteLog = false
-object.logger.bVerboseLog = false
-
-object.core 		= {}
-object.eventsLib 	= {}
-object.metadata 	= {}
-object.behaviorLib 	= {}
-object.skills 		= {}
-
-runfile "bots/core.lua"
-runfile "bots/botbraincore.lua"
-runfile "bots/eventsLib.lua"
-runfile "bots/metadata.lua"
-runfile "bots/behaviorLib.lua"
+runfile "bots/templates/herobot.lua"
 
 local core, eventsLib, behaviorLib, metadata, skills = object.core, object.eventsLib, object.behaviorLib, object.metadata, object.skills
 
@@ -54,33 +23,20 @@ object.heroName = 'Hero_Chronos'
 --------------------------------
 -- Skills
 --------------------------------
-function object:SkillBuild()
-	local unitSelf = self.core.unitSelf	
-	
-	if  skills.abilTimeLeap == nil then
-		skills.abilTimeLeap			= unitSelf:GetAbility(0)
-		skills.abilRewind			= unitSelf:GetAbility(1)
-		skills.abilCurseOfAges		= unitSelf:GetAbility(2)
-		skills.abilChronosphere		= unitSelf:GetAbility(3)
-		skills.abilAttributeBoost	= unitSelf:GetAbility(4)
-	end
-	
-	if unitSelf:GetAbilityPointsAvailable() <= 0 then
-		return
-	end
-	
-	if skills.abilChronosphere:CanLevelUp() then
-		skills.abilChronosphere:LevelUp()
-	elseif skills.abilTimeLeap:CanLevelUp() then
-		skills.abilTimeLeap:LevelUp()
-	elseif skills.abilRewind:GetLevel() < 1 then
-		skills.abilRewind:LevelUp()
-	elseif skills.abilCurseOfAges:CanLevelUp() then
-		skills.abilCurseOfAges:LevelUp()
-	elseif skills.abilRewind:CanLevelUp() then
-		skills.abilRewind:LevelUp()
-	else
-		skills.abilAttributeBoost:LevelUp()
+object.tSkills = {
+	0, 1, 0, 2, 0,
+	3, 0, 2, 2, 2,
+	3, 1, 1, 1, 4,
+	3
+}
+
+function object:SkillBuildAssignSkills()
+	local unitSelf = self.core.unitSelf
+	if not skills.abilTimeLeap then
+		skills.abilTimeLeap     = unitSelf:GetAbility(0)
+		skills.abilRewind       = unitSelf:GetAbility(1)
+		skills.abilCurseOfAges  = unitSelf:GetAbility(2)
+		skills.abilChronosphere = unitSelf:GetAbility(3)
 	end
 end
 

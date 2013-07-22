@@ -4,38 +4,7 @@
 local _G = getfenv(0)
 local object = _G.object
 
-object.myName = object:GetName()
-
-object.bRunLogic 		= true
-object.bRunBehaviors	= true
-object.bUpdates 		= true
-object.bUseShop 		= true
-
-object.bRunCommands 	= true
-object.bMoveCommands 	= true
-object.bAttackCommands 	= true
-object.bAbilityCommands = true
-object.bOtherCommands 	= true
-
-object.bReportBehavior = false
-object.bDebugUtility = false
-object.bDebugExecute = false
-
-object.logger = {}
-object.logger.bWriteLog = false
-object.logger.bVerboseLog = false
-
-object.core 		= {}
-object.eventsLib 	= {}
-object.metadata 	= {}
-object.behaviorLib 	= {}
-object.skills 		= {}
-
-runfile "bots/core.lua"
-runfile "bots/botbraincore.lua"
-runfile "bots/eventsLib.lua"
-runfile "bots/metadata.lua"
-runfile "bots/behaviorLib.lua"
+runfile "bots/templates/herobot.lua"
 
 local core, eventsLib, behaviorLib, metadata, skills = object.core, object.eventsLib, object.behaviorLib, object.metadata, object.skills
 
@@ -121,34 +90,21 @@ core.FindItems = funcFindItemsOverride
 --------------------------------
 -- Skills
 --------------------------------
-function object:SkillBuild()
-	local unitSelf = self.core.unitSelf
+--Ult, HammerThrow, 2 in stats, Galvanzie, Mighty Swing, Stats
+object.tSkills = {
+	0, 4, 0, 2, 0,
+	3, 0, 2, 2, 2,
+	3, 1, 1, 1, 1,
+	3
+}
 
-	if  skills.abilHammerThrow == nil then
-		skills.abilHammerThrow = unitSelf:GetAbility(0)
-		skills.abilMightySwing = unitSelf:GetAbility(1)
-		skills.abilGalvanize = unitSelf:GetAbility(2)
+function object:SkillBuildAssignSkills()
+	local unitSelf = self.core.unitSelf
+	if not skills.abilHammerThrow then
+		skills.abilHammerThrow   = unitSelf:GetAbility(0)
+		skills.abilMightySwing   = unitSelf:GetAbility(1)
+		skills.abilGalvanize     = unitSelf:GetAbility(2)
 		skills.abilBruteStrength = unitSelf:GetAbility(3)
-		skills.abilAttributeBoost = unitSelf:GetAbility(4)
-	end
-	
-	if unitSelf:GetAbilityPointsAvailable() <= 0 then
-		return
-	end
-	
-	--Ult, HammerThrow, 2 in stats, Galvanzie, Mighty Swing, Stats
-	if skills.abilBruteStrength:CanLevelUp() then
-		skills.abilBruteStrength:LevelUp()
-	elseif skills.abilHammerThrow:CanLevelUp() then
-		skills.abilHammerThrow:LevelUp()
-	elseif skills.abilAttributeBoost:GetLevel() < 1 then
-		skills.abilAttributeBoost:LevelUp()
-	elseif skills.abilGalvanize:CanLevelUp() then
-		skills.abilGalvanize:LevelUp()
-	elseif skills.abilMightySwing:CanLevelUp() then
-		skills.abilMightySwing:LevelUp()
-	else
-		skills.abilAttributeBoost:LevelUp()
 	end
 end
 

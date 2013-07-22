@@ -7,38 +7,7 @@
 local _G = getfenv(0)
 local object = _G.object
 
-object.myName = object:GetName()
-
-object.bRunLogic 		= true
-object.bRunBehaviors	= true
-object.bUpdates 		= true
-object.bUseShop 		= true
-
-object.bRunCommands 	= true 
-object.bMoveCommands 	= true
-object.bAttackCommands 	= true
-object.bAbilityCommands = true
-object.bOtherCommands 	= true
-
-object.bReportBehavior = false
-object.bDebugUtility = false
-object.bDebugExecute = false
-
-object.logger = {}
-object.logger.bWriteLog = false
-object.logger.bVerboseLog = false
-
-object.core 		= {}
-object.eventsLib 	= {}
-object.metadata 	= {}
-object.behaviorLib 	= {}
-object.skills 		= {}
-
-runfile "bots/core.lua"
-runfile "bots/botbraincore.lua"
-runfile "bots/eventsLib.lua"
-runfile "bots/metadata.lua"
-runfile "bots/behaviorLib.lua"
+runfile "bots/templates/herobot.lua"
 
 local core, eventsLib, behaviorLib, metadata, skills = object.core, object.eventsLib, object.behaviorLib, object.metadata, object.skills
 
@@ -57,36 +26,22 @@ object.heroName = 'Hero_Predator'
 --------------------------------
 -- Skills
 --------------------------------
-function object:SkillBuild()
+--max leap, 1 lvl stonehide, max {ult, carnivorous, stonehide, stats}
+object.tSkills = {
+	0, 1, 0, 2, 0,
+	3, 0, 2, 2, 2,
+	3, 1, 1, 1, 4,
+	3
+}
 
+function object:SkillBuildAssignSkills()
 	local unitSelf = self.core.unitSelf
-
-	if skills.abilLeap == nil then
-		skills.abilLeap = unitSelf:GetAbility(0)
-		skills.abilStoneHide = unitSelf:GetAbility(1)
+	if not skills.abilLeap then
+		skills.abilLeap        = unitSelf:GetAbility(0)
+		skills.abilStoneHide   = unitSelf:GetAbility(1)
 		skills.abilCarnivorous = unitSelf:GetAbility(2)
-		skills.abilTerror = unitSelf:GetAbility(3)
-		skills.attributeBoost = unitSelf:GetAbility(4)
+		skills.abilTerror      = unitSelf:GetAbility(3)
 	end
-	
-	if unitSelf:GetAbilityPointsAvailable() <= 0 then
-		return
-	end
-	
-	--max leap, 1 lvl stonehide, max {ult, carnivorous, stonehide, stats}
-	if skills.abilTerror:CanLevelUp() then
-		skills.abilTerror:LevelUp()		
-	elseif skills.abilLeap:CanLevelUp() then
-		skills.abilLeap:LevelUp()
-	elseif skills.abilStoneHide:GetLevel() < 1 then
-		skills.abilStoneHide:LevelUp()
-	elseif skills.abilCarnivorous:CanLevelUp() then
-		skills.abilCarnivorous:LevelUp()	
-	elseif skills.abilStoneHide:CanLevelUp() then
-		skills.abilStoneHide:LevelUp()
-	else
-		skills.attributeBoost:LevelUp()
-	end	
 end
 
 ---------------------------------------------------

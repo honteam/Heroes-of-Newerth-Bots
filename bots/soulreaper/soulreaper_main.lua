@@ -15,37 +15,7 @@
 local _G = getfenv(0)
 local object = _G.object
 
-object.myName = object:GetName()
-
-object.bRunLogic        = true
-object.bRunBehaviors    = true
-object.bUpdates         = true
-object.bUseShop         = true
-
-object.bRunCommands     = true 
-object.bMoveCommands     = true
-object.bAttackCommands     = true
-object.bAbilityCommands = true
-object.bOtherCommands   = true
-
-object.bReportBehavior = false
-object.bDebugUtility = false
-
-object.logger = {}
-object.logger.bWriteLog = false
-object.logger.bVerboseLog = false
-
-object.core         = {}
-object.eventsLib    = {}
-object.metadata     = {}
-object.behaviorLib  = {}
-object.skills       = {}
-
-runfile "bots/core.lua"
-runfile "bots/botbraincore.lua"
-runfile "bots/eventslib.lua"
-runfile "bots/metadata.lua"
-runfile "bots/behaviorlib.lua"
+runfile "bots/templates/herobot.lua"
 
 local core, eventsLib, behaviorLib, metadata, skills = object.core, object.eventsLib, object.behaviorLib, object.metadata, object.skills
 
@@ -117,34 +87,18 @@ object.onthink 	= object.onthinkOverride
 ------------------------------
 object.tSkills ={
 	0, 2, 0, 2, 0,
-	3, 0, 2, 2, 1, 
+	3, 0, 2, 2, 1,
 	3, 1, 1, 1, 4,
 	3
 }
-function object:SkillBuild()
-	core.VerboseLog("SkillBuild()")
 
+function object:SkillBuildAssignSkills()
 	local unitSelf = self.core.unitSelf
-	if  skills.abilJudgement == nil then
-		skills.abilJudgement = unitSelf:GetAbility(0)
+	if not skills.abilJudgement then
+		skills.abilJudgement         = unitSelf:GetAbility(0)
 		skills.abilWitheringPresence = unitSelf:GetAbility(1)
-		skills.abilInhumanNature = unitSelf:GetAbility(2)
-		skills.abilDemonicExecution = unitSelf:GetAbility(3)
-		skills.abilAttributeBoost = unitSelf:GetAbility(4)
-	end
-	local nPoints = unitSelf:GetAbilityPointsAvailable()
-	if nPoints <= 0 then
-		return
-	end
-	
-	local nLevel = unitSelf:GetLevel()
-	for i = nLevel, (nLevel + nPoints) do
-		local nSkill = object.tSkills[i]
-		if nSkill == nil then 
-			nSkill = 4 
-		end
-		
-		unitSelf:GetAbility(nSkill):LevelUp()
+		skills.abilInhumanNature     = unitSelf:GetAbility(2)
+		skills.abilDemonicExecution  = unitSelf:GetAbility(3)
 	end
 end
 
