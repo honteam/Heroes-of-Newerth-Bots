@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<bot
-    name="RhapBot"
-    description="Community Built Support-Bot by fane_maciuca"
-    heroname="Hero_Rhapsody"
-    rootlua="rhapsody_main.lua"
-    defaultplayername="RhapsodyBot"
-    precachepath="/heroes/rhapsody/"
-/>
