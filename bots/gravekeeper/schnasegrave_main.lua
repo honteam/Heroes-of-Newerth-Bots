@@ -848,8 +848,6 @@ local function funcGetThreatOfEnemy(unitEnemy)
 	return nThreat
 end
 
--- malloc break point
-
 ------------------------------------------------------------------
 --Retreat utility
 ------------------------------------------------------------------
@@ -870,13 +868,17 @@ local function CustomRetreatFromThreatUtilityFnOverride(botBrain)
 	local nAllies = core.NumberElements(allies) + 1
 
 	--get enemy heroes
-	local tEnemyTeam = HoN.GetHeroes(core.enemyTeam)
+	local tEnemyTeam = core.teamBotBrain.tEnemyHeroes
 
 	--calculate the threat-value and increase utility value
+	local nThreatUtility = 0
 	for id, enemy in pairs(tEnemyTeam) do
 	--BotEcho (id.." Hero "..enemy:GetTypeName())
-		nUtility = nUtility + funcGetThreatOfEnemy(enemy) / nAllies
+		nThreatUtility = nThreatUtility + funcGetThreatOfEnemy(enemy)
 	end
+	
+	nUtility = nUtility + nThreatUtility / nAllies
+	
 	return Clamp(nUtility, 0, 100)
 
 end
@@ -888,18 +890,17 @@ behaviorLib.RetreatFromThreatBehavior["Utility"] = CustomRetreatFromThreatUtilit
 --Retreat execute
 ------------------------------------------------------------------
 local function funcRetreatFromThreatExecuteOverride(botBrain)
-
 	local unitSelf = core.unitSelf
 	local unitTarget = behaviorLib.heroTarget
 
 	local vecPos = behaviorLib.PositionSelfBackUp()
 	local nlastRetreatUtil = behaviorLib.lastRetreatUtil
 
+	local bCanSeeAggressor = unitTarget and core.CanSeeUnit(botBrain, unitTarget)
+	
 	--Counting the enemies
 	local tEnemies = core.localUnits["EnemyHeroes"]
 	local nCount = 0
-
-	local bCanSeeUnit = unitTarget and core.CanSeeUnit(botBrain, unitTarget)
 	for id, unitEnemy in pairs(tEnemies) do
 		if core.CanSeeUnit(botBrain, unitEnemy) then
 			nCount = nCount + 1
@@ -918,7 +919,7 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 			end
 		end
 
-		if bCanSeeUnit then
+		if bCanSeeAggressor then
 			local vecMyPosition = unitSelf:GetPosition()
 			local vecTargetPosition = unitTarget:GetPosition()
 			local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
@@ -939,15 +940,17 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 			--Stun
 			local abilCorpseToss = skills.abilCorpseToss
 			local nNow = HoN.GetGameTime()
-			if abilCorpseToss:CanActivate() and nNow > object.nOneCorpseTossUseTime +900 and (not bTargetVuln or nNow <object.nOneCorpseTossUseTime + 1050) then
-				local nRange = abilCorpseToss:GetRange()
-				if nTargetDistanceSq < (nRange * nRange) then
-					core.OrderAbilityEntity(botBrain, abilCorpseToss, unitTarget)
-					return
+			if abilCorpseToss:CanActivate() and nNow > (object.nOneCorpseTossUseTime + 900) then
+				if not bTargetVuln or nNow < (object.nOneCorpseTossUseTime + 1050) then
+					local nRange = abilCorpseToss:GetRange()
+					if nTargetDistanceSq < (nRange * nRange) then
+						core.OrderAbilityEntity(botBrain, abilCorpseToss, unitTarget)
+						return
+					end
 				end
 			end
 
-			--Frostfield Plate itemFrostfieldPlate
+			--Frostfield Plate
 			local itemFrostfieldPlate = core.itemFrostfieldPlate
 			if itemFrostfieldPlate then
 				local nRange = itemFrostfieldPlate:GetTargetRadius()
@@ -962,27 +965,30 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 	end
 
 	--Activate ghost marchers if we can
-		local itemGhostMarchers = core.itemGhostMarchers
-		if itemGhostMarchers and itemGhostMarchers:CanActivate() and behaviorLib.lastRetreatUtil >= behaviorLib.retreatGhostMarchersThreshold then
+	local itemGhostMarchers = core.itemGhostMarchers
+	if itemGhostMarchers and itemGhostMarchers:CanActivate() then
+		if behaviorLib.lastRetreatUtil >= behaviorLib.retreatGhostMarchersThreshold then
 			core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
 			return
 		end
+	end
 
-		--Just use Tablet if you are in great danger
-			local itemTablet = core.itemTablet
-			if itemTablet then
-				if itemTablet:CanActivate() and nlastRetreatUtil >= object.nTabletRetreatTreshold then
-					core.OrderItemEntityClamp(botBrain, unitSelf, itemTablet, unitSelf)
-					return
-				end
-			end
+	--Just use Tablet if you are in great danger
+	local itemTablet = core.itemTablet
+	if itemTablet then
+		if itemTablet:CanActivate() and nlastRetreatUtil >= object.nTabletRetreatTreshold then
+			--TODO: check heading when that's exposed in the API
+			core.OrderItemEntityClamp(botBrain, unitSelf, itemTablet, unitSelf)
+			return
+		end
+	end
 
 	--Use Sacreficial Stone
-		local itemSacStone = core.itemSacStone
-			if itemSacStone and itemSacStone:CanActivate() then
-				core.OrderItemClamp(botBrain, unitSelf, itemSacStone)
-				return
-			end
+	local itemSacStone = core.itemSacStone
+	if itemSacStone and itemSacStone:CanActivate() then
+		core.OrderItemClamp(botBrain, unitSelf, itemSacStone)
+		return
+	end
 
 	core.OrderMoveToPosClamp(botBrain, core.unitSelf, vecPos, false)
 end
@@ -991,6 +997,8 @@ object.RetreatFromThreatExecuteOld = behaviorLib.RetreatFromThreatExecute
 behaviorLib.RetreatFromThreatBehavior["Execute"] = funcRetreatFromThreatExecuteOverride
 
 
+--TODO: I feel like there are alltogether too many places where we're turning on Sac Stone. Perhaps it should be 
+--  its own behavior that's like 99 as long as it's off (since its cooldown matches its duration)
 
 ----------------------------------
 --Push
@@ -1024,18 +1032,19 @@ local function PushExecuteFnOverride(botBrain)
 			local nNumberEnemyCreeps =  core.NumberElements(core.localUnits["EnemyCreeps"])
 			if unitTarget and nNumberEnemyCreeps > object.nRequiredCorpses then
 				local vecTargetPosition = unitTarget:GetPosition()
-					--looking for creep corpses (tCorpses) and summoned corpses (tPets) in range // no API = high costly
-					local tCorpses = HoN.GetUnitsInRadius(vecTargetPosition, 225, core.UNIT_MASK_CORPSE + core.UNIT_MASK_UNIT)
-					local tPets = HoN.GetUnitsInRadius(vecTargetPosition, 225, core.UNIT_MASK_ALIVE + core.UNIT_MASK_UNIT)
-					local nNumberCorpses = core.NumberElements(tCorpses)
+				--looking for creep corpses (tCorpses) and summoned corpses (tPets) in range // no API = high costly
+				local tCorpses = HoN.GetUnitsInRadius(vecTargetPosition, 225, core.UNIT_MASK_CORPSE + core.UNIT_MASK_UNIT)
+				local tPets = HoN.GetUnitsInRadius(vecTargetPosition, 225, core.UNIT_MASK_ALIVE + core.UNIT_MASK_UNIT)
+				local nNumberCorpses = core.NumberElements(tCorpses)
 
-					for x, creep in pairs(tPets) do
-						--Different summon types
-						if creep:GetTypeName() == "Pet_Taint_Ability3" or creep:GetTypeName() == "Pet_Taint_Ability4_Explode"then
+				for x, creep in pairs(tPets) do
+					--Different summon types
+					if creep:GetTypeName() == "Pet_Taint_Ability3" or creep:GetTypeName() == "Pet_Taint_Ability4_Explode"then
 						nNumberCorpses = nNumberCorpses + 1
-						end
 					end
-					--enough corpses in range?
+				end
+				
+				--enough corpses in range?
 				if nNumberCorpses >= object.nRequiredCorpses  then
 					bActionTaken = core.OrderAbilityPosition(botBrain, skills.abilCorpseExplosion, vecTargetPosition)
 				end
@@ -1067,6 +1076,7 @@ local function CustomHealAtWellUtilityFnOverride(botBrain)
 
 		utility = behaviorLib.WellHealthUtility(hpPercent) + behaviorLib.WellProximityUtility(nDist)
 	end
+	
 	--low mana increases wish to go home
 	if mpPercent < 0.90 then
 		utility = utility + mpPercent * 10
@@ -1088,28 +1098,29 @@ local function HealAtWellExecuteFnOverride(botBrain)
 
 	--Activate ghost marchers if we can
 	local itemGhostMarchers = core.itemGhostMarchers
-	if itemGhostMarchers and itemGhostMarchers:CanActivate() and distanceWellSq > 250000 then
+	if itemGhostMarchers and itemGhostMarchers:CanActivate() and distanceWellSq > (500 * 500) then
 		core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
 		return
 	end
 
-		--Just use Tablet
-		local itemTablet = core.itemTablet
-		if itemTablet then
-			if itemTablet:CanActivate() and distanceWellSq > 250000 then
-				core.OrderItemEntityClamp(botBrain, core.unitSelf, itemTablet, core.unitSelf)
-				return
-			end
+	--Just use Tablet
+	local itemTablet = core.itemTablet
+	if itemTablet then
+		if itemTablet:CanActivate() and distanceWellSq > (500 * 500) then
+		--TODO: check heading when that's exposed in the API
+			core.OrderItemEntityClamp(botBrain, core.unitSelf, itemTablet, core.unitSelf)
+			return
 		end
+	end
 
-				--Portal Key: Port away
-		local itemPortalKey = core.itemPortalKey
-		if itemPortalKey then
-			if itemPortalKey:CanActivate()  and distanceWellSq > 1000000 then
-				core.OrderItemPosition(botBrain, unitSelf, itemPortalKey, wellPos)
-				return
-			end
+			--Portal Key: Port away
+	local itemPortalKey = core.itemPortalKey
+	if itemPortalKey then
+		if itemPortalKey:CanActivate()  and distanceWellSq > (1000 * 1000) then
+			core.OrderItemPosition(botBrain, unitSelf, itemPortalKey, wellPos)
+			return
 		end
+	end
 
 	core.OrderMoveToPosAndHoldClamp(botBrain, core.unitSelf, wellPos, false)
 end
@@ -1119,15 +1130,15 @@ behaviorLib.HealAtWellBehavior["Execute"] = HealAtWellExecuteFnOverride
 
 --Function removes any item that is not valid
 local function funcRemoveInvalidItems()
-	if core.itemPostHaste	   and not core.itemPostHaste:IsValid()	    then    core.itemPostHaste = nil end
-	if core.itemTablet		      and not core.itemTablet:IsValid()		       then    core.itemTablet = nil end
-	if core.itemPortalKey	   and not core.itemPortalKey:IsValid()	    then    core.itemPortalKey = nil end
-	if core.itemHellFlower	  and not core.itemHellFlower:IsValid()	   then    core.itemHellFlower = nil end
-	if core.itemSheepstick	  and not core.itemSheepstick:IsValid()	   then    core.itemSheepstick = nil end
-	if core.itemFrostfieldPlate and not core.itemFrostfieldPlate:IsValid()  then    core.itemFrostfieldPlate = nil end
-	if core.itemSteamboots	  and not core.itemSteamboots:IsValid()	   then    core.itemSteamboots = nil end
-	if core.itemSacStone	    and not core.itemSacStone:IsValid()	     then    core.itemSacStone = nil end
-	if core.itemGhostMarchers       and not core.itemGhostMarchers:IsValid()	then    core.itemGhostMarchers = nil end
+	core.ValidateItem(core.itemPostHaste)
+	core.ValidateItem(core.itemTablet)
+	core.ValidateItem(core.itemPortalKey)
+	core.ValidateItem(core.itemHellFlower)
+	core.ValidateItem(core.itemSheepstick)
+	core.ValidateItem(core.itemFrostfieldPlate)
+	core.ValidateItem(core.itemSteamboots)
+	core.ValidateItem(core.itemSacStone)
+	core.ValidateItem(core.itemGhostMarchers)
 end
 
 ----------------------------------
@@ -1138,42 +1149,41 @@ local function funcFindItemsOverride(botBrain)
 --local bUpdated = object.FindItemsOld(botBrain)
 
 	--Alternate item wasn't checked, so you don't need to look for new items.
-	if core.bCheckForAlternateItems then return end
+	if core.bCheckForAlternateItems then 
+		return 
+	end
 
 	funcRemoveInvalidItems()
 
-	--if bUpdated then
-
-		--We only need to know about our current inventory. Stash items are not important.
-		local inventory = core.unitSelf:GetInventory(true)
-		for slot = 1, 6, 1 do
-			local curItem = inventory[slot]
-			if curItem then
-				if core.itemPostHaste == nil and curItem:GetName() == "Item_PostHaste" then
-					core.itemPostHaste = core.WrapInTable(curItem)
-				elseif core.itemTablet == nil and curItem:GetName() == "Item_PushStaff" then
-					core.itemTablet = core.WrapInTable(curItem)
-				elseif core.itemPortalKey == nil and curItem:GetName() == "Item_PortalKey" then
-					core.itemPortalKey = core.WrapInTable(curItem)
-				elseif core.itemFrostfieldPlate == nil and curItem:GetName() == "Item_FrostfieldPlate" then
-					core.itemFrostfieldPlate = core.WrapInTable(curItem)
-				elseif core.itemSheepstick == nil and curItem:GetName() == "Item_Morph" then
-					core.itemSheepstick = core.WrapInTable(curItem)
-				elseif core.itemHellFlower == nil and curItem:GetName() == "Item_Silence" then
-					core.itemHellFlower = core.WrapInTable(curItem)
-				elseif core.itemSteamboots == nil and curItem:GetName() == "Item_Steamboots" then
-					core.itemSteamboots = core.WrapInTable(curItem)
-				elseif core.itemSacStone == nil and curItem:GetName() == "Item_SacrificialStone" then
-					core.itemSacStone = core.WrapInTable(curItem)
-				elseif core.itemGhostMarchers == nil and curItem:GetName() == "Item_EnhancedMarchers" then
-					core.itemGhostMarchers = core.WrapInTable(curItem)
-					core.itemGhostMarchers.expireTime = 0
-					core.itemGhostMarchers.duration = 6000
-					core.itemGhostMarchers.msMult = 0.12
-				end
-
+	--We only need to know about our current inventory. Stash items are not important.
+	local inventory = core.unitSelf:GetInventory(false)
+	for slot = 1, 6, 1 do
+		local curItem = inventory[slot]
+		if curItem then
+			if core.itemPostHaste == nil and curItem:GetName() == "Item_PostHaste" then
+				core.itemPostHaste = core.WrapInTable(curItem)
+			elseif core.itemTablet == nil and curItem:GetName() == "Item_PushStaff" then
+				core.itemTablet = core.WrapInTable(curItem)
+			elseif core.itemPortalKey == nil and curItem:GetName() == "Item_PortalKey" then
+				core.itemPortalKey = core.WrapInTable(curItem)
+			elseif core.itemFrostfieldPlate == nil and curItem:GetName() == "Item_FrostfieldPlate" then
+				core.itemFrostfieldPlate = core.WrapInTable(curItem)
+			elseif core.itemSheepstick == nil and curItem:GetName() == "Item_Morph" then
+				core.itemSheepstick = core.WrapInTable(curItem)
+			elseif core.itemHellFlower == nil and curItem:GetName() == "Item_Silence" then
+				core.itemHellFlower = core.WrapInTable(curItem)
+			elseif core.itemSteamboots == nil and curItem:GetName() == "Item_Steamboots" then
+				core.itemSteamboots = core.WrapInTable(curItem)
+			elseif core.itemSacStone == nil and curItem:GetName() == "Item_SacrificialStone" then
+				core.itemSacStone = core.WrapInTable(curItem)
+			elseif core.itemGhostMarchers == nil and curItem:GetName() == "Item_EnhancedMarchers" then
+				core.itemGhostMarchers = core.WrapInTable(curItem)
+				core.itemGhostMarchers.expireTime = 0
+				core.itemGhostMarchers.duration = 6000
+				core.itemGhostMarchers.msMult = 0.12
 			end
-		--end
+
+		end
 	end
 end
 object.FindItemsOld = core.FindItems
@@ -1207,7 +1217,7 @@ local function funcCheckforAlternateItemBuild(botbrain)
 		--BotEcho("My early Game sucked. I will go for a defensive Build.")
 		unitSelf.getSteamboots = true
 		behaviorLib.MidItems =
-		{"Item_Steamboots", "Item_MysticVestments", "Item_Scarab",  "Item_SacrificialStone", "Item_Silence"}
+			{"Item_Steamboots", "Item_MysticVestments", "Item_Scarab",  "Item_SacrificialStone", "Item_Silence"}
 
 	--Boots finished
 	elseif core.itemGhostMarchers or core.itemSteamboots then
@@ -1215,15 +1225,14 @@ local function funcCheckforAlternateItemBuild(botbrain)
 		--Mid game: Bad farm, so go for a tablet
 		if unitSelf:GetLevel() > 10 and nGPM < 240 and not unitSelf.getPushStaff then
 			--BotEcho("Well, it's not going as expected. Let's try a Tablet!")
-			unitSelf.getPushStaff=true
+			unitSelf.getPushStaff = true
 			tinsert(behaviorLib.curItemList, 1, "Item_PushStaff")
 
 		--Good farm and you finished your Boots. Now it is time to pick a portal key
 		elseif nGPM >= 300 and not unitSelf.getPK then
 			--BotEcho("The Game is going good. Soon I will kill them with a fresh PK!")
-			unitSelf.getPK=true
+			unitSelf.getPK = true
 			tinsert(behaviorLib.curItemList, 1, "Item_PortalKey")
-
 		end
 
 	end
@@ -1256,13 +1265,8 @@ Usual Shopping
 After finished check for new Items
 --]]
 
+core.bCheckForAlternateItems = true
 local function funcShopExecuteOverride(botBrain)
-
-	--Initialize check for alternate items
-	if core.bCheckForAlternateItems == nil then
-		core.bCheckForAlternateItems = true
-	end
-
 	--check item choices
 	if core.bCheckForAlternateItems then
 		--BotEcho("Checking Alternate Builds")
@@ -1286,11 +1290,13 @@ behaviorLib.ShopBehavior["Execute"] = funcShopExecuteOverride
 
 --####################################################################
 --####################################################################
---#								 ##
---#   CHAT FUNCTIONSS					       ##
---#								 ##
+--#								 									##
+--#   CHAT FUNCTIONSS					       						##
+--#																	##
 --####################################################################
 --####################################################################
+
+
 
 object.tCustomKillKeys = {
 	"schnarchnase_grave_kill1",
@@ -1299,8 +1305,7 @@ object.tCustomKillKeys = {
 	"schnarchnase_grave_kill4",
 	"schnarchnase_grave_kill5",
 	"schnarchnase_grave_kill6",
-	"schnarchnase_grave_kill7",
-	"schnarchnase_grave_kill8"   }
+	"schnarchnase_grave_kill7"  }
 
 local function GetKillKeysOverride(unitTarget)
 	local tChatKeys = object.funcGetKillKeysOld(unitTarget)
@@ -1315,8 +1320,7 @@ object.tCustomRespawnKeys = {
 	"schnarchnase_grave_respawn1",
 	"schnarchnase_grave_respawn2",
 	"schnarchnase_grave_respawn3",
-	"schnarchnase_grave_respawn4",
-	"schnarchnase_grave_respawn5"	}
+	"schnarchnase_grave_respawn4"	}
 
 local function GetRespawnKeysOverride()
 	local tChatKeys = object.funcGetRespawnKeysOld()
