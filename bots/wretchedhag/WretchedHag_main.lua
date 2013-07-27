@@ -145,9 +145,9 @@ end
 local function funcFindItemsOverride(botBrain)
         local bUpdated = object.FindItemsOld(botBrain)
  
-		core.ValidateItem(core.itemSteamboots)
-		core.ValidateItem(core.itemHellflower)
-		core.ValidateItem(core.itemSheepstick)
+        core.ValidateItem(core.itemSteamboots)
+        core.ValidateItem(core.itemHellflower)
+        core.ValidateItem(core.itemSheepstick)
 
         if bUpdated then
                 --only update if we need to
