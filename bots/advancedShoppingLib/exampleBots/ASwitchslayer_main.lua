@@ -230,7 +230,7 @@ local function WitchSlayerItemBuilder()
 		local bNewItems = false
 	   
 		--get itembuild decision table 
-		local tItemDecisions = shopping.ItemDecisions
+		local tItemDecisions = shopping.tItemDecisions
 		if debugInfo then BotEcho("Found ItemDecisions"..type(tItemDecisions)) end
 	   
 		--Choose Lane Items
@@ -251,7 +251,7 @@ local function WitchSlayerItemBuilder()
 								if debugInfo then BotEcho("Argh, I am not mid *sob*") end
 								startItems = {"Item_GuardianRing", "Item_PretendersCrown", "Item_MinorTotem", "Item_HealthPotion", "Item_RunesOfTheBlight"}
 						end
-						core.InsertToTable(shopping.Itembuild, startItems)			 
+						core.InsertToTable(shopping.tItembuild, startItems)			 
 						bNewItems = true
 						tItemDecisions.Lane = true
 				else
@@ -263,9 +263,9 @@ local function WitchSlayerItemBuilder()
 			   
 				if debugInfo then BotEcho("Insert Rest of Items") end
 							   
-				core.InsertToTable(shopping.Itembuild, behaviorLib.LaneItems)
-				core.InsertToTable(shopping.Itembuild, behaviorLib.MidItems)
-				core.InsertToTable(shopping.Itembuild, behaviorLib.LateItems)
+				core.InsertToTable(shopping.tItembuild, behaviorLib.LaneItems)
+				core.InsertToTable(shopping.tItembuild, behaviorLib.MidItems)
+				core.InsertToTable(shopping.tItembuild, behaviorLib.LateItems)
 			   
 				bNewItems = true
 				tItemDecisions.Rest = true

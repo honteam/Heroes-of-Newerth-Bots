@@ -16,7 +16,7 @@ Features:
 		-Bots can use the courier
 		-Bots can take care of the courier (upgrade it, rebuy if it dies)
 		-Bots can reserve items (don't go for team items, if the team has one already or another bot reserved it)
-		-Bots can buy consumables periodicly or on demand
+		-Bots can buy consumables periodically or on demand
 		-dynamic item builds supported
 		-desired item slots supported (e.g.: if bot has boots, put them in slot 1)
 
@@ -52,9 +52,23 @@ Usage:
 		
 		you only need to insert differences to default (same object structure)
 		shopping.setup (tSetupOptions)
+		
+		Example:		
+			This bot will support his team, so he should upgrade the courier, 
+			buy wards, but he shouldn't buy any Mana Potions
+		
+			--Implement changes to default settings
+			local tSetupOptions = {
+					bCourierCare = true, --upgrade courier
+					bWaitForLaneDecision = true, --wait for lane decision before shopping
+					tConsumableOptions = {Item_ManaPotion = false} --don't autobuy Mana Potions
+					}
+			--call setup function
+			shopping.Setup(tSetupOptions)
+		----------------------------------------------------------------
 	
-	ReloadBots compatibility:
-		shopping.developeItemBuildSaver = true
+	ReloadBots compatibility: (Set to true while testing)
+		shopping.bDevelopeItemBuildSaver = false
 		
 	Set desired item slots:
 		shopping.SetItemSlotNumber(sItemName, nSlotNumber)
@@ -72,7 +86,7 @@ Usage:
 		shopping.DoCourierUpgrade(courier, currentGold)
 		
 	Misc.:
-		shopping.SellBonusValue = 2000 --bonus sell value for desired items 
+		shopping.nSellBonusValue = 2000 --Add to sell cost to prevent selling of desired items
 		shopping.nMaxHealthTreshold = 1000 --max Health for buying potions
 		shopping.nMaxManaTreshold = 350 -- max Mana for buying potions
 	
@@ -97,13 +111,13 @@ local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 
 
 --debugInfo
-local debugInfoGeneralInformation = false
-local debugInfoItemHandler = false
-local debugInfoShoppingFunctions = false
-local debugInfoShoppingBehavior = false
-local debugInfoCourierRelated = false
+shopping.bDebugInfoGeneralInformation = false
+shopping.bDebugInfoItemHandler = false
+shopping.bDebugInfoShoppingFunctions = false
+shopping.bDebugInfoShoppingBehavior = false
+shopping.bDebugInfoCourierRelated = false
 
---if debugInfoShoppingFunctions then BotEcho("") end
+--if shopping.bDebugInfoShoppingFunctions then BotEcho("") end
 
 ----------------------------------------------------
 --important advanced Shopping variables
@@ -111,42 +125,41 @@ local debugInfoCourierRelated = false
 
 --Lists
 --Itembuild: list, position and decision
-shopping.Itembuild = shopping.Itembuild or {} --itemcodes
-shopping.ItembuildPosition = shopping.ItembuildPosition or 1 --position
-shopping.ItemDecisions = shopping.ItemDecisions or {} --table of custom reminders 
+shopping.tItembuild = shopping.tItembuild or {} --itemcodes
+shopping.tItembuildPosition = shopping.tItembuildPosition or 1 --position
+shopping.tItemDecisions = shopping.tItemDecisions or {} --table of custom reminders 
 --Shoppinglist
-shopping.ShoppingList = shopping.ShoppingList or {}
+shopping.tShoppingList = shopping.tShoppingList or {}
 
 --Courier
 shopping.bCourierMissionControl = false
-shopping.nextFindCourierTime = HoN.GetGameTime()
+shopping.nNextFindCourierTime = HoN.GetGameTime()
 
 --other variables
-shopping.nextItemBuildCheck = 600*1000
-shopping.checkItemBuildInterval = 10*1000
+shopping.nNextItemBuildCheck = 600*1000
+shopping.nCheckItemBuildInterval = 10*1000
 
-shopping.nextBuyTime = HoN.GetGameTime()
-shopping.buyInterval = 250 -- One Shopping Round per Behavior utility call 
-shopping.finishedBuying = true
+shopping.nNextBuyTime = HoN.GetGameTime()
+shopping.nBuyInterval = 250 -- One Shopping Round per Behavior utility call 
 
 --Shopping Utility Values
 shopping.nShoppingUtilityValue = 30
 shopping.nShoppingPreGameUtilityValue = 100
 
 --item is not avaible for shopping, retry it at a later time (mainly puzzlebox)
-shopping.delayedItems = {}
+shopping.tDelayedItems = {}
 
 --developement only - set this to true in your botfiles, while in pre submission phase
-shopping.developeItemBuildSaver = false 
+shopping.bDevelopeItemBuildSaver = false 
 
 --names of some items
-local nameHomecomingStone = "Item_HomecomingStone"
-local namePostHaste = "Item_PostHaste"
-local nameHealthPostion = "Item_HealthPotion"
-local nameBlightRunes = "Item_RunesOfTheBlight"
-local nameManaPotions = "Item_ManaPotion"
+shopping.sNameHomecomingStone = "Item_HomecomingStone"
+shopping.sNamePostHaste = "Item_PostHaste"
+shopping.sNameHealthPostion = "Item_HealthPotion"
+shopping.sNameBlightRunes = "Item_RunesOfTheBlight"
+shopping.sNameManaPotions = "Item_ManaPotion"
 
---purchaisable consumables 
+--purchasable consumables 
 shopping.tConsumables = {
 	Item_HomecomingStone	= true,
 	Item_HealthPotion		= true,
@@ -158,7 +171,7 @@ shopping.tConsumables = {
 	}
 
 --List of desired item slots 
-shopping.DesiredItems = {
+shopping.tDesiredItems = {
 	Item_PostHaste 			= 1,
 	Item_EnhancedMarchers	= 1,
 	Item_PlatedGreaves 		= 1,
@@ -175,17 +188,17 @@ shopping.DesiredItems = {
 	}
 
 --items in their desired item slot receive a bonus value
-shopping.SellBonusValue = 2000
+shopping.nSellBonusValue = 2000
 
 --check function on a periodic basis
-shopping.nextCourierControl = HoN.GetGameTime()
-shopping.CourierControlIntervall = 250
+shopping.nNextCourierControl = HoN.GetGameTime()
+shopping.nCourierControlIntervall = 250
 
 --Courierstates: 0: Bugged; 1: Fill Courier; 2: Delivery; 3: Fill Stash
-shopping.CourierState = 0
+shopping.nCourierState = 0
 
 --used item slots by our bot
-shopping.courierSlots = {}
+shopping.tCourierSlots = {}
 
 --courier delivery ring
 shopping.nCourierDeliveryDistanceSq = 500 * 500
@@ -198,13 +211,13 @@ shopping.nCourierDeliveryTimeOut = 1000
 shopping.nCourierPositionTimeOut = shopping.nCourierDeliveryTimeOut + 500
 
 --courier repair variables
-shopping.CourierBuggedTimer = 0
-shopping.CourierLastPosition = nil
+shopping.nCourierBuggedTimer = 0
+shopping.vecCourierLastPosition = nil
 
 --stop shopping if we are done
-shopping.DoShopping = true
+shopping.bDoShopping = true
 --stop shopping if we experience issues like stash is full
-shopping.PauseShopping = false
+shopping.bPauseShopping = false
 
 --table of requested items
 shopping.tRequestQueue = {}
@@ -227,24 +240,22 @@ local function SyncWithDatabse()
 	
 	local entry = object.myName
 	
-	--BotEcho("my name is "..entry)
-	
 	--load values
 	if not shopping.bDatabaseLoaded then
-		if debugInfoGeneralInformation then BotEcho("Loading Database") end
+		if shopping.bDebugInfoGeneralInformation then BotEcho("Loading Database") end
 		shopping.bDatabaseLoaded = true
 		local result = GetDBEntry(entry, entry, false, HoN.GetRemainingPreMatchTime() > 0)
 		if result then
-			if debugInfoGeneralInformation then BotEcho("Found entries in database") end
+			if shopping.bDebugInfoGeneralInformation then BotEcho("Found entries in database") end
 			valTable = result.value
 			if valTable then
-				if debugInfoGeneralInformation then BotEcho("Reloading bot decisions") end
+				if shopping.bDebugInfoGeneralInformation then BotEcho("Reloading bot decisions") end
 				--have entries -- unpack them
-					shopping.Itembuild = valTable[1]
-					shopping.ItembuildPosition = valTable[2]
-					shopping.ItemDecisions = valTable[3]
-					shopping.delayedItems = valTable[4]
-					shopping.courierSlots = valTable[5]
+					shopping.tItembuild = valTable[1]
+					shopping.tItembuildPosition = valTable[2]
+					shopping.tItemDecisions = valTable[3]
+					shopping.tDelayedItems = valTable[4]
+					shopping.tCourierSlots = valTable[5]
 					itemHandler:UpdateDatabase()
 			end
 		end
@@ -253,11 +264,11 @@ local function SyncWithDatabse()
 	--save values
 	local tableSaver = {value = {}}
 	local dataToSave = tableSaver.value
-	tinsert (dataToSave, shopping.Itembuild)
-	tinsert (dataToSave, shopping.ItembuildPosition)
-	tinsert (dataToSave, shopping.ItemDecisions)
-	tinsert (dataToSave, shopping.delayedItems)
-	tinsert (dataToSave, shopping.courierSlots)
+	tinsert (dataToSave, shopping.tItembuild)
+	tinsert (dataToSave, shopping.tItembuildPosition)
+	tinsert (dataToSave, shopping.tItemDecisions)
+	tinsert (dataToSave, shopping.tDelayedItems)
+	tinsert (dataToSave, shopping.tCourierSlots)
 	
 	--GetDBEntry(entry, value, saveToDB, restoreDefault, setDefault)
 	GetDBEntry(entry, tableSaver, true)
@@ -281,9 +292,13 @@ returns:		the item or nil if not found
 function itemHandler:GetItem(sItemName, unit, bIncludeStash)
 	   
 	   --no item name, no item
-		if not sItemName then return end
+		if not sItemName then 
+			return 
+		end
 		--default unit: hero-unit
-		if not unit then unit = core.unitSelf end
+		if not unit then 
+			unit = core.unitSelf 
+		end
 	   
 	   --get the item
 		local unitID = unit:GetUniqueID()
@@ -295,19 +310,19 @@ function itemHandler:GetItem(sItemName, unit, bIncludeStash)
 			--access = in the inventory of this unit
 			local access = unit:CanAccess(itemEntry.object)
 			--in stash, therefore not accessable
-			local bInUnitsInventory = nSlot <= 41 and nSlot > 35
-			if debugInfoItemHandler then BotEcho("Access to item "..sItemName.." in slot "..tostring(nSlot).." granted: "..tostring(access)) end
+			local bInUnitsInventory = nSlot <= 6
+			
+			if shopping.bDebugInfoItemHandler then BotEcho("Access to item "..sItemName.." in slot "..tostring(nSlot).." granted: "..tostring(access)) end
+			
 			--don't delete if its acessable or in stash
 			if bInUnitsInventory and not access then
 				--outdated entry
 				itemHandler.tItems[unitID..sItemName] = nil
-			else
-				if access or bIncludeStash then
-					if debugInfoItemHandler then BotEcho("Return Item: "..sItemName) end
+			elseif access or bIncludeStash then
+				if shopping.bDebugInfoItemHandler then BotEcho("Return Item: "..sItemName) end
 				
-					--return the item
-					return itemEntry
-				end
+				--return the item
+				return itemEntry
 			end
 		else
 			--item is not usable --> delete it
@@ -325,7 +340,10 @@ returns:		true if the item was added
 function itemHandler:AddItem(curItem, unit)
 	   
 	--no item, nothing to add
-	if not curItem then return end
+	if not curItem then 
+		return 
+	end
+	
 	--default unit:  hero-unit
 	if not unit then unit = core.unitSelf end
 	
@@ -337,7 +355,7 @@ function itemHandler:AddItem(curItem, unit)
 		
 		local unitID = unit:GetUniqueID()
 		
-		if debugInfoItemHandler then BotEcho("Add Item: "..sItemName) end
+		if shopping.bDebugInfoItemHandler then BotEcho("Add Item: "..sItemName) end
 		
 		--add item
 		itemHandler.tItems[unitID..sItemName] = core.WrapInTable(curItem)
@@ -346,7 +364,7 @@ function itemHandler:AddItem(curItem, unit)
 		return true
 	end
 	
-	if debugInfoItemHandler then BotEcho("Item already in itemHandler: "..sItemName) end
+	if shopping.bDebugInfoItemHandler then BotEcho("Item already in itemHandler: "..sItemName) end
 	--return failure
 	return false
 end
@@ -363,7 +381,7 @@ function itemHandler:UpdateDatabase(bClear)
 	
 	--remove invalid entries
 	if bClear then
-		if debugInfoItemHandler then BotEcho("Clear list") end
+		if shopping.bDebugInfoItemHandler then BotEcho("Clear list") end
 		for slot, item in pairs(itemHandler.tItems) do
 			if item and not item:IsValid() then
 				--item is not valid remove it
@@ -428,7 +446,7 @@ tSetupOptions.bWaitForLaneDecision: false or true
 	Wait for the bots lane before start shopping (lane item builds)
 	
 tSetupOptions.tConsumableOptions: true, false/nil, tChanges
-	Shall the bot buy certain consumables periodicly? 
+	Shall the bot buy certain consumables periodically? 
 	
 tSetupOptions.bCourierCare: false or true
 	Shall the bot upgrade and rebuy the courier?
@@ -466,7 +484,7 @@ function shopping.Setup (tSetupOptions)
 				if shopping.tConsumables[itemDef] ~= nil then
 					shopping.tConsumables[itemDef] = value
 				else
-					if debugInfoGeneralInformation then BotEcho("Itemdefinition was not found in the default table: "..tostring(itemDef)) end
+					if shopping.bDebugInfoGeneralInformation then BotEcho("Itemdefinition was not found in the default table: "..tostring(itemDef)) end
 				end
 			end
 		end
@@ -489,17 +507,19 @@ function shopping.GetCourier(bForceUpdate)
 	--get saved courier
 	local unitCourier = shopping.courier
 	--if it is still alive return it
-	if unitCourier and unitCourier:IsValid() then return unitCourier end
+	if unitCourier and unitCourier:IsValid() then 
+		return unitCourier 
+	end
 	
-	--only search periodicly
+	--only search periodically
 	local nNow = HoN.GetGameTime()
-	if not bForceUpdate and shopping.nextFindCourierTime > nNow then
+	if not bForceUpdate and shopping.nNextFindCourierTime > nNow then
 		return		
 	end	
 	
-	shopping.nextFindCourierTime = nNow + 1000
+	shopping.nNextFindCourierTime = nNow + 1000
 	
-	if debugInfoShoppingFunctions then BotEcho("Courier was not found. Checking inventory units") end
+	if shopping.bDebugInfoShoppingFunctions then BotEcho("Courier was not found. Checking inventory units") end
 	
 	--Search for a courier
 	local controlUnits = core.tControllableUnits and core.tControllableUnits["InventoryUnits"] or {}
@@ -508,7 +528,7 @@ function shopping.GetCourier(bForceUpdate)
 			local sUnitName = unit:GetTypeName()
 			--Courier Check
 			if sUnitName == "Pet_GroundFamiliar" or sUnitName == "Pet_FlyngCourier" then
-				if debugInfoShoppingFunctions then BotEcho("Found Courier!") end
+				if shopping.bDebugInfoShoppingFunctions then BotEcho("Found Courier!") end
 				
 				--my courier? share to team
 				if unit:GetOwnerPlayer() == core.unitSelf:GetOwnerPlayer() then
@@ -539,13 +559,13 @@ function shopping.CareAboutCourier()
 	if courier then 
 		--got a ground courier? Send Upgrade-Order
 		if courier:GetTypeName() == "Pet_GroundFamiliar" then
-			if debugInfoShoppingFunctions then BotEcho("Courier needs an upgrade - Will do it soon") end
+			if shopping.bDebugInfoShoppingFunctions then BotEcho("Courier needs an upgrade - Will do it soon") end
 			shopping.courierDoUpgrade = true
 		end
 	else		
 		--no courier - buy one
-		if debugInfoShoppingFunctions then BotEcho("No Courier found, may buy a new one.") end
-		shopping.BuyNewCourier = HoN.GetItemDefinition("Item_GroundFamiliar")
+		if shopping.bDebugInfoShoppingFunctions then BotEcho("No Courier found, may buy a new one.") end
+		shopping.bBuyNewCourier = true
 	end		
 	
 end
@@ -565,8 +585,8 @@ function shopping.DoCourierUpgrade(courier, gold)
 	
 	if unitCourier and nMyGold >= 200 then
 		shopping.courierDoUpgrade = false
-		if courier:GetTypeName() == "Pet_GroundFamiliar" then
-			local courierUpgrade = courier:GetAbility(0)
+		if unitCourier:GetTypeName() == "Pet_GroundFamiliar" then
+			local courierUpgrade = unitCourier:GetAbility(0)
 			core.OrderAbility(object, courierUpgrade)
 			nMyGold = nMyGold - 200
 		end
@@ -578,7 +598,7 @@ end
 --function RequestConsumable
 --[[
 description:	Request Consumables to be bought soon
-parameters: 	name: itemname, you want to purchaise (regen, stones, wards and dust)
+parameters: 	name: itemname, you want to purchase (regen, stones, wards and dust)
 				count: number you want to purchase (doubles dust)
 --]]
 function shopping.RequestConsumable (name, count)
@@ -588,9 +608,9 @@ function shopping.RequestConsumable (name, count)
 	
 	if sEntry then
 		--item is a consumable
-		local nCount = type(count) == "number" and count or 1
+		local nCount = count or 1
 		for i = 1, nCount do
-			--purchaise the requested number
+			--purchase the requested number
 			tinsert(shopping.tRequestQueue, name)
 		end
 	end			
@@ -598,9 +618,9 @@ end
 
 --function Autobuy
 --[[
-description:	Checks for automatic consumable purchaises
+description:	Checks for automatic consumable purchases
 
-returns:		Keep buying items periodicly		
+returns:		Keep buying items periodically		
 --]]
 function  shopping.Autobuy()
 
@@ -626,32 +646,32 @@ function  shopping.Autobuy()
 		
 		--only buy Health-Regen as long we can use it 
 		if nMaxHealth <= shopping.nMaxHealthTreshold then
-			if tConsumables[nameBlightRunes] then
+			if tConsumables[shopping.sNameBlightRunes] then
 				bBuyRegen = true
 				--only buy Runes if we don't have some
-				local BlightRunes = itemHandler:GetItem(nameBlightRunes, nil, true) or itemHandler:GetItem(nameBlightRunes, courier)
+				local BlightRunes = itemHandler:GetItem(shopping.sNameBlightRunes, nil, true) or itemHandler:GetItem(shopping.sNameBlightRunes, courier)
 				if not BlightRunes and nHealthPercent < 0.8 and nHealthPercent >= 0.6 then
-					local itemDef = HoN.GetItemDefinition(nameBlightRunes)
+					local itemDef = HoN.GetItemDefinition(shopping.sNameBlightRunes)
 					local cost = itemDef:GetCost()
 					
-					--check if we can effford them
+					--check if we can afford them
 					if nMyGold >= cost then
-						shopping.RequestConsumable (nameBlightRunes, 1)
+						shopping.RequestConsumable (shopping.sNameBlightRunes, 1)
 						nMyGold = nMyGold - cost
 					end
 				end
 			end
-			if tConsumables[nameHealthPostion] then
+			if tConsumables[shopping.sNameHealthPostion] then
 				bBuyRegen = true
 				--only buy potions if we don't have some
-				local HealthPotion = itemHandler:GetItem(nameHealthPostion, nil, true) or itemHandler:GetItem(nameHealthPostion, courier)
+				local HealthPotion = itemHandler:GetItem(shopping.sNameHealthPostion, nil, true) or itemHandler:GetItem(shopping.sNameHealthPostion, courier)
 				if not HealthPotion and nHealthPercent < 0.6 and nManaPercent > 0.4 then
-					local itemDef = HoN.GetItemDefinition(nameHealthPostion)
+					local itemDef = HoN.GetItemDefinition(shopping.sNameHealthPostion)
 					local cost = itemDef:GetCost()
 					
-					--check if we can effford them
+					--check if we can afford them
 					if nMyGold >= cost then
-						shopping.RequestConsumable (nameHealthPostion, 1)
+						shopping.RequestConsumable (shopping.sNameHealthPostion, 1)
 						nMyGold = nMyGold - cost
 					end
 				end
@@ -660,16 +680,16 @@ function  shopping.Autobuy()
 		
 		--only buy Mana-Regen as long we can use it 
 		if nMaxMana < shopping.nMaxManaTreshold then
-			if tConsumables[nameManaPotions] then
+			if tConsumables[shopping.sNameManaPotions] then
 				bBuyRegen = true
 				--only buy mana, if we don't have some
-				local ManaPotion = itemHandler:GetItem(nameManaPotions, nil, true) or itemHandler:GetItem(nameManaPotions, courier)
+				local ManaPotion = itemHandler:GetItem(shopping.sNameManaPotions, nil, true) or itemHandler:GetItem(shopping.sNameManaPotions, courier)
 				if not ManaPotion and nManaPercent < 0.4 and nHealthPercent > 0.5 then
-					local itemDef = HoN.GetItemDefinition(nameManaPotions)
+					local itemDef = HoN.GetItemDefinition(shopping.sNameManaPotions)
 					local cost = itemDef:GetCost()
 					
 					if nMyGold >= cost then
-						shopping.RequestConsumable (nameManaPotions, 1)
+						shopping.RequestConsumable (shopping.sNameManaPotions, 1)
 						nMyGold = nMyGold - cost
 					end
 				end
@@ -682,17 +702,17 @@ function  shopping.Autobuy()
 	
 	
 	--homeomcing stones
-	if tConsumables[nameHomecomingStone] then
+	if tConsumables[shopping.sNameHomecomingStone] then
 		--only buy stones if we have not Post Haste
-		local itemPostHaste = itemHandler:GetItem(namePostHaste, nil, true) or itemHandler:GetItem(namePostHaste, courier)
+		local itemPostHaste = itemHandler:GetItem(shopping.sNamePostHaste, nil, true) or itemHandler:GetItem(shopping.sNamePostHaste, courier)
 		if itemPostHaste then 
-			tConsumables[nameHomecomingStone] = false
+			tConsumables[shopping.sNameHomecomingStone] = false
 		else
 			bKeepBuyingConsumables = true
 			--only buy stones if we don't have some
-			local stone = itemHandler:GetItem(nameHomecomingStone, nil, true) or itemHandler:GetItem(nameHomecomingStone, courier)
+			local stone = itemHandler:GetItem(shopping.sNameHomecomingStone, nil, true) or itemHandler:GetItem(shopping.sNameHomecomingStone, courier)
 			if not stone then
-				local itemDef = HoN.GetItemDefinition(nameHomecomingStone)
+				local itemDef = HoN.GetItemDefinition(shopping.sNameHomecomingStone)
 				local cost = itemDef:GetCost()
 				local count = 0
 				
@@ -706,7 +726,7 @@ function  shopping.Autobuy()
 				end
 				
 				if count > 0 then
-					shopping.RequestConsumable (nameHomecomingStone, count)
+					shopping.RequestConsumable (shopping.sNameHomecomingStone, count)
 					nMyGold = nMyGold - count * cost
 				end
 			end
@@ -722,9 +742,9 @@ description:	Insert the requested items into the shopping list.
 --]]
 function shopping.GetConsumables()
 	
-	--automaticly purchaise
+	--automaticly purchase
 	if shopping.BuyConsumables and #shopping.tRequestQueue == 0 then
-		if debugInfoShoppingFunctions then BotEcho("Checking for Consumables") end
+		if shopping.bDebugInfoShoppingFunctions then BotEcho("Checking for Consumables") end
 		shopping.BuyConsumables = shopping.Autobuy()
 	end
 	
@@ -739,10 +759,10 @@ function shopping.GetConsumables()
 			local itemDef = HoN.GetItemDefinition(sQueueEntry)
 			if itemDef then
 				--put item definition into shopping list
-				tinsert(shopping.ShoppingList, 1, itemDef)
+				tinsert(shopping.tShoppingList, 1, itemDef)
 			else
 				--could not get the item definition, skipping entry
-				if debugInfoShoppingFunctions then BotEcho("Item definition was not found: "..sQueueEntry) end
+				if shopping.bDebugInfoShoppingFunctions then BotEcho("Item definition was not found: "..sQueueEntry) end
 			end
 			--remove entry
 			tremove(tRequestQueue, 1)
@@ -761,15 +781,15 @@ returns:		true if you should keep buying items
 --]]
 function shopping.CheckItemBuild()
 
-	if debugInfoGeneralInformation then BotEcho("You may want to override this function: shopping.CheckItemBuild()") end
+	if shopping.bDebugInfoGeneralInformation then BotEcho("You may want to override this function: shopping.CheckItemBuild()") end
 	
 	--just convert the standard lists into the new shopping list
-	if shopping.Itembuild then
-		if #shopping.Itembuild == 0 then
-			core.InsertToTable(shopping.Itembuild, behaviorLib.StartingItems)
-			core.InsertToTable(shopping.Itembuild, behaviorLib.LaneItems)
-			core.InsertToTable(shopping.Itembuild, behaviorLib.MidItems)
-			core.InsertToTable(shopping.Itembuild, behaviorLib.LateItems)
+	if shopping.tItembuild then
+		if #shopping.tItembuild == 0 then
+			core.InsertToTable(shopping.tItembuild, behaviorLib.StartingItems)
+			core.InsertToTable(shopping.tItembuild, behaviorLib.LaneItems)
+			core.InsertToTable(shopping.tItembuild, behaviorLib.MidItems)
+			core.InsertToTable(shopping.tItembuild, behaviorLib.LateItems)
 		else
 			--we reached the end of our itemlist. Done with shopping
 			return false
@@ -820,13 +840,13 @@ function shopping.GetAllComponents(itemDef)
 				tinsert(result, itemDef)
 			end
 		else
-			BotEcho("Error: GetComponents returns no value. Purchaise may bug out")
+			BotEcho("Error: GetComponents returns no value. purchase may bug out")
 		end
 	else
 		BotEcho("Error: No itemDef found")
 	end
 	
-	if debugInfoShoppingFunctions then
+	if shopping.bDebugInfoShoppingFunctions then
 		BotEcho("Result info")
 		for pos,val in ipairs (result) do
 			BotEcho("Position: "..tostring(pos).." ItemName: "..tostring((val and val:GetName()) or "Error val not found"))
@@ -857,7 +877,7 @@ function shopping.RemoveFirstByValue(t, valueToRemove)
 	for i, value in ipairs(t) do
 		--found matching value
 		if value == valueToRemove then
-			if debugInfoShoppingFunctions then BotEcho("Removing itemdef "..tostring(value)) end
+			if shopping.bDebugInfoShoppingFunctions then BotEcho("Removing itemdef "..tostring(value)) end
 			--remove entry
 			tremove(t, i)
 			bSuccess = true
@@ -876,9 +896,11 @@ parameters: 	tComponents: List of itemDef (usually result of shopping.GetAllComp
 returns: 		the remaining components to buy
 --]]
 function shopping.CheckItemsInventory (tComponents)
-	if debugInfoShoppingFunctions then BotEcho("Checking Inventory Stuff") end
+	if shopping.bDebugInfoShoppingFunctions then BotEcho("Checking Inventory Stuff") end
 	
-	if not tComponents then return end
+	if not tComponents then 
+		return 
+	end
 	
 	--result table
 	local tResult = core.CopyTable(tComponents)
@@ -891,7 +913,7 @@ function shopping.CheckItemsInventory (tComponents)
 	local courier = shopping.GetCourier()
 	if courier then
 		local courierInventory = courier:GetInventory(false)
-		for index, slot in ipairs (shopping.courierSlots) do
+		for index, slot in ipairs (shopping.tCourierSlots) do
 			if slot then
 				tinsert(inventory, courierInventory[slot])
 			end
@@ -911,7 +933,7 @@ function shopping.CheckItemsInventory (tComponents)
 				--Search list for any matches
 				for compSlot, compDef in ipairs(tResult) do
 					if compDef == itemDef then
-						if debugInfoShoppingFunctions then BotEcho("Found component. Name"..compDef:GetName()) end
+						if shopping.bDebugInfoShoppingFunctions then BotEcho("Found component. Name"..compDef:GetName()) end
 						
 						--found a component, add it to the list
 						tinsert(tPartOfItem, invItem)
@@ -924,22 +946,22 @@ function shopping.CheckItemsInventory (tComponents)
 		--Delete (sub-)components of items we own
 		for _, item in ipairs (tPartOfItem) do			
 			local itemDef = item:GetItemDefinition()
-			if debugInfoShoppingFunctions then BotEcho("Removing elements itemName"..itemDef:GetName()) end
+			if shopping.bDebugInfoShoppingFunctions then BotEcho("Removing elements itemName"..itemDef:GetName()) end
 			
 			--fount an item
 			if item then
-				if debugInfoShoppingFunctions then BotEcho("Found item") end
+				if shopping.bDebugInfoShoppingFunctions then BotEcho("Found item") end
 				
 				local bRecipe = item:IsRecipe() 
 				local level = not bRecipe and item:GetLevel() or 0
 				
 				if bRecipe then
 					--item is a recipe remove the first encounter
-					if debugInfoShoppingFunctions then BotEcho("this is a recipe") end
+					if shopping.bDebugInfoShoppingFunctions then BotEcho("this is a recipe") end
 					shopping.RemoveFirstByValue(tResult, itemDef)
 				else
 					--item is no recipe, take further testing
-					if debugInfoShoppingFunctions then BotEcho("not a recipe") end
+					if shopping.bDebugInfoShoppingFunctions then BotEcho("not a recipe") end
 					
 					--remove level-1 recipes
 					while level > 1 do
@@ -952,7 +974,7 @@ function shopping.CheckItemsInventory (tComponents)
 					
 					--remove all sub-components and itself
 					for _,val in pairs (components) do
-						if debugInfoShoppingFunctions then BotEcho("Removing Component. "..val:GetName()) end
+						if shopping.bDebugInfoShoppingFunctions then BotEcho("Removing Component. "..val:GetName()) end
 						shopping.RemoveFirstByValue(tResult, val)
 					end
 				end
@@ -974,22 +996,22 @@ local function GetNextItem()
 	local bKeepShopping = true
 	
 	--references to our itembuild list
-	local itemList = shopping.Itembuild
-	local listPos = shopping.ItembuildPosition
+	local itemList = shopping.tItembuild
+	local listPos = shopping.tItembuildPosition
 	
 	--check if there are no more items to buy
 	if  listPos > #itemList then
 		--get new items
-		if debugInfoShoppingFunctions then BotEcho("Shopping.Itembuild: Index Out of Bounds. Check for new stuff") end
+		if shopping.bDebugInfoShoppingFunctions then BotEcho("shopping.tItembuild: Index Out of Bounds. Check for new stuff") end
 		 bKeepShopping = shopping.CheckItemBuild()
 	end
 	
 	--Get next item and put it into Shopping List
 	if bKeepShopping then
 		--go to next position
-		shopping.ItembuildPosition = listPos + 1
+		shopping.tItembuildPosition = listPos + 1
 		
-		if debugInfoShoppingFunctions then BotEcho("Next Listposition:"..tostring(listPos)) end
+		if shopping.bDebugInfoShoppingFunctions then BotEcho("Next Listposition:"..tostring(listPos)) end
 		
 		--get item definition
 		local nextItemCode = itemList[listPos]
@@ -998,7 +1020,7 @@ local function GetNextItem()
 		--care about ItemReservations?
 		if shopping.CheckItemReservation then
 			local teamBot = HoN.GetTeamBotBrain()
-			if teamBot and teamBot.ReserveItem and not teamBot.ReserveItem(name) then 
+			if teamBot and not teamBot.ReserveItem(name) then 
 				--item reservation failed,because it is already reserved
 				return GetNextItem()
 			end
@@ -1006,7 +1028,7 @@ local function GetNextItem()
 		
 		local itemDef = HoN.GetItemDefinition(name)
 		
-		if debugInfoShoppingFunctions then BotEcho("Name "..name.." Anzahl "..num.." Level"..level) end
+		if shopping.bDebugInfoShoppingFunctions then BotEcho("Name "..name.." Anzahl "..num.." Level"..level) end
 				
 		
 		--get all components
@@ -1038,25 +1060,25 @@ local function GetNextItem()
 
 		--insert remaining items in shopping list
 		if #tReaminingItems > 0 then
-			if debugInfoShoppingFunctions then BotEcho("Remaining Components:") end
+			if shopping.bDebugInfoShoppingFunctions then BotEcho("Remaining Components:") end
 			for compSlot, compDef in ipairs (tReaminingItems) do
 				if compDef then
 					local defName = compDef:GetName()
-					if debugInfoShoppingFunctions then BotEcho("Component "..defName) end
+					if shopping.bDebugInfoShoppingFunctions then BotEcho("Component "..defName) end
 					--only insert component if it not an autocombined element
 					if  defName ~= name or not compDef:GetAutoAssemble() then
-						tinsert(shopping.ShoppingList, compDef)
+						tinsert(shopping.tShoppingList, compDef)
 					end
 				end
 			end
 		else
-			if debugInfoShoppingFunctions then BotEcho("No remaining components. Skip this item (If you want more items of this type increase number)") end
+			if shopping.bDebugInfoShoppingFunctions then BotEcho("No remaining components. Skip this item (If you want more items of this type increase number)") end
 			return GetNextItem()
 		end
 		
 	end
 	
-	if debugInfoShoppingFunctions then BotEcho("bKeepShopping? "..tostring(bKeepShopping)) end
+	if shopping.bDebugInfoShoppingFunctions then BotEcho("bKeepShopping? "..tostring(bKeepShopping)) end
 	
 	return bKeepShopping
 end
@@ -1069,9 +1091,9 @@ description:	Print Your itembuild-list, your current itembuild-list position and
 function shopping.printAll()
 	
 	--references to the lists
-	local itemBuild = shopping.Itembuild 
-	local shoppingList = shopping.ShoppingList
-	local position = shopping.ItembuildPosition 
+	local itemBuild = shopping.tItembuild 
+	local shoppingList = shopping.tShoppingList
+	local position = shopping.tItembuildPosition 
 	
 	BotEcho("My itembuild:")
 	--go through whole list and print each component
@@ -1096,7 +1118,7 @@ end
 
 --function UpdateItemList 
 --[[
-description:	Updates your itembuild-list and your shopping-list on a periodicly basis. Update can be forced
+description:	Updates your itembuild-list and your shopping-list on a periodically basis. Update can be forced
 parameters: 	bForceUpdate: Force a list update (usually called if your shopping-list is empty)
 
 --]]
@@ -1113,15 +1135,17 @@ function shopping.UpdateItemList(bForceUpdate)
 
 	
 	--Check itembuild every now and then or force an update
-	if shopping.nextItemBuildCheck <= nNow or bForceUpdate then
-		if debugInfoShoppingFunctions then BotEcho(tostring(shopping.nextItemBuildCheck).." Now "..tostring(nNow).." Force Update? "..tostring(bForceUpdate)) end
+	if shopping.nNextItemBuildCheck <= nNow or bForceUpdate then
+		if shopping.bDebugInfoShoppingFunctions then BotEcho(tostring(shopping.nNextItemBuildCheck).." Now "..tostring(nNow).." Force Update? "..tostring(bForceUpdate)) end
 		
-		if shopping.developeItemBuildSaver and bForceUpdate then SyncWithDatabse() end
+		if shopping.bDevelopeItemBuildSaver and bForceUpdate then 
+			SyncWithDatabse() 
+		end
 		
-		if shopping.ShoppingList then
+		if shopping.tShoppingList then
 			--Is your Shopping list empty? get new item-components to buy
-			if #shopping.ShoppingList == 0 and shopping.BuyItems then
-				if debugInfoShoppingFunctions then BotEcho("Checking for next item") end
+			if #shopping.tShoppingList == 0 and shopping.BuyItems then
+				if shopping.bDebugInfoShoppingFunctions then BotEcho("Checking for next item") end
 				shopping.BuyItems = GetNextItem()
 			end
 			
@@ -1132,35 +1156,35 @@ function shopping.UpdateItemList(bForceUpdate)
 			
 			--Are we in charge to buy and upgrade courier?
 			if shopping.bCourierCare then
-				if debugInfoShoppingFunctions then BotEcho("Care about Courier") end
+				if shopping.bDebugInfoShoppingFunctions then BotEcho("Care about Courier") end
 				shopping.CareAboutCourier()
 			end
 			
-			--check for delayed items (Mainly puzzlebox re-purchaise)
-			local tDelayedItems = shopping.delayedItems
+			--check for delayed items (Mainly puzzlebox re-purchase)
+			local tDelayedItems = shopping.tDelayedItems
 			if #tDelayedItems > 0 then
-				if debugInfoShoppingFunctions then BotEcho("Found delayed items") end
+				if shopping.bDebugInfoShoppingFunctions then BotEcho("Found delayed items") end
 				local success = false
 				--check if there are any items off cooldown
 				for i, listEntry in ipairs(tDelayedItems) do
 					local nTime, itemDef = listEntry[1], listEntry[2]
 					if nTime <= nNow then
 						--try to re-purchase this item
-						if debugInfoShoppingFunctions then BotEcho("Insert Entry in shopping list") end
-						tinsert(shopping.ShoppingList,1, itemDef)
+						if shopping.bDebugInfoShoppingFunctions then BotEcho("Insert Entry in shopping list") end
+						tinsert(shopping.tShoppingList,1, itemDef)
 						success = i
 						break;
 					end
 				end
 				if success then
-					tremove (shopping.delayedItems, success)
+					tremove (shopping.tDelayedItems, success)
 				end				
 			end							
 		end
 		
 		--reset cooldown
-		shopping.nextItemBuildCheck = nNow + shopping.checkItemBuildInterval
-		if debugInfoShoppingFunctions then shopping.printAll() end
+		shopping.nNextItemBuildCheck = nNow + shopping.nCheckItemBuildInterval
+		if shopping.bDebugInfoShoppingFunctions then shopping.printAll() end
 	end
 end
 
@@ -1179,10 +1203,12 @@ returns: 		true if successfully set
 --]]
 function shopping.SetItemSlotNumber(itemName, slot)
 	
-	if not itemName then return false end
+	if not itemName then 
+		return false 
+	end
 	
 	--insert slot number or delete entry if slot is nil
-	shopping.DesiredItems[itemName] = slot
+	shopping.tDesiredItems[itemName] = slot
 	
 	return true
 end
@@ -1195,7 +1221,7 @@ parameters: 	itemName: Name of the item
 returns: 		the number of the desired Slot
 --]]
 function shopping.GetItemSlotNumber(itemName)
-	local desiredItems = shopping.DesiredItems
+	local desiredItems = shopping.tDesiredItems
 	return desiredItems and desiredItems[itemName] or 0
 end
 
@@ -1208,7 +1234,9 @@ parameters:		a: first table element
 				
 returns:		true if a is smaller than b
 --]]
-local function pair(a, b) return a[1] < b[1] end
+local function pair(a, b) 
+	return a[1] < b[1] 
+end
 
 --function SortItems 
 --[[
@@ -1220,10 +1248,12 @@ returns 		true if the inventory was changed
 function shopping.SortItems (unit)
 	local bChanged = false
 	
-	if debugInfoShoppingFunctions then BotEcho("Sorting items probably") end
+	if shopping.bDebugInfoShoppingFunctions then BotEcho("Sorting items probably") end
 	
 	--default unit hero-unit
-	if not unit then unit = core.unitSelf end
+	if not unit then 
+		unit = core.unitSelf 
+	end
 	
 	--get inventory
 	local inventory = unit:GetInventory(true)
@@ -1236,7 +1266,7 @@ function shopping.SortItems (unit)
 	
 	--index all items
 	for slot, item in pairs (inventory) do
-		if debugInfoShoppingFunctions then BotEcho("Current Slot"..tostring(slot)) end
+		if shopping.bDebugInfoShoppingFunctions then BotEcho("Current Slot"..tostring(slot)) end
 		
 		--only add non recipe items
 		if not item:IsRecipe() then 
@@ -1244,7 +1274,7 @@ function shopping.SortItems (unit)
 			--get item info
 			local itemName = item:GetName()			
 			local itemTotalCost = item:GetTotalCost()
-			if debugInfoShoppingFunctions then BotEcho("Item "..itemName) end
+			if shopping.bDebugInfoShoppingFunctions then BotEcho("Item "..itemName) end
 			
 			--get desiredSlot
 			local desiredSlot = shopping.GetItemSlotNumber(itemName)
@@ -1310,7 +1340,7 @@ function shopping.SortItems (unit)
 		if thisItemSlot then
 			--valid swap?
 			if thisItemSlot ~= slot then
-				if debugInfoShoppingFunctions then BotEcho("Swapping Slot "..tostring(thisItemSlot).." with "..tostring(slot)) end
+				if shopping.bDebugInfoShoppingFunctions then BotEcho("Swapping Slot "..tostring(thisItemSlot).." with "..tostring(slot)) end
 				
 				--swap items
 				unit:SwapItems(thisItemSlot, slot)
@@ -1320,7 +1350,7 @@ function shopping.SortItems (unit)
 		end
 	end
 	
-	if debugInfoShoppingFunctions then 
+	if shopping.bDebugInfoShoppingFunctions then 
 		BotEcho("Sorting Result: "..tostring(bChanged)) 
 		for position, fromSlot in pairs (tSlots) do
 			BotEcho("Item in Slot "..tostring(position).." was swapped from "..tostring(fromSlot))
@@ -1332,7 +1362,7 @@ end
 
 --function SellItems 
 --[[
-description:	Sell a number off items from the unit's inventory (inc.stash)
+description:	Sell a number of items from the unit's inventory (inc.stash)
 parameters: 	number: Number of items to sell; 
 				unit: Unit which should sell its items
 				itemdef: sell restirction for item definiton
@@ -1343,32 +1373,36 @@ function shopping.SellItems (number, unit)
 	local bChanged = false
 	
 	--default unit: hero-unit
-	if not unit then unit = core.unitSelf end
+	if not unit then 
+		unit = core.unitSelf 
+	end
 	
 	--default number: 1; return if there is a negative value
-	if not number then number = 1
-	elseif number < 1 then return bChanged 
+	if not number then 
+		number = 1
+	elseif number < 1 then 
+		return bChanged 
 	end
 	
 	--get inventory
-	local inventory = unit:GetInventory(true)
+	local tInventory = unit:GetInventory(true)
 	
 	--list of cost and slot pairs
 	local tValueList = {}
 	
 	--index all items
-	for slot, item in pairs (inventory) do
+	for slot, item in pairs (tInventory) do
 		--insert only non recipe items
 		if not item:IsRecipe() then 
 			local itemTotalCost = item:GetTotalCost()
 			local itemName = item:GetName()
 			--give the important items a bonus in gold (Boots, Mystic Vestments etc.)
 			if slot == shopping.GetItemSlotNumber(itemName) then
-				itemTotalCost = itemTotalCost + shopping.SellBonusValue
+				itemTotalCost = itemTotalCost + shopping.nSellBonusValue
 			end
 			--insert item in the list
 			tinsert(tValueList, {itemTotalCost, slot})
-			if debugInfoShoppingFunctions then BotEcho("Insert Slotnumber: "..tostring(slot).." Item "..itemName.." Price "..tostring(itemTotalCost)) end
+			if shopping.bDebugInfoShoppingFunctions then BotEcho("Insert Slotnumber: "..tostring(slot).." Item "..itemName.." Price "..tostring(itemTotalCost)) end
 		end				
 	end
 	
@@ -1382,7 +1416,7 @@ function shopping.SellItems (number, unit)
 		local valueEntry = tValueList[#tValueList]
 		local sellingSlot = valueEntry and valueEntry[2]
 		if sellingSlot then
-			if debugInfoShoppingFunctions then BotEcho("I am selling slotnumber"..tostring(slot)) end
+			if shopping.bDebugInfoShoppingFunctions then BotEcho("I am selling slotnumber"..tostring(slot)) end
 			--Sell item by lowest TotalCost
 			unit:SellBySlot(sellingSlot)
 			
@@ -1458,21 +1492,21 @@ function shopping.ShopUtility(botBrain)
 		local courier = shopping.GetCourier()
 		
 		--check we have to buy a new courier
-		if shopping.BuyNewCourier then
+		if shopping.bBuyNewCourier then
 			if courier then					
 				--there is a courier, no need to buy one
-				shopping.BuyNewCourier = nil
-				shopping.PauseShopping = false
+				shopping.bBuyNewCourier = false
+				shopping.bPauseShopping = false
 			else
-				shopping.PauseShopping = true
+				shopping.bPauseShopping = true
 				if myGold >= 200 and bCanAccessStash then 
 					--recheck courier to be safe
 					if not shopping.GetCourier(true) then 
 						--buy it
-						tinsert(shopping.ShoppingList, 1, shopping.BuyNewCourier)
+						tinsert(shopping.tShoppingList, 1, HoN.GetItemDefinition("Item_GroundFamiliar"))
 					end
-					shopping.BuyNewCourier = nil
-					shopping.PauseShopping = false
+					shopping.bBuyNewCourier = false
+					shopping.bPauseShopping = false
 				end
 			end
 		end
@@ -1484,36 +1518,36 @@ function shopping.ShopUtility(botBrain)
 	end
 	
 	--still items to buy?
-	if shopping.DoShopping and not shopping.PauseShopping then 
+	if shopping.bDoShopping and not shopping.bPauseShopping then 
 		
 		if not behaviorLib.finishedBuying then
 			utility = nShoppingUtilityValue
 		end
 		
-		--if debugInfoShoppingBehavior then BotEcho("Check next item") end
-		local nextItemDef = shopping.ShoppingList and shopping.ShoppingList[1]
+		--if shopping.bDebugInfoShoppingBehavior then BotEcho("Check next item") end
+		local nextItemDef = shopping.tShoppingList and shopping.tShoppingList[1]
 		
 		if not nextItemDef then
-			if debugInfoShoppingBehavior then BotEcho("No item definition in Shopping List. Start List update") end
+			if shopping.bDebugInfoShoppingBehavior then BotEcho("No item definition in Shopping List. Start List update") end
 			shopping.UpdateItemList(true)
-			nextItemDef = shopping.ShoppingList[1]
+			nextItemDef = shopping.tShoppingList[1]
 		end
 		
 		
 		if nextItemDef then 
 		
 			if myGold > nextItemDef:GetCost() then
-				if debugInfoShoppingBehavior then BotEcho("Enough gold to buy the item: "..nextItemDef:GetName()..". Current gold: "..tostring(myGold)) end	
+				if shopping.bDebugInfoShoppingBehavior then BotEcho("Enough gold to buy the item: "..nextItemDef:GetName()..". Current gold: "..tostring(myGold)) end	
 				utility = nShoppingUtilityValue
 				behaviorLib.finishedBuying = false
 				if bCanAccessStash then
-					if debugInfoShoppingBehavior then BotEcho("Hero can access shop") end
+					if shopping.bDebugInfoShoppingBehavior then BotEcho("Hero can access shop") end
 					utility = nShoppingUtilityValue * 3						
 				end				
 			end
 		else
 			BotEcho("Error no next item...Stopping any shopping")
-			shopping.DoShopping = false
+			shopping.bDoShopping = false
 		end
 		
 	end
@@ -1526,22 +1560,22 @@ function shopping.ShopExecute(botBrain)
 	local nNow = HoN.GetGameTime()
 	
 	--Space out your buys (one purchase per behavior-utility cycle)
-	if shopping.nextBuyTime > nNow then
+	if shopping.nNextBuyTime > nNow then
 		return false
 	end
 
-	if debugInfoShoppingBehavior then BotEcho("Shopping Execute:") end
+	if shopping.bDebugInfoShoppingBehavior then BotEcho("Shopping Execute:") end
 	
-	shopping.nextBuyTime = nNow + shopping.buyInterval
+	shopping.nNextBuyTime = nNow + shopping.nBuyInterval
 		
 	local unitSelf = core.unitSelf
 
 	local bChanged = false
 	local inventory = unitSelf:GetInventory(true)
-	local nextItemDef = shopping.ShoppingList[1]
+	local nextItemDef = shopping.tShoppingList[1]
 		
 	if nextItemDef then
-		if debugInfoShoppingBehavior then BotEcho("Found item. Buying "..nextItemDef:GetName()) end
+		if shopping.bDebugInfoShoppingBehavior then BotEcho("Found item. Buying "..nextItemDef:GetName()) end
 		
 		local goldAmtBefore = botBrain:GetGold()
 		local nItemCost = nextItemDef:GetCost()
@@ -1556,8 +1590,8 @@ function shopping.ShopExecute(botBrain)
 			if openSlots < 1 then
 			
 				local bSuccess, bStashOnly = shopping.SellItems (1)
-				--stop shopping, if we can't purchaise items anymore, fix it with next stash access
-				shopping.PauseShopping = not bSuccess or not bStashOnly
+				--stop shopping, if we can't purchase items anymore, fix it with next stash access
+				shopping.bPauseShopping = not bSuccess or not bStashOnly
 				
 			else
 				unitSelf:PurchaseRemaining(nextItemDef)
@@ -1567,24 +1601,24 @@ function shopping.ShopExecute(botBrain)
 				
 				--check purchase success
 				if bGoldReduced then 
-					if debugInfoShoppingBehavior then BotEcho("item Purchased. removing it from shopping list") end
-					tremove(shopping.ShoppingList,1)
-					if shopping.developeItemBuildSaver then SyncWithDatabse() end
+					if shopping.bDebugInfoShoppingBehavior then BotEcho("item Purchased. removing it from shopping list") end
+					tremove(shopping.tShoppingList,1)
+					if shopping.bDevelopeItemBuildSaver then SyncWithDatabse() end
 				else
 					local maxStock = nextItemDef:GetMaxStock()
 					if maxStock > 0 then
 						-- item may not be purchaseble, due to cooldown, so skip it
-						if debugInfoShoppingBehavior then BotEcho("Item not purchaseable due to cooldown. Item will be skipped") end
-						tremove(shopping.ShoppingList,1)
+						if shopping.bDebugInfoShoppingBehavior then BotEcho("Item not purchaseable due to cooldown. Item will be skipped") end
+						tremove(shopping.tShoppingList,1)
 						--re-enter bigger items after cooldown delay 
 						if nItemCost > 250 then
-							if debugInfoShoppingBehavior then BotEcho("Item is valuble, will try to repurchaise it after some delay") end
+							if shopping.bDebugInfoShoppingBehavior then BotEcho("Item is valuble, will try to repurchase it after some delay") end
 							local nItemRestockedTime = nNow + 120000
-							tinsert (shopping.delayedItems, {nItemRestockedTime, nextItemDef})
+							tinsert (shopping.tDelayedItems, {nItemRestockedTime, nextItemDef})
 						end
 					else
-						if debugInfoShoppingBehavior then BotEcho("No Purchase of "..nextItemDef:GetName()..". Unknown exception waiting for stash access to fix it.") end
-						shopping.PauseShopping = true
+						if shopping.bDebugInfoShoppingBehavior then BotEcho("No Purchase of "..nextItemDef:GetName()..". Unknown exception waiting for stash access to fix it.") end
+						shopping.bPauseShopping = true
 					end						
 				end	
 				bChanged = bChanged or bGoldReduced
@@ -1594,13 +1628,13 @@ function shopping.ShopExecute(botBrain)
 	
 	--finished buying
 	if bChanged == false then
-		if debugInfoShoppingBehavior then BotEcho("Finished Buying!") end
+		if shopping.bDebugInfoShoppingBehavior then BotEcho("Finished Buying!") end
 		behaviorLib.finishedBuying = true
 		shopping.bStashFunctionActivation = true
 		itemHandler:UpdateDatabase()
 		local bCanAccessStash = unitSelf:CanAccessStash()
 		if not bCanAccessStash then 
-			if debugInfoShoppingBehavior then  BotEcho("CourierStart") end
+			if shopping.bDebugInfoShoppingBehavior then  BotEcho("CourierStart") end
 			shopping.bCourierMissionControl = true
 		end
 	end
@@ -1629,7 +1663,7 @@ function shopping.StashUtility(botBrain)
 		shopping.bStashFunctionActivation = true
 	end
 	
-	if debugInfoShoppingBehavior and utility > 0 then BotEcho("Stash utility: "..tostring(utility)) end
+	if shopping.bDebugInfoShoppingBehavior and utility > 0 then BotEcho("Stash utility: "..tostring(utility)) end
 
 	return utility
 end
@@ -1641,21 +1675,21 @@ function shopping.StashExecute(botBrain)
 	local unitSelf = core.unitSelf
 	local bCanAccessStash = unitSelf:CanAccessStash()
 	
-	if debugInfoShoppingBehavior then BotEcho("Can access stash "..tostring(bCanAccessStash)) end
+	if shopping.bDebugInfoShoppingBehavior then BotEcho("Can access stash "..tostring(bCanAccessStash)) end
 	
 	--we can access the stash so just sort the items
 	if bCanAccessStash then
-		if debugInfoShoppingBehavior then BotEcho("Sorting items soon") end
+		if shopping.bDebugInfoShoppingBehavior then BotEcho("Sorting items soon") end
 		
 		bSuccess = shopping.SortItems (unitSelf) 
 		
-		if debugInfoShoppingBehavior then BotEcho("Sorted items"..tostring(bSuccess)) end
+		if shopping.bDebugInfoShoppingBehavior then BotEcho("Sorted items"..tostring(bSuccess)) end
 		
 		--don't sort items again in this stash-meeting (besides if we are using a tp)
 		shopping.bStashFunctionActivation = false
 		
 		--all Stashproblems should be fixed now
-		shopping.PauseShopping = false
+		shopping.bPauseShopping = false
 		
 		itemHandler:UpdateDatabase(bSuccess)
 	end
@@ -1742,7 +1776,7 @@ function shopping.FillCourier(courier)
 	
 	if not courier then return success end
 	
-	if debugInfoCourierRelated then BotEcho("Fill COurier") end
+	if shopping.bDebugInfoCourierRelated then BotEcho("Fill COurier") end
 	
 	--get info about inventory
 	local inventory = courier:GetInventory()
@@ -1754,7 +1788,7 @@ function shopping.FillCourier(courier)
 	for  slot = 1, 6, 1 do
 		local item = inventory[slot]
 		if not item then 
-			if debugInfoCourierRelated then BotEcho("Slot "..tostring(slot).." is free") end
+			if shopping.bDebugInfoCourierRelated then BotEcho("Slot "..tostring(slot).." is free") end
 			tinsert(tSlotsOpen, slot)
 		end
 	end
@@ -1764,9 +1798,9 @@ function shopping.FillCourier(courier)
 		local curItem = stash[slot]
 		local freeSlot = tSlotsOpen[openSlot]
 		if curItem and freeSlot then
-			if debugInfoCourierRelated then BotEcho("Swap "..tostring(slot).." with "..tostring(freeSlot)) end
+			if shopping.bDebugInfoCourierRelated then BotEcho("Swap "..tostring(slot).." with "..tostring(freeSlot)) end
 			courier:SwapItems(slot, freeSlot)
-			tinsert(shopping.courierSlots, freeSlot)
+			tinsert(shopping.tCourierSlots, freeSlot)
 			openSlot = openSlot + 1
 			success = true
 		end
@@ -1783,17 +1817,21 @@ end
 function shopping.FillStash(courier)
 	local success = false
 	
-	if not courier then return success end
+	if not courier then 
+		return success 
+	end
 	
 	--get inventory information
 	local inventory = courier:GetInventory()
 	local stash = core.unitSelf:GetInventory (true)
 	
 	--any items to return to stash?
-	local tCourierSlots = shopping.courierSlots
-	if not tCourierSlots then return success end
+	local tCourierSlots = shopping.tCourierSlots
+	if not tCourierSlots then 
+		return success 
+	end
 	
-	if debugInfoCourierRelated then BotEcho("Fill Stash") end
+	if shopping.bDebugInfoCourierRelated then BotEcho("Fill Stash") end
 	
 	-- return items to stash
 	local nLastItemSlot = #tCourierSlots
@@ -1802,23 +1840,23 @@ function shopping.FillStash(courier)
 		local nItemSlot = tCourierSlots[nLastItemSlot]
 		local itemInSlot = nItemSlot and inventory[nItemSlot]
 		if not itemInSlot then
-			if debugInfoCourierRelated then BotEcho("No item in Slot "..tostring(nItemSlot)) end
-			tremove(shopping.courierSlots)
+			if shopping.bDebugInfoCourierRelated then BotEcho("No item in Slot "..tostring(nItemSlot)) end
+			tremove(shopping.tCourierSlots)
 			nLastItemSlot = nLastItemSlot - 1
 		else
 			if not itemInStashSlot then
-				if debugInfoCourierRelated then BotEcho("Swap "..tostring(nItemSlot).." with "..tostring(slot)) end
+				if shopping.bDebugInfoCourierRelated then BotEcho("Swap "..tostring(nItemSlot).." with "..tostring(slot)) end
 				courier:SwapItems(nItemSlot, slot)
-				tremove(shopping.courierSlots)
+				tremove(shopping.tCourierSlots)
 				nLastItemSlot = nLastItemSlot - 1
 				success = true
 			end
 		end
 	end
 	
-	local courierSlotsUsed = #shopping.courierSlots
+	local courierSlotsUsed = #shopping.tCourierSlots
 	if courierSlotsUsed > 0 then
-		if debugInfoCourierRelated then BotEcho("Still items remaining. Selling number of items: "..tostring(courierSlotsUsed)) end
+		if shopping.bDebugInfoCourierRelated then BotEcho("Still items remaining. Selling number of items: "..tostring(courierSlotsUsed)) end
 		shopping.SellItems (courierSlotsUsed, courier)
 		return shopping.FillStash(courier)
 	end
@@ -1829,39 +1867,39 @@ end
 --courier control function
 local function CourierMission(botBrain, courier)
 	
-	local currentState = shopping.CourierState
+	local currentState = shopping.nCourierState
 	local bOnMission = true
 	
 	--check current state; 0: setting up courier (after reload); 1: fill courier; 2 deliver; 3 home
 	if currentState < 2 then
 		if currentState < 1 then
 			--we have sth to deliver
-			if #shopping.courierSlots > 0 then
-				shopping.CourierState = 2
+			if #shopping.tCourierSlots > 0 then
+				shopping.nCourierState = 2
 			else
-				shopping.CourierState = 1
+				shopping.nCourierState = 1
 			end
 		else
 			--filling courier phase
 			if courier:CanAccessStash() then
-				if debugInfoCourierRelated then BotEcho("Stash Access") end
+				if shopping.bDebugInfoCourierRelated then BotEcho("Stash Access") end
 				--fill courier
 				local success = shopping.FillCourier(courier)
 				if success then
 					--Item transfer successfull. Switch to delivery phase
-					shopping.CourierState = 2
+					shopping.nCourierState = 2
 				else 
 					--no items transfered (no space or no items)
 					if currentState == 1.9 then
 						--3rd transfer attempt didn't solve the issue, stopping mission
-						if debugInfoCourierRelated then BotEcho("Something destroyed courier usage. Courier-Inventory is full or unit has no stash items") end
+						if shopping.bDebugInfoCourierRelated then BotEcho("Something destroyed courier usage. Courier-Inventory is full or unit has no stash items") end
 						bOnMission = false
 					else
 						--waiting some time before trying again
-						if debugInfoCourierRelated then BotEcho("Can not transfer any items. Taking a time-out") end
+						if shopping.bDebugInfoCourierRelated then BotEcho("Can not transfer any items. Taking a time-out") end
 						local nNow = HoN.GetGameTime()
-						shopping.nextCourierControl = nNow + 5000
-						shopping.CourierState = shopping.CourierState +0.3
+						shopping.nNextCourierControl = nNow + 5000
+						shopping.nCourierState = shopping.nCourierState +0.3
 					end
 				end
 			end
@@ -1872,9 +1910,9 @@ local function CourierMission(botBrain, courier)
 			
 			--unit is dead? abort delivery
 			if not core.unitSelf:IsAlive() then
-				if debugInfoCourierRelated then BotEcho("Hero is dead - returning Home") end
+				if shopping.bDebugInfoCourierRelated then BotEcho("Hero is dead - returning Home") end
 				--abort mission and fill stash
-				shopping.CourierState = 3
+				shopping.nCourierState = 3
 				
 				--home
 				local courierHome = courier:GetAbility(3)
@@ -1886,7 +1924,7 @@ local function CourierMission(botBrain, courier)
 			
 			-- only cast delivery ability once (else it will lag the courier movement
 			if not shopping.bDelivery then
-				if debugInfoCourierRelated then BotEcho("Courier uses Delivery!") end
+				if shopping.bDebugInfoCourierRelated then BotEcho("Courier uses Delivery!") end
 				--deliver
 				local courierSend = courier:GetAbility(2)
 				if courierSend then
@@ -1905,15 +1943,15 @@ local function CourierMission(botBrain, courier)
 			
 			--check if courier is near hero to queue home-skill
 			local distanceCourierToHeroSq = Vector3.Distance2DSq(courier:GetPosition(), core.unitSelf:GetPosition()) 
-			if debugInfoCourierRelated then BotEcho("Distance between courier and hero"..tostring(distanceCourierToHeroSq)) end
+			if shopping.bDebugInfoCourierRelated then BotEcho("Distance between courier and hero"..tostring(distanceCourierToHeroSq)) end
 			
 			if distanceCourierToHeroSq <= shopping.nCourierDeliveryDistanceSq then
-				if debugInfoCourierRelated then BotEcho("Courier is in inner circle") end
+				if shopping.bDebugInfoCourierRelated then BotEcho("Courier is in inner circle") end
 				
 				if not shopping.bUpdateDatabaseAfterDelivery then
 					shopping.bUpdateDatabaseAfterDelivery = true
 					
-					if debugInfoCourierRelated then BotEcho("Activate Home Skill !") end
+					if shopping.bDebugInfoCourierRelated then BotEcho("Activate Home Skill !") end
 					--home
 					local courierHome = courier:GetAbility(3)
 					if courierHome then
@@ -1922,27 +1960,27 @@ local function CourierMission(botBrain, courier)
 					end
 				end
 			else
-				if debugInfoCourierRelated then BotEcho("Courier is out of range") end
+				if shopping.bDebugInfoCourierRelated then BotEcho("Courier is out of range") end
 				if shopping.bUpdateDatabaseAfterDelivery then
 				
-					if debugInfoCourierRelated then BotEcho("Delivery done") end
+					if shopping.bDebugInfoCourierRelated then BotEcho("Delivery done") end
 					shopping.bUpdateDatabaseAfterDelivery = false
 					itemHandler:UpdateDatabase()
 					
 					--remove item entries successfully delivered (item transfer bug protection)
 					local inventory = courier:GetInventory(false)
 					local index = 1
-					while index <= #shopping.courierSlots do
-						local slot = shopping.courierSlots[index]
+					while index <= #shopping.tCourierSlots do
+						local slot = shopping.tCourierSlots[index]
 						local item = slot and inventory[slot]
 						if item then
 							index = index + 1
 						else
-							tremove(shopping.courierSlots, index)
+							tremove(shopping.tCourierSlots, index)
 						end
 					end
-					if shopping.developeItemBuildSaver then SyncWithDatabse() end
-					shopping.CourierState = 3
+					if shopping.bDevelopeItemBuildSaver then SyncWithDatabse() end
+					shopping.nCourierState = 3
 					shopping.bDelivery = false
 				end
 			end
@@ -1950,21 +1988,21 @@ local function CourierMission(botBrain, courier)
 		
 			--unit just respawned after failed mission - try to deliver again
 			if core.unitSelf:IsAlive() and shopping.bDelivery then
-				if debugInfoCourierRelated then BotEcho("Hero has respawned") end
+				if shopping.bDebugInfoCourierRelated then BotEcho("Hero has respawned") end
 				--abort mission and fill stash
-				shopping.CourierState = 2
+				shopping.nCourierState = 2
 				shopping.bDelivery = false
 			end
 			
 			--Waiting for courier to be usable
 			if courier:CanAccessStash() then
-				if debugInfoCourierRelated then BotEcho("Courier can access stash. Ending mission") end
+				if shopping.bDebugInfoCourierRelated then BotEcho("Courier can access stash. Ending mission") end
 				
 				shopping.FillStash(courier)
-				shopping.CourierState = 1
+				shopping.nCourierState = 1
 				
 				bOnMission = false
-				if shopping.developeItemBuildSaver then SyncWithDatabse() end
+				if shopping.bDevelopeItemBuildSaver then SyncWithDatabse() end
 			end
 		end
 	end
@@ -1977,8 +2015,8 @@ local function CheckCourierBugged(botBrain, courier)
 	--Courier is a multi user controlled unit, so it may bugged out
 	
 	--end of courier mission; don't track courier
-	if not shopping.bCourierMissionControl and core.IsTableEmpty(shopping.courierSlots) then
-		shopping.CourierLastPosition = nil
+	if not shopping.bCourierMissionControl and core.IsTableEmpty(shopping.tCourierSlots) then
+		shopping.vecCourierLastPosition = nil
 		return
 	end
 	
@@ -1986,17 +2024,17 @@ local function CheckCourierBugged(botBrain, courier)
 	local vecCourierPosition = courier:GetPosition()
 	
 	--no position set or courier is moving update position and time
-	if not shopping.CourierLastPosition or Vector3.Distance2DSq(vecCourierPosition, shopping.CourierLastPosition) > 100 then
-		shopping.CourierLastPosition = vecCourierPosition
-		shopping.CourierBuggedTimer	= nNow
+	if not shopping.vecCourierLastPosition or Vector3.Distance2DSq(vecCourierPosition, shopping.vecCourierLastPosition) > 100 then
+		shopping.vecCourierLastPosition = vecCourierPosition
+		shopping.nCourierBuggedTimer	= nNow
 		return
 	end
 		
 	--current tracking
 	--check for bugs
-	if shopping.CourierState == 2 then
+	if shopping.nCourierState == 2 then
 		--want to deliver 
-		if shopping.CourierBuggedTimer + shopping.nCourierDeliveryTimeOut <= nNow then
+		if shopping.nCourierBuggedTimer + shopping.nCourierDeliveryTimeOut <= nNow then
 			--unit is not moving for 1.5s and we want to deliver... request a new delivery order
 			--deliver
 			local courierSend = courier:GetAbility(2)
@@ -2004,17 +2042,17 @@ local function CheckCourierBugged(botBrain, courier)
 				core.OrderAbility(botBrain, courierSend, nil, true)
 				shopping.bDelivery = true
 			end
-			shopping.CourierBuggedTimer = nNow
+			shopping.nCourierBuggedTimer = nNow
 		end
 	else
 		--otherwise
-		if shopping.CourierBuggedTimer + shopping.nCourierPositionTimeOut <= nNow then
+		if shopping.nCourierBuggedTimer + shopping.nCourierPositionTimeOut <= nNow then
 			--home
 			local courierHome = courier:GetAbility(3)
 			if courierHome then
 				core.OrderAbility(botBrain, courierHome, nil, true)
 			end
-			shopping.CourierBuggedTimer = nNow
+			shopping.nCourierBuggedTimer = nNow
 		end
 	end	
 	
@@ -2024,115 +2062,19 @@ local function CheckCourierBugged(botBrain, courier)
 	
 end
 
-
-
----------------------------------------------------
--- TeamBotBrain Functions
----------------------------------------------------
-
---generate new Reservation table in the teambot
-local function SetupReservation()
-	
-	local debugTeamBotBrain = false
-	local teamBot = HoN.GetTeamBotBrain()
-	
-	teamBot.bReservation = true
-	
-	--restricted items:
-	local tReservations = {
-			--AbyssalSkull
-			Item_LifeSteal5 = false,
-			--Nomes Wisdom
-			Item_NomesWisdom = false,
-			--Sols Bulwark
-			Item_SolsBulwark = false,
-			--Daemonic Breastplate
-			Item_DaemonicBreastplate = false,
-			--Barrier Idol
-			Item_BarrierIdol = false,
-			--Astrolabe
-			Item_Astrolabe = false,
-			--Mock of Brilliance
-			Item_Damage10 = false
-	}
-	teamBot.tReservatedItems = tReservations
-	
-	if debugTeamBotBrain then BotEcho("Teambotbrain reservation Initialized") end
-end
-
---reserve an item, if possible
-local function ReserveItem (itemName)
-	
-	local debugTeamBotBrain = false
-	
-	if not itemName then return false end
-	
-	local teamBot = HoN.GetTeamBotBrain()
-	
-	if not teamBot.bReservation then 
-		teamBot.SetupReservation()
-	end
-	
-	--check if reserved
-	local tReservationTable = teamBot.tReservatedItems
-	
-	local bReserved = tReservationTable[itemName]
-	
-	if debugTeamBotBrain then BotEcho(itemName.." was found in reservation table: "..tostring(bReserved)) end
-	
-	--if item is not reserved or not tracked, you can buy it 
-	if  bReserved ~= false then
-		return not bReserved
-	end
-	
-	--item is not reserved... need further checks
-	local bFoundItem = false
-	
-	--check if an instance of the item is in the inventory of not supported heroes (without this lib or human players)
-	local tAllyHeroes= HoN.GetHeroes(core.myTeam)
-	for index, hero in pairs(tAllyHeroes) do
-		--we can only check the inventory... :(
-		local inventory = hero:GetInventory (false)
-		bFoundItem = core.InventoryContains(inventory, itemName, false, false)
-		if #bFoundItem > 0 then
-			if debugTeamBotBrain then BotEcho(itemName.." was found in an allies inventory: ") end
-			bFoundItem = true
-			break
-		else
-			bFoundItem = false
-		end
-	end
-	
-	--Reserve item 
-	tReservationTable[itemName] = true
-	
-	--if item was not found, we can buy it
-	return not bFoundItem
-end
-
 ---------------------------------------------------
 -- On think: TeambotBrain  and Courier Control
 ---------------------------------------------------
 function shopping:onThinkShopping(tGameVariables)
-	
-	--Pre old onThink, because we have to add the teambot functions before entering the behaviors
-	if shopping.CheckItemReservation then
-		local teamBot = HoN.GetTeamBotBrain()
-		if not teamBot.SetupReservation then
-			if debugInfoGeneralInformation then BotEcho("Setting up teambotBrain") end
-			teamBot.SetupReservation = SetupReservation
-			teamBot.ReserveItem = ReserveItem
-		end
-	end
-	
+
 	--old onThink
 	self:onthinkPreShopOld(tGameVariables)
 	
 	--Courier Control
 	local nNow = HoN.GetGameTime()
-	if shopping.nextCourierControl <= nNow then
+	if shopping.nNextCourierControl <= nNow then
 	
-		shopping.nextCourierControl = nNow + shopping.CourierControlIntervall
+		shopping.nNextCourierControl = nNow + shopping.nCourierControlIntervall
 		
 		local courier = shopping.GetCourier()
 	
@@ -2147,9 +2089,9 @@ function shopping:onThinkShopping(tGameVariables)
 			
 			--activate shield if needed
 			local courierShield =  courier:GetAbility(1)
-			local nCourierHP = courier:GetHealthPercent()
-			if courierShield and courierShield:CanActivate() and nCourierHP < 1 then
-				if debugInfoCourierRelated then BotEcho("Activate Shield") end
+			local nCourierHealthPercent = courier:GetHealthPercent()
+			if courierShield and courierShield:CanActivate() and nCourierHealthPercent < 1 then
+				if shopping.bDebugInfoCourierRelated then BotEcho("Activate Shield") end
 				core.OrderAbility(self, courierShield)
 				return 
 			end		
