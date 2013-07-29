@@ -148,6 +148,7 @@ local function funcFindItemsOverride(botBrain)
         core.ValidateItem(core.itemSteamboots)
         core.ValidateItem(core.itemHellflower)
         core.ValidateItem(core.itemSheepstick)
+        core.ValidateItem(core.itemSotM)
 
         if bUpdated then
                 --only update if we need to
@@ -165,6 +166,8 @@ local function funcFindItemsOverride(botBrain)
                                         core.itemHellflower = core.WrapInTable(curItem)
                                 elseif core.itemSheepstick == nil and curItem:GetName() == "Item_Morph" then
                                         core.itemSheepstick = core.WrapInTable(curItem)
+                                elseif core.itemSotM == nil and curItem:GetName() == "Item_Intelligence7" then
+                                        core.itemSotM = core.WrapInTable(curItem)
                                 end
                         end
                 end
@@ -433,7 +436,7 @@ end
 -- Returns the magic damage that Hag Ult will do
 local function blastDamage()
         local nBlastLevel = skills.abilBlast:GetLevel()
-        if not core.IsTableEmpty(core.InventoryContains(core.unitSelf:GetInventory(false), "Item_Intelligence7")) then
+        if core.itemSotM then
                 if nBlastLevel == 1 then
                         return 340
                 elseif nBlastLevel == 2 then
