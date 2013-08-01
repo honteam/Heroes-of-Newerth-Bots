@@ -1016,13 +1016,12 @@ function behaviorLib.GetAttackDamageOnCreep(botBrain, unitCreepTarget)
 	local nTravelTime = nil
 	if (unitSelf:GetAttackType() ~= "melee") then--We are ranged, use projectile time.
 		local nProjectileSpeed = unitSelf:GetAttackProjectileSpeed()
-		nTravelTime = Vector3.Distance2D(vecSelfPos, vecTargetPos) / nProjectileSpeed + 0.5 --0.5 is the attack action time.
+		nTravelTime = Vector3.Distance2D(vecSelfPos, vecTargetPos) / nProjectileSpeed + unitSelf:GetAdjustedAttackActionTime()
 		if bDebugEchos then BotEcho ("Projectile travel time: " .. nTravelTime ) end 
 	else --We are melee, therefore we don't use projectile time, we use walking time.
 		local nMovementSpeed = unitSelf:GetMoveSpeed()
-		local nMeleeRange=128 --We don't have to be ontop of the enemy to hit them.
-		nTravelTime = (Vector3.Distance2D(vecSelfPos, vecTargetPos)-nMeleeRange) / nMovementSpeed + 0.5
-		BotEcho((Vector3.Distance2D(vecSelfPos, vecTargetPos)-nMeleeRange) / nMovementSpeed + 0.5)
+		local nMeleeRange = 128 --We don't have to be ontop of the enemy to hit them.
+		nTravelTime = (Vector3.Distance2D(vecSelfPos, vecTargetPos) - nMeleeRange) / nMovementSpeed + unitSelf:GetAdjustedAttackActionTime()
 	end
 	
 	
@@ -1076,7 +1075,7 @@ function behaviorLib.GetCreepAttackTarget(botBrain, unitEnemyCreep, unitAllyCree
 		--Only attack if, by the time our attack reaches the target
 		-- the damage done by other sources brings the target's health
 		-- below our minimum damage
-		if nDamageMin*(1-unitEnemyCreep:GetPhysicalResistance()) >= (nTargetHealth - behaviorLib.GetAttackDamageOnCreep(botBrain, unitEnemyCreep)) then
+		if nDamageMin*(1 - unitEnemyCreep:GetPhysicalResistance()) >= (nTargetHealth - behaviorLib.GetAttackDamageOnCreep(botBrain, unitEnemyCreep)) then
 			if bDebugEchos then BotEcho("Returning an enemy") end
 			return unitEnemyCreep
 		end
@@ -1087,7 +1086,7 @@ function behaviorLib.GetCreepAttackTarget(botBrain, unitEnemyCreep, unitAllyCree
 		--Only attack if, by the time our attack reaches the target
 		-- the damage done by other sources brings the target's health
 		-- below our minimum damage
-		if nDamageMin*(1-unitAllyCreep:GetPhysicalResistance()) >= (nTargetHealth - behaviorLib.GetAttackDamageOnCreep(botBrain, unitAllyCreep)) then
+		if nDamageMin*(1 - unitAllyCreep:GetPhysicalResistance()) >= (nTargetHealth - behaviorLib.GetAttackDamageOnCreep(botBrain, unitAllyCreep)) then
 			local bActuallyDeny = true
 			
 			--[Difficulty: Easy] Don't deny
@@ -1181,11 +1180,15 @@ function behaviorLib.AttackCreepsExecute(botBrain)
 		-- Use Loggers Hatchet
 		if not bActionTaken then
 			local itemHatchet = core.itemHatchet
-			if itemHatchet and itemHatchet:CanActivate() and --valid hatchet
-			  unitCreepTarget:GetTeam() ~= unitSelf:GetTeam() and core.IsLaneCreep(unitCreepTarget) and --valid creep
-			  core.GetAttackSequenceProgress(unitSelf) ~= "windup" and nDistSq < 600 * 600 and --valid positioning
-			  unitSelf:GetBaseDamage()*(1-core.unitCreepTarget:GetPhysicalResistance())>core.unitCreepTarget:GetHealth() then --valid HP
-				bActionTaken = botBrain:OrderItemEntity(itemHatchet.object or itemHatchet, unitCreepTarget.object or unitCreepTarget, false)
+			--nested if for clarity and to reduce optimization which is negligible.
+			if itemHatchet and itemHatchet:CanActivate() then --valid hatchet
+				if unitCreepTarget:GetTeam() ~= unitSelf:GetTeam() and core.IsLaneCreep(unitCreepTarget) then --valid creep
+					if core.GetAttackSequenceProgress(unitSelf) ~= "windup" and nDistSq < (600 * 600) then --valid positioning
+						if unitSelf:GetBaseDamage() * (1 - core.unitCreepTarget:GetPhysicalResistance()) > core.unitCreepTarget:GetHealth() then --valid HP
+							bActionTaken = botBrain:OrderItemEntity(itemHatchet.object or itemHatchet, unitCreepTarget.object or unitCreepTarget, false)
+						end
+					end
+				end
 			end
 		end
 	end
