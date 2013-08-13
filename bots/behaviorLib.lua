@@ -1021,11 +1021,7 @@ function behaviorLib.GetAttackDamageOnCreep(botBrain, unitCreepTarget)
 	else --We are melee, therefore we don't use projectile time, we use walking time.
 		local nMovementSpeed = unitSelf:GetMoveSpeed()
 		local nMeleeRange = 128 --We don't have to be ontop of the enemy to hit them.
-		local nTravelDistance = (Vector3.Distance2D(vecSelfPos, vecTargetPos) - nMeleeRange)
-		if (localnTravelDistance < 0) then
-			localnTravelDistance = 0
-		end
-		nTravelTime = nTravelDistance / nMovementSpeed + unitSelf:GetAdjustedAttackActionTime() + 0.5
+		nTravelTime = (Vector3.Distance2D(vecSelfPos, vecTargetPos) - nMeleeRange) / nMovementSpeed + unitSelf:GetAdjustedAttackActionTime()
 	end
 	
 	
@@ -1150,7 +1146,14 @@ end
 function behaviorLib.AttackCreepsExecute(botBrain)
 	local bActionTaken = false
 	local unitSelf = core.unitSelf
-	local unitCreepTarget = core.unitCreepTarget
+	local sCurrentBehavior = core.GetCurrentBehaviorName(self)
+
+	local unitCreepTarget = nil
+	if sCurrentBehavior == "AttackEnemyMinions" then
+		unitCreepTarget = core.unitMinionTarget
+	else
+		unitCreepTarget = core.unitCreepTarget
+	end
 
 	if unitCreepTarget and core.CanSeeUnit(botBrain, unitCreepTarget) then      
 		--Get info about the target we are about to attack
@@ -1159,24 +1162,11 @@ function behaviorLib.AttackCreepsExecute(botBrain)
 		local nDistSq = Vector3.Distance2DSq(vecSelfPos, vecTargetPos)
 		local nAttackRangeSq = core.GetAbsoluteAttackRangeToUnit(unitSelf, unitCreepTarget, true)
 	
-		--ranged:
 		--Only attack if, by the time our attack reaches the target
 		-- the damage done by other sources brings the target's health
-		-- below our minimum damage, and we are in range and can attack right now
-		--melee
-		--we are very close, if we can kill them, do so.
+		-- below our minimum damage, and we are in range and can attack right now-		
 		if nDistSq <= nAttackRangeSq and unitSelf:IsAttackReady() then
-			if unitSelf:GetAttackType() == "melee" then
-				local nDamageMin = unitSelf:GetFinalAttackDamageMin()
-				if core.itemHatchet then
-					nDamageMin = nDamageMin * core.itemHatchet.creepDamageMul
-				end
-				if nDamageMin * (1 - unitCreepTarget:GetPhysicalResistance()) >= unitCreepTarget:GetHealth() then
-					bActionTaken = core.OrderAttackClamp(botBrain, unitSelf, unitCreepTarget)
-				end
-			else
-				bActionTaken = core.OrderAttackClamp(botBrain, unitSelf, unitCreepTarget)
-			end
+			bActionTaken = core.OrderAttackClamp(botBrain, unitSelf, unitCreepTarget)
 		else
 			if unitSelf:GetAttackType() == "melee" then
 				--If melee, move closer.
@@ -1225,6 +1215,7 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.AttackCreepsBehavior)
 --      Utility: 20.5 or 25 based on Minion-Health
 --      Execute: Attacks chosen minion like a creep
 ----------------------------------
+core.unitMinionTarget = nil
 function behaviorLib.attackEnemyMinionsUtility(botBrain)
 	local tEnemies = core.localUnits["Enemies"]
 	local unitWeakestMinion = nil
@@ -1242,7 +1233,7 @@ function behaviorLib.attackEnemyMinionsUtility(botBrain)
 	end
 	
 	if unitWeakestMinion ~= nil then
-		core.unitCreepTarget = unitWeakestMinion
+		core.unitMinionTarget = unitWeakestMinion
 		--minion lh > creep lh
 		local unitSelf = core.unitSelf
 		local nDistSq = Vector3.Distance2DSq(unitSelf:GetPosition(), unitWeakestMinion:GetPosition())
