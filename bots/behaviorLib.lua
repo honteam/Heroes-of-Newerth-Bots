@@ -1021,7 +1021,11 @@ function behaviorLib.GetAttackDamageOnCreep(botBrain, unitCreepTarget)
 	else --We are melee, therefore we don't use projectile time, we use walking time.
 		local nMovementSpeed = unitSelf:GetMoveSpeed()
 		local nMeleeRange = 128 --We don't have to be ontop of the enemy to hit them.
-		nTravelTime = (Vector3.Distance2D(vecSelfPos, vecTargetPos) - nMeleeRange) / nMovementSpeed + unitSelf:GetAdjustedAttackActionTime()
+		local nTravelDistance = (Vector3.Distance2D(vecSelfPos, vecTargetPos) - nMeleeRange)
+		if (localnTravelDistance < 0) then
+			localnTravelDistance = 0
+		end
+		nTravelTime = nTravelDistance / nMovementSpeed + unitSelf:GetAdjustedAttackActionTime() + 0.5
 	end
 	
 	
@@ -1155,11 +1159,24 @@ function behaviorLib.AttackCreepsExecute(botBrain)
 		local nDistSq = Vector3.Distance2DSq(vecSelfPos, vecTargetPos)
 		local nAttackRangeSq = core.GetAbsoluteAttackRangeToUnit(unitSelf, unitCreepTarget, true)
 	
+		--ranged:
 		--Only attack if, by the time our attack reaches the target
 		-- the damage done by other sources brings the target's health
 		-- below our minimum damage, and we are in range and can attack right now
-		if nDistSq < nAttackRangeSq and unitSelf:IsAttackReady() then
-			bActionTaken = core.OrderAttackClamp(botBrain, unitSelf, unitCreepTarget)
+		--melee
+		--we are very close, if we can kill them, do so.
+		if nDistSq <= nAttackRangeSq and unitSelf:IsAttackReady() then
+			if unitSelf:GetAttackType() == "melee" then
+				local nDamageMin = unitSelf:GetFinalAttackDamageMin()
+				if core.itemHatchet then
+					nDamageMin = nDamageMin * core.itemHatchet.creepDamageMul
+				end
+				if nDamageMin * (1 - unitCreepTarget:GetPhysicalResistance()) >= unitCreepTarget:GetHealth() then
+					bActionTaken = core.OrderAttackClamp(botBrain, unitSelf, unitCreepTarget)
+				end
+			else
+				bActionTaken = core.OrderAttackClamp(botBrain, unitSelf, unitCreepTarget)
+			end
 		else
 			if unitSelf:GetAttackType() == "melee" then
 				--If melee, move closer.
