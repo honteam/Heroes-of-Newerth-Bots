@@ -1146,7 +1146,14 @@ end
 function behaviorLib.AttackCreepsExecute(botBrain)
 	local bActionTaken = false
 	local unitSelf = core.unitSelf
-	local unitCreepTarget = core.unitCreepTarget
+	local sCurrentBehavior = core.GetCurrentBehaviorName(self)
+
+	local unitCreepTarget = nil
+	if sCurrentBehavior == "AttackEnemyMinions" then
+		unitCreepTarget = core.unitMinionTarget
+	else
+		unitCreepTarget = core.unitCreepTarget
+	end
 
 	if unitCreepTarget and core.CanSeeUnit(botBrain, unitCreepTarget) then      
 		--Get info about the target we are about to attack
@@ -1157,8 +1164,8 @@ function behaviorLib.AttackCreepsExecute(botBrain)
 	
 		--Only attack if, by the time our attack reaches the target
 		-- the damage done by other sources brings the target's health
-		-- below our minimum damage, and we are in range and can attack right now
-		if nDistSq < nAttackRangeSq and unitSelf:IsAttackReady() then
+		-- below our minimum damage, and we are in range and can attack right now-		
+		if nDistSq <= nAttackRangeSq and unitSelf:IsAttackReady() then
 			bActionTaken = core.OrderAttackClamp(botBrain, unitSelf, unitCreepTarget)
 		else
 			if unitSelf:GetAttackType() == "melee" then
@@ -1208,6 +1215,7 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.AttackCreepsBehavior)
 --      Utility: 20.5 or 25 based on Minion-Health
 --      Execute: Attacks chosen minion like a creep
 ----------------------------------
+core.unitMinionTarget = nil
 function behaviorLib.attackEnemyMinionsUtility(botBrain)
 	local tEnemies = core.localUnits["Enemies"]
 	local unitWeakestMinion = nil
@@ -1225,7 +1233,7 @@ function behaviorLib.attackEnemyMinionsUtility(botBrain)
 	end
 	
 	if unitWeakestMinion ~= nil then
-		core.unitCreepTarget = unitWeakestMinion
+		core.unitMinionTarget = unitWeakestMinion
 		--minion lh > creep lh
 		local unitSelf = core.unitSelf
 		local nDistSq = Vector3.Distance2DSq(unitSelf:GetPosition(), unitWeakestMinion:GetPosition())
