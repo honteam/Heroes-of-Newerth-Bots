@@ -87,12 +87,9 @@ behaviorLib.LateItems  = {"Item_ManaBurn2", "Item_LifeSteal4", "Item_Evasion"}
 ------------------------------
 --     skills               --
 ------------------------------
--- @param: none
--- @return: none
 function object:SkillBuild()
 	core.VerboseLog("skillbuild()")
 
--- takes care at load/reload, <name_#> to be replaced by some convinient name.
 	local unitSelf = self.core.unitSelf
 	if skills.moonbeam == nil then
 		skills.moonbeam = unitSelf:GetAbility(0)
@@ -126,22 +123,10 @@ end
 
 local function funcFindItemsOverride(botBrain)
 	object.FindItemsOld(botBrain)
-	if core.itemGeometer ~= nil and not core.itemGeometer:IsValid() then
-		core.itemGeometer = nil
-	end
-	if core.itemShrunkenHead ~= nil and not core.itemShrunkenHead:IsValid() then
-		core.itemShrunkenHead = nil
-	end
-	if core.itemSymbolofRage ~= nil and not core.itemSymbolofRage:IsValid() then
-		core.itemSymbolofRage = nil
-	end
-	if core.itemWhisperingHelm ~= nil and not core.itemWhisperingHelm:IsValid() then
-		core.itemWhisperingHelm = nil
-	end
-
-	if core.itemSteamBoots ~= nil and not core.itemSteamBoots:IsValid() then
-		core.itemSteamBoots = nil
-	end
+	core.ValidateItem(core.itemGeometer)
+	core.ValidateItem(core.itemShrunkenHead)
+	core.ValidateItem(core.itemSymbolofRage)
+	core.ValidateItem(core.itemSteamBoots)
 
 	local inventory = core.unitSelf:GetInventory(true)
 	for slot = 1, 6, 1 do
@@ -153,8 +138,6 @@ local function funcFindItemsOverride(botBrain)
 				core.itemShrunkenHead = core.WrapInTable(curItem)
 			elseif core.itemSymbolofRage == nil and curItem:GetName() == "Item_LifeSteal4" then
 				core.itemSymbolofRage = core.WrapInTable(curItem)
-			elseif core.itemWhisperingHelm == nil and curItem:GetName() == "Item_WhisperingHelm" then
-				core.itemWhisperingHelm = core.WrapInTable(curItem)
 			elseif core.itemSteamBoots == nil and curItem:GetName() == "Item_Steamboots" then
 				core.itemSteamBoots = core.WrapInTable(curItem)
 			end
