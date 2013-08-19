@@ -199,8 +199,10 @@ function object:onthinkOverride(tGameVariables)
 			--gnight
 			object.isDay = false
 			if math.random(5) == 1 then --math.random(upper) generates integer numbers between 1 and upper.
-				local randomMessageId = math.random(#core.nightMessages)
-				core.AllChat(core.nightMessages[randomMessageId])
+				sMessage = object.tNightMessages[math.random(#object.tNightMessages)]
+				nDelay = 200
+
+				core.AllChatLocalizedMessage(sMessage, nil, nDelay)
 			end
 		end
 	end
@@ -573,8 +575,6 @@ end
 
 SteamBootsLib.desiredAttribute = "agi"
 
-
-
 function SteamBootsLib.getAttributeBonus()
 	if not core.itemSteamBoots then
 		return ""
@@ -596,27 +596,54 @@ end
 --------------
 -- Messages --
 --------------
-core.tKillChatKeys={
-	"Shot by the Moon.",
-	"Harvest moon.",
-	"Feel the power of the moon.",
-	"Take one and pass it on.",
-	"One to the other."
+object.tCustomKillChatKeys={
+	"anakonda_moonqueen_kill1",
+	"anakonda_moonqueen_kill2",
+	"anakonda_moonqueen_kill3",
+	"anakonda_moonqueen_kill4",
+	"anakonda_moonqueen_kill5"
 }
 
-core.tDeathChatKeys = {
-	"Carried away by a moonlight shadow.",
+local function GetKillKeysOverride(unitTarget)
+	local tChatKeys = object.funcGetKillKeysOld(unitTarget)
+	core.InsertToTable(tChatKeys, object.tCustomKillKeys)
+	return tChatKeys
+end
+object.funcGetKillKeysOld = core.GetKillKeys
+core.GetKillKeys = GetKillKeysOverride
+
+
+object.tCustomDeathChatKeys = {
+	"anakonda_moonqueen_death1",
 }
 
-core.tRespawnChatKeys = {
-	"By the moonlight.",
-	"Moonlight guide me."
+local function GetDeathKeysOverride(unitSource)
+	local tChatKeys = object.funcGetDeathKeysOld(unitSource)
+	core.InsertToTable(tChatKeys, object.tCustomDeathKeys)
+	return tChatKeys
+end
+object.funcGetDeathKeysOld = core.GetDeathKeys
+core.GetDeathKeys = GetDeathKeysOverride
+
+
+object.tCustomRespawnChatKeys = {
+	"anakonda_moonqueen_respawn1",
+	"anakonda_moonqueen_respawn2"
 }
 
-core.nightMessages = {
-	"Oh full moon tonight",
-	"Blue moon rises",
-	"Under the moon."
+local function GetRespawnKeysOverride()
+	local tChatKeys = object.funcGetRespawnKeysOld()
+	core.InsertToTable(tChatKeys, object.tCustomRespawnKeys)
+	return tChatKeys
+end
+object.funcGetRespawnKeysOld = core.GetRespawnKeys
+core.GetRespawnKeys = GetRespawnKeysOverride
+
+
+object.tNightMessages = {
+	"anakonda_moonqueen_night1",
+	"anakonda_moonqueen_night2",
+	"anakonda_moonqueen_night3"
 }
 
 BotEcho('finished loading Moon Queen')

@@ -121,6 +121,24 @@ schnarchnase_grave_death2		That's why, I always carry a tombstone.
 schnarchnase_grave_death4		Ugh, I hate rigor mortis.
 schnarchnase_grave_death5		Restarting.
 
+/////////////////////////////////////////
+//Anakonda's Moon Queen bot custom messages
+
+anakonda_moonqueen_kill1		Shot by the Moon.
+anakonda_moonqueen_kill2		Harvest moon.
+anakonda_moonqueen_kill3		Feel the power of the moon.
+anakonda_moonqueen_kill4		Take one and pass it on.
+anakonda_moonqueen_kill5		One to the other.
+
+anakonda_moonqueen_respawn1		By the moonlight.
+anakonda_moonqueen_respawn2		Moonlight guide me.
+
+anakonda_moonqueen_death1		Carried away by a moonlight shadow.
+
+anakonda_moonqueen_night1		Oh full moon tonight
+anakonda_moonqueen_night2		Blue moon rises
+anakonda_moonqueen_night3		Under the moon.
+
 
 
 // End - do not delete this line
