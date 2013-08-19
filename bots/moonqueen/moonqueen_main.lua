@@ -47,8 +47,8 @@ local Clamp = core.Clamp
 object.SteamBootsLib = object.SteamBootsLib or {}
 local SteamBootsLib = object.SteamBootsLib
 
-object.IlluLib = object.IlluLib or {}
-local IlluLib = object.IlluLib
+object.IllusionLib = object.IllusionLib or {}
+local IllusionLib = object.IllusionLib
 
 BotEcho(' loading Moon Queen')
 
@@ -56,11 +56,8 @@ BotEcho(' loading Moon Queen')
 -- bot "global" vars --
 -----------------------
 
---To keep track status of 2nd skill
-object.bouncing = true
-object.auraState = true
 --bounce "resets" when you die to keep track when you respawn
-object.alive = true
+object.bHeroAlive = true
 
 --To keep track day/night cycle
 object.isDay = true
@@ -91,12 +88,16 @@ function object:SkillBuild()
 	core.VerboseLog("skillbuild()")
 
 	local unitSelf = self.core.unitSelf
-	if skills.moonbeam == nil then
-		skills.moonbeam = unitSelf:GetAbility(0)
-		skills.bounce = unitSelf:GetAbility(1)
-		skills.aura = unitSelf:GetAbility(2)
-		skills.ult = unitSelf:GetAbility(3)
+	if skills.abilMoonbeam == nil then
+		skills.abilMoonbeam = unitSelf:GetAbility(0)
+		skills.abilBounce = core.WrapInTable(unitSelf:GetAbility(1))
+		skills.abilAura = core.WrapInTable(unitSelf:GetAbility(2))
+		skills.abilMoonFinale = unitSelf:GetAbility(3)
 		skills.abilAttributeBoost = unitSelf:GetAbility(4)
+
+		--To keep track status of 2nd and 3rd skill
+		skills.abilBounce.bTargetAll = true
+		skills.abilAura.bTargetAll = true
 	end
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then
 		return
@@ -128,6 +129,10 @@ local function funcFindItemsOverride(botBrain)
 	core.ValidateItem(core.itemSymbolofRage)
 	core.ValidateItem(core.itemSteamBoots)
 
+	if core.itemGeometer and core.itemShrunkenHead and core.itemSymbolofRage and core.itemSteamBoots then
+		return
+	end
+
 	local inventory = core.unitSelf:GetInventory(true)
 	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
@@ -157,18 +162,18 @@ function object:onthinkOverride(tGameVariables)
 	self:onthinkOld(tGameVariables)
 	local unitSelf = core.unitSelf
 	local heroPos = unitSelf:GetPosition()
-	if (unitSelf:IsAlive() and core.localUnits~=nil)then
-		if not object.alive then
+	if unitSelf:IsAlive() and core.localUnits~=nil then
+		if not object.bHeroAlive then
 			--To keep track status of 2nd skill
-			object.alive = true
-			object.bouncing = true
+			object.bHeroAlive = true
+			skills.abilBounce.bTargetAll = true
 			object.toggleBounce(self, false)
 		end
 
 		-- Keep illus near
 		local heroPos = unitSelf:GetPosition()
-		for _, illu in pairs(IlluLib.myIllusions()) do
-			if Vector3.Distance2DSq(illu:GetPosition(), heroPos) > 400*400 then
+		for _, illu in pairs(IllusionLib.myIllusions()) do
+			if Vector3.Distance2DSq(illu:GetPosition(), heroPos) > 160000 then
 				core.OrderMoveToPos(self, illu, heroPos, false)
 			end
 		end
@@ -177,7 +182,7 @@ function object:onthinkOverride(tGameVariables)
 
 	if not unitSelf:IsAlive() then
 		--To keep track status of 2nd skill
-		object.alive = false
+		object.bHeroAlive = false
 	end
 
 	--keep track of day/night only to say something stupid in all chat
@@ -227,13 +232,13 @@ end
 object.PushExecuteOld = behaviorLib.PushBehavior["Execute"]
 behaviorLib.PushBehavior["Execute"] = PushExecuteOverride
 
-function behaviorLib.newPositionSelfExecute(botBrain)
+function behaviorLib.PositionSelfExecuteOverride(botBrain)
 	object.toggleBounce(botBrain, false)
 	object.toggleAura(botBrain, false)
-	behaviorLib.oldPositionSelfExecute(botBrain)
+	behaviorLib.PositionSelfExecuteOld(botBrain)
 end
-behaviorLib.oldPositionSelfExecute = behaviorLib.PositionSelfBehavior["Execute"]
-behaviorLib.PositionSelfBehavior["Execute"] = behaviorLib.newPositionSelfExecute
+behaviorLib.PositionSelfExecuteOld = behaviorLib.PositionSelfBehavior["Execute"]
+behaviorLib.PositionSelfBehavior["Execute"] = behaviorLib.PositionSelfExecuteOverride
 
 ----------------------------
 -- oncombatevent override --
@@ -256,7 +261,7 @@ function object:oncombateventOverride(EventData)
 	elseif EventData.Type == "Item" then
 		if core.itemGeometer ~= nil and EventData.InflictorName == core.itemGeometer:GetName() then
 			addBonus = addBonus + object.geometerUseBonus
-		elseif EventData.InflictorName == "Item_LifeSteal4" then
+		elseif core.itemSymbolofRage and EventData.InflictorName == core.itemSymbolofRage:GetName() then
 			addBonus = addBonus + object.SymbolofRageUseBonus
 		end
 	end
@@ -300,11 +305,11 @@ object.geometerUpBonus = 5
 local function CustomHarassUtilityFnOverride(hero)
 	local val = 0
 	
-	if skills.moonbeam:CanActivate() then
+	if skills.abilMoonbeam:CanActivate() then
 		val = val + object.moonbeamUpBonus
 	end
 	
-	if skills.ult:CanActivate() then
+	if skills.abilMoonFinale:CanActivate() then
 		val = val + object.ultUpBonus
 	end
 
@@ -325,13 +330,15 @@ behaviorLib.CustomHarassUtility = CustomHarassUtilityFnOverride
 ---------------------
 object.geometerUseThreshold = 55
 object.moonbeamThreshold = 35
-object.ultTheresholds = {95, 85, 75}
+object.ultThresholds = {95, 85, 75}
 local function HarassHeroExecuteOverride(botBrain)
-	SteamBootsLib.setAttributeBonus("agi")
+
 	local unitTarget = behaviorLib.heroTarget
 	if unitTarget == nil then
 		return false --Target is invalid, move on to the next behavior
 	end
+
+	SteamBootsLib.setAttributeBonus("agi")
 
 	if not core.CanSeeUnit(botBrain, unitTarget) then
 		return object.harassExecuteOld(botBrain)
@@ -354,8 +361,8 @@ local function HarassHeroExecuteOverride(botBrain)
 	----------------------------------------------------------------------------
 
 	if not bActionTaken then
-		if skills.moonbeam:CanActivate() and nLastHarassUtility > object.moonbeamThreshold and not targetMagicImmune then
-			bActionTaken = core.OrderAbilityEntity(botBrain, skills.moonbeam, unitTarget)
+		if skills.abilMoonbeam:CanActivate() and nLastHarassUtility > object.moonbeamThreshold and not targetMagicImmune then
+			bActionTaken = core.OrderAbilityEntity(botBrain, skills.abilMoonbeam, unitTarget)
 		end
 	end
 
@@ -367,12 +374,12 @@ local function HarassHeroExecuteOverride(botBrain)
 
 	if not bActionTaken and bCanSee and not targetMagicImmune then
 		--at higher levels this overpowers ult behavior with lastHarassUtil like 150
-		if skills.ult:CanActivate() and nLastHarassUtility > object.ultTheresholds[skills.ult:GetLevel()] and nTargetDistanceSq < 600 * 600 then
+		if skills.abilMoonFinale:CanActivate() and nLastHarassUtility > object.ultThresholds[skills.abilMoonFinale:GetLevel()] and nTargetDistanceSq < 600 * 600 then
 			bActionTaken = behaviorLib.ultBehavior["Execute"](botBrain)
 		end
 	end
 
-	for _, illu in pairs(IlluLib.myIllusions()) do
+	for _, illu in pairs(IllusionLib.myIllusions()) do
 		core.OrderAttack(botBrain, illu, unitTarget)
 	end
 
@@ -395,7 +402,7 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 -------------------------------------------------------------------
 function behaviorLib.UltimateUtility(botBrain)
 
-	if not skills.ult:CanActivate() then
+	if not skills.abilMoonFinale:CanActivate() then
 		return 0
 	end
 
@@ -420,7 +427,7 @@ function behaviorLib.UltimateUtility(botBrain)
 	end
 
 	local utilityvalue = 0
-	if core.NumberElements(localUnits["tEnemyUnits"]) <= skills.ult:GetLevel() + 1 then
+	if core.NumberElements(localUnits["tEnemyUnits"]) <= skills.abilMoonFinale:GetLevel() + 1 then
 		utilityvalue = utilityvalue + 30
 	end
 	if core.NumberElements(localUnits["tEnemyUnits"]) == core.NumberElements(enemyheroes) then
@@ -433,7 +440,7 @@ end
 
 --press R to kill
 function behaviorLib.UltimateExecute(botBrain)
-	bActionTaken = core.OrderAbility(botBrain, skills.ult)
+	bActionTaken = core.OrderAbility(botBrain, skills.abilMoonFinale)
 
 	if core.itemShrunkenHead and bActionTaken then
 		botBrain:OrderItem(core.itemShrunkenHead.object)
@@ -452,7 +459,7 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.ultBehavior)
 ------------------------------------------------
 behaviorLib.enemyToStun = nil
 function behaviorLib.stunUtility(botBrain)
-	if not skills.moonbeam:CanActivate() then
+	if not skills.abilMoonbeam:CanActivate() then
 		return 0
 	end
 
@@ -467,7 +474,7 @@ function behaviorLib.stunUtility(botBrain)
 end
 
 function behaviorLib.stunExecute(botBrain)
-	return core.OrderAbilityEntity(botBrain, skills.moonbeam, behaviorLib.enemyToStun)
+	return core.OrderAbilityEntity(botBrain, skills.abilMoonbeam, behaviorLib.enemyToStun)
 end
 
 behaviorLib.stunBehavior = {}
@@ -484,41 +491,41 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.stunBehavior)
 --Helppers for bounce and aura --
 ---------------------------------
 function object.toggleAura(botBrain, state)
-	if object.getAuraState() == state or not skills.aura:CanActivate() then
+	if object.getAuraState() == state or not skills.abilAura:CanActivate() then
 		return false
 	end
-	local success = core.OrderAbility(botBrain, skills.aura)
+	local success = core.OrderAbility(botBrain, skills.abilAura)
 	if success then
-		object.auraState = not object.auraState
+		skills.abilAura.bTargetAll = not skills.abilAura.bTargetAll
 	end
 	return true
 end
 
 function object.toggleBounce(botBrain, state)
-	if object.getBounceState() == state or not skills.bounce:CanActivate() then
+	if object.getBounceState() == state or not skills.abilBounce:CanActivate() then
 		return false
 	end
 
-	local success = core.OrderAbility(botBrain, skills.bounce)
+	local success = core.OrderAbility(botBrain, skills.abilBounce)
 	if success then
-		object.bouncing = not object.bouncing
+		skills.abilBounce.bTargetAll = not skills.abilBounce.bTargetAll
 	end
 	return true
 end
 
 --true when target is "all" false when heroes only
 function object.getAuraState()
-	if skills.aura:GetLevel() == 0 then
+	if skills.abilAura:GetLevel() == 0 then
 		return false
 	end
-	return object.auraState
+	return skills.abilAura.bTargetAll
 end
 
 function object.getBounceState()
-	if skills.bounce:GetLevel() == 0 then
+	if skills.abilBounce:GetLevel() == 0 then
 		return false
 	end
-	return object.bouncing 
+	return skills.abilBounce.bTargetAll 
 end
 
 --------------------
@@ -538,12 +545,12 @@ end
 -- Wrappers for illusions --
 ----------------------------
 
-function IlluLib.myIllusions()
+function IllusionLib.myIllusions()
 	if core.tControllableUnits ~= nil then
 		local illus = {}
 
 		for _, unit in pairs(core.tControllableUnits["InventoryUnits"]) do
-			if unit:IsHero() and IlluLib.IsIllusion(unit) then
+			if unit:IsHero() and IllusionLib.IsIllusion(unit) then
 				tinsert(illus, unit)
 			end
 		end
@@ -553,7 +560,7 @@ function IlluLib.myIllusions()
 	end
 end
 
-function IlluLib.IsIllusion(unit)
+function IllusionLib.IsIllusion(unit)
 	if unit:GetTeam() ~= object.core.myTeam then --Dont "cheat"
 		return false
 	end
@@ -566,9 +573,7 @@ end
 
 SteamBootsLib.desiredAttribute = "agi"
 
-function SteamBootsLib.haveSteamBoots()
-	return core.itemSteamBoots ~= nil
-end
+
 
 function SteamBootsLib.getAttributeBonus()
 	if not core.itemSteamBoots then
