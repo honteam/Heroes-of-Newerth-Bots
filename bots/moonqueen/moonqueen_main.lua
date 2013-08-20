@@ -104,8 +104,8 @@ function object:SkillBuild()
 	end
 
 	local nlev = unitSelf:GetLevel()
-	local nlevpts = unitSelf:GetAbilityPointsAvailable()
-	for i = nlev, nlev+nlevpts do
+	local nlevPts = unitSelf:GetAbilityPointsAvailable()
+	for i = nlev, nlev+nlevPts do
 		unitSelf:GetAbility( object.tSkills[i] ):LevelUp()
 
 		--initialy set aura and bounce to heroes only
@@ -157,11 +157,11 @@ core.FindItems = funcFindItemsOverride
 --    onthink override   --
 -- Called every bot tick --
 ---------------------------
-object.steambootsToggleDelay = 0
+object.nSteambootsToggleDelay = 0
 function object:onthinkOverride(tGameVariables)
 	self:onthinkOld(tGameVariables)
 	local unitSelf = core.unitSelf
-	local heroPos = unitSelf:GetPosition()
+	local vecHeroPos = unitSelf:GetPosition()
 	if unitSelf:IsAlive() and core.localUnits~=nil then
 		if not object.bHeroAlive then
 			--To keep track status of 2nd skill
@@ -171,10 +171,9 @@ function object:onthinkOverride(tGameVariables)
 		end
 
 		-- Keep illus near
-		local heroPos = unitSelf:GetPosition()
 		for _, illu in pairs(IllusionLib.myIllusions()) do
-			if Vector3.Distance2DSq(illu:GetPosition(), heroPos) > 160000 then
-				core.OrderMoveToPos(self, illu, heroPos, false)
+			if Vector3.Distance2DSq(illu:GetPosition(), vecHeroPos) > 160000 then
+				core.OrderMoveToPos(self, illu, vecHeroPos, false)
 			end
 		end
 
@@ -208,13 +207,13 @@ function object:onthinkOverride(tGameVariables)
 	end
 
 	if core.itemSteamBoots then
-		currentAttribute = self.SteamBootsLib.getAttributeBonus()
-		if currentAttribute ~= "" and currentAttribute ~= SteamBootsLib.desiredAttribute then
-			if object.steambootsToggleDelay ~= 0 then
-				object.steambootsToggleDelay = object.steambootsToggleDelay - 1 --not to spam faster than it can handle
-			else
+		if object.nSteambootsToggleDelay ~= 0 then
+			object.nSteambootsToggleDelay = object.nSteambootsToggleDelay - 1 --not to spam faster than it can handle
+		else
+			currentAttribute = self.SteamBootsLib.getAttributeBonus()
+			if currentAttribute ~= "" and currentAttribute ~= SteamBootsLib.sDesiredAttribute then
 				self:OrderItem(core.itemSteamBoots.object, "None")
-				object.steambootsToggleDelay = 5
+				object.nSteambootsToggleDelay = 5
 			end
 		end
 	end
@@ -358,12 +357,12 @@ local function HarassHeroExecuteOverride(botBrain)
 
 	local bActionTaken = false
 
-	local targetMagicImmune = object.IsMagicImmune(unitTarget)
+	local bTargetMagicImmune = object.IsMagicImmune(unitTarget)
 
 	----------------------------------------------------------------------------
 
 	if not bActionTaken then
-		if skills.abilMoonbeam:CanActivate() and nLastHarassUtility > object.moonbeamThreshold and not targetMagicImmune then
+		if skills.abilMoonbeam:CanActivate() and nLastHarassUtility > object.moonbeamThreshold and not bTargetMagicImmune then
 			bActionTaken = core.OrderAbilityEntity(botBrain, skills.abilMoonbeam, unitTarget)
 		end
 	end
@@ -374,7 +373,7 @@ local function HarassHeroExecuteOverride(botBrain)
 		end
 	end
 
-	if not bActionTaken and bCanSee and not targetMagicImmune then
+	if not bActionTaken and bCanSee and not bTargetMagicImmune then
 		--at higher levels this overpowers ult behavior with lastHarassUtil like 150
 		if skills.abilMoonFinale:CanActivate() and nLastHarassUtility > object.ultThresholds[skills.abilMoonFinale:GetLevel()] and nTargetDistanceSq < 600 * 600 then
 			bActionTaken = behaviorLib.ultBehavior["Execute"](botBrain)
@@ -408,18 +407,18 @@ function behaviorLib.UltimateUtility(botBrain)
 		return 0
 	end
 
-	local selfPos = core.unitSelf:GetPosition()
+	local vecMyPosition = core.unitSelf:GetPosition()
 
 	--range of ult is 700, check 800 cause we are going to move during ult
 	--check heroes in range 600, they try to run
-	local unitlist = HoN.GetUnitsInRadius(selfPos, 800, core.UNIT_MASK_UNIT + core.UNIT_MASK_HERO + core.UNIT_MASK_ALIVE)
+	local unitlist = HoN.GetUnitsInRadius(vecMyPosition, 800, core.UNIT_MASK_UNIT + core.UNIT_MASK_HERO + core.UNIT_MASK_ALIVE)
 	local localUnits = {}
 	core.SortUnitsAndBuildings(unitlist, localUnits, true)
 
 	local enemyheroes = {}
 
 	for _, hero in pairs(localUnits["enemyHeroes"]) do
-		if Vector3.Distance2DSq(selfPos, hero:GetPosition()) < 600*600 and not object.IsMagicImmune(hero) then
+		if Vector3.Distance2DSq(vecMyPosition, hero:GetPosition()) < 600*600 and not object.IsMagicImmune(hero) then
 			tinsert(enemyheroes, hero)
 		end
 	end
@@ -453,7 +452,7 @@ end
 behaviorLib.ultBehavior = {}
 behaviorLib.ultBehavior["Utility"] = behaviorLib.UltimateUtility
 behaviorLib.ultBehavior["Execute"] = behaviorLib.UltimateExecute
-behaviorLib.ultBehavior["Name"] = "mq Ultimate"
+behaviorLib.ultBehavior["Name"] = "Moon Finale"
 tinsert(behaviorLib.tBehaviors, behaviorLib.ultBehavior)
 
 ------------------------------------------------
@@ -465,11 +464,15 @@ function behaviorLib.stunUtility(botBrain)
 		return 0
 	end
 
+	local vecMyPosition = core.unitSelf:GetPosition()
+
 	for _,enemy in pairs(core.localUnits["EnemyHeroes"]) do
 		if enemy:IsChanneling() or enemy:HasState("State_ManaPotion") or enemy:HasState("State_HealthPotion")
 			or enemy:HasState("State_Bottle") or enemy:HasState("State_PowerupRegen") then
-			behaviorLib.enemyToStun = enemy
-			return 75
+			if Vector3.Distance2DSq(vecMyPosition, enemy:GetPosition()) < 160000 then
+				behaviorLib.enemyToStun = enemy
+				return 70
+			end
 		end
 	end
 	return 0
@@ -566,30 +569,30 @@ function IllusionLib.IsIllusion(unit)
 	if unit:GetTeam() ~= object.core.myTeam then --Dont "cheat"
 		return false
 	end
-	return not table.contains(core.teamBotBrain.tAllyHeroes, unit)
+	return core.tableContains(core.teamBotBrain.tAllyHeroes, unit) == 0
 end
 
 -----------------------------
 -- Wrappers for steamboots --
 -----------------------------
 
-SteamBootsLib.desiredAttribute = "agi"
+SteamBootsLib.sDesiredAttribute = "agi"
 
 function SteamBootsLib.getAttributeBonus()
 	if not core.itemSteamBoots then
 		return ""
 	end
-	local attribute = core.itemSteamBoots:GetActiveModifierKey()
-	if attribute == nil then
+	local sAttribute = core.itemSteamBoots:GetActiveModifierKey()
+	if sAttribute == nil then
 		--a bug?
 		return ""
 	end
-	return attribute
+	return sAttribute
 end
 
 function SteamBootsLib.setAttributeBonus(attribute)
 	if attribute == "str" or attribute == "agi" or attribute == "int" then
-		SteamBootsLib.desiredAttribute = attribute
+		SteamBootsLib.sDesiredAttribute = attribute
 	end
 end
 
@@ -606,7 +609,7 @@ object.tCustomKillChatKeys={
 
 local function GetKillKeysOverride(unitTarget)
 	local tChatKeys = object.funcGetKillKeysOld(unitTarget)
-	core.InsertToTable(tChatKeys, object.tCustomKillKeys)
+	core.InsertToTable(tChatKeys, object.tCustomKillChatKeys)
 	return tChatKeys
 end
 object.funcGetKillKeysOld = core.GetKillKeys
@@ -619,7 +622,8 @@ object.tCustomDeathChatKeys = {
 
 local function GetDeathKeysOverride(unitSource)
 	local tChatKeys = object.funcGetDeathKeysOld(unitSource)
-	core.InsertToTable(tChatKeys, object.tCustomDeathKeys)
+	core.InsertToTable(tChatKeys, object.tCustomDeathChatKeys)
+	BotEcho(#tChatKeys)
 	return tChatKeys
 end
 object.funcGetDeathKeysOld = core.GetDeathKeys
@@ -633,7 +637,7 @@ object.tCustomRespawnChatKeys = {
 
 local function GetRespawnKeysOverride()
 	local tChatKeys = object.funcGetRespawnKeysOld()
-	core.InsertToTable(tChatKeys, object.tCustomRespawnKeys)
+	core.InsertToTable(tChatKeys, object.tCustomRespawnChatKeys)
 	return tChatKeys
 end
 object.funcGetRespawnKeysOld = core.GetRespawnKeys
