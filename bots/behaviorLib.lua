@@ -1146,7 +1146,7 @@ end
 function behaviorLib.AttackCreepsExecute(botBrain)
 	local bActionTaken = false
 	local unitSelf = core.unitSelf
-	local sCurrentBehavior = core.GetCurrentBehaviorName(self)
+	local sCurrentBehavior = core.GetCurrentBehaviorName(botBrain)
 
 	local unitCreepTarget = nil
 	if sCurrentBehavior == "AttackEnemyMinions" then
