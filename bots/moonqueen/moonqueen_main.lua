@@ -466,10 +466,12 @@ function behaviorLib.stunUtility(botBrain)
 
 	local vecMyPosition = core.unitSelf:GetPosition()
 
+	local nRadiusSQ = (skills.abilMoonbeam::GetRange() + 200) * (skills.abilMoonbeam::GetRange() + 200)
+
 	for _,enemy in pairs(core.localUnits["EnemyHeroes"]) do
 		if enemy:IsChanneling() or enemy:HasState("State_ManaPotion") or enemy:HasState("State_HealthPotion")
 			or enemy:HasState("State_Bottle") or enemy:HasState("State_PowerupRegen") then
-			if Vector3.Distance2DSq(vecMyPosition, enemy:GetPosition()) < 160000 then
+			if Vector3.Distance2DSq(vecMyPosition, enemy:GetPosition()) < nRadiusSQ then
 				behaviorLib.enemyToStun = enemy
 				return 70
 			end
