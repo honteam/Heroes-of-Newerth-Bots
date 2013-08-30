@@ -169,25 +169,28 @@ function behaviorLib.PositionSelfCreepWave(botBrain, unitCurrentTarget)
 		StopProfile()
 	end
 
-	--stand appart from allies a bit
-	StartProfile('Allies')
-	local tAllyHeroes = tLocalUnits.AllyHeroes
+
 	local vecTotalAllyInfluence = Vector3.Create()
-	local nAllyInfluenceMul = behaviorLib.nAllyInfluenceMul
-	local nPositionSelfAllySeparation = behaviorLib.nPositionSelfAllySeparation
-	for nUID, unitAlly in pairs(tAllyHeroes) do
-		local vecAllyPos = unitAlly:GetPosition()
-		local vecCurrentAllyInfluence, nDistance = funcV3Normalize(vecMyPos - vecAllyPos)
-		if nDistance < nPositionSelfAllySeparation then
-			vecCurrentAllyInfluence = vecCurrentAllyInfluence * (1 - nDistance/nPositionSelfAllySeparation) * nAllyInfluenceMul
-			
-			--vecTotalAllyInfluence.AddAssign(vecCurrentAllyInfluence)
-			vecTotalAllyInfluence = vecTotalAllyInfluence + vecCurrentAllyInfluence
-			
-			if bDebugLines then core.DrawDebugArrow(vecMyPos, vecMyPos + vecCurrentAllyInfluence * nLineLen, 'white') end
+	if core.nDifficulty ~= core.nEASY_DIFFICULTY or not core.IsTableEmpty(core.teamBotBrain.tAllyHumanHeroes) then
+		--stand appart from allies a bit if we d
+		StartProfile('Allies')
+		local tAllyHeroes = tLocalUnits.AllyHeroes
+		local nAllyInfluenceMul = behaviorLib.nAllyInfluenceMul
+		local nPositionSelfAllySeparation = behaviorLib.nPositionSelfAllySeparation
+		for nUID, unitAlly in pairs(tAllyHeroes) do
+			local vecAllyPos = unitAlly:GetPosition()
+			local vecCurrentAllyInfluence, nDistance = funcV3Normalize(vecMyPos - vecAllyPos)
+			if nDistance < nPositionSelfAllySeparation then
+				vecCurrentAllyInfluence = vecCurrentAllyInfluence * (1 - nDistance/nPositionSelfAllySeparation) * nAllyInfluenceMul
+				
+				--vecTotalAllyInfluence.AddAssign(vecCurrentAllyInfluence)
+				vecTotalAllyInfluence = vecTotalAllyInfluence + vecCurrentAllyInfluence
+				
+				if bDebugLines then core.DrawDebugArrow(vecMyPos, vecMyPos + vecCurrentAllyInfluence * nLineLen, 'white') end
+			end
 		end
+		StopProfile()
 	end
-	StopProfile()
 
 	--stand near your target
 	StartProfile('Target')
