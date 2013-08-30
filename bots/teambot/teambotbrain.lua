@@ -116,7 +116,7 @@ function object:onthink(tGameVariables)
 			--[Tutorial] Hellbourne heroes don't group up to push and Legion waits longer to push
 			if core.bIsTutorial then
 				if core.myTeam == HoN.GetHellbourneTeam() then
-					self.bGroupAndPush = false
+					object.bGroupAndPush = false
 				else
 					object.nNextPushTime = core.MinToMS(12)
 				end
@@ -126,6 +126,10 @@ function object:onthink(tGameVariables)
 			if core.nDifficulty == core.nEASY_DIFFICULTY or core.bIsTutorial then
 				object.bDefense = false
 				-- don't reset this when the tutorial switches Legion to medium
+			end
+
+			if core.nDifficulty == core.nEASY_DIFFICULTY and core.IsTableEmpty(object.tAllyHumanHeroes) then
+				object.bGroupAndPush = false
 			end
 		end
 	end
