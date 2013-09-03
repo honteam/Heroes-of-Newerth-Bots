@@ -240,34 +240,45 @@ function object:onthink(tGameVariables)
 							end
 
 							if not heroTarget:IsBotControlled() then
+								--If a human player is the target of aggression, and is below
+								-- 25% or 300 HP (whichever is higher) there is a 16.666% chance
+								-- that the bot will follow through with the aggression, for a total of 2 seconds
+								--If the bot follows through with the aggression, there is a 20
+								-- second cooldown before it begins checking again
+								--Bot checks to see if it should follow through with agression
+								-- every 5 seconds
+								--Result: Once a bot aggresses a low health human for 2 seconds, it will wait
+								-- another 20-50 seconds before doing so again
+
 								local bDebugRunFromHuman = false
 								local nHealthPercent = heroTarget:GetHealthPercent()
 								local nCurrentHealth = heroTarget:GetHealth()
 
 								if core.bEasyLowHumanHealthRunHarass and nGameTime >= core.nEasyLowHumanHealthAggroStartTime + core.nEasyLowHumanHealthDuration then
-									core.bEasyLowHumanHealthRunHarass = false
+								 	core.bEasyLowHumanHealthRunHarass = false
 								end
 
 								if nGameTime >= core.nEasyLowHumanHealthReassessTime then
-									if nHealthPercent <= 0.25 or nCurrentHealth <= 300 then
-										if bDebugRunFromHuman then BotEcho("Human player is below health threshold") end
+								 	if nHealthPercent <= 0.25 or nCurrentHealth <= 300 then
+								  		if bDebugRunFromHuman then BotEcho("Human player is below health threshold") end
 
-										if random() > core.nEasyLowHumanHealthKillChance then
-											if bDebugRunFromHuman then BotEcho("Choosing not to execute HarassHero") end
-											bRunBehaviorExecute = false
-											core.nEasyLowHumanHealthReassessTime = nGameTime + core.nEasyLowHumanHealthRecheckInterval
-										else
-											if bDebugRunFromHuman then BotEcho("ATTACKING HUMAN PLAYER EVEN THOUGH THEY HAVE LOW HEALTH") end
+								  		if random() > core.nEasyLowHumanHealthKillChance then
+								   			if bDebugRunFromHuman then BotEcho("Choosing not to execute HarassHero") end
+								   			core.bEasyLowHumanHealthRunHarass = false
+								   			core.nEasyLowHumanHealthReassessTime = nGameTime + core.nEasyLowHumanHealthRecheckInterval
+								  		else
+								   			if bDebugRunFromHuman then BotEcho("ATTACKING HUMAN PLAYER EVEN THOUGH THEY HAVE LOW HEALTH") end
+											core.bEasyLowHumanHealthRunHarass = true
 											core.nEasyLowHumanHealthAggroStartTime = nGameTime
 											core.nEasyLowHumanHealthReassessTime = nGameTime + core.nEasyLowHumanHealthCooldown + core.nEasyLowHumanHealthDuration
-										end
-										if bDebugRunFromHuman then BotEcho("Setting new reassess time to: " .. core.nEasyLowHumanHealthReassessTime) end
-									end
-									core.bEasyLowHumanHealthRunHarass = bRunBehaviorExecute
-								else
-									bRunBehaviorExecute = core.bEasyLowHumanHealthRunHarass
+							  			end
+
+							  			if bDebugRunFromHuman then BotEcho("Setting new reassess time to: " .. core.nEasyLowHumanHealthReassessTime) end
+							 		end
 								end
-							end
+
+						   		bRunBehaviorExecute = core.bEasyLowHumanHealthRunHarass
+						   	end
 						end
 					elseif self.bAbilityCommandsDefault then --don't set to true if the default is false
 						self.bAbilityCommands = true 
