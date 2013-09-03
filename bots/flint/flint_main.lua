@@ -1,5 +1,6 @@
 --FlintBot v1.0
 
+
 local _G = getfenv(0)
 local object = _G.object
 
@@ -346,17 +347,15 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 local function funcFindItemsOverride(botBrain)
 	object.FindItemsOld(botBrain)
 
-	if core.itemStealth ~= nil and not core.itemStealth:IsValid() then
-		core.itemStealth = nil
-	end
+	core.ValidateItem(core.itemStealth)
 
 	--only update if we need to
 	if core.itemStealth then
 		return
 	end
 
-	local inventory = core.unitSelf:GetInventory(true)
-	for slot = 1, 12, 1 do
+	local inventory = core.unitSelf:GetInventory(false)
+	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
 		if curItem then
 			if core.itemStealth == nil and curItem:GetName() == "Item_Stealth" then

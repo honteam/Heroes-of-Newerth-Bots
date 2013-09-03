@@ -318,7 +318,7 @@ local function HarassHeroExecuteOverride(botBrain)
 		if not bActionTaken then
 			if bDebugEchos then BotEcho("  No action yet, checking storm cloud.") end
 			local abilStormCloud = skills.abilStormCloud
-			local nUltRange = abilStormCloud and (abilStormCloud:GetRange() + nMyExtraRange) or 0
+			local nUltRange = (abilStormCloud and (abilStormCloud:GetRange() + nMyExtraRange)) or 0
 			if abilStormCloud:CanActivate() then
 				local bShouldUlt, vecTarget = botBrain.StormCloudLogic()
 
@@ -389,20 +389,16 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 local function funcFindItemsOverride(botBrain)
 	object.FindItemsOld(botBrain)
 
-	if core.itemAstrolabe ~= nil and not core.itemAstrolabe:IsValid() then
-		core.itemAstrolabe = nil
-	end
-	if core.itemSheepstick ~= nil and not core.itemSheepstick:IsValid() then
-		core.itemSheepstick = nil
-	end
+	core.ValidateItem(core.itemAstrolabe)
+	core.ValidateItem(core.itemSheepstick)
 
 	--only update if we need to
 	if core.itemSheepstick and core.itemAstrolabe then
 		return
 	end
 
-	local inventory = core.unitSelf:GetInventory(true)
-	for slot = 1, 12, 1 do
+	local inventory = core.unitSelf:GetInventory(false)
+	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
 		if curItem then
 			if core.itemAstrolabe == nil and curItem:GetName() == "Item_Astrolabe" then

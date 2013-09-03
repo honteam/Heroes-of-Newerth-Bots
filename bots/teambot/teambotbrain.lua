@@ -94,15 +94,17 @@ object.nPushState = STATE_IDLE
 --Called every frame the engine gives us during the actual match
 function object:onthink(tGameVariables)
 	StartProfile('onthink')
-	if core.coreInitialized == false or core.coreInitialized == nil then
+	
+	if core.coreInitialized ~= true then
 		core.CoreInitialize(self)
 	end	
-	if self.teamBotBrainInitialized == false then
+	if self.teamBotBrainInitialized ~= true then
 		self:TeamBotBrainInitialize()
 	end
-	if metadata.bInitialized == false then
+	if metadata.bInitialized ~= true then
 		metadata.Initialize()
 	end	
+	
 	if core.tGameVariables == nil then
 		if tGameVariables == nil then
 			BotEcho("TGAMEVARIABLES IS NIL OH GOD OH GOD WHYYYYYYYY!??!?!!?")
@@ -114,7 +116,7 @@ function object:onthink(tGameVariables)
 			--[Tutorial] Hellbourne heroes don't group up to push and Legion waits longer to push
 			if core.bIsTutorial then
 				if core.myTeam == HoN.GetHellbourneTeam() then
-					self.bGroupAndPush = false
+					object.bGroupAndPush = false
 				else
 					object.nNextPushTime = core.MinToMS(12)
 				end
@@ -124,6 +126,10 @@ function object:onthink(tGameVariables)
 			if core.nDifficulty == core.nEASY_DIFFICULTY or core.bIsTutorial then
 				object.bDefense = false
 				-- don't reset this when the tutorial switches Legion to medium
+			end
+
+			if core.nDifficulty == core.nEASY_DIFFICULTY and core.IsTableEmpty(object.tAllyHumanHeroes) then
+				object.bGroupAndPush = false
 			end
 		end
 	end
@@ -569,7 +575,7 @@ function object:UpdateAllMemoryUnits()
 				tMemoryUnits[id] = nil
 			end
 		else
-			if bDebugEchos then BotEcho('Removing '..(unit and unit:GetTypeName() or '"nil unit"')..' since it is not an actual memory unit') end
+			if bDebugEchos then BotEcho('Removing '..((unit and unit:GetTypeName()) or '"nil unit"')..' since it is not an actual memory unit') end
 			tMemoryUnits[id] = nil --this is not an actual memoryUnit
 		end
 	end

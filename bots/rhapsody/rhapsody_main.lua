@@ -8,9 +8,13 @@
 --  |_| \_\ |_| |_| |_| |_| |_,     |______,  \____,     |__|	 -----
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
--- Rhapbot v1.0
+-- Rhapbot v1.1 
 
 -- By community member fane_maciuca
+
+--[[ Change Log: 
+(v1.1)	Changed the call to GroupCenter to use the faster, engine-side call
+--]]
 
 -- Note from fane_maciuca:
 -- I have a new respect for ASCII artists (a damn pain do the header here)
@@ -305,23 +309,16 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 local function funcFindItemsOverride(botBrain)
 	object.FindItemsOld(botBrain)
 
-	if core.itemAstrolabe ~= nil and not core.itemAstrolabe:IsValid() then
-		core.itemAstrolabe = nil
-	end
-	--[[
-	if core.itemWardOfSight ~= nil and not core.itemWardOfSight:IsValid() then
-		core.itemWardOfSight = nil
-	end--]]
-	if core.itemShrunkenHead ~= nil and not core.itemShrunkenHead:IsValid() then
-		core.itemShrunkenHead = nil
-	end
+	core.ValidateItem(core.itemAstrolabe)
+	core.ValidateItem(core.itemShrunkenHead)
+	--core.ValidateItem(core.itemWardOfSight)
 	
 	if --[[core.itemWardOfSight and --]] core.itemAstrolabe and core.itemShrunkenHead then
 		return
 	end
 
-	local inventory = core.unitSelf:GetInventory(true)
-	for slot = 1, 12, 1 do
+	local inventory = core.unitSelf:GetInventory(false)
+	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
 		if curItem then
 			if core.itemAstrolabe == nil and curItem:GetName() == "Item_Astrolabe" then
@@ -409,7 +406,7 @@ function AbilityPush(botBrain)
 
 	local vecCreepCenter, nCreeps = core.GetGroupCenter(core.localUnits["EnemyCreeps"])
 	
-	if vecCreepCenter == nil or nCreeps < nMinimumCreeps then 
+	if vecCreepCenter == nil or nCreeps == nil or nCreeps < nMinimumCreeps then 
 		return false
 	end
 	
@@ -462,30 +459,31 @@ behaviorLib.nHealTimeToLiveUtilityMul = 0.5
 -------------------------------------Also pops Shrunken, if available
 function ProtectiveMelodyExecute(botBrain)
 	local unitSelf = core.unitSelf
-	local tTargets = core.localUnits["AllyHeroes"]
+	local tTargets = core.CopyTable(core.localUnits["AllyHeroes"])
 	local nMyID    = unitSelf:GetUniqueID()
+	tTargets[nMyID] = nil
 	
-	for key, hero in pairs(tTargets) do
-		if hero:GetUniqueID() ~= nMyID then			
-			local vecAlliesCenter = core.GetGroupCenter(tTargets)
-			local vecMyPosition = unitSelf:GetPosition()
-			local abilUlt = skills.abilProtectiveMelody
-		
-			local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecAlliesCenter)
-						
-			local nRadius = abilUlt:GetTargetRadius()
-			local nHalfRadiusSq = nRadius * nRadius * 0.25
-			if nTargetDistanceSq <= nHalfRadiusSq then
-				local itemShrunkenHead = core.itemShrunkenHead
-				if itemShrunkenHead and itemShrunkenHead:CanActivate() then		--see if Shrunken can pop, then pop it
-					core.OrderItem(itemShrunkenHead)
-					return
-				end
-				core.OrderAbility(botBrain, abilUlt)		
-			else 
-				core.OrderMoveToPosClamp(botBrain, unitSelf, vecAlliesCenter)
+	local vecAlliesCenter = core.GetGroupCenter(tTargets)
+	local vecMyPosition = unitSelf:GetPosition()
+	local abilUlt = skills.abilProtectiveMelody
+
+	if vecAlliesCenter ~= nil then
+		local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecAlliesCenter)
+					
+		local nRadius = abilUlt:GetTargetRadius()
+		local nHalfRadiusSq = nRadius * nRadius * 0.25
+		if nTargetDistanceSq <= nHalfRadiusSq then
+			local itemShrunkenHead = core.itemShrunkenHead
+			if itemShrunkenHead and itemShrunkenHead:CanActivate() then		--see if Shrunken can pop, then pop it
+				core.OrderItemClamp(botBrain, unitSelf, itemShrunkenHead)
+				return
 			end
+			core.OrderAbility(botBrain, abilUlt)		
+		else 
+			core.OrderMoveToPosClamp(botBrain, unitSelf, vecAlliesCenter)
 		end
+	else
+		return false
 	end
 end
 

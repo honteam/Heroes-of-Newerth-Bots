@@ -870,7 +870,7 @@ function core.AdjustMovementForTowerLogic(vecDesiredPos, bCanEnterRange)
 				--TODO: predict ally creep death times and use that to know when to book it
 			end
 
-			--BotEcho('AdjustMovementForTowerLogic localTower: '..(localTower and localTower:GetTypeName() or 'nil'))
+			--BotEcho('AdjustMovementForTowerLogic localTower: '..((localTower and localTower:GetTypeName()) or 'nil'))
 			if bDebugLines and localTower ~= nil then
 				local nTowerExtraRange = core.GetExtraRange(localTower)
 				local nMyExtraRange = core.GetExtraRange(unitSelf)
@@ -970,9 +970,9 @@ function core.GetFurthestLaneTower(tNodes, bTraverseForward, nTargetTeam)
 	if bDebugEchos then BotEcho('GetFurthestLaneTower - bForward: '..tostring(bTraverseForward)) end
 	
 	--Traverse backward down the lane nodes and seach in a 2000 unit radius for the creeps from each node
-	local wellNodePos = core.allyWell and core.allyWell:GetPosition() or nil
+	local wellNodePos = (core.allyWell and core.allyWell:GetPosition()) or nil
 	if nTargetTeam ~= core.myTeam then --hacky
-		wellNodePos = core.enemyWell and core.enemyWell:GetPosition() or nil
+		wellNodePos = (core.enemyWell and core.enemyWell:GetPosition()) or nil
 	end
 	if bDebugEchos then BotEcho("WellNodePos: "..tostring(wellNodePos).."  allyWell: "..tostring(core.allyWell)) end
 	
@@ -1160,7 +1160,7 @@ function core.InventoryContains(inventory, val, bIgnoreRecipes, bIncludeStash)
 	for slot = 1, nLast, 1 do
 		local curItem = inventory[slot]
 		if curItem then
-			--Echo(format("%d - Type:%s  Name:%s", slot, type(curItem), curItem.GetName and curItem:GetName() or "ERROR"))
+			--Echo(format("%d - Type:%s  Name:%s", slot, type(curItem), (curItem.GetName and curItem:GetName()) or "ERROR"))
 			--if type(curItem) == "table" then
 			--	printTable(curItem)
 			--end
@@ -1172,6 +1172,10 @@ function core.InventoryContains(inventory, val, bIgnoreRecipes, bIncludeStash)
 	end
 	
     return tableOfThings
+end
+
+function core.IsLaneCreep(unit)
+	return (strfind(unit:GetTypeName(), "Creep") ~= nil)
 end
 
 function core.IsCourier(unit)
@@ -1400,7 +1404,7 @@ function core.SortBuildings(tBuildingList, tSortedTable)
 		BotEcho("--enemyRax:")
 		core.printGetTypeNameTable(tSortedTable.enemyRax)
 		BotEcho("--enemyMainBaseStructure:")
-		BotEcho(tSortedTable.enemyMainBaseStructure and tSortedTable.enemyMainBaseStructure:GetTypeName() or "nil")
+		BotEcho((tSortedTable.enemyMainBaseStructure and tSortedTable.enemyMainBaseStructure:GetTypeName()) or "nil")
 		BotEcho("--enemyOtherBuildings:")
 		core.printGetTypeNameTable(tSortedTable.enemyOtherBuildings)
 		BotEcho("--allyTowers:")
@@ -1408,7 +1412,7 @@ function core.SortBuildings(tBuildingList, tSortedTable)
 		BotEcho("--allyRax:")
 		core.printGetTypeNameTable(tSortedTable.allyRax)
 		BotEcho("--allyMainBaseStructure:")
-		BotEcho(tSortedTable.allyMainBaseStructure and tSortedTable.allyMainBaseStructure:GetTypeName() or "nil")
+		BotEcho((tSortedTable.allyMainBaseStructure and tSortedTable.allyMainBaseStructure:GetTypeName()) or "nil")
 		BotEcho("--allyOtherBuildings:")
 		core.printGetTypeNameTable(tSortedTable.allyOtherBuildings)
 		BotEcho("--shops:")
@@ -1780,8 +1784,8 @@ function core.AoETargeting(unitSelf, nRange, nRadius, bPositionTargets, unitPrio
 	local nLineLength = 50	
 	
 	local vecMyPosition = unitSelf:GetPosition()
-	local target = nil --vec or unit
-	local nTargetID = unitPriorityTarget and unitPriorityTarget:GetUniqueID() or nil
+	local target = nil
+	local nTargetID = (unitPriorityTarget and unitPriorityTarget:GetUniqueID()) or nil
 	local nMyExtraRange = core.GetExtraRange(core.unitSelf)
 	
 	local teamBotBrain = core.teamBotBrain
@@ -1848,7 +1852,7 @@ function core.AoETargeting(unitSelf, nRange, nRadius, bPositionTargets, unitPrio
 		
 		if bDebugLines then
 			for _, unit in pairs(tBestTargets) do
-				local sColor = (unit == target) and 'red' or 'yellow'
+				local sColor = (unit == target and 'red') or 'yellow'
 				core.DrawXPosition(unit:GetPosition(), sColor)
 			end
 		end
@@ -1954,7 +1958,8 @@ end
 
 ------------------ misc overrides and remanes ------------------
 function core.CanSeeUnit(botBrain, unit)
-	return botBrain:CanSeeUnit((unit and unit.object) or unit)
+	local unitParam = (unit ~= nil and unit.object) or unit
+	return botBrain:CanSeeUnit(unitParam)
 end
 
 --==== Item ====
