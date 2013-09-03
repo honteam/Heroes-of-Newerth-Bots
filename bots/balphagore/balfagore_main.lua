@@ -37,6 +37,11 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random, sqrt 
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
 BotEcho('loading balfagore_main...')
+
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 4, ShortSolo = 4, LongSolo = 3, ShortSupport = 1, LongSupport = 1, ShortCarry = 5, LongCarry = 5}
  
 ---------------------------------
 --          Constants          --

@@ -58,6 +58,11 @@ local Clamp = core.Clamp
 
 BotEcho('loading soulreaper_main...')
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 5, ShortSolo = 5, LongSolo = 4, ShortSupport = 4, LongSupport = 4, ShortCarry = 3, LongCarry = 3}
+
 --####################################################################
 --####################################################################
 --#                                                                 ##

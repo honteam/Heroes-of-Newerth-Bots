@@ -49,6 +49,11 @@ local Clamp = core.Clamp
 
 BotEcho('loading hammerstorm_main...')
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 3, ShortSolo = 3, LongSolo = 3, ShortSupport = 2, LongSupport = 2, ShortCarry = 5, LongCarry = 5}
+
 object.heroName = 'Hero_Hammerstorm'
 
 

@@ -49,6 +49,11 @@ local Clamp = core.Clamp
 
 BotEcho('loading defiler_main...')
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 5, ShortSolo = 5, LongSolo = 4, ShortSupport = 2, LongSupport = 2, ShortCarry = 3, LongCarry = 2}
+
 object.heroName = 'Hero_Defiler'
 
 --------------------------------

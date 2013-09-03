@@ -86,6 +86,11 @@ local Clamp = core.Clamp
  
  
 BotEcho('loading schnasegrave_main...')
+
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 4, ShortSolo = 3, LongSolo = 1, ShortSupport = 5, LongSupport = 4, ShortCarry = 2, LongCarry = 2}
  
 object.heroName = 'Hero_Taint'
  

@@ -49,6 +49,11 @@ local Clamp = core.Clamp
 
 BotEcho('loading forsakenarcher_main...')
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 5, ShortSolo = 5, LongSolo = 3, ShortSupport = 1, LongSupport = 2, ShortCarry = 5, LongCarry = 4}
+
 object.heroName = 'Hero_ForsakenArcher'
 
 --------------------------------

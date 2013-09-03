@@ -68,6 +68,11 @@ object.onthinkOld = object.onthink
 object.onthink 	= object.onthinkOverride
 
 --------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 2, ShortSolo = 4, LongSolo = 3, ShortSupport = 2, LongSupport = 2, ShortCarry = 5, LongCarry = 5}
+
+--------------------------------
 -- Skills
 --------------------------------
 function object:SkillBuild()
