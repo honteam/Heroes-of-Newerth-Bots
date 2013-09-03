@@ -103,9 +103,9 @@ function object:SkillBuild()
 		return
 	end
 
-	local nlev = unitSelf:GetLevel()
-	local nlevPts = unitSelf:GetAbilityPointsAvailable()
-	for i = nlev, nlev+nlevPts do
+	local nLev = unitSelf:GetLevel()
+	local nLevPts = unitSelf:GetAbilityPointsAvailable()
+	for i = nLev, nLev+nLevPts do
 		unitSelf:GetAbility( object.tSkills[i] ):LevelUp()
 
 		--initialy set aura and bounce to heroes only
@@ -122,7 +122,7 @@ end
 -- Find geo, shrunken, rage, helm and boots --
 ----------------------------------------------
 
-local function funcFindItemsOverride(botBrain)
+local function FindItemsOverride(botBrain)
 	object.FindItemsOld(botBrain)
 	core.ValidateItem(core.itemGeometer)
 	core.ValidateItem(core.itemShrunkenHead)
@@ -151,7 +151,7 @@ local function funcFindItemsOverride(botBrain)
 end
 
 object.FindItemsOld = core.FindItems
-core.FindItems = funcFindItemsOverride
+core.FindItems = FindItemsOverride
 
 ---------------------------
 --    onthink override   --
@@ -210,7 +210,7 @@ function object:onthinkOverride(tGameVariables)
 		if object.nSteambootsToggleDelay ~= 0 then
 			object.nSteambootsToggleDelay = object.nSteambootsToggleDelay - 1 --not to spam faster than it can handle
 		else
-			currentAttribute = self.SteamBootsLib.getAttributeBonus()
+			currentAttribute = SteamBootsLib.getAttributeBonus()
 			if currentAttribute ~= "" and currentAttribute ~= SteamBootsLib.sDesiredAttribute then
 				self:OrderItem(core.itemSteamBoots.object, "None")
 				object.nSteambootsToggleDelay = 5
@@ -245,25 +245,25 @@ behaviorLib.PositionSelfBehavior["Execute"] = behaviorLib.PositionSelfExecuteOve
 -- oncombatevent override --
 ----------------------------
 --Bonuses
-object.geometerUseBonus = 15
-object.ultUseBonus = 65
-object.beamUseBonus = 5
-object.SymbolofRageUseBonus = 50
+object.nGeometerUseBonus = 15
+object.nUltUseBonus = 65
+object.nBeamUseBonus = 5
+object.nSymbolofRageUseBonus = 50
 function object:oncombateventOverride(EventData)
 	self:oncombateventOld(EventData)
 
 	local addBonus = 0
 	if EventData.Type == "Ability" then	
 		if EventData.InflictorName == "Ability_Krixi1" then
-			addBonus = addBonus + object.beamUseBonus
+			addBonus = addBonus + object.nBeamUseBonus
 		elseif EventData.InflictorName == "Ability_Krixi4" then
-			addBonus = addBonus + object.ultUseBonus
+			addBonus = addBonus + object.nUltUseBonus
 		end
 	elseif EventData.Type == "Item" then
 		if core.itemGeometer ~= nil and EventData.InflictorName == core.itemGeometer:GetName() then
-			addBonus = addBonus + object.geometerUseBonus
+			addBonus = addBonus + object.nGeometerUseBonus
 		elseif core.itemSymbolofRage and EventData.InflictorName == core.itemSymbolofRage:GetName() then
-			addBonus = addBonus + object.SymbolofRageUseBonus
+			addBonus = addBonus + object.nSymbolofRageUseBonus
 		end
 	end
 	
@@ -300,23 +300,23 @@ behaviorLib.RetreatFromThreatBehavior["Execute"] = behaviorLib.RetreatFromThreat
 ----------------------------------
 -- Extra value from spells and geo
 
-object.moonbeamUpBonus = 5
-object.ultUpBonus = 20
-object.geometerUpBonus = 5
+object.nMoonbeamUpBonus = 5
+object.nUltUpBonus = 20
+object.nGeometerUpBonus = 5
 local function CustomHarassUtilityFnOverride(hero)
 	local val = 0
 	
 	if skills.abilMoonbeam:CanActivate() then
-		val = val + object.moonbeamUpBonus
+		val = val + object.nMoonbeamUpBonus
 	end
 	
 	if skills.abilMoonFinale:CanActivate() then
-		val = val + object.ultUpBonus
+		val = val + object.nUltUpBonus
 	end
 
 	if core.itemGeometer ~= nil then
 		if core.itemGeometer:CanActivate() then
-			val = val + object.geometerUpBonus
+			val = val + object.nGeometerUpBonus
 		end
 	end
 	-- Less mana less aggerssion
@@ -329,9 +329,9 @@ behaviorLib.CustomHarassUtility = CustomHarassUtilityFnOverride
 ---------------------
 -- Harass Behavior --
 ---------------------
-object.geometerUseThreshold = 55
+object.nGeometerUseThreshold = 55
 object.moonbeamThreshold = 35
-object.ultThresholds = {95, 85, 75}
+object.tUltThresholds = {95, 85, 75}
 local function HarassHeroExecuteOverride(botBrain)
 
 	local unitTarget = behaviorLib.heroTarget
@@ -357,7 +357,7 @@ local function HarassHeroExecuteOverride(botBrain)
 
 	local bActionTaken = false
 
-	local bTargetMagicImmune = object.IsMagicImmune(unitTarget)
+	local bTargetMagicImmune = object.isMagicImmune(unitTarget)
 
 	----------------------------------------------------------------------------
 
@@ -368,14 +368,14 @@ local function HarassHeroExecuteOverride(botBrain)
 	end
 
 	if not bActionTaken then
-		if nLastHarassUtility > object.geometerUseThreshold and core.itemGeometer and core.itemGeometer:CanActivate() then
+		if nLastHarassUtility > object.nGeometerUseThreshold and core.itemGeometer and core.itemGeometer:CanActivate() then
 			bActionTaken = core.OrderItemClamp(botBrain, unitSelf, core.itemGeometer, false, false)
 		end
 	end
 
 	if not bActionTaken and bCanSee and not bTargetMagicImmune then
 		--at higher levels this overpowers ult behavior with lastHarassUtil like 150
-		if skills.abilMoonFinale:CanActivate() and nLastHarassUtility > object.ultThresholds[skills.abilMoonFinale:GetLevel()] and nTargetDistanceSq < 600 * 600 then
+		if skills.abilMoonFinale:CanActivate() and nLastHarassUtility > object.tUltThresholds[skills.abilMoonFinale:GetLevel()] and nTargetDistanceSq < 600 * 600 then
 			bActionTaken = behaviorLib.ultBehavior["Execute"](botBrain)
 		end
 	end
@@ -401,7 +401,7 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 -------------------------------------------------------------------
 --Use ult when there are good change and harashero is too afraid --
 -------------------------------------------------------------------
-function behaviorLib.UltimateUtility(botBrain)
+function behaviorLib.ultimateUtility(botBrain)
 
 	if not skills.abilMoonFinale:CanActivate() then
 		return 0
@@ -411,36 +411,36 @@ function behaviorLib.UltimateUtility(botBrain)
 
 	--range of ult is 700, check 800 cause we are going to move during ult
 	--check heroes in range 600, they try to run
-	local unitlist = HoN.GetUnitsInRadius(vecMyPosition, 800, core.UNIT_MASK_UNIT + core.UNIT_MASK_HERO + core.UNIT_MASK_ALIVE)
-	local localUnits = {}
-	core.SortUnitsAndBuildings(unitlist, localUnits, true)
+	local tUnitList = HoN.GetUnitsInRadius(vecMyPosition, 800, core.UNIT_MASK_UNIT + core.UNIT_MASK_HERO + core.UNIT_MASK_ALIVE)
+	local tLocalUnits = {}
+	core.SortUnitsAndBuildings(tUnitList, tLocalUnits, true)
 
-	local enemyheroes = {}
+	local nEnemyHeroes = 0
 
-	for _, hero in pairs(localUnits["enemyHeroes"]) do
-		if Vector3.Distance2DSq(vecMyPosition, hero:GetPosition()) < 600*600 and not object.IsMagicImmune(hero) then
-			tinsert(enemyheroes, hero)
+	for _, unitHero in pairs(tLocalUnits["enemyHeroes"]) do
+		if Vector3.Distance2DSq(vecMyPosition, unitHero:GetPosition()) < 600*600 and not object.isMagicImmune(unitHero) then
+			nEnemyHeroes = nEnemyHeroes + 1
 		end
 	end
 
-	if core.NumberElements(enemyheroes) == 0 then
+	if nEnemyHeroes == 0 then
 		return 0
 	end
 
-	local utilityvalue = 0
-	if core.NumberElements(localUnits["tEnemyUnits"]) <= skills.abilMoonFinale:GetLevel() + 1 then
-		utilityvalue = utilityvalue + 30
+	local nUtilityValue = 0
+	if core.NumberElements(tLocalUnits["enemyUnits"]) <= skills.abilMoonFinale:GetLevel() + 1 then
+		nUtilityValue = nUtilityValue + 30
 	end
-	if core.NumberElements(localUnits["tEnemyUnits"]) == core.NumberElements(enemyheroes) then
-		utilityvalue = utilityvalue + 40
-	elseif core.NumberElements(localUnits["tEnemyUnits"]) < core.NumberElements(enemyheroes) *2 then
-		utilityvalue = utilityvalue + 20
+	if core.NumberElements(tLocalUnits["enemyUnits"]) == nEnemyHeroes then
+		nUtilityValue = nUtilityValue + 40
+	elseif core.NumberElements(tLocalUnits["enemyUnits"]) < nEnemyHeroes * 2 then
+		nUtilityValue = nUtilityValue + 20
 	end
-	return utilityvalue * core.unitSelf:GetHealthPercent()
+	return nUtilityValue * core.unitSelf:GetHealthPercent()
 end
 
 --press R to kill
-function behaviorLib.UltimateExecute(botBrain)
+function behaviorLib.ultimateExecute(botBrain)
 	bActionTaken = core.OrderAbility(botBrain, skills.abilMoonFinale)
 
 	if core.itemShrunkenHead and bActionTaken then
@@ -450,15 +450,15 @@ function behaviorLib.UltimateExecute(botBrain)
 end
 
 behaviorLib.ultBehavior = {}
-behaviorLib.ultBehavior["Utility"] = behaviorLib.UltimateUtility
-behaviorLib.ultBehavior["Execute"] = behaviorLib.UltimateExecute
+behaviorLib.ultBehavior["Utility"] = behaviorLib.ultimateUtility
+behaviorLib.ultBehavior["Execute"] = behaviorLib.ultimateExecute
 behaviorLib.ultBehavior["Name"] = "Moon Finale"
 tinsert(behaviorLib.tBehaviors, behaviorLib.ultBehavior)
 
 ------------------------------------------------
 -- Behavior to break channels and remove pots --
 ------------------------------------------------
-behaviorLib.enemyToStun = nil
+behaviorLib.unitEnemyToStun = nil
 function behaviorLib.stunUtility(botBrain)
 	if not skills.abilMoonbeam:CanActivate() then
 		return 0
@@ -466,13 +466,13 @@ function behaviorLib.stunUtility(botBrain)
 
 	local vecMyPosition = core.unitSelf:GetPosition()
 
-	local nRadiusSQ = (skills.abilMoonbeam::GetRange() + 200) * (skills.abilMoonbeam::GetRange() + 200)
+	local nRadiusSQ = (skills.abilMoonbeam:GetRange() + 200) * (skills.abilMoonbeam:GetRange() + 200)
 
-	for _,enemy in pairs(core.localUnits["EnemyHeroes"]) do
-		if enemy:IsChanneling() or enemy:HasState("State_ManaPotion") or enemy:HasState("State_HealthPotion")
-			or enemy:HasState("State_Bottle") or enemy:HasState("State_PowerupRegen") then
-			if Vector3.Distance2DSq(vecMyPosition, enemy:GetPosition()) < nRadiusSQ then
-				behaviorLib.enemyToStun = enemy
+	for _, unitEnemyHero in pairs(core.localUnits["EnemyHeroes"]) do
+		if unitEnemyHero:IsChanneling() or unitEnemyHero:HasState("State_ManaPotion") or unitEnemyHero:HasState("State_HealthPotion")
+			or unitEnemyHero:HasState("State_Bottle") or unitEnemyHero:HasState("State_PowerupRegen") then
+			if Vector3.Distance2DSq(vecMyPosition, unitEnemyHero:GetPosition()) < nRadiusSQ then
+				behaviorLib.unitEnemyToStun = unitEnemyHero
 				return 70
 			end
 		end
@@ -481,7 +481,7 @@ function behaviorLib.stunUtility(botBrain)
 end
 
 function behaviorLib.stunExecute(botBrain)
-	return core.OrderAbilityEntity(botBrain, skills.abilMoonbeam, behaviorLib.enemyToStun)
+	return core.OrderAbilityEntity(botBrain, skills.abilMoonbeam, behaviorLib.unitEnemyToStun)
 end
 
 behaviorLib.stunBehavior = {}
@@ -497,24 +497,24 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.stunBehavior)
 ---------------------------------
 --Helppers for bounce and aura --
 ---------------------------------
-function object.toggleAura(botBrain, state)
-	if object.getAuraState() == state or not skills.abilAura:CanActivate() then
+function object.toggleAura(botBrain, bState)
+	if object.getAuraState() == bState or not skills.abilAura:CanActivate() then
 		return false
 	end
-	local success = core.OrderAbility(botBrain, skills.abilAura)
-	if success then
+	local bSuccess = core.OrderAbility(botBrain, skills.abilAura)
+	if bSuccess then
 		skills.abilAura.bTargetAll = not skills.abilAura.bTargetAll
 	end
 	return true
 end
 
-function object.toggleBounce(botBrain, state)
-	if object.getBounceState() == state or not skills.abilBounce:CanActivate() then
+function object.toggleBounce(botBrain, bState)
+	if object.getBounceState() == bState or not skills.abilBounce:CanActivate() then
 		return false
 	end
 
-	local success = core.OrderAbility(botBrain, skills.abilBounce)
-	if success then
+	local bSuccess = core.OrderAbility(botBrain, skills.abilBounce)
+	if bSuccess then
 		skills.abilBounce.bTargetAll = not skills.abilBounce.bTargetAll
 	end
 	return true
@@ -538,7 +538,7 @@ end
 --------------------
 -- Magic immunity --
 --------------------
-function object.IsMagicImmune(unit)
+function object.isMagicImmune(unit)
 	local states = { "State_Item3E", "State_Predator_Ability2", "State_Jereziah_Ability2", "State_Rampage_Ability1_Self", "State_Rhapsody_Ability4_Buff", "State_Hiro_Ability1" }
 	for _, state in ipairs(states) do
 		if unit:HasState(state) then
@@ -554,20 +554,20 @@ end
 
 function IllusionLib.myIllusions()
 	if core.tControllableUnits ~= nil then
-		local illus = {}
+		local tIllusions = {}
 
 		for _, unit in pairs(core.tControllableUnits["InventoryUnits"]) do
-			if unit:IsHero() and IllusionLib.IsIllusion(unit) then
-				tinsert(illus, unit)
+			if unit:IsHero() and IllusionLib.isIllusion(unit) then
+				tinsert(tIllusions, unit)
 			end
 		end
-		return illus
+		return tIllusions
 	else
 		return {}
 	end
 end
 
-function IllusionLib.IsIllusion(unit)
+function IllusionLib.isIllusion(unit)
 	if unit:GetTeam() ~= object.core.myTeam then --Dont "cheat"
 		return false
 	end
