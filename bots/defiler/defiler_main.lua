@@ -339,20 +339,16 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 local function funcFindItemsOverride(botBrain)
 	object.FindItemsOld(botBrain)
 
-	if core.itemSheepstick ~= nil and not core.itemSheepstick:IsValid() then
-		core.itemSheepstick = nil
-	end	
-	if core.itemFrostfieldPlate ~= nil and not core.itemFrostfieldPlate:IsValid() then
-		core.itemFrostfieldPlate = nil
-	end
+	core.ValidateItem(core.itemSheepstick)
+	core.ValidateItem(core.itemFrostfieldPlate)
 	
 	--only update if we need to
 	if core.itemSheepstick and core.itemFrostfieldPlate then
 		return
 	end
 	
-	local inventory = core.unitSelf:GetInventory(true)
-	for slot = 1, 12, 1 do
+	local inventory = core.unitSelf:GetInventory(false)
+	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
 		if curItem then
 			if core.itemSheepstick == nil and curItem:GetName() == "Item_Morph" then
@@ -375,7 +371,7 @@ object.nUnholyExpulsionPushWeight = 1.0
 
 --Ghosts out, towers goin down
 local function UnholyExpulsionPushUtility()
-	return IsUnholyExpulsionActive() and 100 or 0
+	return (IsUnholyExpulsionActive() and 100) or 0
 end
 
 local function PushingStrengthUtilityOverride(myHero)

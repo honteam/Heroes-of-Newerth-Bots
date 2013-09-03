@@ -101,16 +101,14 @@ end
 local function funcFindItemsOverride(botBrain)
 	object.FindItemsOld(botBrain)
 
-	if core.itemPortalKey ~= nil and not core.itemPortalKey:IsValid() then
-		core.itemPortalKey = nil
-	end
-
+	core.ValidateItem(core.itemPortalKey)
+	
 	if core.itemPortalKey then
 		return
 	end
 
-	local inventory = core.unitSelf:GetInventory(true)
-	for slot = 1, 12, 1 do
+	local inventory = core.unitSelf:GetInventory(false)
+	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
 		if curItem then
 			if core.itemPortalKey == nil and curItem:GetName() == "Item_PortalKey" then

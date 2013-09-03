@@ -362,9 +362,6 @@ local function HarassHeroExecuteOverride(botBrain)
 	if not bActionTaken then
 		if bDebugEchos then BotEcho("No action yet, proceeding with normal harass execute.") end
 		return object.harassExecuteOld(botBrain)
-		--core.OrderAttackClamp(botBrain, unitSelf, unitTarget)
-		--botBrain:OrderEntity(unitSelf.object or unitSelf, "Attack", unitTarget.object or unitTarget)
-		--return true
 	end
 end
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
@@ -377,19 +374,15 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 local function funcFindItemsOverride(botBrain)
 	object.FindItemsOld(botBrain)
 
-	if core.itemSheepstick ~= nil and not core.itemSheepstick:IsValid() then
-		core.itemSheepstick = nil
-	end
-	if core.itemRoS ~= nil and not core.itemRoS:IsValid() then
-		core.itemRoS = nil
-	end
-	
+	core.ValidateItem(core.itemSheepstick)
+	core.ValidateItem(core.itemRoS)
+		
 	if core.itemSheepstick and core.itemRoS then
 		return
 	end
 
-	local inventory = core.unitSelf:GetInventory(true)
-	for slot = 1, 12, 1 do
+	local inventory = core.unitSelf:GetInventory(false)
+	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
 		if curItem then
 			if core.itemSheepstick == nil and curItem:GetName() == "Item_Morph" then

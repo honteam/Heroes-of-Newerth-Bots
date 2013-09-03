@@ -757,23 +757,28 @@ function core.UpdateLane()
 	end
 end
 
+function core.ValidateItem(item)
+	--if item ~= nil then BotEcho("item "..item:GetTypeName().." is in slot "..item:GetSlot()) end
+	if item ~= nil and (not item:IsValid() or item:GetSlot() > 6) then
+		item = nil
+	end	
+end
+
 function core.FindItems(botBrain)
 	--seach for the key Items of ours that we want to track
 	
-	if core.itemGhostMarchers ~= nil and not core.itemGhostMarchers:IsValid() then
-		core.itemGhostMarchers = nil
-	end
-	if core.itemHatchet ~= nil and not core.itemHatchet:IsValid() then
-		core.itemHatchet = nil
-	end	
-	if core.itemRoT ~= nil and not core.itemRoT:IsValid() then
-		core.itemRoT = nil
-	end
+	core.ValidateItem(core.itemGhostMarchers)
+	core.ValidateItem(core.itemHatchet)
+	core.ValidateItem(core.itemRoT)
 	
 	local unitSelf = core.unitSelf
 	
-	local inventory = unitSelf:GetInventory(true)
-	for slot = 1, 12, 1 do
+	if (core.itemGhostMarchers and core.itemHatchet and core.itemRoT) then
+		return
+	end	
+	
+	local inventory = unitSelf:GetInventory(false)
+	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
 		if curItem then
 			if core.itemGhostMarchers == nil and curItem:GetName() == "Item_EnhancedMarchers" then
@@ -809,7 +814,7 @@ function core.FindItems(botBrain)
 		end
 	end
 	
-	return true
+	return
 end
 
 function core.DecayBonus(botBrain)
@@ -839,7 +844,10 @@ function core.OrderAttack(botBrain, unit, unitTarget, bQueueCommand)
 		queue = "Back"
 	end
 	
-	botBrain:OrderEntity(unit.object or unit, "Attack", unitTarget.object or unitTarget, queue)
+	local unitParam = (unit ~= nil and unit.object) or unit
+	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
+		
+	botBrain:OrderEntity(unitParam, "Attack", targetParam, queue)
 	return true
 end
 
@@ -863,7 +871,10 @@ function core.OrderAttackClamp(botBrain, unit, unitTarget, bQueueCommand)
 		queue = "Back"
 	end
 	
-	botBrain:OrderEntity(unit.object or unit, "Attack", unitTarget.object or unitTarget, queue)
+	local unitParam = (unit ~= nil and unit.object) or unit
+	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
+	
+	botBrain:OrderEntity(unitParam, "Attack", targetParam, queue)
 	
 	core.nextOrderTime = curTimeMS + core.timeBetweenOrders
 	return true
@@ -911,7 +922,10 @@ function core.OrderMoveToUnit(botBrain, unit, unitTarget, bInterruptAttacks, bQu
 		queue = "Back"
 	end
 	
-	botBrain:OrderEntity(unit.object or unit, "Move", unitTarget.object or unitTarget, queue)
+	local unitParam = (unit ~= nil and unit.object) or unit
+	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
+	
+	botBrain:OrderEntity(unitParam, "Move", targetParam, queue)
 	return true
 end
 
@@ -940,7 +954,10 @@ function core.OrderFollow(botBrain, unit, target, bInterruptAttacks, bQueueComma
 		queue = "Back"
 	end
 	
-	botBrain:OrderEntity(unit.object or unit, "Follow", target.object or target, queue)
+	local unitParam = (unit ~= nil and unit.object) or unit
+	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
+	
+	botBrain:OrderEntity(unitParam, "Follow", targetParam, queue)
 	return true
 end
 
@@ -969,7 +986,10 @@ function core.OrderTouch(botBrain, unit, target, bInterruptAttacks, bQueueComman
 		queue = "Back"
 	end
 	
-	botBrain:OrderEntity(unit.object or unit, "Touch", target.object or target, queue)
+	local unitParam = (unit ~= nil and unit.object) or unit
+	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
+	
+	botBrain:OrderEntity(unitParam, "Touch", targetParam, queue)
 	return true
 end
 
@@ -998,7 +1018,9 @@ function core.OrderStop(botBrain, unit, bInterruptAttacks, bQueueCommand)
 		queue = "Back"
 	end
 	
-	botBrain:Order(unit.object or unit, "Stop")
+	local unitParam = (unit ~= nil and unit.object) or unit
+	
+	botBrain:Order(unitParam, "Stop")
 	return true
 end
 
@@ -1044,7 +1066,9 @@ function core.OrderHold(botBrain, unit, bInterruptAttacks, bQueueCommand)
 		queue = "Back"
 	end
 	
-	botBrain:Order(unit.object or unit, "Hold", queue)
+	local unitParam = (unit ~= nil and unit.object) or unit
+	
+	botBrain:Order(unitParam, "Hold", queue)
 	return true
 end
 
@@ -1073,7 +1097,11 @@ function core.OrderGiveItem(botBrain, unit, target, item, bInterruptAttacks, bQu
 		queue = "Back"
 	end
 	
-	botBrain:OrderEntity(unit.object or unit, "GiveItem", target.object or target, queue, item)
+	local unitParam = (unit ~= nil and unit.object) or unit
+	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
+	local itemParam = (item ~= nil and item.object) or item
+	
+	botBrain:OrderEntity(unitParam, "GiveItem", targetParam, queue, itemParam)
 	return true
 end
 
@@ -1149,7 +1177,7 @@ function core.OrderMoveToPos(botBrain, unit, position, bInterruptAttacks, bQueue
 		queue = "Back"
 	end
 	
-	--BotEcho('C++ call: OrderPosition('..unit:GetTypeName()..', "Move", {'..tostring(position)..'}, '..tostring(bQueueCommand)..')')
+	local unitParam = (unit ~= nil and unit.object) or unit
 	
 	botBrain:OrderPosition(unit.object or unit, "Move", position, queue)
 	return true
@@ -1196,7 +1224,9 @@ function core.OrderAttackPosition(botBrain, unit, position, bInterruptAttacks, b
 		queue = "Back"
 	end
 	
-	botBrain:OrderPosition(unit.object or unit, "Attack", position, queue)
+	local unitParam = (unit ~= nil and unit.object) or unit
+	
+	botBrain:OrderPosition(unitParam, "Attack", position, queue)
 	return true
 end
 
@@ -1225,7 +1255,10 @@ function core.OrderDropItem(botBrain, unit, position, item, bInterruptAttacks, b
 		queue = "Back"
 	end
 	
-	botBrain:OrderPosition(unit.object or unit, "DropItem", position, queue, item.object or item)
+	local unitParam = (unit ~= nil and unit.object) or unit
+	local itemParam = (item ~= nil and item.object) or item
+	
+	botBrain:OrderPosition(unitParam, "DropItem", position, queue, itemParam)
 	return true
 end
 
@@ -1261,7 +1294,10 @@ function core.OrderItemEntityClamp(botBrain, unit, item, entity, bInterruptAttac
 		queue = "Back"
 	end
 	
-	botBrain:OrderItemEntity(item.object or item, entity.object or entity, queue)
+	local itemParam = (item ~= nil and item.object) or item
+	local entityParam = (entity ~= nil and entity.object) or entity
+	
+	botBrain:OrderItemEntity(itemParam, entityParam, queue)
 	
 	core.nextOrderTime = curTimeMS + core.timeBetweenOrders
 	return true
@@ -1298,7 +1334,9 @@ function core.OrderItemClamp(botBrain, unit, item, bInterruptAttacks, bQueueComm
 		queue = "Back"
 	end
 	
-	botBrain:OrderItem(item.object or item, queue)
+	local itemParam = (item ~= nil and item.object) or item
+	
+	botBrain:OrderItem(itemParam, queue)
 	
 	core.nextOrderTime = curTimeMS + core.timeBetweenOrders
 	return true
@@ -1329,7 +1367,9 @@ function core.OrderItemPosition(botBrain, unit, item, vecTarget, bInterruptAttac
 		queue = "Back"
 	end
 	
-	botBrain:OrderItemPosition(item.object or item, vecTarget)
+	local itemParam = (item ~= nil and item.object) or item
+	
+	botBrain:OrderItemPosition(itemParam, vecTarget)
 	return true
 end
 
@@ -1353,7 +1393,9 @@ function core.ToggleAutoCastItem(botBrain, item, bInterruptAttacks, bQueueComman
 		end
 	end
 	
-	botBrain:OrderItem2(item, bQueueCommand)
+	local itemParam = (item ~= nil and item.object) or item
+	
+	botBrain:OrderItem2(itemParam, bQueueCommand)
 	return true
 end
 
@@ -1378,7 +1420,9 @@ function core.OrderAbility(botBrain, ability, bInterruptAttacks, bQueueCommand)
 		end
 	end
 	
-	botBrain:OrderAbility(ability, bQueueCommand)
+	local abilityParam = (ability ~= nil and ability.object) or ability
+	
+	botBrain:OrderAbility(abilityParam, bQueueCommand)
 	return true
 end
 
@@ -1402,7 +1446,9 @@ function core.OrderAbilityPosition(botBrain, ability, vecTarget, bInterruptAttac
 		end
 	end
 	
-	botBrain:OrderAbilityPosition(ability, vecTarget, bQueueCommand)
+	local abilityParam = (ability ~= nil and ability.object) or ability
+	
+	botBrain:OrderAbilityPosition(abilityParam, vecTarget, bQueueCommand)
 	return true
 end
 
@@ -1426,7 +1472,10 @@ function core.OrderAbilityEntity(botBrain, ability, unitTarget, bInterruptAttack
 		end
 	end
 	
-	botBrain:OrderAbilityEntity(ability, unitTarget.object or unitTarget, bQueueCommand)
+	local abilityParam = (ability ~= nil and ability.object) or ability
+	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
+	
+	botBrain:OrderAbilityEntity(abilityParam, targetParam, bQueueCommand)
 	return true
 end
 
@@ -1449,8 +1498,10 @@ function core.ToggleAutoCastAbility(botBrain, ability, bInterruptAttacks, bQueue
 			return true
 		end
 	end
+		
+	local abilityParam = (ability ~= nil and ability.object) or ability
 	
-	botBrain:OrderAbility2(ability, bQueueCommand)
+	botBrain:OrderAbility2(abilityParam, bQueueCommand)
 	return true
 end
 
@@ -1474,7 +1525,10 @@ function core.OrderAbilityEntityVector(botBrain, ability, unitTarget, vecDelta, 
 		end
 	end
 	
-	botBrain:OrderAbilityEntityVector(ability, unitTarget.object or unitTarget, vecDelta, bQueueCommand)
+	local abilityParam = (ability ~= nil and ability.object) or ability
+	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
+	
+	botBrain:OrderAbilityEntityVector(abilityParam, targetParam, vecDelta, bQueueCommand)
 	return true
 end
 

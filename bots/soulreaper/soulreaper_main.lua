@@ -2,6 +2,7 @@
 
 -- By community member paradox870
 
+
 --####################################################################
 --####################################################################
 --#                                                                 ##
@@ -222,39 +223,29 @@ object.oncombatevent		= object.oncombateventOverride
 --            FindItems override            --
 ----------------------------------------------
 local function funcFindItemsOverride(botBrain)
-	local bUpdated = object.FindItemsOld(botBrain)
+	object.FindItemsOld(botBrain)
 
-	if core.itemRoT ~= nil and not core.itemRoT:IsValid() then
-		core.itemRoT = nil
-	end
-	if core.itemRoS ~= nil and not core.itemRoS:IsValid() then
-		core.itemRoS = nil
-	end
-	if core.itemSheepstick ~= nil and not core.itemSheepstick:IsValid() then
-		core.itemSheepstick = nil
-	end
-	if core.itemFrostfieldPlate ~= nil and not core.itemFrostfieldPlate:IsValid() then
-		core.itemFrostfieldPlate = nil
+	core.ValidateItem(core.itemRoT)
+	core.ValidateItem(core.itemRoS)
+	core.ValidateItem(core.itemSheepstick)
+	core.ValidateItem(core.itemFrostfieldPlate)
+	
+	if core.itemRoT and core.itemRoS and core.itemSheepstick and core.itemFrostfieldPlate then
+		return
 	end
 
-	if bUpdated then
-		if core.itemRoT and core.itemRoS and core.itemSheepstick and core.itemFrostfieldPlate then
-			return
-		end
-
-		local inventory = core.unitSelf:GetInventory(true)
-		for slot = 1, 12, 1 do
-			local curItem = inventory[slot]
-			if curItem then
-				if core.itemRoT == nil and curItem:GetName() == "Item_ManaRegen3" then
-					core.itemRoT = core.WrapInTable(curItem)
-				elseif core.itemRoS == nil and curItem:GetName() == "Item_Replenish" then
-					core.itemRoS = core.WrapInTable(curItem)
-				elseif core.itemSheepstick == nil and curItem:GetName() == "Item_Morph" then
-					core.itemSheepstick = core.WrapInTable(curItem)
-				elseif core.itemFrostfieldPlate == nil and curItem:GetName() == "Item_FrostfieldPlate" then
-					core.itemFrostfieldPlate = core.WrapInTable(curItem)
-				end
+	local inventory = core.unitSelf:GetInventory(false)
+	for slot = 1, 6, 1 do
+		local curItem = inventory[slot]
+		if curItem then
+			if core.itemRoT == nil and curItem:GetName() == "Item_ManaRegen3" then
+				core.itemRoT = core.WrapInTable(curItem)
+			elseif core.itemRoS == nil and curItem:GetName() == "Item_Replenish" then
+				core.itemRoS = core.WrapInTable(curItem)
+			elseif core.itemSheepstick == nil and curItem:GetName() == "Item_Morph" then
+				core.itemSheepstick = core.WrapInTable(curItem)
+			elseif core.itemFrostfieldPlate == nil and curItem:GetName() == "Item_FrostfieldPlate" then
+				core.itemFrostfieldPlate = core.WrapInTable(curItem)
 			end
 		end
 	end
