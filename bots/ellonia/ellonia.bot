@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="Ellonia"
+	description="Carry"
+	heroname="Hero_Ellonia"
+	rootlua="ellonia_main.lua"
+	defaultplayername="IceQueen"
+	precachepath="heroes/ellonia"
+/>
