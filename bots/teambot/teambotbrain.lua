@@ -943,7 +943,11 @@ function object:PushUtility()
 end
 
 function object:GetGroupRallyPoint()
-	return self.unitRallyBuilding:GetPosition()
+	if self.unitRallyBuilding ~= nil then
+		return self.unitRallyBuilding:GetPosition()
+	end
+	
+	return nil
 end
 
 

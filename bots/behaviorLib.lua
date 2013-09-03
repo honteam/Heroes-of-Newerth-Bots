@@ -2305,7 +2305,7 @@ function behaviorLib.UseBatterySupplyExecute(botBrain)
 	
 	-- Use Mana Battery/Power Supply to heal
 	local itemBatterySupply = behaviorLib.GetBatterySupplyFromInventory(tInventory)
-	if itemBatterySupply:GetCharges() > 0 then
+	if itemBatterySupply ~= nil and itemBatterySupply:GetCharges() > 0 then
 		bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemBatterySupply)
 	end
 	

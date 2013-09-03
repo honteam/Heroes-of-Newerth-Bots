@@ -48,11 +48,15 @@ core.nEasyAbilityRangeSq = 450*450
 core.bEasyRandomAggression = false
 core.nEasyAggroPercent = 0.066666
 core.nEasyAggroTime = 0
-core.nEasyAggroDuraiton = 2000
+core.nEasyAggroDuration = 2000
 core.nEasyAggroReassessTime = 0
 core.nEasyAggroReassessInterval = 60000
 core.nEasyAggroHarassBonus = 35
 core.nEasyAggroAbilityBonus = 30
+core.bEasyLowHumanHealthRunHarass = 0
+core.nEasyLowHumanHealthTime = 0
+core.nEasyLowHumanHealthReassesInterval = 5000
+core.nEasyLowHumanHealthReassesAfterAttackInterval = 2000
 
 --Called every frame the engine gives us during the pick phase
 function object:onpickframe()
@@ -105,7 +109,7 @@ function object:onthink(tGameVariables)
 		--  The end result is once an aggressive interval occurs, we will
 		--	not have another one for 30-60s
 	
-		if core.bEasyRandomAggression and nGameTime >= core.nEasyAggroTime + core.nEasyAggroDuraiton then
+		if core.bEasyRandomAggression and nGameTime >= core.nEasyAggroTime + core.nEasyAggroDuration then
 			--Done with this interval
 			core.bEasyRandomAggression = false
 		end
@@ -119,7 +123,7 @@ function object:onthink(tGameVariables)
 			else
 				-- off, try again in 2s
 				core.bEasyRandomAggression = false
-				core.nEasyAggroReassessTime = nGameTime + core.nEasyAggroDuraiton
+				core.nEasyAggroReassessTime = nGameTime + core.nEasyAggroDuration
 			end
 		end
 		
@@ -202,6 +206,7 @@ function object:onthink(tGameVariables)
 			self.sLastBehaviorName = self.sCurrentBehaviorName
 			for i=nFirstBehavior,#object.tEvaluatedBehaviors do
 				if object.tEvaluatedBehaviors[i].Behavior.Execute ~= nil then
+					local bRunBehaviorExecute = true
 					self.sCurrentBehaviorName = object.tEvaluatedBehaviors[i].Behavior.Name
 					
 					--[Difficulty: Easy] Bots can't use abils if they aren't within a certain range 
@@ -230,15 +235,45 @@ function object:onthink(tGameVariables)
 									behaviorLib.lastHarassUtil = behaviorLib.lastHarassUtil + core.nEasyAggroAbilityBonus
 								end
 							end
+
+							if not heroTarget:IsBotControlled() then
+								local bDebugRunFromHuman = true
+								local nHealthPercent = heroTarget:GetHealthPercent()
+								local nCurrentHealth = heroTarget:GetHealth()
+
+								if nGameTime >= core.nEasyLowHumanHealthTime then
+									if nHealthPercent <= 0.15 or nCurrentHealth <= 300 then
+										if bDebugRunFromHuman then BotEcho("Human player is below health threshold") end
+
+										local nKillThreshold = 2
+										if random(10) > nKillThreshold then
+											if bDebugRunFromHuman then BotEcho("Choosing not to execute HarassHero") end
+											bRunBehaviorExecute = false
+											core.nEasyLowHumanHealthTime = nGameTime + core.nEasyLowHumanHealthReassesInterval
+										else
+											if bDebugRunFromHuman then BotEcho("ATTACKING HUMAN PLAYER EVEN THOUGH THEY HAVE LOW HEALTH") end
+											core.nEasyLowHumanHealthTime = nGameTime + core.nEasyLowHumanHealthDuration
+										end
+										if bDebugRunFromHuman then BotEcho("Setting new reassess time to: " .. core.nEasyLowHumanHealthTime) end
+									end
+									core.bEasyLowHumanHealthRunHarass = bRunBehaviorExecute
+								else
+									bRunBehaviorExecute = core.bEasyLowHumanHealthRunHarass
+									if bDebugRunFromHuman then BotEcho("Reassess threshold not passed - Running HarassHero: " .. tostring(bRunBehaviorExecute)) end
+								end
+							end
 						end
 					elseif self.bAbilityCommandsDefault then --don't set to true if the default is false
 						self.bAbilityCommands = true 
 					end
 					--[/Difficulty: Easy]
 					
-					StartProfile(object.tEvaluatedBehaviors[i].Behavior.Name .. " - Execute")
-					local bSuccessful = object.tEvaluatedBehaviors[i].Behavior.Execute(self)
-					StopProfile()
+					local bSuccessful = false
+					if bRunBehaviorExecute then
+						StartProfile(object.tEvaluatedBehaviors[i].Behavior.Name .. " - Execute")
+						bSuccessful = object.tEvaluatedBehaviors[i].Behavior.Execute(self)
+						StopProfile()
+					end
 					
 					--[Difficulty: Easy] Reset aggro
 					if nOldHarassUtility then
