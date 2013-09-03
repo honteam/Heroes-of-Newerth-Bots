@@ -56,7 +56,7 @@ core.nEasyAggroAbilityBonus = 30
 core.bEasyLowHumanHealthRunHarass = 0
 core.nEasyLowHumanHealthTime = 0
 core.nEasyLowHumanHealthReassesInterval = 5000
-core.nEasyLowHumanHealthReassesAfterAttackInterval = 2000
+core.nEasyLowHumanHealthDuration = 3000
 
 --Called every frame the engine gives us during the pick phase
 function object:onpickframe()
