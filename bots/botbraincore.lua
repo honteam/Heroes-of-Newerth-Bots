@@ -54,9 +54,12 @@ core.nEasyAggroReassessInterval = 60000
 core.nEasyAggroHarassBonus = 35
 core.nEasyAggroAbilityBonus = 30
 core.bEasyLowHumanHealthRunHarass = 0
-core.nEasyLowHumanHealthTime = 0
-core.nEasyLowHumanHealthReassesInterval = 5000
-core.nEasyLowHumanHealthDuration = 3000
+core.nEasyLowHumanHealthAggroStartTime = 0
+core.nEasyLowHumanHealthReassessTime = 0
+core.nEasyLowHumanHealthRecheckInterval = 5000
+core.nEasyLowHumanHealthCooldown = 20000
+core.nEasyLowHumanHealthDuration = 2000
+core.nEasyLowHumanHealthKillChance = 0.166666
 
 --Called every frame the engine gives us during the pick phase
 function object:onpickframe()
@@ -237,29 +240,32 @@ function object:onthink(tGameVariables)
 							end
 
 							if not heroTarget:IsBotControlled() then
-								local bDebugRunFromHuman = true
+								local bDebugRunFromHuman = false
 								local nHealthPercent = heroTarget:GetHealthPercent()
 								local nCurrentHealth = heroTarget:GetHealth()
 
-								if nGameTime >= core.nEasyLowHumanHealthTime then
-									if nHealthPercent <= 0.15 or nCurrentHealth <= 300 then
+								if core.bEasyLowHumanHealthRunHarass and nGameTime >= core.nEasyLowHumanHealthAggroStartTime + core.nEasyLowHumanHealthDuration then
+									core.bEasyLowHumanHealthRunHarass = false
+								end
+
+								if nGameTime >= core.nEasyLowHumanHealthReassessTime then
+									if nHealthPercent <= 0.25 or nCurrentHealth <= 300 then
 										if bDebugRunFromHuman then BotEcho("Human player is below health threshold") end
 
-										local nKillThreshold = 2
-										if random(10) > nKillThreshold then
+										if random() > core.nEasyLowHumanHealthKillChance then
 											if bDebugRunFromHuman then BotEcho("Choosing not to execute HarassHero") end
 											bRunBehaviorExecute = false
-											core.nEasyLowHumanHealthTime = nGameTime + core.nEasyLowHumanHealthReassesInterval
+											core.nEasyLowHumanHealthReassessTime = nGameTime + core.nEasyLowHumanHealthRecheckInterval
 										else
 											if bDebugRunFromHuman then BotEcho("ATTACKING HUMAN PLAYER EVEN THOUGH THEY HAVE LOW HEALTH") end
-											core.nEasyLowHumanHealthTime = nGameTime + core.nEasyLowHumanHealthDuration
+											core.nEasyLowHumanHealthAggroStartTime = nGameTime
+											core.nEasyLowHumanHealthReassessTime = nGameTime + core.nEasyLowHumanHealthCooldown + core.nEasyLowHumanHealthDuration
 										end
-										if bDebugRunFromHuman then BotEcho("Setting new reassess time to: " .. core.nEasyLowHumanHealthTime) end
+										if bDebugRunFromHuman then BotEcho("Setting new reassess time to: " .. core.nEasyLowHumanHealthReassessTime) end
 									end
 									core.bEasyLowHumanHealthRunHarass = bRunBehaviorExecute
 								else
 									bRunBehaviorExecute = core.bEasyLowHumanHealthRunHarass
-									if bDebugRunFromHuman then BotEcho("Reassess threshold not passed - Running HarassHero: " .. tostring(bRunBehaviorExecute)) end
 								end
 							end
 						end
