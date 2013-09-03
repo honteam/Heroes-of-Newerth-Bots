@@ -86,6 +86,11 @@ local sqrtTwo = math.sqrt(2)
 
 BotEcho('loading legionnaire_main...')
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 5, Mid = 1, ShortSolo = 1, LongSolo = 1, ShortSupport = 1, LongSupport = 1, ShortCarry = 3, LongCarry = 2, hero=core.unitSelf}
+
 ---------------------------------
 --          Constants          --
 ---------------------------------
@@ -284,10 +289,6 @@ core.FindItems = funcFindItemsOverride
 object.bLoadedLanes=false 
 function object:onthinkOverride(tGameVariables)
 	self:onthinkOld(tGameVariables)
-    if (not object.bLoadedLanes) then
-        core.teamBotBrain:SetLanePreferences( {Jungle = 5, Mid = 1, ShortSolo = 1, LongSolo = 1, ShortSupport = 1, LongSupport = 1, ShortCarry = 3, LongCarry = 2, hero=core.unitSelf} )
-        object.bLoadedLanes=true
-    end
 	jungleLib.assess(self)
 end
 
