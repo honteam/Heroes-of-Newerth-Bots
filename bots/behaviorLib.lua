@@ -2722,10 +2722,67 @@ function behaviorLib.PositionSelfBackUp()
 	return vecDesiredPos
 end
 
--------- Behavior Fns --------
+
+
+--------------------------------------------------
+--          RetreatFromThreat Override          --
+--------------------------------------------------
+behaviorLib.nOldRetreatFactor = 0.9--Decrease the value of the normal retreat behavior
+behaviorLib.nMaxLevelDifference = 4--Ensure hero will not be too carefull
+behaviorLib.nEnemyBaseThreat = 6--Base threat. Level differences and distance alter the actual threat level.
+
+--This function returns the position of the enemy hero.
+--If he is not shown on map it returns the last visible spot
+--as long as it is not older than 10s
+function behaviorLib.funcGetEnemyPosition(unitEnemy)
+	if unitEnemy == nil  then return Vector3.Create(20000, 20000) end 
+	local tEnemyPosition = core.unitSelf.tEnemyPosition
+	local tEnemyPositionTimestamp = core.unitSelf.tEnemyPositionTimestamp
+	if tEnemyPosition == nil then
+		-- initialize new table
+		core.unitSelf.tEnemyPosition = {}
+		core.unitSelf.tEnemyPositionTimestamp = {}
+		tEnemyPosition = core.unitSelf.tEnemyPosition
+		tEnemyPositionTimestamp = core.unitSelf.tEnemyPositionTimestamp
+		local tEnemyTeam = HoN.GetHeroes(core.enemyTeam)
+		--vector beyond map
+		for x, hero in pairs(tEnemyTeam) do
+			tEnemyPosition[hero:GetUniqueID()] = Vector3.Create(20000, 20000)
+			tEnemyPositionTimestamp[hero:GetUniqueID()] = HoN.GetGameTime()
+		end
+		
+	end
+	local vecPosition = unitEnemy:GetPosition()
+	--enemy visible?
+	if vecPosition then
+		--update table
+		tEnemyPosition[unitEnemy:GetUniqueID()] = unitEnemy:GetPosition()
+		tEnemyPositionTimestamp[unitEnemy:GetUniqueID()] = HoN.GetGameTime()
+	end
+	--return position, 10s memory
+	if tEnemyPositionTimestamp[unitEnemy:GetUniqueID()] <= HoN.GetGameTime() + 10000 then
+		return tEnemyPosition[unitEnemy:GetUniqueID()]
+	else
+		return Vector3.Create(20000, 20000)
+	end
+end
+
+function behaviorLib.funcGetThreatOfEnemy(unitEnemy)
+	if unitEnemy == nil or not unitEnemy:IsAlive() then return 0 end
+	local unitSelf = core.unitSelf
+	local nDistanceSq = Vector3.Distance2DSq(unitSelf:GetPosition(), behaviorLib.funcGetEnemyPosition (unitEnemy))
+	if nDistanceSq > 4000000 then return 0 end			
+	local nMyLevel = unitSelf:GetLevel()
+	local nEnemyLevel = unitEnemy:GetLevel()
+	--Level differences increase / decrease actual nThreat
+	local nThreat = behaviorLib.nEnemyBaseThreat + Clamp(nEnemyLevel - nMyLevel, 0, behaviorLib.nMaxLevelDifference)
+	--Magic-Formel: Threat to Range, T(700²) = 2, T(1100²) = 1.5, T(2000²)= 0.75
+	nThreat = Clamp(3*(112810000-nDistanceSq) / (4*(19*nDistanceSq+32810000)),0.75,2) * nThreat
+	return nThreat
+end
+
 function behaviorLib.RetreatFromThreatUtility(botBrain)
 	local bDebugEchos = false
-
 	local unitSelf = core.unitSelf
 	local tEnemyCreeps = core.localUnits["EnemyCreeps"]
 	local tEnemyTowers = core.localUnits["EnemyTowers"]
@@ -2763,7 +2820,6 @@ function behaviorLib.RetreatFromThreatUtility(botBrain)
 	--Total
 	local nUtility = nCreepAggroUtility + nRecentDamageUtility + nTowerUtility
 	
-	
 	if bDebugEchos then
 		BotEcho(format("nRecentDmgUtil: %d  nRecentDamage: %g", nRecentDamageUtility, nRecentDamage))
 		BotEcho(format("nTowerUtil: %d  max( nTowerProjectilesUtil: %d, nTowerAggroUtil: %d )", 
@@ -2771,29 +2827,61 @@ function behaviorLib.RetreatFromThreatUtility(botBrain)
 		BotEcho(format("util: %d  recentDmg: %d  tower: %d  creeps: %d", 
 			nUtility, nRecentDamageUtility, nTowerUtility, nCreepAggroUtility))		
 	end
-
-	
-	
 	nUtility = Clamp(nUtility, 0, 100)
 	behaviorLib.lastRetreatUtil = nUtility
 
 	if botBrain.bDebugUtility == true and nUtility ~= 0 then
 		BotEcho(format("  RetreatFromThreatUtility: %g", nUtility))
 	end
-
-	return nUtility
+	--New code starts here.
+	nUtility=nUtility * behaviorLib.nOldRetreatFactor
+	
+	local nUtilityOld = behaviorLib.lastRetreatUtil
+	--decay with a maximum of 4 utility points per frame to ensure a longer retreat time
+	if nUtilityOld > nUtility +4 then
+		nUtility = nUtilityOld -4
+	end
+	
+	--bonus of allies decrease fear
+	local allies = core.localUnits["AllyHeroes"]
+	local nAllies = core.NumberElements(allies) + 1
+	--get enemy heroes
+	local tEnemyTeam = HoN.GetHeroes(core.enemyTeam)
+	--calculate the threat-value and increase utility value
+	for id, enemy in pairs(tEnemyTeam) do
+		nUtility = nUtility + behaviorLib.funcGetThreatOfEnemy(enemy) / nAllies
+	end
+	return Clamp(nUtility, 0, 100)
 end
 
 function behaviorLib.RetreatFromThreatExecute(botBrain)
-	--Activate ghost marchers if we can
-	local itemGhostMarchers = core.itemGhostMarchers
-	if behaviorLib.lastRetreatUtil >= behaviorLib.retreatGhostMarchersThreshold and itemGhostMarchers and itemGhostMarchers:CanActivate() then
-		core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
-		return
-	end
-
+	local unitSelf = core.unitSelf
+	local unitTarget = behaviorLib.heroTarget
 	local vecPos = behaviorLib.PositionSelfBackUp()
-	core.OrderMoveToPosClamp(botBrain, core.unitSelf, vecPos, false)
+	local nlastRetreatUtil = behaviorLib.lastRetreatUtil
+	local nNow = HoN.GetGameTime()
+	local bActionTaken = false
+	
+	--Counting the enemies 	
+	local tEnemies = core.localUnits["EnemyHeroes"]
+	local nCount = 0
+	local bCanSeeUnit = unitTarget and core.CanSeeUnit(botBrain, unitTarget) 
+	for id, unitEnemy in pairs(tEnemies) do
+		if core.CanSeeUnit(botBrain, unitEnemy) then
+			nCount = nCount + 1
+		end
+	end
+	--people can/will override this code, similar to CustomHarassUtility.
+	bActionTaken = behaviorLib.CustomRetreatExecute(botBrain)
+	if not bActionTaken then
+		bActionTaken = core.OrderMoveToPosClamp(botBrain, core.unitSelf, vecPos, false)
+	end
+	return bActionTaken
+end
+
+function behaviorLib.CustomRetreatExecute(botBrain)
+	--  this is a great function to override with using retreating skills, such as blinks, travels, stuns or slows.
+	return false
 end
 
 behaviorLib.RetreatFromThreatBehavior = {}
@@ -2801,6 +2889,26 @@ behaviorLib.RetreatFromThreatBehavior["Utility"] = behaviorLib.RetreatFromThreat
 behaviorLib.RetreatFromThreatBehavior["Execute"] = behaviorLib.RetreatFromThreatExecute
 behaviorLib.RetreatFromThreatBehavior["Name"] = "RetreatFromThreat"
 tinsert(behaviorLib.tBehaviors, behaviorLib.RetreatFromThreatBehavior)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ----------------------------------
