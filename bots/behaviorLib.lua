@@ -2723,7 +2723,6 @@ function behaviorLib.PositionSelfBackUp()
 end
 
 
-
 --------------------------------------------------
 --          RetreatFromThreat Override          --
 --------------------------------------------------
@@ -2889,26 +2888,6 @@ behaviorLib.RetreatFromThreatBehavior["Utility"] = behaviorLib.RetreatFromThreat
 behaviorLib.RetreatFromThreatBehavior["Execute"] = behaviorLib.RetreatFromThreatExecute
 behaviorLib.RetreatFromThreatBehavior["Name"] = "RetreatFromThreat"
 tinsert(behaviorLib.tBehaviors, behaviorLib.RetreatFromThreatBehavior)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 ----------------------------------
