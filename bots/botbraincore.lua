@@ -60,6 +60,9 @@ core.nEasyLowHumanHealthRecheckInterval = 5000
 core.nEasyLowHumanHealthCooldown = 20000
 core.nEasyLowHumanHealthDuration = 2000
 core.nEasyLowHumanHealthKillChance = 0.166666
+core.bEasyTurnOffHealAtWell = false
+core.nEasyTurnOffHealAtWellDuration = 5000
+core.nEasyTurnOffHealAtWellHumanLastSeenTime = 0
 
 --Called every frame the engine gives us during the pick phase
 function object:onpickframe()
@@ -160,6 +163,27 @@ function object:onthink(tGameVariables)
 		core.FindItems(self)
 	StopProfile()
 	end
+
+	if core.nDifficulty == core.nEASY_DIFFICULTY then
+		local bDebugTurnOffHealAtWell = false
+		local bEnemyHumanNearby = false
+		local tLocalEnemyHeroes = core.localUnits['EnemyHeroes']
+		for _, unitHero in pairs(tLocalEnemyHeroes) do
+			if not unitHero:IsBotControlled() then
+				bEnemyHumanNearby = true
+				core.nEasyTurnOffHealAtWellHumanLastSeenTime = nGameTime
+				break
+			end
+		end
+
+		if bEnemyHumanNearby or nGameTime < core.nEasyTurnOffHealAtWellHumanLastSeenTime + core.nEasyTurnOffHealAtWellDuration then
+			if bDebugTurnOffHealAtWell then BotEcho("Turning off heal at well behavior") end
+			core.bEasyTurnOffHealAtWell = true
+		elseif nGameTime >= core.nEasyTurnOffHealAtWellHumanLastSeenTime + core.nEasyTurnOffHealAtWellDuration then
+			if bDebugTurnOffHealAtWell then BotEcho("Turning on heal at well behavior") end
+			core.bEasyTurnOffHealAtWell = false			
+		end
+	end
 	
 	if core.tMyLane ~= nil then
 		object.vecLaneForward, object.vecLaneForwardOrtho = core.AssessLaneDirection(core.unitSelf:GetPosition(), core.tMyLane, core.bTraverseForward)
@@ -211,6 +235,10 @@ function object:onthink(tGameVariables)
 				if object.tEvaluatedBehaviors[i].Behavior.Execute ~= nil then
 					local bRunBehaviorExecute = true
 					self.sCurrentBehaviorName = object.tEvaluatedBehaviors[i].Behavior.Name
+
+					if core.bEasyTurnOffHealAtWell and self.sCurrentBehaviorName == behaviorLib.HealAtWellBehavior["Name"] then
+						bRunBehaviorExecute = false
+					end
 					
 					--[Difficulty: Easy] Bots can't use abils if they aren't within a certain range 
 					--  and are above 50% HP. Also, for randomly for an interval, bots will be more 
