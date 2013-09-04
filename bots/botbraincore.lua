@@ -281,13 +281,14 @@ function object:onthink(tGameVariables)
 								local bDebugRunFromHuman = false
 								local nHealthPercent = heroTarget:GetHealthPercent()
 								local nCurrentHealth = heroTarget:GetHealth()
+								local bHumanHealthLow = (nHealthPercent <= 0.25) or (nCurrentHealth <= 300)
 
-								if core.bEasyLowHumanHealthRunHarass and nGameTime >= core.nEasyLowHumanHealthAggroStartTime + core.nEasyLowHumanHealthDuration then
+								if bHumanHealthLow and core.bEasyLowHumanHealthRunHarass and nGameTime >= core.nEasyLowHumanHealthAggroStartTime + core.nEasyLowHumanHealthDuration then
 								 	core.bEasyLowHumanHealthRunHarass = false
 								end
 
 								if nGameTime >= core.nEasyLowHumanHealthReassessTime then
-								 	if nHealthPercent <= 0.25 or nCurrentHealth <= 300 then
+								 	if bHumanHealthLow then
 								  		if bDebugRunFromHuman then BotEcho("Human player is below health threshold") end
 
 								  		if random() > core.nEasyLowHumanHealthKillChance then
@@ -302,6 +303,8 @@ function object:onthink(tGameVariables)
 							  			end
 
 							  			if bDebugRunFromHuman then BotEcho("Setting new reassess time to: " .. core.nEasyLowHumanHealthReassessTime) end
+							  		elseif not core.bEasyLowHumanHealthRunHarass then
+							  			core.bEasyLowHumanHealthRunHarass = true
 							 		end
 								end
 
