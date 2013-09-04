@@ -304,24 +304,31 @@ object.nMoonbeamUpBonus = 5
 object.nUltUpBonus = 20
 object.nGeometerUpBonus = 5
 local function CustomHarassUtilityFnOverride(hero)
-	local val = 0
+	local nReturnValue = 0
 	
 	if skills.abilMoonbeam:CanActivate() then
-		val = val + object.nMoonbeamUpBonus
+		nReturnValue = nReturnValue + object.nMoonbeamUpBonus
 	end
 	
 	if skills.abilMoonFinale:CanActivate() then
-		val = val + object.nUltUpBonus
+		nReturnValue = nReturnValue + object.nUltUpBonus
 	end
 
 	if core.itemGeometer ~= nil then
 		if core.itemGeometer:CanActivate() then
-			val = val + object.nGeometerUpBonus
+			nReturnValue = nReturnValue + object.nGeometerUpBonus
 		end
 	end
 	-- Less mana less aggerssion
-	val = val + (core.unitSelf:GetManaPercent() - 0.65) * 30
-	return val
+	nReturnValue = nReturnValue + (core.unitSelf:GetManaPercent() - 1) * 20
+
+	--Low level less aggression
+	nLevel = core.unitSelf:GetLevel()
+	if nLevel < 5 then
+		nReturnValue = nReturnValue - (5 - nLevel) * 4
+	end
+
+	return nReturnValue
 
 end
 behaviorLib.CustomHarassUtility = CustomHarassUtilityFnOverride   
@@ -330,7 +337,7 @@ behaviorLib.CustomHarassUtility = CustomHarassUtilityFnOverride
 -- Harass Behavior --
 ---------------------
 object.nGeometerUseThreshold = 55
-object.moonbeamThreshold = 35
+object.moonbeamThreshold = 45
 object.tUltThresholds = {95, 85, 75}
 local function HarassHeroExecuteOverride(botBrain)
 
