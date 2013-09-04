@@ -382,8 +382,11 @@ local function HarassHeroExecuteOverride(botBrain)
 
 	if not bActionTaken and bCanSee and not bTargetMagicImmune then
 		--at higher levels this overpowers ult behavior with lastHarassUtil like 150
-		if skills.abilMoonFinale:CanActivate() and nLastHarassUtility > object.tUltThresholds[skills.abilMoonFinale:GetLevel()] and nTargetDistanceSq < 600 * 600 then
-			bActionTaken = behaviorLib.ultBehavior["Execute"](botBrain)
+		if skills.abilMoonFinale:CanActivate() and nTargetDistanceSq < 600 * 600 then
+			if nLastHarassUtility - (core.localUnits["EnemyUnits"] - core.localUnits["EnemyHeroes"]) * 4 > object.tUltThresholds[skills.abilMoonFinale:GetLevel()] then
+
+				bActionTaken = behaviorLib.ultBehavior["Execute"](botBrain)
+			end
 		end
 	end
 
