@@ -171,7 +171,15 @@ function behaviorLib.PositionSelfCreepWave(botBrain, unitCurrentTarget)
 
 
 	local vecTotalAllyInfluence = Vector3.Create()
-	if core.nDifficulty ~= core.nEASY_DIFFICULTY or not core.IsTableEmpty(core.teamBotBrain.tAllyHumanHeroes) then
+	local bEnemyTeamHasHuman = false
+	local tEnemyHeroes = core.teamBotBrain.tEnemyHeroes
+	for _, unitHero in pairs(tEnemyHeroes) do
+		if not unitHero:IsBotControlled() then
+			bEnemyTeamHasHuman = true
+			break
+		end
+	end
+	if core.nDifficulty ~= core.nEASY_DIFFICULTY or not bEnemyTeamHasHuman then
 		--stand appart from allies a bit if we d
 		StartProfile('Allies')
 		local tAllyHeroes = tLocalUnits.AllyHeroes
