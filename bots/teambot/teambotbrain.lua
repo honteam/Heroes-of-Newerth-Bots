@@ -116,7 +116,7 @@ function object:onthink(tGameVariables)
 			--[Tutorial] Hellbourne heroes don't group up to push and Legion waits longer to push
 			if core.bIsTutorial then
 				if core.myTeam == HoN.GetHellbourneTeam() then
-					self.bGroupAndPush = false
+					object.bGroupAndPush = false
 				else
 					object.nNextPushTime = core.MinToMS(12)
 				end
@@ -126,6 +126,23 @@ function object:onthink(tGameVariables)
 			if core.nDifficulty == core.nEASY_DIFFICULTY or core.bIsTutorial then
 				object.bDefense = false
 				-- don't reset this when the tutorial switches Legion to medium
+			end
+
+			local bEnemyTeamHasHuman = false
+			local tEnemyHeroes = self.tEnemyHeroes
+			for _, unitHero in pairs(tEnemyHeroes) do
+				if not unitHero:IsBotControlled() then
+					bEnemyTeamHasHuman = true
+					break
+				end
+			end
+
+			if core.nDifficulty == core.nEASY_DIFFICULTY and bEnemyTeamHasHuman then
+				object.bGroupAndPush = false
+			end
+
+			if core.nDifficulty == core.nEASY_DIFFICULTY and bEnemyTeamHasHuman then
+				object.bDefense = false
 			end
 		end
 	end
@@ -939,7 +956,11 @@ function object:PushUtility()
 end
 
 function object:GetGroupRallyPoint()
-	return self.unitRallyBuilding:GetPosition()
+	if self.unitRallyBuilding ~= nil then
+		return self.unitRallyBuilding:GetPosition()
+	end
+	
+	return nil
 end
 
 
