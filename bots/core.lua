@@ -1951,6 +1951,18 @@ function core.GetAttackSequenceProgress(unit)
 	return retVal
 end
 
+--unitCreepTarget is an optional parameter that will be passed in
+function core.GetAttackDamageMinOnCreep(unitCreepTarget)
+	local unitSelf = core.unitSelf
+	local nDamageMin = unitSelf:GetFinalAttackDamageMin()
+				
+	if core.itemHatchet then
+		nDamageMin = nDamageMin * core.itemHatchet.creepDamageMul
+	end	
+
+	return nDamageMin
+end
+
 
 ------------------ misc overrides and remanes ------------------
 function core.CanSeeUnit(botBrain, unit)

@@ -1064,20 +1064,33 @@ function behaviorLib.GetCreepAttackTarget(botBrain, unitEnemyCreep, unitAllyCree
 
 	--Get info about self
 	local unitSelf = core.unitSelf
-	local nDamageMin = unitSelf:GetFinalAttackDamageMin()
+	local nDamageMinEnemy = core.GetAttackDamageMinOnCreep(unitEnemyCreep)
+	local nDamageMinAlly = core.GetAttackDamageMinOnCreep(unitAllyCreep)
 	
-	if core.itemHatchet then
-		nDamageMin = nDamageMin * core.itemHatchet.creepDamageMul
-	end	
+	-- [Difficulty: Easy] Make bots worse at last hitting
+	-- TODO: use actual time variance instead of damage flubbing
+	if core.nDifficulty == core.nEASY_DIFFICULTY then
+		nDamageMinEnemy = nDamageMinEnemy + 120
+		nDamageMinAlly = nDamageMinAlly + 120
+	end
 
 	if unitEnemyCreep and core.CanSeeUnit(botBrain, unitEnemyCreep) then
 		local nTargetHealth = unitEnemyCreep:GetHealth()
 		--Only attack if, by the time our attack reaches the target
 		-- the damage done by other sources brings the target's health
 		-- below our minimum damage
-		if nDamageMin * (1 - unitEnemyCreep:GetPhysicalResistance()) >= (nTargetHealth - behaviorLib.GetAttackDamageOnCreep(botBrain, unitEnemyCreep)) then
-			if bDebugEchos then BotEcho("Returning an enemy") end
-			return unitEnemyCreep
+		if nDamageMinEnemy * (1 - unitEnemyCreep:GetPhysicalResistance()) >= (nTargetHealth - behaviorLib.GetAttackDamageOnCreep(botBrain, unitEnemyCreep)) then
+			local bActuallyLH = true
+			
+			-- [Tutorial] Make DS not mess with your last hitting before shit gets real
+			if core.bIsTutorial and core.bTutorialBehaviorReset == false and core.unitSelf:GetTypeName() == "Hero_Shaman" then
+				bActuallyLH = false
+			end
+			
+			if bActuallyLH then
+				if bDebugEchos then BotEcho("Returning an enemy") end
+				return unitEnemyCreep
+			end
 		end
 	end
 
@@ -1086,7 +1099,7 @@ function behaviorLib.GetCreepAttackTarget(botBrain, unitEnemyCreep, unitAllyCree
 		--Only attack if, by the time our attack reaches the target
 		-- the damage done by other sources brings the target's health
 		-- below our minimum damage
-		if nDamageMin * (1 - unitAllyCreep:GetPhysicalResistance()) >= (nTargetHealth - behaviorLib.GetAttackDamageOnCreep(botBrain, unitAllyCreep)) then
+		if nDamageMinAlly * (1 - unitAllyCreep:GetPhysicalResistance()) >= (nTargetHealth - behaviorLib.GetAttackDamageOnCreep(botBrain, unitAllyCreep)) then
 			local bActuallyDeny = true
 			
 			--[Difficulty: Easy] Don't deny
@@ -1166,7 +1179,21 @@ function behaviorLib.AttackCreepsExecute(botBrain)
 		-- the damage done by other sources brings the target's health
 		-- below our minimum damage, and we are in range and can attack right now-		
 		if nDistSq <= nAttackRangeSq and unitSelf:IsAttackReady() then
-			bActionTaken = core.OrderAttackClamp(botBrain, unitSelf, unitCreepTarget)
+			if unitSelf:GetAttackType() == "melee" then
+				local nDamageMin = core.GetAttackDamageMinOnCreep(unitCreepTarget)
+
+				if unitCreepTarget:GetHealth() <= nDamageMin then
+					if core.GetAttackSequenceProgress(unitSelf) ~= "windup" then
+						bActionTaken = core.OrderAttack(botBrain, unitSelf, unitCreepTarget)
+					else
+						bActionTaken = true		
+					end
+				else
+					bActionTaken = core.OrderHoldClamp(botBrain, unitSelf, false)
+				end
+			else
+				bActionTaken = core.OrderAttackClamp(botBrain, unitSelf, unitCreepTarget)
+			end
 		else
 			if unitSelf:GetAttackType() == "melee" then
 				--If melee, move closer.
