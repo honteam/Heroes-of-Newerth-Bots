@@ -479,8 +479,7 @@ function behaviorLib.stunUtility(botBrain)
 	local nRadiusSQ = (skills.abilMoonbeam:GetRange() + 200) * (skills.abilMoonbeam:GetRange() + 200)
 
 	for _, unitEnemyHero in pairs(core.localUnits["EnemyHeroes"]) do
-		if unitEnemyHero:IsChanneling() or unitEnemyHero:HasState("State_ManaPotion") or unitEnemyHero:HasState("State_HealthPotion")
-			or unitEnemyHero:HasState("State_Bottle") or unitEnemyHero:HasState("State_PowerupRegen") then
+		if unitEnemyHero:IsChanneling() then
 			if Vector3.Distance2DSq(vecMyPosition, unitEnemyHero:GetPosition()) < nRadiusSQ then
 				behaviorLib.unitEnemyToStun = unitEnemyHero
 				return 70
@@ -499,6 +498,48 @@ behaviorLib.stunBehavior["Utility"] = behaviorLib.stunUtility
 behaviorLib.stunBehavior["Execute"] = behaviorLib.stunExecute
 behaviorLib.stunBehavior["Name"] = "stun"
 tinsert(behaviorLib.tBehaviors, behaviorLib.stunBehavior)
+
+
+behaviorLib.unitEnemyToAttack = nil
+function behaviorLib.breakPotsUtility(botBrain)
+
+	local vecMyPosition = core.unitSelf:GetPosition()
+
+	local nRadiusSQ = (skills.abilMoonbeam:GetRange() + 200) * (skills.abilMoonbeam:GetRange() + 200)
+
+	for _, unitEnemyHero in pairs(core.localUnits["EnemyHeroes"]) do
+		if unitEnemyHero:HasState("State_ManaPotion") or unitEnemyHero:HasState("State_HealthPotion")
+			or unitEnemyHero:HasState("State_Bottle") or unitEnemyHero:HasState("State_PowerupRegen") then
+			if Vector3.Distance2DSq(vecMyPosition, unitEnemyHero:GetPosition()) < nRadiusSQ then
+				behaviorLib.unitEnemyToAttack = unitEnemyHero
+				return 35
+			end
+		end
+	end
+	return 0
+end
+
+function behaviorLib.breakPotsExecute(botBrain)
+	local bActionTaken = false
+
+	local unitSelf = core.unitSelf
+	local unitTarget = behaviorLib.unitEnemyToAttack
+
+	if core.GetAbsoluteAttackRangeToUnit(unitSelf, unitTarget, true) > Vector3.Distance2DSq(unitSelf:GetPosition(), unitTarget:GetPosition()) then
+		bActionTaken = core.OrderAttackClamp(botBrain, unitSelf, unitTarget)
+	end
+	if not bActionTaken and skills.abilMoonbeam:CanActivate() then
+		bActionTaken = core.OrderAbilityEntity(botBrain, skills.abilMoonbeam, unitTarget)
+	end
+
+	return bActionTaken
+end
+
+behaviorLib.breakPotsBehavior = {}
+behaviorLib.breakPotsBehavior["Utility"] = behaviorLib.breakPotsUtility
+behaviorLib.breakPotsBehavior["Execute"] = behaviorLib.breakPotsExecute
+behaviorLib.breakPotsBehavior["Name"] = "Behavior to remove enemy potions"
+tinsert(behaviorLib.tBehaviors, behaviorLib.breakPotsBehavior)
 
 -----------------------------------------------
 --                  Misc                     --
