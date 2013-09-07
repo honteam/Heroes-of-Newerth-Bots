@@ -426,6 +426,7 @@ function behaviorLib.ultimateUtility(botBrain)
 	core.SortUnitsAndBuildings(tUnitList, tLocalUnits, true)
 
 	local nEnemyHeroes = 0
+	local nEnemyCreeps = core.NumberElements(tLocalUnits["enemyCreeps"])
 
 	for _, unitHero in pairs(tLocalUnits["enemyHeroes"]) do
 		if Vector3.Distance2DSq(vecMyPosition, unitHero:GetPosition()) < 600*600 and not object.isMagicImmune(unitHero) then
@@ -437,15 +438,20 @@ function behaviorLib.ultimateUtility(botBrain)
 		return 0
 	end
 
-	local nUtilityValue = 0
-	if core.NumberElements(tLocalUnits["enemyUnits"]) <= skills.abilMoonFinale:GetLevel() + 1 then
-		nUtilityValue = nUtilityValue + 30
+	local nUtilityValue = 25
+	local nUtilityPerLevel = 15
+
+	nUtilityValue = nUtilityValue + skills.abilMoonFinale:GetLevel() * nUtilityPerLevel 
+
+	local nDropPerHero = 5 + nEnemyHeroes
+	nUtilityValue = nUtilityValue - (nEnemyHeroes - 1) * nDropPerHero
+
+	local nDropPerCreep = 5
+	if nEnemyCreeps >= nEnemyHeroes then
+		nDropPerCreep = 8
 	end
-	if core.NumberElements(tLocalUnits["enemyUnits"]) == nEnemyHeroes then
-		nUtilityValue = nUtilityValue + 40
-	elseif core.NumberElements(tLocalUnits["enemyUnits"]) < nEnemyHeroes * 2 then
-		nUtilityValue = nUtilityValue + 20
-	end
+
+	nUtilityValue = nUtilityValue - nEnemyCreeps * nDropPerCreep
 	return nUtilityValue * core.unitSelf:GetHealthPercent()
 end
 
