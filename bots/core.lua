@@ -68,6 +68,9 @@ core.nEASY_DIFFICULTY 	= 1
 core.nMEDIUM_DIFFICULTY = 2
 core.nHARD_DIFFICULTY 	= 3
 
+core.bMyTeamHasHuman = nil
+core.bEnemyTeamHasHuman = nil
+
 core.nDifficulty = core.nEASY_DIFFICULTY
 
 core.coreInitialized = false
@@ -1180,6 +1183,34 @@ end
 
 function core.IsCourier(unit)
 	return unit:IsUnitType("Courier")
+end
+
+function core.EnemyTeamHasHuman()
+	if core.bEnemyTeamHasHuman == nil then
+		local tEnemyHeroes = HoN.GetHeroes(core.enemyTeam)
+		for _, unitHero in pairs(tEnemyHeroes) do
+			if not unitHero:IsBotControlled() then
+				core.bEnemyTeamHasHuman = true
+				break
+			end
+		end
+	end
+
+	return core.bEnemyTeamHasHuman
+end
+
+function core.MyTeamHasHuman()
+	if core.bMyTeamHasHuman == nil then
+		local tAllyHeroes = HoN.GetHeroes(core.myTeam)
+		for _, unitHero in pairs(tAllyHeroes) do
+			if not unitHero:IsBotControlled() then
+				core.bMyTeamHasHuman = true
+				break
+			end
+		end
+	end
+
+	return core.bMyTeamHasHuman
 end
 
 function core.IsTowerSafe(unitEnemyTower, unitSelf)

@@ -168,14 +168,7 @@ function behaviorLib.PositionSelfCreepWave(botBrain, unitCurrentTarget)
 
 	--stand appart from allies a bit
 	local vecTotalAllyInfluence = Vector3.Create()
-	local bEnemyTeamHasHuman = false
-	local tEnemyHeroes = core.teamBotBrain.tEnemyHeroes
-	for _, unitHero in pairs(tEnemyHeroes) do
-		if not unitHero:IsBotControlled() then
-			bEnemyTeamHasHuman = true
-			break
-		end
-	end
+	local bEnemyTeamHasHuman = core.EnemyTeamHasHuman()
 	if core.nDifficulty ~= core.nEASY_DIFFICULTY or not bEnemyTeamHasHuman then
 		StartProfile('Allies')
 		local tAllyHeroes = tLocalUnits.AllyHeroes
@@ -3566,9 +3559,11 @@ Current algorithm:
 	local bGoldReduced = false
 	local tInventory = core.unitSelf:GetInventory(true)
 	local nextItemDef = behaviorLib.DetermineNextItemDef(botBrain)
+	local bMyTeamHasHuman = core.MyTeamHasHuman()
+	local bBuyTPStone = (core.nDifficulty ~= core.nEASY_DIFFICULTY) or bMyTeamHasHuman
 
 	--For our first frame of this execute
-	if core.GetLastBehaviorName(botBrain) ~= core.GetCurrentBehaviorName(botBrain) then
+	if bBuyTPStone and core.GetLastBehaviorName(botBrain) ~= core.GetCurrentBehaviorName(botBrain) then
 		if nextItemDef:GetName() ~= core.idefHomecomingStone:GetName() then		
 			--Seed a TP stone into the buy items after 1 min, Don't buy TP stones if we have Post Haste
 			local sName = "Item_HomecomingStone"
