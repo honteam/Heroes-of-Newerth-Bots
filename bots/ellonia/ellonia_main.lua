@@ -411,18 +411,14 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 -----------------------------------
 
 core.tKillChatKeys={
-    "The prince shall be mine!",
-    "Outta my way, tomboy!",
-    "NOT THIS TIME!",
-    "This was so much easier than I thought it would be!",
-    "You like my ice sword?",
-    "Paws off my prince!"
+    "mellow_ink_ellonia_kill1",
+    "mellow_ink_ellonia_kill2",
+    "mellow_ink_ellonia_kill3",
 }
 
 core.tDeathChatKeys = {
-    "Totally ice-blocking my game!",
-    "My magic tiara...my powers!",
-    "My powers! Foul and noisome whelp! You've not seen the last of my wintry fangs!",
-    "I've soiled my tunic, completely by choice!"
+    "mellow_ink_ellonia_death1",
+    "mellow_ink_ellonia_death2",
+    "mellow_ink_ellonia_death3",
 }
 BotEcho(object:GetName()..' finished loading ellonia_main')
