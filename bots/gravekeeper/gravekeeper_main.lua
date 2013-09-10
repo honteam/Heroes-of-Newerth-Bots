@@ -554,6 +554,7 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 
 
 local function GetAttackDamageMinOnCreep(unitCreepTarget)
+	local unitSelf = core.unitSelf
 	local nDamageMin = object.GetAttackDamageMinOnCreepOld(unitCreepTarget)
 
 	if unitCreepTarget and unitCreepTarget:GetTeam() ~= unitSelf:GetTeam() then

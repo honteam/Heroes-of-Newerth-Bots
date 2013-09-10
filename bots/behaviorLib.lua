@@ -1019,7 +1019,7 @@ function behaviorLib.GetAttackDamageOnCreep(botBrain, unitCreepTarget)
 		local nProjectileSpeed = unitSelf:GetAttackProjectileSpeed()
 		local nAdjustedAttackActionTime = unitSelf:GetAdjustedAttackActionTime() / 1000
 		nTravelTime = Vector3.Distance2D(vecSelfPos, vecTargetPos) / nProjectileSpeed
-		nTravelTime = nTravelTime + nAdjustedAttackActionTime
+		nTravelTime = nTravelTime * 1.1 + nAdjustedAttackActionTime
 		if bDebugEchos then BotEcho ("Projectile travel time: " .. nTravelTime ) end 
 	else --We are melee, therefore we don't use projectile time, we use walking time.
 		local nMovementSpeed = unitSelf:GetMoveSpeed()
@@ -1398,6 +1398,10 @@ end
 function behaviorLib.ProcessKill(unit)
 	local bDebugEchos = false
 	
+	if unit == nil then
+		return
+	end
+		
 	local nID = unit:GetUniqueID()
 	local tThreatMultipliers = behaviorLib.tThreatMultipliers
 	
