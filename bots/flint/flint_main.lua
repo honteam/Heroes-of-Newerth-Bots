@@ -297,9 +297,12 @@ local function HarassHeroExecuteOverride(botBrain)
 			local nHealth = unitTarget:GetHealth()
 			local nDamageMultiplier = 1 - unitTarget:GetMagicResistance()
 			local nTrueDamage = nDamage * nDamageMultiplier
+			local bUseMoneyShot = ((core.nDifficulty ~= core.nEASY_DIFFCULTY) 
+								or (unitTarget:IsBotControlled() and nTrueDamage > nHealth) 
+								or (not unitTarget:IsBotControlled() and nHealth - nTrueDamage >= nMaxHealth * 0.12))
 			
 			--BotEcho(format("ultDamage: %d  damageMul: %g  trueDmg: %g  health: %d", nDamage, nDamageMultiplier, nTrueDamage, nHealth))
-			if nTrueDamage > nHealth then
+			if bUseMoneyShot then
 				bActionTaken = core.OrderAbilityEntity(botBrain, abilMoneyShot, unitTarget)
 			end
 		end

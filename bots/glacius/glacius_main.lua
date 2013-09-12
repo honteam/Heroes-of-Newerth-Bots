@@ -312,8 +312,6 @@ local function funcFindItemsOverride(botBrain)
 	object.FindItemsOld(botBrain)
 
 	core.ValidateItem(core.itemSheepstick)
-	core.ValidateItem(core.itemManaBattery)
-	core.ValidateItem(core.itemPowerSupply)
 	
 	--only update if we need to
 	if core.itemSheepstick and core.itemManaBattery and core.itemPowerSupply then
@@ -326,10 +324,6 @@ local function funcFindItemsOverride(botBrain)
 		if curItem then
 			if core.itemSheepstick == nil and curItem:GetName() == "Item_Morph" then
 				core.itemSheepstick = core.WrapInTable(curItem)
-			elseif core.itemManaBattery == nil and curItem:GetName() == "Item_ManaBattery" then
-				core.itemManaBattery = core.WrapInTable(curItem)
-			elseif core.itemPowerSupply == nil and curItem:GetName() == "Item_ManaPowerSupply" then
-				core.itemPowerSupply = core.WrapInTable(curItem)
 			end
 		end
 	end
