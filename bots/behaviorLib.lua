@@ -2855,25 +2855,14 @@ end
 
 function behaviorLib.RetreatFromThreatExecute(botBrain)
 	local unitSelf = core.unitSelf
-	local unitTarget = behaviorLib.heroTarget
 	local vecPos = behaviorLib.PositionSelfBackUp()
-	local nlastRetreatUtil = behaviorLib.lastRetreatUtil
-	local nNow = HoN.GetGameTime()
 	local bActionTaken = false
 	
-	--Counting the enemies 	
-	local tEnemies = core.localUnits["EnemyHeroes"]
-	local nCount = 0
-	local bCanSeeUnit = unitTarget and core.CanSeeUnit(botBrain, unitTarget) 
-	for id, unitEnemy in pairs(tEnemies) do
-		if core.CanSeeUnit(botBrain, unitEnemy) then
-			nCount = nCount + 1
-		end
-	end
 	--people can/will override this code, similar to CustomHarassUtility.
 	bActionTaken = behaviorLib.CustomRetreatExecute(botBrain)
+	
 	if not bActionTaken then
-		bActionTaken = core.OrderMoveToPosClamp(botBrain, core.unitSelf, vecPos, false)
+		bActionTaken = core.OrderMoveToPosClamp(botBrain, unitSelf, vecPos, false)
 	end
 	return bActionTaken
 end

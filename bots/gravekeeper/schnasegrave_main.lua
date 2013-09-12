@@ -890,13 +890,24 @@ behaviorLib.RetreatFromThreatBehavior["Utility"] = CustomRetreatFromThreatUtilit
 --Retreat execute
 ------------------------------------------------------------------
 local function funcRetreatFromThreatExecuteOverride(botBrain)
+
+
+
+
+	core.OrderMoveToPosClamp(botBrain, core.unitSelf, vecPos, false)
+end
+
+object.RetreatFromThreatExecuteOld = behaviorLib.RetreatFromThreatExecute
+behaviorLib.RetreatFromThreatBehavior["Execute"] = funcRetreatFromThreatExecuteOverride
+
+--  this is a great function to override with using retreating skills, such as blinks, travels, stuns or slows.
+function behaviorLib.CustomRetreatExecute(botBrain)
+	bActionTaken = false
 	local unitSelf = core.unitSelf
 	local unitTarget = behaviorLib.heroTarget
-
-	local vecPos = behaviorLib.PositionSelfBackUp()
 	local nlastRetreatUtil = behaviorLib.lastRetreatUtil
-
 	local bCanSeeAggressor = unitTarget and core.CanSeeUnit(botBrain, unitTarget)
+	local vecPos = behaviorLib.PositionSelfBackUp()
 	
 	--Counting the enemies
 	local tEnemies = core.localUnits["EnemyHeroes"]
@@ -914,8 +925,7 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 		local itemPortalKey = core.itemPortalKey
 		if itemPortalKey and nlastRetreatUtil >= object.nPKTRetreathreshold then
 			if itemPortalKey:CanActivate()  then
-				core.OrderItemPosition(botBrain, unitSelf, itemPortalKey, vecPos)
-				return
+				return core.OrderItemPosition(botBrain, unitSelf, itemPortalKey, vecPos)
 			end
 		end
 
@@ -931,8 +941,7 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 				local nRange = itemSheepstick:GetRange()
 				if itemSheepstick:CanActivate() then
 					if nTargetDistanceSq < (nRange * nRange) then
-						core.OrderItemEntityClamp(botBrain, unitSelf, itemSheepstick, unitTarget)
-						return
+						return core.OrderItemEntityClamp(botBrain, unitSelf, itemSheepstick, unitTarget)
 					end
 				end
 			end
@@ -944,8 +953,7 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 				if not bTargetVuln or nNow < (object.nOneCorpseTossUseTime + 1050) then
 					local nRange = abilCorpseToss:GetRange()
 					if nTargetDistanceSq < (nRange * nRange) then
-						core.OrderAbilityEntity(botBrain, abilCorpseToss, unitTarget)
-						return
+						return core.OrderAbilityEntity(botBrain, abilCorpseToss, unitTarget)
 					end
 				end
 			end
@@ -956,8 +964,7 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 				local nRange = itemFrostfieldPlate:GetTargetRadius()
 				if itemFrostfieldPlate:CanActivate()  then
 					if nTargetDistanceSq < (nRange * nRange) then
-						core.OrderItemClamp(botBrain, unitSelf, itemFrostfieldPlate)
-						return
+						return core.OrderItemClamp(botBrain, unitSelf, itemFrostfieldPlate)
 					end
 				end
 			end
@@ -968,8 +975,7 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 	local itemGhostMarchers = core.itemGhostMarchers
 	if itemGhostMarchers and itemGhostMarchers:CanActivate() then
 		if behaviorLib.lastRetreatUtil >= behaviorLib.retreatGhostMarchersThreshold then
-			core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
-			return
+			return core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
 		end
 	end
 
@@ -978,24 +984,18 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 	if itemTablet then
 		if itemTablet:CanActivate() and nlastRetreatUtil >= object.nTabletRetreatTreshold then
 			--TODO: check heading when that's exposed in the API
-			core.OrderItemEntityClamp(botBrain, unitSelf, itemTablet, unitSelf)
-			return
+			return core.OrderItemEntityClamp(botBrain, unitSelf, itemTablet, unitSelf)
 		end
 	end
 
 	--Use Sacreficial Stone
 	local itemSacStone = core.itemSacStone
 	if itemSacStone and itemSacStone:CanActivate() then
-		core.OrderItemClamp(botBrain, unitSelf, itemSacStone)
-		return
+		return core.OrderItemClamp(botBrain, unitSelf, itemSacStone)
 	end
-
-	core.OrderMoveToPosClamp(botBrain, core.unitSelf, vecPos, false)
+	
+	return false
 end
-
-object.RetreatFromThreatExecuteOld = behaviorLib.RetreatFromThreatExecute
-behaviorLib.RetreatFromThreatBehavior["Execute"] = funcRetreatFromThreatExecuteOverride
-
 
 --TODO: I feel like there are alltogether too many places where we're turning on Sac Stone. Perhaps it should be 
 --  its own behavior that's like 99 as long as it's off (since its cooldown matches its duration)
