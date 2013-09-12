@@ -534,14 +534,6 @@ StopProfile()
 		end
 	end
 
-	--Use Sacrificial Stone
-	if not bActionTaken then
-		local itemSacStone = core.itemSacStone
-		if itemSacStone and itemSacStone:CanActivate() then
-			bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemSacStone, bActionTaken)
-		end
-	end
-
 	if not bActionTaken then
 		if bDebugEchos then BotEcho("  No action yet, proceeding with normal harass execute.") end
 		return object.harassExecuteOld(botBrain)
@@ -983,22 +975,12 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 		end
 	end
 
-	--Use Sacreficial Stone
-	local itemSacStone = core.itemSacStone
-	if itemSacStone and itemSacStone:CanActivate() then
-		core.OrderItemClamp(botBrain, unitSelf, itemSacStone)
-		return
-	end
-
 	core.OrderMoveToPosClamp(botBrain, core.unitSelf, vecPos, false)
 end
 
 object.RetreatFromThreatExecuteOld = behaviorLib.RetreatFromThreatExecute
 behaviorLib.RetreatFromThreatBehavior["Execute"] = funcRetreatFromThreatExecuteOverride
 
-
---TODO: I feel like there are alltogether too many places where we're turning on Sac Stone. Perhaps it should be 
---  its own behavior that's like 99 as long as it's off (since its cooldown matches its duration)
 
 ----------------------------------
 --Push
@@ -1015,14 +997,6 @@ local function PushExecuteFnOverride(botBrain)
 	end
 
 	local bActionTaken = false
-
-	--Use Sacreficial Stone
-	if not bActionTaken then
-		local itemSacStone = core.itemSacStone
-		if itemSacStone and itemSacStone:CanActivate() then
-			bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemSacStone)
-		end
-	end
 
 	if not bActionTaken then
 		--use corpse explosion
@@ -1137,7 +1111,6 @@ local function funcRemoveInvalidItems()
 	core.ValidateItem(core.itemSheepstick)
 	core.ValidateItem(core.itemFrostfieldPlate)
 	core.ValidateItem(core.itemSteamboots)
-	core.ValidateItem(core.itemSacStone)
 	core.ValidateItem(core.itemGhostMarchers)
 end
 
@@ -1174,8 +1147,6 @@ local function funcFindItemsOverride(botBrain)
 				core.itemHellFlower = core.WrapInTable(curItem)
 			elseif core.itemSteamboots == nil and curItem:GetName() == "Item_Steamboots" then
 				core.itemSteamboots = core.WrapInTable(curItem)
-			elseif core.itemSacStone == nil and curItem:GetName() == "Item_SacrificialStone" then
-				core.itemSacStone = core.WrapInTable(curItem)
 			elseif core.itemGhostMarchers == nil and curItem:GetName() == "Item_EnhancedMarchers" then
 				core.itemGhostMarchers = core.WrapInTable(curItem)
 				core.itemGhostMarchers.expireTime = 0
