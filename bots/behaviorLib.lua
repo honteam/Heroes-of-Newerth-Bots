@@ -168,14 +168,7 @@ function behaviorLib.PositionSelfCreepWave(botBrain, unitCurrentTarget)
 
 	--stand appart from allies a bit
 	local vecTotalAllyInfluence = Vector3.Create()
-	local bEnemyTeamHasHuman = false
-	local tEnemyHeroes = core.teamBotBrain.tEnemyHeroes
-	for _, unitHero in pairs(tEnemyHeroes) do
-		if not unitHero:IsBotControlled() then
-			bEnemyTeamHasHuman = true
-			break
-		end
-	end
+	local bEnemyTeamHasHuman = core.EnemyTeamHasHuman()
 	if core.nDifficulty ~= core.nEASY_DIFFICULTY or not bEnemyTeamHasHuman then
 		StartProfile('Allies')
 		local tAllyHeroes = tLocalUnits.AllyHeroes
@@ -1026,13 +1019,17 @@ function behaviorLib.GetAttackDamageOnCreep(botBrain, unitCreepTarget)
 		local nProjectileSpeed = unitSelf:GetAttackProjectileSpeed()
 		local nAdjustedAttackActionTime = unitSelf:GetAdjustedAttackActionTime() / 1000
 		nTravelTime = Vector3.Distance2D(vecSelfPos, vecTargetPos) / nProjectileSpeed
-		nTravelTime = nTravelTime + nAdjustedAttackActionTime
+		nTravelTime = nTravelTime * 1.1 + nAdjustedAttackActionTime
 		if bDebugEchos then BotEcho ("Projectile travel time: " .. nTravelTime ) end 
 	else --We are melee, therefore we don't use projectile time, we use walking time.
 		local nMovementSpeed = unitSelf:GetMoveSpeed()
 		local nMeleeRange = 128 --We don't have to be ontop of the enemy to hit them.
 		local nAdjustedAttackActionTime = unitSelf:GetAdjustedAttackActionTime() / 1000
-		nTravelTime = (Vector3.Distance2D(vecSelfPos, vecTargetPos) - nMeleeRange) / nMovementSpeed
+		local nDistanceToMove = Vector3.Distance2D(vecSelfPos, vecTargetPos) - nMeleeRange
+		if nDistanceToMove < 0 then
+			nDistanceToMove = 0
+		end
+		nTravelTime = nDistanceToMove / nMovementSpeed
 		nTravelTime = nTravelTime * 1.2 + nAdjustedAttackActionTime
 		if bDebugEchos then BotEcho ("Melee travel time: " .. nTravelTime ) end 
 	end
@@ -1077,16 +1074,14 @@ function behaviorLib.GetCreepAttackTarget(botBrain, unitEnemyCreep, unitAllyCree
 
 	--Get info about self
 	local unitSelf = core.unitSelf
-	local nDamageMin = unitSelf:GetFinalAttackDamageMin()
-	
-	if core.itemHatchet then
-		nDamageMin = nDamageMin * core.itemHatchet.creepDamageMul
-	end	
+	local nDamageMinEnemy = core.GetAttackDamageMinOnCreep(unitEnemyCreep)
+	local nDamageMinAlly = core.GetAttackDamageMinOnCreep(unitAllyCreep)
 	
 	-- [Difficulty: Easy] Make bots worse at last hitting
 	-- TODO: use actual time variance instead of damage flubbing
 	if core.nDifficulty == core.nEASY_DIFFICULTY then
-		nDamageMin = nDamageMin + 120
+		nDamageMinEnemy = nDamageMinEnemy + 120
+		nDamageMinAlly = nDamageMinAlly + 120
 	end
 
 	if unitEnemyCreep and core.CanSeeUnit(botBrain, unitEnemyCreep) then
@@ -1094,7 +1089,7 @@ function behaviorLib.GetCreepAttackTarget(botBrain, unitEnemyCreep, unitAllyCree
 		--Only attack if, by the time our attack reaches the target
 		-- the damage done by other sources brings the target's health
 		-- below our minimum damage
-		if nDamageMin * (1 - unitEnemyCreep:GetPhysicalResistance()) >= (nTargetHealth - behaviorLib.GetAttackDamageOnCreep(botBrain, unitEnemyCreep)) then
+		if nDamageMinEnemy * (1 - unitEnemyCreep:GetPhysicalResistance()) >= (nTargetHealth - behaviorLib.GetAttackDamageOnCreep(botBrain, unitEnemyCreep)) then
 			local bActuallyLH = true
 			
 			-- [Tutorial] Make DS not mess with your last hitting before shit gets real
@@ -1114,7 +1109,7 @@ function behaviorLib.GetCreepAttackTarget(botBrain, unitEnemyCreep, unitAllyCree
 		--Only attack if, by the time our attack reaches the target
 		-- the damage done by other sources brings the target's health
 		-- below our minimum damage
-		if nDamageMin * (1 - unitAllyCreep:GetPhysicalResistance()) >= (nTargetHealth - behaviorLib.GetAttackDamageOnCreep(botBrain, unitAllyCreep)) then
+		if nDamageMinAlly * (1 - unitAllyCreep:GetPhysicalResistance()) >= (nTargetHealth - behaviorLib.GetAttackDamageOnCreep(botBrain, unitAllyCreep)) then
 			local bActuallyDeny = true
 			
 			--[Difficulty: Easy] Don't deny
@@ -1193,11 +1188,7 @@ function behaviorLib.AttackCreepsExecute(botBrain)
 		-- below our minimum damage, and we are in range and can attack right now-		
 		if nDistSq <= nAttackRangeSq and unitSelf:IsAttackReady() then
 			if unitSelf:GetAttackType() == "melee" then
-				local nDamageMin = unitSelf:GetFinalAttackDamageMin()
-				
-				if core.itemHatchet then
-					nDamageMin = nDamageMin * core.itemHatchet.creepDamageMul
-				end	
+				local nDamageMin = core.GetAttackDamageMinOnCreep(unitCreepTarget)
 
 				if unitCreepTarget:GetHealth() <= nDamageMin then
 					if core.GetAttackSequenceProgress(unitSelf) ~= "windup" then
@@ -1407,6 +1398,10 @@ end
 function behaviorLib.ProcessKill(unit)
 	local bDebugEchos = false
 	
+	if unit == nil then
+		return
+	end
+		
 	local nID = unit:GetUniqueID()
 	local tThreatMultipliers = behaviorLib.tThreatMultipliers
 	
@@ -3568,9 +3563,11 @@ Current algorithm:
 	local bGoldReduced = false
 	local tInventory = core.unitSelf:GetInventory(true)
 	local nextItemDef = behaviorLib.DetermineNextItemDef(botBrain)
+	local bMyTeamHasHuman = core.MyTeamHasHuman()
+	local bBuyTPStone = (core.nDifficulty ~= core.nEASY_DIFFICULTY) or bMyTeamHasHuman
 
 	--For our first frame of this execute
-	if core.GetLastBehaviorName(botBrain) ~= core.GetCurrentBehaviorName(botBrain) then
+	if bBuyTPStone and core.GetLastBehaviorName(botBrain) ~= core.GetCurrentBehaviorName(botBrain) then
 		if nextItemDef:GetName() ~= core.idefHomecomingStone:GetName() then		
 			--Seed a TP stone into the buy items after 1 min, Don't buy TP stones if we have Post Haste
 			local sName = "Item_HomecomingStone"
