@@ -392,7 +392,6 @@ local function funcFindItemsOverride(botBrain)
 end
 object.FindItemsOld = core.FindItems
 core.FindItems = funcFindItemsOverride
-
  
 ----------------------------------
 --	EngiBot's Retreating Tactics
