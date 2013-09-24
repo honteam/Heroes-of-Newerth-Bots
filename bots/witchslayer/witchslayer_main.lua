@@ -285,7 +285,19 @@ local function HarassHeroExecuteOverride(botBrain)
 		if not bActionTaken and nLastHarassUtility > botBrain.nSilverBulletThreshold then
 			if bDebugEchos then BotEcho("  No action yet, checking silver bullet") end
 			local abilSilverBullet = skills.abilSilverBullet
-			if abilSilverBullet:CanActivate() --[[and CanKillWithUlt?]] then
+			local nDamage = 500
+			if nLevel == 2 then
+				nDamage = 650
+			elseif nLevel == 3 then
+				nDamage = 850
+			end
+			
+			local nMaxHealth = unitTarget:GetMaxHealth()
+			local nHealth = unitTarget:GetHealth()
+			local nDamageMultiplier = 1 - unitTarget:GetMagicResistance()
+			local nTrueDamage = nDamage * nDamageMultiplier
+			local bUseBullet = (core.nDifficulty ~= core.nEASY_DIFFCULTY) or unitTarget:IsBotControlled() or (nHealth - nTrueDamage >= nMaxHealth * 0.12)
+			if abilSilverBullet:CanActivate() and bUseBullet then
 				local nRange = abilSilverBullet:GetRange()
 				if nTargetDistanceSq < (nRange * nRange) then
 					bActionTaken = core.OrderAbilityEntity(botBrain, abilSilverBullet, unitTarget)
