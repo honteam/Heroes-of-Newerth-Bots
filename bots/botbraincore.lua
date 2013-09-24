@@ -410,9 +410,8 @@ function core.BotBrainCoreInitialize(tGameVariables)
 		
 		core.bTutorialBehaviorReset = false
 	end
-
-	--add relevent item behaviours
-	behaviorLib.addItemBehaviors()
+	
+	behaviorLib.addCurrentItemBehaviors()
 	
 	core.botBrainInitialized = true
 end

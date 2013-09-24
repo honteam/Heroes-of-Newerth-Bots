@@ -2977,6 +2977,7 @@ function behaviorLib.SellLowestItems(botBrain, numToSell)
 
 		if lowestItem then
 			BotEcho("Selling "..lowestItem:GetName().." in slot "..lowestItem:GetSlot())
+			behaviorLib.addItemBehavior(lowestItem:GetName(), true)
 			core.unitSelf:Sell(lowestItem)
 			inventory[lowestItem:GetSlot()] = ""
 			numToSell = numToSell - 1
@@ -3198,6 +3199,7 @@ Current algorithm:
 		if #componentDefs == 0 then
 			behaviorLib.ShuffleCombine(botBrain, nextItemDef, unitSelf)
 		end
+		behaviorLib.addItemBehavior(nextItemDef:GetName(), false)
 	end
 
 	bShuffled = behaviorLib.SortInventoryAndStash(botBrain)

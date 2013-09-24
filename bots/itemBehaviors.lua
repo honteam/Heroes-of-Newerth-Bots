@@ -7,45 +7,56 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
 
-function behaviorLib.addItemBehaviors()
-	object.tItemList = {}
-	for _, itemName in ipairs(behaviorLib.StartingItems) do 
-		tinsert(object.tItemList, itemName)
-	end
-	for _, itemName in ipairs(behaviorLib.LaneItems) do
-		tinsert(object.tItemList, itemName)
-	end
-	for _, itemName in ipairs(behaviorLib.MidItems) do
-		tinsert(object.tItemList, itemName)
-	end
-	for _, itemName in ipairs(behaviorLib.LateItems) do
-		tinsert(object.tItemList, itemName)
-	end
-	
-	for _, itemName in ipairs(object.tItemList) do
-		--BotEcho("Checking '"..itemName.."'")
-		if itemName=="Item_Replenish" and core.tableContains(behaviorLib.tBehaviors, behaviorLib.RingOfSorceryBehavior)==0 then
-			tinsert(behaviorLib.tBehaviors, behaviorLib.RingOfSorceryBehavior)
-		elseif itemName=="Item_ManaPotion" and core.tableContains(behaviorLib.tBehaviors, behaviorLib.UseManaPotBehavior)==0 then
-			tinsert(behaviorLib.tBehaviors, behaviorLib.UseManaPotBehavior)
-		elseif itemName=="Item_Bottle" and core.tableContains(behaviorLib.tBehaviors, behaviorLib.UseBottleBehavior)==0 then
-			tinsert(behaviorLib.tBehaviors, behaviorLib.UseBottleBehavior)
-		elseif itemName=="Item_HealthPotion" and core.tableContains(behaviorLib.tBehaviors, behaviorLib.UseHealthPotBehavior)==0 then
-			tinsert(behaviorLib.tBehaviors, behaviorLib.UseHealthPotBehavior)
-		elseif itemName=="Item_RunesOfTheBlight" and core.tableContains(behaviorLib.tBehaviors, behaviorLib.UseRunesOfTheBlightBehavior)==0 then
-			tinsert(behaviorLib.tBehaviors, behaviorLib.UseRunesOfTheBlightBehavior)
-		elseif (itemName=="Item_ManaBattery" or itemName=="Item_PowerSupply") and core.tableContains(behaviorLib.tBehaviors, behaviorLib.UseBatterySupplyBehavior)==0 then
-			tinsert(behaviorLib.tBehaviors, behaviorLib.UseBatterySupplyBehavior)
-		elseif itemName=="Item_Astrolabe" and core.tableContains(behaviorLib.tBehaviors, behaviorLib.AstrolabeBehavior)==0 then
-			tinsert(behaviorLib.tBehaviors, behaviorLib.AstrolabeBehavior)
-		elseif itemName=="Item_SacrificialStone" and core.tableContains(behaviorLib.tBehaviors, behaviorLib.SacrificialStoneBehavior)==0 then
-			tinsert(behaviorLib.tBehaviors, behaviorLib.SacrificialStoneBehavior)
+function behaviorLib.addCurrentItemBehaviors()  --run on initialization
+	local inventory = core.unitSelf:GetInventory(false)
+	for slot = 1, 6 do
+		local curItem = inventory[slot]
+		if curItem then
+			behaviorLib.addItemBehavior(curItem:GetName(), false)
 		end
 	end
+end
 	
-	--for _, behav in ipairs(behaviorLib.tBehaviors) do
-	--	BotEcho(behav["Name"])
-	--end
+function behaviorLib.addItemBehavior(itemName, remove)
+	local bDebugEchos = false
+	remove = (remove == nil and false) or remove
+	behaviorLib.behaviorToModify=nil
+	
+	if itemName=="Item_Replenish" then
+		behaviorLib.behaviorToModify = behaviorLib.RingOfSorceryBehavior
+	elseif itemName=="Item_ManaPotion" then
+		behaviorLib.behaviorToModify = behaviorLib.UseManaPotBehavior
+	elseif itemName=="Item_Bottle" then
+		behaviorLib.behaviorToModify = behaviorLib.UseBottleBehavior
+	elseif itemName=="Item_HealthPotion" then
+		behaviorLib.behaviorToModify = behaviorLib.UseHealthPotBehavior
+	elseif itemName=="Item_RunesOfTheBlight" then
+		behaviorLib.behaviorToModify = behaviorLib.UseRunesOfTheBlightBehavior
+	elseif (itemName=="Item_ManaBattery" or itemName=="Item_PowerSupply") then
+		behaviorLib.behaviorToModify = behaviorLib.UseBatterySupplyBehavior
+	elseif itemName=="Item_Astrolabe" then
+		behaviorLib.behaviorToModify = behaviorLib.AstrolabeBehavior
+	elseif itemName=="Item_SacrificialStone" then
+		behaviorLib.behaviorToModify = behaviorLib.SacrificialStoneBehavior
+	end
+	
+	
+	if behaviorLib.behaviorToModify~=nil then
+		--BotEcho("^gfound behavior for item! "..itemName)
+		--core.printTable(behaviorLib.behaviorToModify)
+		if remove then
+			if core.RemoveByValue(behaviorLib.tBehaviors, behaviorLib.behaviorToModify) then
+				if bDebugEchos then BotEcho("^rRemoved "..itemName) end
+			else
+				BotEcho("^rFailed to remove "..itemName.." from behaviours!?") --this is an error we should know about.
+			end
+		elseif core.tableContains(behaviorLib.tBehaviors, behaviorLib.behaviorToModify) == 0 then
+			tinsert(behaviorLib.tBehaviors, behaviorLib.behaviorToModify)
+			if bDebugEchos then BotEcho("^gadded "..itemName) end
+		else
+			--BotEcho("^rBehavior exists.. ")
+		end
+	end
 end
 
 
@@ -165,6 +176,8 @@ function behaviorLib.UseManaPotUtility(botBrain)
 		local vecOrigin = Vector3.Create(-100, -45)
 		
 		return core.ATanFn(nManaMissing, vecPoint, vecOrigin, 100)
+	elseif not behaviorLib.itemManaPot then
+		behaviorLib.addItemBehavior("Item_ManaPotion", true)
 	end
 	
 	return 0
@@ -293,6 +306,8 @@ function behaviorLib.UseHealthPotUtility(botBrain)
 		local vecPoint = Vector3.Create(nHealAmount, nUtilityThreshold)
 		local vecOrigin = Vector3.Create(200, -40)
 		return core.ATanFn(nHealthMissing, vecPoint, vecOrigin, 100)
+	elseif not behaviorLib.itemHealthPot then
+		behaviorLib.addItemBehavior("Item_HealthPotion", true)
 	end
 	return 0
 end
@@ -331,7 +346,7 @@ function behaviorLib.UseRunesOfTheBlightUtility(botBrain)
 	local tInventory = unitSelf:GetInventory()
 	behaviorLib.itemBlights = core.GetItem("Item_RunesOfTheBlight")
 	
-	if  behaviorLib.itemBlights and not unitSelf:HasState("State_RunesOfTheBlight") then
+	if behaviorLib.itemBlights and not unitSelf:HasState("State_RunesOfTheBlight") then
 		local unitSelf = core.unitSelf
 		local nHealthMissing = unitSelf:GetMaxHealth() - unitSelf:GetHealth()
 		local nHealthRegen = unitSelf:GetHealthRegen()
@@ -343,6 +358,8 @@ function behaviorLib.UseRunesOfTheBlightUtility(botBrain)
 		local vecOrigin = Vector3.Create(-1000, -20)
 		
 		return core.ATanFn(nHealthMissing, vecPoint, vecOrigin, 100)
+	elseif not behaviorLib.itemBlights then
+		behaviorLib.addItemBehavior("Item_RunesOfTheBlight", true)
 	end
 	
 	return 0
@@ -572,7 +589,7 @@ function behaviorLib.AstrolabeUtility(botBrain)
 			nUtility = nHighestUtility
 			behaviorLib.unitHealTarget = unitTarget
 			behaviorLib.nHealTimeToLive = nTargetTimeToLive
-		end		
+		end
 	end
 	
 	nUtility = nUtility * behaviorLib.nHealUtilityMul
