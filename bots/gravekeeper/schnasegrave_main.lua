@@ -889,17 +889,6 @@ behaviorLib.RetreatFromThreatBehavior["Utility"] = CustomRetreatFromThreatUtilit
 ------------------------------------------------------------------
 --Retreat execute
 ------------------------------------------------------------------
-local function funcRetreatFromThreatExecuteOverride(botBrain)
-
-
-
-
-	core.OrderMoveToPosClamp(botBrain, core.unitSelf, vecPos, false)
-end
-
-object.RetreatFromThreatExecuteOld = behaviorLib.RetreatFromThreatExecute
-behaviorLib.RetreatFromThreatBehavior["Execute"] = funcRetreatFromThreatExecuteOverride
-
 --  this is a great function to override with using retreating skills, such as blinks, travels, stuns or slows.
 function behaviorLib.CustomRetreatExecute(botBrain)
 	bActionTaken = false
