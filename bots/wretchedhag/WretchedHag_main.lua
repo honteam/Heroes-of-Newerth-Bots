@@ -157,7 +157,7 @@ local function funcFindItemsOverride(botBrain)
                 end
          
                 local inventory = core.unitSelf:GetInventory(true)
-                for slot = 1, 12, 1 do
+                for slot = 1, 6, 1 do
                         local curItem = inventory[slot]
                         if curItem then
                                 if core.itemSteamboots == nil and curItem:GetName() == "Item_Steamboots" then
