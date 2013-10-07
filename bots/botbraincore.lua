@@ -583,10 +583,12 @@ core.tRespawnChatKeys = { "respawn1", "respawn2", "respawn3", "respawn4", "respa
 function core.GetKillKeys(unitTarget)
 	local tChatKeys = core.CopyTable(core.tKillChatKeys)
 	
-	if unitTarget:IsBotControlled() then
-		core.InsertToTable(tChatKeys, core.tKillBotKeys)
-	else
-		core.InsertToTable(tChatKeys, core.tKillHumanKeys)
+	if unitTarget ~= nil then
+		if unitTarget:IsBotControlled() then
+			core.InsertToTable(tChatKeys, core.tKillBotKeys)
+		else
+			core.InsertToTable(tChatKeys, core.tKillHumanKeys)
+		end
 	end
 	
 	return tChatKeys

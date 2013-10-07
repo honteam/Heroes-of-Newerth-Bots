@@ -128,14 +128,7 @@ function object:onthink(tGameVariables)
 				-- don't reset this when the tutorial switches Legion to medium
 			end
 
-			local bEnemyTeamHasHuman = false
-			local tEnemyHeroes = self.tEnemyHeroes
-			for _, unitHero in pairs(tEnemyHeroes) do
-				if not unitHero:IsBotControlled() then
-					bEnemyTeamHasHuman = true
-					break
-				end
-			end
+			local bEnemyTeamHasHuman = core.EnemyTeamHasHuman()
 
 			if core.nDifficulty == core.nEASY_DIFFICULTY and bEnemyTeamHasHuman then
 				object.bGroupAndPush = false
