@@ -534,15 +534,6 @@ StopProfile()
 		end
 	end
 
-	--Use Sacrificial Stone
-	if not bActionTaken then
-		--Todo: remove all sac stone usage into its own behavior		
-		local itemSacStone = core.itemSacStone
-		if itemSacStone and itemSacStone:CanActivate() then
-			bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemSacStone, bActionTaken)
-		end
-	end
-
 	if not bActionTaken then
 		if bDebugEchos then BotEcho("  No action yet, proceeding with normal harass execute.") end
 		return object.harassExecuteOld(botBrain)
@@ -812,20 +803,11 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 		end
 	end
 
-	--Use Sacreficial Stone
-	--TODO: remove all sac stone usage into its own behavior
-	local itemSacStone = core.itemSacStone
-	if itemSacStone and itemSacStone:CanActivate() then
-		core.OrderItemClamp(botBrain, unitSelf, itemSacStone)
-		return
-	end
-
 	core.OrderMoveToPosClamp(botBrain, core.unitSelf, vecRetreatPos, false)
 end
 
 object.RetreatFromThreatExecuteOld = behaviorLib.RetreatFromThreatExecute
 behaviorLib.RetreatFromThreatBehavior["Execute"] = funcRetreatFromThreatExecuteOverride
-
 
 
 ----------------------------------
@@ -844,15 +826,7 @@ local function PushExecuteFnOverride(botBrain)
 
 	local bActionTaken = false
 
-	--Use Sacreficial Stone
 	--Todo: remove all sac stone usage into its own behavior
-	if not bActionTaken then
-		local itemSacStone = core.itemSacStone
-		if itemSacStone and itemSacStone:CanActivate() then
-			bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemSacStone)
-		end
-	end
-
 	if not bActionTaken then
 		--use corpse explosion
 		if skills.abilCorpseExplosion:CanActivate() and core.unitSelf:GetManaPercent() > object.nCorpseExplosionManaPercentTreshold then
@@ -967,7 +941,6 @@ local function funcRemoveInvalidItems()
 	core.ValidateItem(core.itemSheepstick)
 	core.ValidateItem(core.itemFrostfieldPlate)
 	core.ValidateItem(core.itemSteamboots)
-	core.ValidateItem(core.itemSacStone)
 	core.ValidateItem(core.itemGhostMarchers)
 end
 
@@ -1000,8 +973,6 @@ local function funcFindItemsOverride(botBrain)
 				core.itemHellFlower = core.WrapInTable(curItem)
 			elseif core.itemSteamboots == nil and curItem:GetName() == "Item_Steamboots" then
 				core.itemSteamboots = core.WrapInTable(curItem)
-			elseif core.itemSacStone == nil and curItem:GetName() == "Item_SacrificialStone" then
-				core.itemSacStone = core.WrapInTable(curItem)
 			elseif core.itemGhostMarchers == nil and curItem:GetName() == "Item_EnhancedMarchers" then
 				core.itemGhostMarchers = core.WrapInTable(curItem)
 				core.itemGhostMarchers.expireTime = 0
