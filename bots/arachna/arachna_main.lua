@@ -53,6 +53,11 @@ BotEcho('loading arachna_main...')
 object.heroName = 'Hero_Arachna'
 
 --------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 5, ShortSolo = 4, LongSolo = 3, ShortSupport = 1, LongSupport = 1, ShortCarry = 5, LongCarry = 4}
+
+--------------------------------
 -- Skills
 --------------------------------
 function object:SkillBuild()
