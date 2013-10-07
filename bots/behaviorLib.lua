@@ -14,9 +14,6 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
 
 local nSqrtTwo = math.sqrt(2)
 
-behaviorLib.currentBehavior = nil
-behaviorLib.lastBeahavior = nil
-
 behaviorLib.tBehaviors = {}
 behaviorLib.nNextBehaviorTime = HoN.GetGameTime()
 behaviorLib.nBehaviorAssessInterval = 250
@@ -169,10 +166,10 @@ function behaviorLib.PositionSelfCreepWave(botBrain, unitCurrentTarget)
 		StopProfile()
 	end
 
-
+	--stand appart from allies a bit
 	local vecTotalAllyInfluence = Vector3.Create()
-	if core.nDifficulty ~= core.nEASY_DIFFICULTY or not core.IsTableEmpty(core.teamBotBrain.tAllyHumanHeroes) then
-		--stand appart from allies a bit if we d
+	local bEnemyTeamHasHuman = core.EnemyTeamHasHuman()
+	if core.nDifficulty ~= core.nEASY_DIFFICULTY or not bEnemyTeamHasHuman then
 		StartProfile('Allies')
 		local tAllyHeroes = tLocalUnits.AllyHeroes
 		local nAllyInfluenceMul = behaviorLib.nAllyInfluenceMul
@@ -1005,6 +1002,7 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.PreGameBehavior)
 --  with assistance from Kairus101
 ----------------------------------
 function behaviorLib.GetAttackDamageOnCreep(botBrain, unitCreepTarget)
+	local bDebugEchos = false
 
 	if not unitCreepTarget or not core.CanSeeUnit(botBrain, unitCreepTarget) then
 		return nil
@@ -1019,12 +1017,21 @@ function behaviorLib.GetAttackDamageOnCreep(botBrain, unitCreepTarget)
 	local nTravelTime = nil
 	if (unitSelf:GetAttackType() ~= "melee") then--We are ranged, use projectile time.
 		local nProjectileSpeed = unitSelf:GetAttackProjectileSpeed()
-		nTravelTime = Vector3.Distance2D(vecSelfPos, vecTargetPos) / nProjectileSpeed + unitSelf:GetAdjustedAttackActionTime()
+		local nAdjustedAttackActionTime = unitSelf:GetAdjustedAttackActionTime() / 1000
+		nTravelTime = Vector3.Distance2D(vecSelfPos, vecTargetPos) / nProjectileSpeed
+		nTravelTime = nTravelTime * 1.1 + nAdjustedAttackActionTime
 		if bDebugEchos then BotEcho ("Projectile travel time: " .. nTravelTime ) end 
 	else --We are melee, therefore we don't use projectile time, we use walking time.
 		local nMovementSpeed = unitSelf:GetMoveSpeed()
 		local nMeleeRange = 128 --We don't have to be ontop of the enemy to hit them.
-		nTravelTime = (Vector3.Distance2D(vecSelfPos, vecTargetPos) - nMeleeRange) / nMovementSpeed + unitSelf:GetAdjustedAttackActionTime()
+		local nAdjustedAttackActionTime = unitSelf:GetAdjustedAttackActionTime() / 1000
+		local nDistanceToMove = Vector3.Distance2D(vecSelfPos, vecTargetPos) - nMeleeRange
+		if nDistanceToMove < 0 then
+			nDistanceToMove = 0
+		end
+		nTravelTime = nDistanceToMove / nMovementSpeed
+		nTravelTime = nTravelTime * 1.2 + nAdjustedAttackActionTime
+		if bDebugEchos then BotEcho ("Melee travel time: " .. nTravelTime ) end 
 	end
 	
 	
@@ -1067,20 +1074,33 @@ function behaviorLib.GetCreepAttackTarget(botBrain, unitEnemyCreep, unitAllyCree
 
 	--Get info about self
 	local unitSelf = core.unitSelf
-	local nDamageMin = unitSelf:GetFinalAttackDamageMin()
+	local nDamageMinEnemy = core.GetAttackDamageMinOnCreep(unitEnemyCreep)
+	local nDamageMinAlly = core.GetAttackDamageMinOnCreep(unitAllyCreep)
 	
-	if core.itemHatchet then
-		nDamageMin = nDamageMin * core.itemHatchet.creepDamageMul
-	end	
+	-- [Difficulty: Easy] Make bots worse at last hitting
+	-- TODO: use actual time variance instead of damage flubbing
+	if core.nDifficulty == core.nEASY_DIFFICULTY then
+		nDamageMinEnemy = nDamageMinEnemy + 120
+		nDamageMinAlly = nDamageMinAlly + 120
+	end
 
 	if unitEnemyCreep and core.CanSeeUnit(botBrain, unitEnemyCreep) then
 		local nTargetHealth = unitEnemyCreep:GetHealth()
 		--Only attack if, by the time our attack reaches the target
 		-- the damage done by other sources brings the target's health
 		-- below our minimum damage
-		if nDamageMin * (1 - unitEnemyCreep:GetPhysicalResistance()) >= (nTargetHealth - behaviorLib.GetAttackDamageOnCreep(botBrain, unitEnemyCreep)) then
-			if bDebugEchos then BotEcho("Returning an enemy") end
-			return unitEnemyCreep
+		if nDamageMinEnemy * (1 - unitEnemyCreep:GetPhysicalResistance()) >= (nTargetHealth - behaviorLib.GetAttackDamageOnCreep(botBrain, unitEnemyCreep)) then
+			local bActuallyLH = true
+			
+			-- [Tutorial] Make DS not mess with your last hitting before shit gets real
+			if core.bIsTutorial and core.bTutorialBehaviorReset == false and core.unitSelf:GetTypeName() == "Hero_Shaman" then
+				bActuallyLH = false
+			end
+			
+			if bActuallyLH then
+				if bDebugEchos then BotEcho("Returning an enemy") end
+				return unitEnemyCreep
+			end
 		end
 	end
 
@@ -1089,13 +1109,13 @@ function behaviorLib.GetCreepAttackTarget(botBrain, unitEnemyCreep, unitAllyCree
 		--Only attack if, by the time our attack reaches the target
 		-- the damage done by other sources brings the target's health
 		-- below our minimum damage
-		if nDamageMin * (1 - unitAllyCreep:GetPhysicalResistance()) >= (nTargetHealth - behaviorLib.GetAttackDamageOnCreep(botBrain, unitAllyCreep)) then
+		if nDamageMinAlly * (1 - unitAllyCreep:GetPhysicalResistance()) >= (nTargetHealth - behaviorLib.GetAttackDamageOnCreep(botBrain, unitAllyCreep)) then
 			local bActuallyDeny = true
 			
 			--[Difficulty: Easy] Don't deny
 			if core.nDifficulty == core.nEASY_DIFFICULTY then
 				bActuallyDeny = false
-			end         
+			end			
 			
 			-- [Tutorial] Hellbourne *will* deny creeps after shit gets real
 			if core.bIsTutorial and core.bTutorialBehaviorReset == true and core.myTeam == HoN.GetHellbourneTeam() then
@@ -1103,10 +1123,7 @@ function behaviorLib.GetCreepAttackTarget(botBrain, unitEnemyCreep, unitAllyCree
 			end
 			
 			if bActuallyDeny then
-				if bDebugEchos then 
-					BotEcho("Returning an ally") 
-				end
-				
+				if bDebugEchos then BotEcho("Returning an ally") end
 				return unitAllyCreep
 			end
 		end
@@ -1146,6 +1163,7 @@ function behaviorLib.AttackCreepsUtility(botBrain)
 	return nUtility
 end
 
+behaviorLib.nLastMoveToCreepID = nil
 function behaviorLib.AttackCreepsExecute(botBrain)
 	local bActionTaken = false
 	local unitSelf = core.unitSelf
@@ -1164,26 +1182,43 @@ function behaviorLib.AttackCreepsExecute(botBrain)
 		local vecTargetPos = unitCreepTarget:GetPosition()
 		local nDistSq = Vector3.Distance2DSq(vecSelfPos, vecTargetPos)
 		local nAttackRangeSq = core.GetAbsoluteAttackRangeToUnit(unitSelf, unitCreepTarget, true)
-	
+
 		--Only attack if, by the time our attack reaches the target
 		-- the damage done by other sources brings the target's health
 		-- below our minimum damage, and we are in range and can attack right now-		
 		if nDistSq <= nAttackRangeSq and unitSelf:IsAttackReady() then
-			bActionTaken = core.OrderAttackClamp(botBrain, unitSelf, unitCreepTarget)
+			if unitSelf:GetAttackType() == "melee" then
+				local nDamageMin = core.GetAttackDamageMinOnCreep(unitCreepTarget)
+
+				if unitCreepTarget:GetHealth() <= nDamageMin then
+					if core.GetAttackSequenceProgress(unitSelf) ~= "windup" then
+						bActionTaken = core.OrderAttack(botBrain, unitSelf, unitCreepTarget)
+					else
+						bActionTaken = true		
+					end
+				else
+					bActionTaken = core.OrderHoldClamp(botBrain, unitSelf, false)
+				end
+			else
+				bActionTaken = core.OrderAttackClamp(botBrain, unitSelf, unitCreepTarget)
+			end
 		else
 			if unitSelf:GetAttackType() == "melee" then
-				--If melee, move closer.
-				local vecDesiredPos = core.AdjustMovementForTowerLogic(vecTargetPos)
-				core.OrderMoveToPosAndHoldClamp(botBrain, unitSelf, vecDesiredPos, false)
+				if core.GetLastBehaviorName(botBrain) ~= behaviorLib.AttackCreepsBehavior.Name and unitCreepTarget:GetUniqueID() ~= behaviorLib.nLastMoveToCreepID then
+					behaviorLib.nLastMoveToCreepID = unitCreepTarget:GetUniqueID()
+					--If melee, move closer.
+					local vecDesiredPos = core.AdjustMovementForTowerLogic(vecTargetPos)
+					bActionTaken = core.OrderMoveToPosAndHoldClamp(botBrain, unitSelf, vecDesiredPos, false)
+				end
 			else
 				--If ranged, get within 70% of attack range if not already
 				-- This will decrease travel time for the projectile
 				if (nDistSq > nAttackRangeSq * 0.5) then 
 					local vecDesiredPos = core.AdjustMovementForTowerLogic(vecTargetPos)
-					core.OrderMoveToPosClamp(botBrain, unitSelf, vecDesiredPos, false)
+					bActionTaken = core.OrderMoveToPosClamp(botBrain, unitSelf, vecDesiredPos, false)
 				--If within a good range, just hold tight
 				else
-					core.OrderHoldClamp(botBrain, unitSelf, false)
+					bActionTaken = core.OrderHoldClamp(botBrain, unitSelf, false)
 				end
 			end
 		end
@@ -1363,6 +1398,10 @@ end
 function behaviorLib.ProcessKill(unit)
 	local bDebugEchos = false
 	
+	if unit == nil then
+		return
+	end
+		
 	local nID = unit:GetUniqueID()
 	local tThreatMultipliers = behaviorLib.tThreatMultipliers
 	
@@ -2151,433 +2190,6 @@ behaviorLib.DontBreakChannelBehavior["Name"] = "DontBreakChannel"
 tinsert(behaviorLib.tBehaviors, behaviorLib.DontBreakChannelBehavior)
 
 
---------------------------------------
---          UseHealthRegen          --
---------------------------------------
---
--- Utility: 0 to 40
--- Based on missing health
---
--- Execute: 
--- Use a Rune of the Blight, Health Pot, or Bottle to heal
--- Will only use Health Pot or Bottle if it is safe
---
-
--------- Global Constants & Variables --------
-behaviorLib.bUseBatterySupplyForHealth = true
-behaviorLib.bUseBatterySupplyForMana = true
-behaviorLib.bUseBottleForHealth = true
-behaviorLib.bUseBottleForMana = true
-
-behaviorLib.safeTreeAngle = 120
-
--------- Helper Functions --------
-function behaviorLib.GetSafeDrinkDirection()
-	-- Returns vector to a safe direciton to retreat to drink if the bot is threatened
-	-- Returns nil if safe
-	local vecSafeDirection = nil
-	local unitSelf = core.unitSelf
-	local vecSelfPos = unitSelf:GetPosition()
-	local nMyID = unitSelf:GetUniqueID()
-	local tThreateningUnits = {}
-	local tUnitThreatenedRadius = {}
-	
-	for _, unitEnemy in pairs(core.localUnits["EnemyUnits"]) do
-		-- Ignore creeps that are already attacking something
-		local unitEnemyTarget = unitEnemy:GetAttackTarget()
-		if not (core.IsLaneCreep(unitEnemy) and unitEnemyTarget and unitEnemyTarget:GetUniqueID() ~= nMyID) then
-			local nAbsRange = core.GetAbsoluteAttackRangeToUnit(unitEnemy, unitSelf) + 325
-			local nAbsRangeSq = nAbsRange * nAbsRange
-			local nDistSq = Vector3.Distance2DSq(vecSelfPos, unitEnemy:GetPosition())
-			if nDistSq < nAbsRangeSq then
-				tinsert(tThreateningUnits, unitEnemy)
-				tinsert(tUnitThreatenedRadius, nAbsRange)
-			end
-		end
-	end
-
-	local curTimeMS = HoN.GetGameTime()
-	local nThreateningUnits = core.NumberElements(tThreateningUnits)
-	if nThreateningUnits > 0 or eventsLib.recentDotTime > curTimeMS or #eventsLib.incomingProjectiles["all"] > 0 then
-		-- Determine best "away from threat" vector
-		local vecAway = Vector3.Create()
-		for nIndex, unitEnemy in pairs(tThreateningUnits) do
-			local vecAwayFromTarget = Vector3.Normalize(vecSelfPos - unitEnemy:GetPosition())
-			vecAway = vecAway + vecAwayFromTarget * tUnitThreatenedRadius[nIndex]
-		end
-		
-		-- Average vecAway with "retreat" vector
-		local vecRetreat = Vector3.Normalize(behaviorLib.PositionSelfBackUp() - vecSelfPos)
-		local vecSafeDirection = Vector3.Normalize(vecAway + vecRetreat)
-	end
-
-	return vecSafeDirection
-end
-
-------------------------------------
---   Mana Battery/PowerSupply     --
-------------------------------------
-
-function behaviorLib.GetBatterySupplyFromInventory()
-	-- Returns Mana Battery or Power Supply if they are in the bot's inventory
-	-- else returns nil
-	
-	local unitSelf = core.unitSelf
-	local tInventory = unitSelf:GetInventory()
-	local tManaBattery = core.InventoryContains(tInventory, "Item_ManaBattery")
-	local tPowerSupply = core.InventoryContains(tInventory, "Item_PowerSupply")
-	
-	if not core.IsTableEmpty(tManaBattery) then
-		return tManaBattery[1]
-	elseif not core.IsTableEmpty(tPowerSupply) then
-		return tPowerSupply[1]
-	end
-	
-	return nil
-end
-
-function behaviorLib.BatterySupplyHealthUtilFn(nHealthMissing, nCharges)
-	-- With 1 Charge:
-	-- Roughly 20+ when we are missing 30 health
-	-- Function which crosses 20 at x=30 and 30 at x=140, convex down
-	-- With 15 Charges:
-	-- Roughly 20+ when we are missing 170 health
-	-- Function which crosses 20 at x=170 and 30 at x=330, convex down
-	if (not behaviorLib.bUseBatterySupplyForHealth) then
-		return 0
-	end
-	
-	local nHealAmount = 10 * nCharges
-	local nHealBuffer = 20
-	local nUtilityThreshold = 20
-	
-	local vecPoint = Vector3.Create(nHealAmount + nHealBuffer, nUtilityThreshold)
-	local vecOrigin = Vector3.Create(-250, -30)
-	
-	return core.ATanFn(nHealthMissing, vecPoint, vecOrigin, 100)
-end
-
-function behaviorLib.BatterySupplyManaUtilFn(nManaMissing, nCharges)
-	-- With 1 Charge:
-	-- Roughly 20+ when we are missing 40 mana
-	-- Function which crosses 20 at x=40 and 30 at x=100, convex down
-	-- With 15 Charges:
-	-- Roughly 20+ when we are missing 280 mana
-	-- Function which crosses 20 at x=280 and 30 at x=470, convex down
-	if (not behaviorLib.bUseBatterySupplyForMana) then
-		return 0
-	end
-	
-	local nManaRegenAmount = 15 * nCharges
-	local nManaBuffer = 25
-	local nUtilityThreshold = 20
-	
-	local vecPoint = Vector3.Create(nManaRegenAmount + nManaBuffer, nUtilityThreshold)
-	local vecOrigin = Vector3.Create(-60, -50)
-	
-	return core.ATanFn(nManaMissing, vecPoint, vecOrigin, 100)
-end
-
-function behaviorLib.UseBatterySupplyUtility(botBrain)
-	local unitSelf = core.unitSelf
-	local nHealthMissing = unitSelf:GetMaxHealth() - unitSelf:GetHealth()
-	local nManaMissing = unitSelf:GetMaxMana() - unitSelf:GetMana()
-	local itemBatterySupply = behaviorLib.GetBatterySupplyFromInventory()
-	
-	if itemBatterySupply ~= nil and itemBatterySupply:CanActivate() then
-		local nCharges = itemBatterySupply:GetCharges()
-		local nBatterySupplyHealthUtility = behaviorLib.BatterySupplyHealthUtilFn(nHealthMissing, nCharges)
-		local nBatterySupplyManaUtility = behaviorLib.BatterySupplyManaUtilFn(nManaMissing, nCharges)
-		
-		return max(
-			nBatterySupplyHealthUtility * .8 + nBatterySupplyManaUtility * .2, --health
-			nBatterySupplyManaUtility * .8 + nBatterySupplyHealthUtility * .2  --mana
-			)
-	end
-	
-	return 0
-end
-
-function behaviorLib.UseBatterySupplyExecute(botBrain)
-	local unitSelf = core.unitSelf
-	local tInventory = unitSelf:GetInventory()
-	local bActionTaken = false
-	
-	-- Use Mana Battery/Power Supply to heal
-	local itemBatterySupply = behaviorLib.GetBatterySupplyFromInventory(tInventory)
-	if itemBatterySupply:GetCharges() > 0 then
-		bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemBatterySupply)
-	end
-	
-	return bActionTaken
-end
-behaviorLib.UseBatterySupplyBehavior = {}
-behaviorLib.UseBatterySupplyBehavior["Utility"] = behaviorLib.UseBatterySupplyUtility
-behaviorLib.UseBatterySupplyBehavior["Execute"] = behaviorLib.UseBatterySupplyExecute
-behaviorLib.UseBatterySupplyBehavior["Name"] = "UseBatterySupply"
-tinsert(behaviorLib.tBehaviors, behaviorLib.UseBatterySupplyBehavior)
-
-------------------------------------
---       Runes OfThe Blight       --
-------------------------------------
-function behaviorLib.UseRunesOfTheBlightUtility(botBrain)
-	-- Roughly 20+ when we are missing 115 hp
-	-- Function which crosses 20 at x=115 and is 30 at roughly x=600, convex down
-
-	local unitSelf = core.unitSelf
-	local tInventory = unitSelf:GetInventory()
-	local tBlights = core.InventoryContains(tInventory, "Item_RunesOfTheBlight")
-	
-	if not core.IsTableEmpty(tBlights) and not unitSelf:HasState("State_RunesOfTheBlight") then
-		local unitSelf = core.unitSelf
-		local nHealthMissing = unitSelf:GetMaxHealth() - unitSelf:GetHealth()
-		local nHealthRegen = unitSelf:GetHealthRegen()
-		local nHealAmount = 115
-		local nHealBuffer = nHealthRegen * 16
-		local nUtilityThreshold = 20
-			
-		local vecPoint = Vector3.Create(nHealAmount + nHealBuffer, nUtilityThreshold)
-		local vecOrigin = Vector3.Create(-1000, -20)
-		
-		return core.ATanFn(nHealthMissing, vecPoint, vecOrigin, 100)
-	end
-	
-	return 0
-end
-
-function behaviorLib.UseRunesOfTheBlightExecute(botBrain)
-	local unitSelf = core.unitSelf
-	local vecSelfPos = unitSelf:GetPosition()
-	local tInventory = unitSelf:GetInventory()
-	local tBlights = core.InventoryContains(tInventory, "Item_RunesOfTheBlight")
-	local bActionTaken = false
-	local unitClosestTree = nil
-	local nClosestTreeDistSq = 9999 * 9999
-	local vecLaneForward = object.vecLaneForward
-	local vecLaneForwardNeg = -vecLaneForward
-	local funcRadToDeg = core.RadToDeg
-	local funcAngleBetween = core.AngleBetween
-	local nHalfSafeTreeAngle = behaviorLib.safeTreeAngle / 2
-
-	if not core.IsTableEmpty(tBlights) then
-		core.UpdateLocalTrees()
-		local tTrees = core.localTrees
-		for _, unitTree in pairs(tTrees) do
-			vecTreePosition = unitTree:GetPosition()
-			-- "Safe" trees are backwards
-			if not vecLaneForward or abs(funcRadToDeg(funcAngleBetween(vecTreePosition - vecSelfPos, vecLaneForwardNeg)) ) < nHalfSafeTreeAngle then
-				local nDistSq = Vector3.Distance2DSq(vecTreePosition, vecSelfPos)
-				if nDistSq < nClosestTreeDistSq then
-					unitClosestTree = unitTree
-					nClosestTreeDistSq = nDistSq
-					if bDebugLines then
-						core.DrawXPosition(vecTreePosition, 'yellow')
-					end
-				end
-			end
-		end
-		if unitClosestTree ~= nil then
-			bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, tBlights[1], unitClosestTree)
-		end
-	end
-		
-	return bActionTaken
-end
-behaviorLib.UseRunesOfTheBlightBehavior = {}
-behaviorLib.UseRunesOfTheBlightBehavior["Utility"] = behaviorLib.UseRunesOfTheBlightUtility
-behaviorLib.UseRunesOfTheBlightBehavior["Execute"] = behaviorLib.UseRunesOfTheBlightExecute
-behaviorLib.UseRunesOfTheBlightBehavior["Name"] = "UseRunesOfTheBlight"
-tinsert(behaviorLib.tBehaviors, behaviorLib.UseRunesOfTheBlightBehavior)
-
-------------------------------------
---          Health Potion         --
-------------------------------------
-function behaviorLib.UseHealthPotUtility(botBrain)
-	-- Roughly 20+ when we are missing 400 hp
-	-- Function which crosses 20 at x=400 and 40 at x=650, convex down
-
-	local unitSelf = core.unitSelf
-	local tInventory = unitSelf:GetInventory()
-	local tHealthPots = core.InventoryContains(tInventory, "Item_HealthPotion")
-	
-	if not core.IsTableEmpty(tHealthPots) and not unitSelf:HasState("State_HealthPotion") then	
-		local nHealthMissing = unitSelf:GetMaxHealth() - unitSelf:GetHealth()
-		local nHealthRegen = unitSelf:GetHealthRegen()
-		local nHealAmount = 400
-		local nHealBuffer = nHealthRegen * 10
-		local nUtilityThreshold = 20
-		
-		local vecPoint = Vector3.Create(nHealAmount, nUtilityThreshold)
-		local vecOrigin = Vector3.Create(200, -40)
-		return core.ATanFn(nHealthMissing, vecPoint, vecOrigin, 100)
-	end
-	
-	return 0
-end
-
-function behaviorLib.UseHealthPotExecute(botBrain)
-	local bActionTaken = false
-	local unitSelf = core.unitSelf
-	local vecSelfPos = unitSelf:GetPosition()
-	local tInventory = unitSelf:GetInventory()
-	local tHealthPots = core.InventoryContains(tInventory, "Item_HealthPotion")
-	
-	if not core.IsTableEmpty(tHealthPots) then
-		local vecRetreatDirection = behaviorLib.GetSafeDrinkDirection()
-		-- Check if it is safe to drink
-		if vecRetreatDirection then
-			bActionTaken = core.OrderMoveToPosClamp(botBrain, unitSelf, vecSelfPos + vecRetreatDirection * core.moveVecMultiplier, false)
-		else
-			bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, tHealthPots[1], unitSelf)
-		end
-	end
-	
-	return bActionTaken
-end
-
-behaviorLib.UseHealthPotBehavior = {}
-behaviorLib.UseHealthPotBehavior["Utility"] = behaviorLib.UseHealthPotUtility
-behaviorLib.UseHealthPotBehavior["Execute"] = behaviorLib.UseHealthPotExecute
-behaviorLib.UseHealthPotBehavior["Name"] = "UseHealthPot"
-tinsert(behaviorLib.tBehaviors, behaviorLib.UseHealthPotBehavior)
-
-------------------------------------
---             Bottle             --
-------------------------------------
-function behaviorLib.BottleHealthUtilFn(nHealthMissing, nHealthRegen)
-	-- Roughly 20+ when we are missing 135 hp
-	-- Function which crosses 20 at x=135 and 30 at x=220, convex down
-	if (not behaviorLib.bUseBottleForHealth) then
-		return 0
-	end
-	
-	local nHealAmount = 135
-	local nHealBuffer = nHealthRegen * 3
-	local nUtilityThreshold = 20
-
-	local vecPoint = Vector3.Create(nHealAmount + nHealBuffer, nUtilityThreshold)
-	local vecOrigin = Vector3.Create(-100, -30)
-	
-	return core.ATanFn(nHealthMissing, vecPoint, vecOrigin, 100)
-end
-
-function behaviorLib.BottleManaUtilFn(nManaMissing, nManaRegen)
-	-- Roughly 20+ when we are missing 70 mana
-	-- Function which crosses 20 at x=70 and 30 at x=140, convex down
-	if (not behaviorLib.bUseBottleForMana) then
-		return 0
-	end
-	
-	local nManaRegenAmount = 70
-	local nManaBuffer = nManaRegen * 3
-	local nUtilityThreshold = 20
-	
-	local vecPoint = Vector3.Create(nManaRegenAmount + nManaBuffer, nUtilityThreshold)
-	local vecOrigin = Vector3.Create(-125, -30)
-	
-	return core.ATanFn(nManaMissing, vecPoint, vecOrigin, 100)
-end
-
-function behaviorLib.UseBottleUtility(botBrain)
-	local unitSelf = core.unitSelf
-	local nHealthMissing = unitSelf:GetMaxHealth() - unitSelf:GetHealth()
-	local nManaMissing = unitSelf:GetMaxMana() - unitSelf:GetMana()
-	local nHealthRegen = unitSelf:GetHealthRegen()
-	local nManaRegen = unitSelf:GetManaRegen()
-	local tInventory = unitSelf:GetInventory()
-	local tItemBottle = core.InventoryContains(tInventory, "Item_Bottle")
-	
-	if not core.IsTableEmpty(tItemBottle) and not unitSelf:HasState("State_Bottle") and tItemBottle[1]:GetActiveModifierKey() ~= "bottle_empty" then
-		local nBottleHealthFn=behaviorLib.BottleHealthUtilFn(nHealthMissing, nHealthRegen)
-		local nBottleManaFn=behaviorLib.BottleManaUtilFn(nManaMissing, nManaRegen)
-		
-		return max(
-			nBottleHealthFn * .8 + nBottleManaFn * .2, --health
-			nBottleManaFn * .8 + nBottleHealthFn * .2  --mana
-			)
-	end
-	
-	return 0
-end
-
-function behaviorLib.UseBottleExecute(botBrain)
-	local bActionTaken = false
-	local unitSelf = core.unitSelf
-	local tInventory = unitSelf:GetInventory()
-	local tItemBottle = core.InventoryContains(tInventory, "Item_Bottle")
-
-	if not core.IsTableEmpty(tItemBottle) then
-		local vecRetreatDirection = behaviorLib.GetSafeDrinkDirection()
-		-- Check if it is safe to drink
-		if vecRetreatDirection then
-			bActionTaken = core.OrderMoveToPosClamp(botBrain, unitSelf, vecSelfPos + vecRetreatDirection * core.moveVecMultiplier, false)
-		else
-			bActionTaken = core.OrderItemClamp(botBrain, unitSelf, tItemBottle[1])
-		end
-	end
-	
-	return bActionTaken
-end
-
-behaviorLib.UseBottleBehavior = {}
-behaviorLib.UseBottleBehavior["Utility"] = behaviorLib.UseBottleUtility
-behaviorLib.UseBottleBehavior["Execute"] = behaviorLib.UseBottleExecute
-behaviorLib.UseBottleBehavior["Name"] = "UseBottle"
-tinsert(behaviorLib.tBehaviors, behaviorLib.UseBottleBehavior)
-
-------------------------------------
---          Mana Potion           --
-------------------------------------
-function behaviorLib.UseManaPotUtility(botBrain)
-	-- Roughly 20+ when we are missing 100 mana
-	-- Function which crosses 20 at x=100 and 30 at x=200, convex down
-	
-	local unitSelf = core.unitSelf
-	local tInventory = unitSelf:GetInventory()
-	local tManaPots = core.InventoryContains(tInventory, "Item_ManaPotion")
-	
-	if not core.IsTableEmpty(tManaPots) and not unitSelf:HasState("State_ManaPotion") then	
-		local nManaMissing = unitSelf:GetMaxMana() - unitSelf:GetMana()
-		local nManaRegen = unitSelf:GetManaRegen()
-		local nManaRegenAmount = 100
-		local nManaBuffer = nManaRegen * 20
-		local nUtilityThreshold = 20
-		
-		local vecPoint = Vector3.Create(nManaRegenAmount, nUtilityThreshold)
-		local vecOrigin = Vector3.Create(-100, -45)
-		
-		return core.ATanFn(nManaMissing, vecPoint, vecOrigin, 100)
-	end
-	
-	return 0
-end
-
-function behaviorLib.UseManaPotExecute(botBrain)
-	local bActionTaken = false
-	local unitSelf = core.unitSelf
-	local vecSelfPos = unitSelf:GetPosition()
-	local tInventory = unitSelf:GetInventory()
-	local tManaPots = core.InventoryContains(tInventory, "Item_ManaPotion")
-	
-	if not core.IsTableEmpty(tManaPots) then
-		local vecRetreatDirection = behaviorLib.GetSafeDrinkDirection()
-		-- Check if it is safe to drink
-		if vecRetreatDirection then
-			bActionTaken = core.OrderMoveToPosClamp(botBrain, unitSelf, vecSelfPos + vecRetreatDirection * core.moveVecMultiplier, false)
-		else
-			bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, tManaPots[1], unitSelf)
-		end
-	end
-		
-	return bActionTaken
-end
-
-behaviorLib.UseManaPotBehavior = {}
-behaviorLib.UseManaPotBehavior["Utility"] = behaviorLib.UseManaPotUtility
-behaviorLib.UseManaPotBehavior["Execute"] = behaviorLib.UseManaPotExecute
-behaviorLib.UseManaPotBehavior["Name"] = "UseManaPot"
-tinsert(behaviorLib.tBehaviors, behaviorLib.UseManaPotBehavior)
-
 ----------------------------------
 --	PositionSelf
 --
@@ -2722,10 +2334,66 @@ function behaviorLib.PositionSelfBackUp()
 	return vecDesiredPos
 end
 
--------- Behavior Fns --------
+
+--------------------------------------------------
+--          RetreatFromThreat Override          --
+--------------------------------------------------
+behaviorLib.nOldRetreatFactor = 0.9--Decrease the value of the normal retreat behavior
+behaviorLib.nMaxLevelDifference = 4--Ensure hero will not be too carefull
+behaviorLib.nEnemyBaseThreat = 6--Base threat. Level differences and distance alter the actual threat level.
+
+--This function returns the position of the enemy hero.
+--If he is not shown on map it returns the last visible spot
+--as long as it is not older than 10s
+function behaviorLib.funcGetEnemyPosition(unitEnemy)
+	if unitEnemy == nil  then return Vector3.Create(20000, 20000) end 
+	local tEnemyPosition = core.unitSelf.tEnemyPosition
+	local tEnemyPositionTimestamp = core.unitSelf.tEnemyPositionTimestamp
+	if tEnemyPosition == nil then
+		-- initialize new table
+		core.unitSelf.tEnemyPosition = {}
+		core.unitSelf.tEnemyPositionTimestamp = {}
+		tEnemyPosition = core.unitSelf.tEnemyPosition
+		tEnemyPositionTimestamp = core.unitSelf.tEnemyPositionTimestamp
+		local tEnemyTeam = HoN.GetHeroes(core.enemyTeam)
+		--vector beyond map
+		for x, hero in pairs(tEnemyTeam) do
+			tEnemyPosition[hero:GetUniqueID()] = Vector3.Create(20000, 20000)
+			tEnemyPositionTimestamp[hero:GetUniqueID()] = HoN.GetGameTime()
+		end
+		
+	end
+	local vecPosition = unitEnemy:GetPosition()
+	--enemy visible?
+	if vecPosition then
+		--update table
+		tEnemyPosition[unitEnemy:GetUniqueID()] = unitEnemy:GetPosition()
+		tEnemyPositionTimestamp[unitEnemy:GetUniqueID()] = HoN.GetGameTime()
+	end
+	--return position, 10s memory
+	if tEnemyPositionTimestamp[unitEnemy:GetUniqueID()] <= HoN.GetGameTime() + 10000 then
+		return tEnemyPosition[unitEnemy:GetUniqueID()]
+	else
+		return Vector3.Create(20000, 20000)
+	end
+end
+
+function behaviorLib.funcGetThreatOfEnemy(unitEnemy)
+	if unitEnemy == nil or not unitEnemy:IsAlive() then return 0 end
+	local unitSelf = core.unitSelf
+	local nDistanceSq = Vector3.Distance2DSq(unitSelf:GetPosition(), behaviorLib.funcGetEnemyPosition (unitEnemy))
+	if nDistanceSq > 4000000 then return 0 end			
+	local nMyLevel = unitSelf:GetLevel()
+	local nEnemyLevel = unitEnemy:GetLevel()
+	--Level differences increase / decrease actual nThreat
+	local nThreat = behaviorLib.nEnemyBaseThreat + Clamp(nEnemyLevel - nMyLevel, 0, behaviorLib.nMaxLevelDifference)
+	--Magic-Formel: Threat to Range, T(700²) = 2, T(1100²) = 1.5, T(2000²)= 0.75
+	nThreat = Clamp(3*(112810000-nDistanceSq) / (4*(19*nDistanceSq+32810000)),0.75,2) * nThreat
+	return nThreat
+end
+
 function behaviorLib.RetreatFromThreatUtility(botBrain)
 	local bDebugEchos = false
-
 	local unitSelf = core.unitSelf
 	local tEnemyCreeps = core.localUnits["EnemyCreeps"]
 	local tEnemyTowers = core.localUnits["EnemyTowers"]
@@ -2763,7 +2431,6 @@ function behaviorLib.RetreatFromThreatUtility(botBrain)
 	--Total
 	local nUtility = nCreepAggroUtility + nRecentDamageUtility + nTowerUtility
 	
-	
 	if bDebugEchos then
 		BotEcho(format("nRecentDmgUtil: %d  nRecentDamage: %g", nRecentDamageUtility, nRecentDamage))
 		BotEcho(format("nTowerUtil: %d  max( nTowerProjectilesUtil: %d, nTowerAggroUtil: %d )", 
@@ -2771,29 +2438,50 @@ function behaviorLib.RetreatFromThreatUtility(botBrain)
 		BotEcho(format("util: %d  recentDmg: %d  tower: %d  creeps: %d", 
 			nUtility, nRecentDamageUtility, nTowerUtility, nCreepAggroUtility))		
 	end
-
-	
-	
 	nUtility = Clamp(nUtility, 0, 100)
 	behaviorLib.lastRetreatUtil = nUtility
 
 	if botBrain.bDebugUtility == true and nUtility ~= 0 then
 		BotEcho(format("  RetreatFromThreatUtility: %g", nUtility))
 	end
-
-	return nUtility
+	--New code starts here.
+	nUtility=nUtility * behaviorLib.nOldRetreatFactor
+	
+	local nUtilityOld = behaviorLib.lastRetreatUtil
+	--decay with a maximum of 4 utility points per frame to ensure a longer retreat time
+	if nUtilityOld > nUtility +4 then
+		nUtility = nUtilityOld -4
+	end
+	
+	--bonus of allies decrease fear
+	local allies = core.localUnits["AllyHeroes"]
+	local nAllies = core.NumberElements(allies) + 1
+	--get enemy heroes
+	local tEnemyTeam = HoN.GetHeroes(core.enemyTeam)
+	--calculate the threat-value and increase utility value
+	for id, enemy in pairs(tEnemyTeam) do
+		nUtility = nUtility + behaviorLib.funcGetThreatOfEnemy(enemy) / nAllies
+	end
+	return Clamp(nUtility, 0, 100)
 end
 
 function behaviorLib.RetreatFromThreatExecute(botBrain)
-	--Activate ghost marchers if we can
-	local itemGhostMarchers = core.itemGhostMarchers
-	if behaviorLib.lastRetreatUtil >= behaviorLib.retreatGhostMarchersThreshold and itemGhostMarchers and itemGhostMarchers:CanActivate() then
-		core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
-		return
-	end
-
+	local unitSelf = core.unitSelf
 	local vecPos = behaviorLib.PositionSelfBackUp()
-	core.OrderMoveToPosClamp(botBrain, core.unitSelf, vecPos, false)
+	local bActionTaken = false
+	
+	--people can/will override this code, similar to CustomHarassUtility.
+	bActionTaken = behaviorLib.CustomRetreatExecute(botBrain)
+	
+	if not bActionTaken then
+		bActionTaken = core.OrderMoveToPosClamp(botBrain, unitSelf, vecPos, false)
+	end
+	return bActionTaken
+end
+
+function behaviorLib.CustomRetreatExecute(botBrain)
+	--  this is a great function to override with using retreating skills, such as blinks, travels, stuns or slows.
+	return false
 end
 
 behaviorLib.RetreatFromThreatBehavior = {}
@@ -3360,6 +3048,7 @@ function behaviorLib.SellLowestItems(botBrain, numToSell)
 
 		if lowestItem then
 			BotEcho("Selling "..lowestItem:GetName().." in slot "..lowestItem:GetSlot())
+			behaviorLib.addItemBehavior(lowestItem:GetName(), true)
 			core.unitSelf:Sell(lowestItem)
 			inventory[lowestItem:GetSlot()] = ""
 			numToSell = numToSell - 1
@@ -3524,9 +3213,11 @@ Current algorithm:
 	local bGoldReduced = false
 	local tInventory = core.unitSelf:GetInventory(true)
 	local nextItemDef = behaviorLib.DetermineNextItemDef(botBrain)
+	local bMyTeamHasHuman = core.MyTeamHasHuman()
+	local bBuyTPStone = (core.nDifficulty ~= core.nEASY_DIFFICULTY) or bMyTeamHasHuman
 
 	--For our first frame of this execute
-	if core.GetLastBehaviorName(botBrain) ~= core.GetCurrentBehaviorName(botBrain) then
+	if bBuyTPStone and core.GetLastBehaviorName(botBrain) ~= core.GetCurrentBehaviorName(botBrain) then
 		if nextItemDef:GetName() ~= core.idefHomecomingStone:GetName() then		
 			--Seed a TP stone into the buy items after 1 min, Don't buy TP stones if we have Post Haste
 			local sName = "Item_HomecomingStone"
@@ -3581,6 +3272,7 @@ Current algorithm:
 		if #componentDefs == 0 then
 			behaviorLib.ShuffleCombine(botBrain, nextItemDef, unitSelf)
 		end
+		behaviorLib.addItemBehavior(nextItemDef:GetName(), false)
 	end
 
 	bShuffled = behaviorLib.SortInventoryAndStash(botBrain)
@@ -3601,3 +3293,6 @@ behaviorLib.ShopBehavior["Utility"] = behaviorLib.ShopUtility
 behaviorLib.ShopBehavior["Execute"] = behaviorLib.ShopExecute
 behaviorLib.ShopBehavior["Name"] = "Shop"
 tinsert(behaviorLib.tBehaviors, behaviorLib.ShopBehavior)
+
+--add the item behaviors into the game, so they can be overloaded.
+runfile "bots/itemBehaviors.lua"

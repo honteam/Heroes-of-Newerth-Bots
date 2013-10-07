@@ -68,6 +68,9 @@ core.nEASY_DIFFICULTY 	= 1
 core.nMEDIUM_DIFFICULTY = 2
 core.nHARD_DIFFICULTY 	= 3
 
+core.bMyTeamHasHuman = nil
+core.bEnemyTeamHasHuman = nil
+
 core.nDifficulty = core.nEASY_DIFFICULTY
 
 core.coreInitialized = false
@@ -141,7 +144,7 @@ function core.CoreInitialize(controller)
 			core.printTableTable(tSorted)
 		end
 	end
-
+	
 	core.coreInitialized = true
 end
 
@@ -1174,12 +1177,58 @@ function core.InventoryContains(inventory, val, bIgnoreRecipes, bIncludeStash)
     return tableOfThings
 end
 
+--Finds an item on your hero.
+function core.GetItem(val, bIncludeStash)
+	inventory = core.unitSelf:GetInventory()
+	if bIncludeStash == nil then
+		bIncludeStash = false
+	end
+	local nLast = (bIncludeStash and 12) or 6
+	for slot = 1, nLast, 1 do
+		local curItem = inventory[slot]
+		if curItem then
+			if curItem:GetName() == val then
+				return core.WrapInTable(curItem)
+			end
+		end
+	end
+    return nil
+end
+
 function core.IsLaneCreep(unit)
 	return (strfind(unit:GetTypeName(), "Creep") ~= nil)
 end
 
 function core.IsCourier(unit)
 	return unit:IsUnitType("Courier")
+end
+
+function core.EnemyTeamHasHuman()
+	if core.bEnemyTeamHasHuman == nil then
+		local tEnemyHeroes = HoN.GetHeroes(core.enemyTeam)
+		for _, unitHero in pairs(tEnemyHeroes) do
+			if not unitHero:IsBotControlled() then
+				core.bEnemyTeamHasHuman = true
+				break
+			end
+		end
+	end
+
+	return core.bEnemyTeamHasHuman
+end
+
+function core.MyTeamHasHuman()
+	if core.bMyTeamHasHuman == nil then
+		local tAllyHeroes = HoN.GetHeroes(core.myTeam)
+		for _, unitHero in pairs(tAllyHeroes) do
+			if not unitHero:IsBotControlled() then
+				core.bMyTeamHasHuman = true
+				break
+			end
+		end
+	end
+
+	return core.bMyTeamHasHuman
 end
 
 function core.IsTowerSafe(unitEnemyTower, unitSelf)
@@ -1953,6 +2002,18 @@ function core.GetAttackSequenceProgress(unit)
 	end
 	
 	return retVal
+end
+
+--unitCreepTarget is an optional parameter that will be passed in
+function core.GetAttackDamageMinOnCreep(unitCreepTarget)
+	local unitSelf = core.unitSelf
+	local nDamageMin = unitSelf:GetFinalAttackDamageMin()
+				
+	if core.itemHatchet then
+		nDamageMin = nDamageMin * core.itemHatchet.creepDamageMul
+	end	
+
+	return nDamageMin
 end
 
 
