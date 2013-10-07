@@ -1521,7 +1521,7 @@ function core.TimeToPosition(position, myLocation, moveSpeed, itemGhostMarchers)
 	
 	if itemGhostMarchers == nil then
 		timeMS = totalDist / moveSpeedPerMS
-	else
+	elseif itemGhostMarchers.expireTime then
 		local bGhostOn = HoN.GetGameTime() < itemGhostMarchers.expireTime
 		local curCDTimeMS = itemGhostMarchers:GetRemainingCooldownTime()
 		

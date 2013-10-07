@@ -220,7 +220,7 @@ function GetUnitPositionIn(unit, t)
 	local beh = unit:GetBehavior()
 	local vecCurLocation = unit:GetPosition()
 	local cantMove = unit:IsImmobilized() or unit:IsStunned()
-	BotEcho(tostring(cantMove))
+	--BotEcho(tostring(cantMove))
 	if beh:IsTraveling() and not(cantMove) -- If unit is heading somewhere, get his position
 	then
 		local targetSpeed = unit:GetMoveSpeed() * t

@@ -419,7 +419,7 @@ local function HarassHeroExecuteOverride(botBrain)
         end
     end 
 
-	if not bActionTaken then
+	if not bActionTaken and unitTarget.storedPosition and unitTarget.lastStoredPosition then
 		local vecTargetVelocity = unitTarget.storedPosition - unitTarget.lastStoredPosition
         local abilBlade = skills.abilR
 		local abilR = skills.abilR

@@ -63,11 +63,11 @@ runfile "bots/eventsLib.lua"
 runfile "bots/metadata.lua"
 runfile "bots/behaviorLib.lua"
 
---[[
+
 runfile "bots/advancedShopping.lua"
 local shopping = object.shoppingHandler
 shopping.Setup({bReserveItems=true, bWaitForLaneDecision=true, tConsumableOptions=false, bCourierCare=false})
-]]
+
 
 runfile "bots/jungleLib.lua"
 local jungleLib = object.jungleLib
@@ -150,14 +150,13 @@ object.nLastTauntTime = 0
 ------------------------------
 --  Dynamic Item building   --
 ------------------------------
---[[
 local function legoItemBuilder()
 		local debugInfo = false
 		if debugInfo then BotEcho("Checking Itembuilder of Lego") end
 		local bNewItems = false
 	   
 		--get itembuild decision table
-		local tItemDecisions = shopping.ItemDecisions
+		local tItemDecisions = shopping.tItemDecisions
 		if debugInfo then BotEcho("Found ItemDecisions"..type(tItemDecisions)) end
 	   
 		--Choose Lane Items
@@ -176,7 +175,7 @@ local function legoItemBuilder()
 								if debugInfo then BotEcho("Argh, I am not mid *sob*") end
 								startItems = {"Item_LoggersHatchet", "Item_IronBuckler", "Item_RunesOfTheBlight"}
 						end
-						core.InsertToTable(shopping.Itembuild, startItems)			 
+						core.InsertToTable(shopping.tItembuild, startItems)			 
 						bNewItems = true
 						tItemDecisions.Lane = true
 				else
@@ -186,9 +185,9 @@ local function legoItemBuilder()
 		--rest of itembuild
 		elseif not tItemDecisions.Rest then
 				if debugInfo then BotEcho("Insert Rest of Items") end
-				core.InsertToTable(shopping.Itembuild, behaviorLib.LaneItems)
-				core.InsertToTable(shopping.Itembuild, behaviorLib.MidItems)
-				core.InsertToTable(shopping.Itembuild, behaviorLib.LateItems)
+				core.InsertToTable(shopping.tItembuild, behaviorLib.LaneItems)
+				core.InsertToTable(shopping.tItembuild, behaviorLib.MidItems)
+				core.InsertToTable(shopping.tItembuild, behaviorLib.LateItems)
 			   
 				bNewItems = true
 				tItemDecisions.Rest = true
@@ -199,7 +198,7 @@ local function legoItemBuilder()
 end
 object.oldItembuilder = shopping.CheckItemBuild
 shopping.CheckItemBuild = legoItemBuilder
-]]
+
 
 ------------------------------
 --          Skills          --
@@ -596,7 +595,7 @@ function jungleExecute(botBrain)
 	local debugMode=false
 
 	local vecMyPos = unitSelf:GetPosition()
-	local vecTargetPos, nCamp = jungleLib.getNearestCampPos(vecMyPos, 0, jungleLib.currentMaxDifficulty)
+	local vecTargetPos, nCamp = jungleLib.getNearestCampPos(vecMyPos, 0, jungleLib.currentMaxDifficulty, core.myTeam)
 	if not vecTargetPos then
 		if core.myTeam == HoN.GetHellbourneTeam() then
 			return core.OrderMoveToPosAndHoldClamp(botBrain, unitSelf, jungleLib.jungleSpots[8].outsidePos)

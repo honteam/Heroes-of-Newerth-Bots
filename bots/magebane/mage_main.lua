@@ -62,7 +62,7 @@ local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
 
 
-BotEcho(object:GetName()..' loading <hero>_main...')
+BotEcho(object:GetName()..' loading mage_main...')
 
 
 -- hero_<hero>  to reference the internal hon name of a hero, Hero_Yogi ==wildsoul
@@ -168,11 +168,11 @@ function object:oncombateventOverride(EventData)
         if EventData.InflictorName == "Ability_Javaras2" then
             addBonus = addBonus + object.abilWUse
             object.abilWUseTime = EventData.TimeStamp
-            BotEcho(object.abilWUseTime)
+            --BotEcho(object.abilWUseTime)
     elseif EventData.InflictorName == "Ability_Javaras4" then
             addBonus = addBonus + object.abilRUse
             object.abilRUseTime = EventData.TimeStamp
-            BotEcho(object.abilRUseTime)
+            --BotEcho(object.abilRUseTime)
      end
      elseif EventData.Type == "Item" then
             if core.itemImmunity ~= nil and EventData.SourceUnit == core.unitSelf:GetUniqueID() and EventData.InflictorName == core.itemImmunity:GetName() then
@@ -372,7 +372,7 @@ object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 
 function funcRetreatFromThreatExecuteOverride(botBrain)
-    local bDebugEchos = true
+    local bDebugEchos = false
     local bActionTaken = false
     local unitSelf = core.unitSelf  
     local vecMyPosition = unitSelf:GetPosition()
@@ -390,8 +390,8 @@ function funcRetreatFromThreatExecuteOverride(botBrain)
     end
 
     if nCount > 0 then
-        local vecTargetPosition = unitTarget:GetPosition()
         local unitTarget = behaviorLib.heroTarget
+        local vecTargetPosition = unitTarget:GetPosition()
             --When retreating, will Keg himself to push them back 
             --as well as create some distance between enemies
             if not bActionTaken then

@@ -431,7 +431,7 @@ object.nRetreatSilenceThreshold = 3
 
 --Unfortunately this utility is kind of volatile, so we basically have to deal with util spikes 
 function funcRetreatFromThreatExecuteOverride(botBrain)
-	local bDebugEchos = true
+	local bDebugEchos = false
 	
 	local bActionTaken = false
 	local unitSelf = core.unitSelf

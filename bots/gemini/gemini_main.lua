@@ -496,7 +496,7 @@ local function CustomHarassUtilityOverride(hero)
     local itemLightning = core.itemLightning
     if itemLightning and itemLightning:GetCharges() then
         potentialDmg = potentialDmg + itemLightning.Dmg
-        BotEcho("Thunderclaw rdy: Dmg ~"..tostring(itemLightning.Dmg))
+        --BotEcho("Thunderclaw rdy: Dmg ~"..tostring(itemLightning.Dmg))
     end
     
     --[[
@@ -509,7 +509,7 @@ local function CustomHarassUtilityOverride(hero)
     local itemBrutalizer = core.itemBrutalizer
     if itemBrutalizer and itemBrutalizer:CanActivate() then
         nUtility = nUtility + 5
-        BotEcho("Brutalizer rdy")
+        --BotEcho("Brutalizer rdy")
     end
     
     --no chargesystem
@@ -517,7 +517,7 @@ local function CustomHarassUtilityOverride(hero)
     if itemIcebrand and (unitTarget:HasState("State_ItemHackSlow") or 
         unitTarget:HasState("State_ItemFirenIceSlow") or unitTarget:HasState("State_ItemDawnbringerSlow")) then
         nUtility = nUtility + itemIcebrand.slowPerAttack
-        BotEcho("Slow Applied")
+        --BotEcho("Slow Applied")
     end
     
     --BotEcho("Potential damage pre-migration: "..potentialDmg.." Potential attacks: "..potentialAttacks)
@@ -888,7 +888,7 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
         --TwinFangs
         local abilTwinFangs = skills.TwinFangs
         if not bActionTaken and nlastRetreatUtil > 30 and abilTwinFangs:CanActivate() then
-            BotEcho ("trying really hard to twinfang")
+            --BotEcho ("trying really hard to twinfang")
             bActionTaken = core.OrderAbilityPosition(botBrain, abilTwinFangs, 2*vecSelfPosition-vecTargetPosition)
         end
     
@@ -1281,7 +1281,7 @@ local function PositionSelfBackUp(unit)
             vecDesiredPos = nodePrev:GetPosition()
         end
     else
-        BotEcho('PositionSelfBackUp - invalid lane set')
+        --BotEcho('PositionSelfBackUp - invalid lane set')
     end
 
     if nodePrev then
@@ -1309,7 +1309,7 @@ local function PositionSelfBackUp(unit)
     end
 
     StopProfile()
-    BotEcho("I'm here"..tostring(unit:GetPosition()).." I want to be there "..tostring(vecDesiredPos))
+    --BotEcho("I'm here"..tostring(unit:GetPosition()).." I want to be there "..tostring(vecDesiredPos))
     return vecDesiredPos
 end
 
@@ -1324,10 +1324,10 @@ local function getFireAndIce()
     tUnits = HoN.GetUnitsInRadius(core.unitSelf:GetPosition(), 20000, core.UNIT_MASK_UNIT+core.UNIT_MASK_ALIVE)
             for x, unit in pairs(tUnits) do
                 if unit:GetTypeName() == "Heropet_Gemini_Ability4_Fire" and unit:GetOwnerPlayer() == core.unitSelf:GetOwnerPlayer() then
-                    BotEcho("found Fire")
+                    --BotEcho("found Fire")
                     tOwnedUnits[Fire] = unit
                 elseif unit:GetTypeName() == "Heropet_Gemini_Ability4_Ice" and unit:GetOwnerPlayer() == core.unitSelf:GetOwnerPlayer() then
-                    BotEcho("found Ice")
+                    --BotEcho("found Ice")
                     tOwnedUnits[Ice] = unit
                 end
             end
@@ -1354,7 +1354,7 @@ local function SplittingFireAndIceUtility(botBrain) --done
             local TwinBreath = skills.TwinBreath 
             if TwinBreath and not TwinBreath:CanActivate() then
                 nUtility =  40 + behaviorLib.lastHarassUtil
-                BotEcho("now")
+                --BotEcho("now")
             end
         end
     end
@@ -1461,7 +1461,7 @@ local function PetHarassExecuteFn(botBrain, unit)
 
     if unitHealingAtWell and unitHealingAtWell == unit then unitHealingAtWell = nil end
     
-    BotEcho(tostring(unit:GetTypeName()).." harass")
+    --BotEcho(tostring(unit:GetTypeName()).." harass")
     local unitTarget = tUnitTarget[unit]
     if not unitTarget then return false end
     local vecMyPosition =unit:GetPosition()
@@ -1567,7 +1567,7 @@ local function PetRetreatUtilityFn(botBrain, unit)
     if nTimeToLive <= object.DeathTimer then
         tSlowerDecay[unit] = nUtility
     end
-    BotEcho("ReatreatUtil "..tostring(nUtility).."> 20")
+    --BotEcho("ReatreatUtil "..tostring(nUtility).."> 20")
     return nUtility
 end
 
@@ -1603,7 +1603,7 @@ local function PetRetreatExecuteFn(botBrain, unit)
             end
         end
     end
-    BotEcho("Im gonna move now retreating")
+    --BotEcho("Im gonna move now retreating")
     if not bActionTaken then
         core.OrderMoveToPos(botBrain, unit, vecPos, true)
     end
@@ -1629,7 +1629,7 @@ local function PetLaningExecuteFn(botBrain, unit)
     
     local tUnitsNear = getUnitsInRange(unit)
     
-    BotEcho(tostring(unit:GetTypeName()).." laning")
+    --BotEcho(tostring(unit:GetTypeName()).." laning")
     --Creep aggro
     local unitCreep =nil
     local targetHP = 10000
@@ -1690,7 +1690,7 @@ local function PetHealAtWellExecuteFn(botBrain, unit)
     
     local wellPos = core.allyWell and core.allyWell:GetPosition() or PositionSelfBackUp()
     --local distanceWellSq =  Vector3.Distance2DSq(core.unitSelf:GetPosition(), wellPos)
-    BotEcho(tostring(unit:GetTypeName()).." healing")
+    --BotEcho(tostring(unit:GetTypeName()).." healing")
     local success = core.OrderMoveToPosAndHold(botBrain, unit, wellPos, false)
     if success then
         unitHealingAtWell = unit
