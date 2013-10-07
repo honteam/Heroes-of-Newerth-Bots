@@ -711,14 +711,15 @@ behaviorLib.RetreatFromThreatBehavior["Utility"] = CustomRetreatFromThreatUtilit
 ------------------------------------------------------------------
 --Retreat execute
 ------------------------------------------------------------------
-local function funcRetreatFromThreatExecuteOverride(botBrain)
+--  this is a great function to override with using retreating skills, such as blinks, travels, stuns or slows.
+function behaviorLib.CustomRetreatExecute(botBrain)
+	bActionTaken = false
 
 	local unitSelf = core.unitSelf
 	local unitTarget = behaviorLib.heroTarget
 
 	local vecRetreatPos = behaviorLib.PositionSelfBackUp()
 	local nlastRetreatUtil = behaviorLib.lastRetreatUtil
-
 	--Counting the enemies
 	local tEnemies = core.localUnits["EnemyHeroes"]
 	local nCount = 0
@@ -754,8 +755,7 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 				local nRange = itemSheepstick:GetRange()
 				if itemSheepstick:CanActivate() then
 					if nTargetDistanceSq < (nRange * nRange) then
-						core.OrderItemEntityClamp(botBrain, unitSelf, itemSheepstick, unitTarget)
-						return
+						return core.OrderItemEntityClamp(botBrain, unitSelf, itemSheepstick, unitTarget)
 					end
 				end
 			end
@@ -767,8 +767,7 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 				if not bTargetVuln or (nNow < object.nOneCorpseTossUseTime + 1050) then
 					local nRange = abilCorpseToss:GetRange()
 					if nTargetDistanceSq < (nRange * nRange) then
-						core.OrderAbilityEntity(botBrain, abilCorpseToss, unitTarget)
-						return
+						return core.OrderAbilityEntity(botBrain, abilCorpseToss, unitTarget)
 					end
 				end
 			end
@@ -798,16 +797,13 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 	if itemTablet then
 		if itemTablet:CanActivate() and nlastRetreatUtil >= object.nTabletRetreatTreshold then
 			--TODO: GetHeading math to ensure we're actually going backwards
-			core.OrderItemEntityClamp(botBrain, unitSelf, itemTablet, unitSelf)
-			return
+			return core.OrderItemEntityClamp(botBrain, unitSelf, itemTablet, unitSelf)
 		end
 	end
 
 	core.OrderMoveToPosClamp(botBrain, core.unitSelf, vecRetreatPos, false)
 end
 
-object.RetreatFromThreatExecuteOld = behaviorLib.RetreatFromThreatExecute
-behaviorLib.RetreatFromThreatBehavior["Execute"] = funcRetreatFromThreatExecuteOverride
 
 
 ----------------------------------
