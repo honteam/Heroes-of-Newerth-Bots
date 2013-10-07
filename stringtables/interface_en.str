@@ -9442,17 +9442,20 @@ HeroCategory_tank							Tank
 bot_description_ra					Amun-Ra serves as a pusher and mid-game carry that works well in most lanes. Authored by St0l3n_ID!
 bot_description_arachna				Arachna is a single-target DPS carry with strong harassment capability and low survivability.
 bot_description_chronos				Chronos is a strong late game carry. Although weak early on, he can become very deadly and elusive later.
-bot_description_defiler				Defiler is a team-oriented lane pusher. Her spells do most of her damage, so her item focus is on survivability.
+bot_description_defiler				Defiler is a team-oriented lane pusher with a dangerous ultimate. Her spells pack a punch!
 bot_description_shaman				Demented Shaman is a deadly support whose spells have both offensive and defensive components.
 bot_description_flint_beastwood		Flint Beastwood is a late-game DPS carry and consummate sniper, with a very long attack range.
 bot_description_forsaken_archer		Forsaken Archer is a carry with a good mix of both Physical and Magic damage.
 bot_description_glacius				Glacius is a support hero with strong spells, including a global mana regeneration aura.
-bot_description_hammerstorm			With one of the best stuns in the game, Hammerstorm is a very reliable hero from beginning to end.
+bot_description_hammerstorm			With one of the best stuns in the game, Hammerstorm is a very reliable physical hero.
 bot_description_magmar				Magmus is one of the most effective gankers and initiators in the game if played well.
 bot_description_predator			Predator is a carry strength hero who is known for his survivability and damage potential.
 bot_description_witch_slayer		Witch Slayer is one of the most reliable support heroes, with two different controlling abilities.
+bot_description_rhapsody			Rhapsody is a support hero with pushing ability and a damage-absorbing ult. Authored by fane_maciuca!
 bot_description_soul_reaper			Soul Reaper is a strong, versatile hero who can heal, harm, and execute! Authored by paradox870!
-bot_description_engineer			A capable ganker, Engineer also provides a lot of teamfight capability with his Ult. Authored by V1P3R`!
+bot_description_engineer			A capable ganker, Engineer also provides a lot of teamfight capability. Authored by V1P3R`!
+bot_description_gravekeeper			Gravekeeper is a versatile hero with solid Magic and Physical damage. Authored by Schnarchnase!
+bot_description_ellonia				Ellonia is a ranged intelligence hero known for her frost spells, freezing the opposition! Authored by Mellow_Ink!
 
 // Maintenance
 maintenance_general 			Under Maintenance
