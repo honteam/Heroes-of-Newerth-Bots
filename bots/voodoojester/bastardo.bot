@@ -1,0 +1,9 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<bot
+	name="Bastardo"
+	description="An agressive ganking Voodoo Jester"
+	heroname="Hero_Voodoo"
+	rootlua="bastardo_main.lua"
+	defaultplayername="Bastardo"
+	precachepath="/heroes/Voodoo/"
+/>

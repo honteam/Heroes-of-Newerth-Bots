@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+    name="Gemini"
+    description="Fusion, the Gemini-Bot by Schnarchnase"
+    heroname="Hero_Gemini"
+    rootlua="gemini_main.lua"
+    defaultplayername="Fusion"
+    precachepath="/heroes/gemini"
+/>

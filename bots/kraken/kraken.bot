@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="KrakenBot"
+	description="bot_description_kraken"
+	heroname="Hero_Kraken"
+	rootlua="kraken_main.lua"
+	defaultplayername="KrakenBot"
+	precachepath="/heroes/kraken/"
+/>

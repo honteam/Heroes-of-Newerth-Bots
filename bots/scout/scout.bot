@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="CodexScoutBot"
+	description="bot_description_scout"
+	heroname="Hero_Scout"
+	rootlua="scout_main.lua"
+	defaultplayername="CodexScoutBot"
+	precachepath="/heroes/scout/"
+/>

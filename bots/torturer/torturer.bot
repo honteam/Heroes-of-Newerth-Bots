@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+    name="Torturer"
+    description="Pain"
+    heroname="Hero_Xalynx"
+    rootlua="torturer_main.lua"
+    defaultplayername="TorturerBot"
+    precachepath="/heroes/xalynx"
+/>

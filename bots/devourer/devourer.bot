@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="DevourerBot"
+	description="A bot for the ugliest hooker ever... Devourer"
+	heroname="Hero_Devourer"
+	rootlua="devourer_main_1.2.lua"
+	defaultplayername="DevourerBot"
+	precachepath="/heroes/devourer/"
+/>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+    name="SkillStealer"
+    description="A SoulStealer bot by Kairus101, displaying predictive last hitting."
+    heroname="Hero_Soulstealer"
+    rootlua="skillstealer_main.lua"
+    defaultplayername="SkillStealer"
+    precachepath="/heroes/soulstealer/"
+/>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="TrembleBot"
+	description="Tremble Rapes"
+	heroname="Hero_Tremble"
+	rootlua="tremble_main.lua"
+	defaultplayername="TrembleBot"
+	precachepath="/heroes/tremble/"
+/>
