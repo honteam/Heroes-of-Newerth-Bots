@@ -82,6 +82,11 @@ local Clamp = core.Clamp
 
 BotEcho(' loading rhapsody_main...')
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 3, ShortSolo = 2, LongSolo = 1, ShortSupport = 5, LongSupport = 4, ShortCarry = 3, LongCarry = 2}
+
 
 --[[for testing
 function object:onthinkOverride(tGameVariables)

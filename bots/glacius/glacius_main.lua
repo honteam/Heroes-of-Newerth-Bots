@@ -52,6 +52,11 @@ local sqrtTwo = math.sqrt(2)
 
 BotEcho('loading glacius_main...')
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 3, ShortSolo = 1, LongSolo = 1, ShortSupport = 5, LongSupport = 4, ShortCarry = 1, LongCarry = 1}
+
 object.heroName = 'Hero_Frosty'
 
 --------------------------------
