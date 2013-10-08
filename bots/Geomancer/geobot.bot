@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<bot
-    name="Geobot"
-    description="A geomancer bot by NotReiti and Giymo11"
-    heroname="Hero_Geomancer"
-    rootlua="geobot_main.lua"
-    defaultplayername="Geobot"
-    precachepath="/heroes/geomancer"
-/>
