@@ -54,9 +54,15 @@ core.nEasyAggroReassessInterval = 60000
 core.nEasyAggroHarassBonus = 35
 core.nEasyAggroAbilityBonus = 30
 core.bEasyLowHumanHealthRunHarass = 0
-core.nEasyLowHumanHealthTime = 0
-core.nEasyLowHumanHealthReassesInterval = 5000
-core.nEasyLowHumanHealthDuration = 3000
+core.nEasyLowHumanHealthAggroStartTime = 0
+core.nEasyLowHumanHealthReassessTime = 0
+core.nEasyLowHumanHealthRecheckInterval = 5000
+core.nEasyLowHumanHealthCooldown = 20000
+core.nEasyLowHumanHealthDuration = 2000
+core.nEasyLowHumanHealthKillChance = 0.166666
+core.bEasyTurnOffHealAtWell = false
+core.nEasyTurnOffHealAtWellDuration = 5000
+core.nEasyTurnOffHealAtWellHumanLastSeenTime = 0
 
 --Called every frame the engine gives us during the pick phase
 function object:onpickframe()
@@ -157,6 +163,27 @@ function object:onthink(tGameVariables)
 		core.FindItems(self)
 	StopProfile()
 	end
+
+	if core.nDifficulty == core.nEASY_DIFFICULTY then
+		local bDebugTurnOffHealAtWell = false
+		local bEnemyHumanNearby = false
+		local tLocalEnemyHeroes = core.localUnits['EnemyHeroes']
+		for _, unitHero in pairs(tLocalEnemyHeroes) do
+			if not unitHero:IsBotControlled() then
+				bEnemyHumanNearby = true
+				core.nEasyTurnOffHealAtWellHumanLastSeenTime = nGameTime
+				break
+			end
+		end
+
+		if bEnemyHumanNearby or nGameTime < core.nEasyTurnOffHealAtWellHumanLastSeenTime + core.nEasyTurnOffHealAtWellDuration then
+			if bDebugTurnOffHealAtWell then BotEcho("Turning off heal at well behavior") end
+			core.bEasyTurnOffHealAtWell = true
+		elseif nGameTime >= core.nEasyTurnOffHealAtWellHumanLastSeenTime + core.nEasyTurnOffHealAtWellDuration then
+			if bDebugTurnOffHealAtWell then BotEcho("Turning on heal at well behavior") end
+			core.bEasyTurnOffHealAtWell = false			
+		end
+	end
 	
 	if core.tMyLane ~= nil then
 		object.vecLaneForward, object.vecLaneForwardOrtho = core.AssessLaneDirection(core.unitSelf:GetPosition(), core.tMyLane, core.bTraverseForward)
@@ -208,6 +235,10 @@ function object:onthink(tGameVariables)
 				if object.tEvaluatedBehaviors[i].Behavior.Execute ~= nil then
 					local bRunBehaviorExecute = true
 					self.sCurrentBehaviorName = object.tEvaluatedBehaviors[i].Behavior.Name
+
+					if core.bEasyTurnOffHealAtWell and self.sCurrentBehaviorName == behaviorLib.HealAtWellBehavior["Name"] then
+						bRunBehaviorExecute = false
+					end
 					
 					--[Difficulty: Easy] Bots can't use abils if they aren't within a certain range 
 					--  and are above 50% HP. Also, for randomly for an interval, bots will be more 
@@ -237,31 +268,48 @@ function object:onthink(tGameVariables)
 							end
 
 							if not heroTarget:IsBotControlled() then
-								local bDebugRunFromHuman = true
+								--If a human player is the target of aggression, and is below
+								-- 25% or 300 HP (whichever is higher) there is a 16.666% chance
+								-- that the bot will follow through with the aggression, for a total of 2 seconds
+								--If the bot follows through with the aggression, there is a 20
+								-- second cooldown before it begins checking again
+								--Bot checks to see if it should follow through with agression
+								-- every 5 seconds
+								--Result: Once a bot aggresses a low health human for 2 seconds, it will wait
+								-- another 20-50 seconds before doing so again
+
+								local bDebugRunFromHuman = false
 								local nHealthPercent = heroTarget:GetHealthPercent()
 								local nCurrentHealth = heroTarget:GetHealth()
+								local bHumanHealthLow = (nHealthPercent <= 0.25) or (nCurrentHealth <= 300)
 
-								if nGameTime >= core.nEasyLowHumanHealthTime then
-									if nHealthPercent <= 0.15 or nCurrentHealth <= 300 then
-										if bDebugRunFromHuman then BotEcho("Human player is below health threshold") end
-
-										local nKillThreshold = 2
-										if random(10) > nKillThreshold then
-											if bDebugRunFromHuman then BotEcho("Choosing not to execute HarassHero") end
-											bRunBehaviorExecute = false
-											core.nEasyLowHumanHealthTime = nGameTime + core.nEasyLowHumanHealthReassesInterval
-										else
-											if bDebugRunFromHuman then BotEcho("ATTACKING HUMAN PLAYER EVEN THOUGH THEY HAVE LOW HEALTH") end
-											core.nEasyLowHumanHealthTime = nGameTime + core.nEasyLowHumanHealthDuration
-										end
-										if bDebugRunFromHuman then BotEcho("Setting new reassess time to: " .. core.nEasyLowHumanHealthTime) end
-									end
-									core.bEasyLowHumanHealthRunHarass = bRunBehaviorExecute
-								else
-									bRunBehaviorExecute = core.bEasyLowHumanHealthRunHarass
-									if bDebugRunFromHuman then BotEcho("Reassess threshold not passed - Running HarassHero: " .. tostring(bRunBehaviorExecute)) end
+								if bHumanHealthLow and core.bEasyLowHumanHealthRunHarass and nGameTime >= core.nEasyLowHumanHealthAggroStartTime + core.nEasyLowHumanHealthDuration then
+								 	core.bEasyLowHumanHealthRunHarass = false
 								end
-							end
+
+								if nGameTime >= core.nEasyLowHumanHealthReassessTime then
+								 	if bHumanHealthLow then
+								  		if bDebugRunFromHuman then BotEcho("Human player is below health threshold") end
+
+								  		if random() > core.nEasyLowHumanHealthKillChance then
+								   			if bDebugRunFromHuman then BotEcho("Choosing not to execute HarassHero") end
+								   			core.bEasyLowHumanHealthRunHarass = false
+								   			core.nEasyLowHumanHealthReassessTime = nGameTime + core.nEasyLowHumanHealthRecheckInterval
+								  		else
+								   			if bDebugRunFromHuman then BotEcho("ATTACKING HUMAN PLAYER EVEN THOUGH THEY HAVE LOW HEALTH") end
+											core.bEasyLowHumanHealthRunHarass = true
+											core.nEasyLowHumanHealthAggroStartTime = nGameTime
+											core.nEasyLowHumanHealthReassessTime = nGameTime + core.nEasyLowHumanHealthCooldown + core.nEasyLowHumanHealthDuration
+							  			end
+
+							  			if bDebugRunFromHuman then BotEcho("Setting new reassess time to: " .. core.nEasyLowHumanHealthReassessTime) end
+							  		elseif not core.bEasyLowHumanHealthRunHarass then
+							  			core.bEasyLowHumanHealthRunHarass = true
+							 		end
+								end
+
+						   		bRunBehaviorExecute = core.bEasyLowHumanHealthRunHarass
+						   	end
 						end
 					elseif self.bAbilityCommandsDefault then --don't set to true if the default is false
 						self.bAbilityCommands = true 
@@ -533,10 +581,12 @@ core.tRespawnChatKeys = { "respawn1", "respawn2", "respawn3", "respawn4", "respa
 function core.GetKillKeys(unitTarget)
 	local tChatKeys = core.CopyTable(core.tKillChatKeys)
 	
-	if unitTarget:IsBotControlled() then
-		core.InsertToTable(tChatKeys, core.tKillBotKeys)
-	else
-		core.InsertToTable(tChatKeys, core.tKillHumanKeys)
+	if unitTarget ~= nil then
+		if unitTarget:IsBotControlled() then
+			core.InsertToTable(tChatKeys, core.tKillBotKeys)
+		else
+			core.InsertToTable(tChatKeys, core.tKillHumanKeys)
+		end
 	end
 	
 	return tChatKeys

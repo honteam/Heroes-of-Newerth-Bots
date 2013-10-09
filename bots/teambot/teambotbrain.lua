@@ -128,8 +128,14 @@ function object:onthink(tGameVariables)
 				-- don't reset this when the tutorial switches Legion to medium
 			end
 
-			if core.nDifficulty == core.nEASY_DIFFICULTY and core.IsTableEmpty(object.tAllyHumanHeroes) then
+			local bEnemyTeamHasHuman = core.EnemyTeamHasHuman()
+
+			if core.nDifficulty == core.nEASY_DIFFICULTY and bEnemyTeamHasHuman then
 				object.bGroupAndPush = false
+			end
+
+			if core.nDifficulty == core.nEASY_DIFFICULTY and bEnemyTeamHasHuman then
+				object.bDefense = false
 			end
 		end
 	end
