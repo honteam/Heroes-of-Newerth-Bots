@@ -309,23 +309,16 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 local function funcFindItemsOverride(botBrain)
 	object.FindItemsOld(botBrain)
 
-	if core.itemAstrolabe ~= nil and not core.itemAstrolabe:IsValid() then
-		core.itemAstrolabe = nil
-	end
-	--[[
-	if core.itemWardOfSight ~= nil and not core.itemWardOfSight:IsValid() then
-		core.itemWardOfSight = nil
-	end--]]
-	if core.itemShrunkenHead ~= nil and not core.itemShrunkenHead:IsValid() then
-		core.itemShrunkenHead = nil
-	end
+	core.ValidateItem(core.itemAstrolabe)
+	core.ValidateItem(core.itemShrunkenHead)
+	--core.ValidateItem(core.itemWardOfSight)
 	
 	if --[[core.itemWardOfSight and --]] core.itemAstrolabe and core.itemShrunkenHead then
 		return
 	end
 
-	local inventory = core.unitSelf:GetInventory(true)
-	for slot = 1, 12, 1 do
+	local inventory = core.unitSelf:GetInventory(false)
+	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
 		if curItem then
 			if core.itemAstrolabe == nil and curItem:GetName() == "Item_Astrolabe" then
@@ -482,7 +475,7 @@ function ProtectiveMelodyExecute(botBrain)
 		if nTargetDistanceSq <= nHalfRadiusSq then
 			local itemShrunkenHead = core.itemShrunkenHead
 			if itemShrunkenHead and itemShrunkenHead:CanActivate() then		--see if Shrunken can pop, then pop it
-				core.OrderItem(itemShrunkenHead)
+				core.OrderItemClamp(botBrain, unitSelf, itemShrunkenHead)
 				return
 			end
 			core.OrderAbility(botBrain, abilUlt)		

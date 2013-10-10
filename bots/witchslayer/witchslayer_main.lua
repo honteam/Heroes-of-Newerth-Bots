@@ -285,7 +285,19 @@ local function HarassHeroExecuteOverride(botBrain)
 		if not bActionTaken and nLastHarassUtility > botBrain.nSilverBulletThreshold then
 			if bDebugEchos then BotEcho("  No action yet, checking silver bullet") end
 			local abilSilverBullet = skills.abilSilverBullet
-			if abilSilverBullet:CanActivate() --[[and CanKillWithUlt?]] then
+			local nDamage = 500
+			if nLevel == 2 then
+				nDamage = 650
+			elseif nLevel == 3 then
+				nDamage = 850
+			end
+			
+			local nMaxHealth = unitTarget:GetMaxHealth()
+			local nHealth = unitTarget:GetHealth()
+			local nDamageMultiplier = 1 - unitTarget:GetMagicResistance()
+			local nTrueDamage = nDamage * nDamageMultiplier
+			local bUseBullet = (core.nDifficulty ~= core.nEASY_DIFFCULTY) or unitTarget:IsBotControlled() or (nHealth - nTrueDamage >= nMaxHealth * 0.12)
+			if abilSilverBullet:CanActivate() and bUseBullet then
 				local nRange = abilSilverBullet:GetRange()
 				if nTargetDistanceSq < (nRange * nRange) then
 					bActionTaken = core.OrderAbilityEntity(botBrain, abilSilverBullet, unitTarget)
@@ -313,20 +325,16 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 local function funcFindItemsOverride(botBrain)
 	object.FindItemsOld(botBrain)
 
-	if core.itemAstrolabe ~= nil and not core.itemAstrolabe:IsValid() then
-		core.itemAstrolabe = nil
-	end
-	if core.itemSheepstick ~= nil and not core.itemSheepstick:IsValid() then
-		core.itemSheepstick = nil
-	end
-
+	core.ValidateItem(core.itemAstrolabe)
+	core.ValidateItem(core.itemSheepstick)
+	
 	--only update if we need to
 	if core.itemSheepstick and core.itemAstrolabe then
 		return
 	end
 
-	local inventory = core.unitSelf:GetInventory(true)
-	for slot = 1, 12, 1 do
+	local inventory = core.unitSelf:GetInventory(false)
+	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
 		if curItem then
 			if core.itemAstrolabe == nil and curItem:GetName() == "Item_Astrolabe" then

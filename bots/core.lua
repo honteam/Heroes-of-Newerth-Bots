@@ -68,6 +68,9 @@ core.nEASY_DIFFICULTY 	= 1
 core.nMEDIUM_DIFFICULTY = 2
 core.nHARD_DIFFICULTY 	= 3
 
+core.bMyTeamHasHuman = nil
+core.bEnemyTeamHasHuman = nil
+
 core.nDifficulty = core.nEASY_DIFFICULTY
 
 core.coreInitialized = false
@@ -870,7 +873,7 @@ function core.AdjustMovementForTowerLogic(vecDesiredPos, bCanEnterRange)
 				--TODO: predict ally creep death times and use that to know when to book it
 			end
 
-			--BotEcho('AdjustMovementForTowerLogic localTower: '..(localTower and localTower:GetTypeName() or 'nil'))
+			--BotEcho('AdjustMovementForTowerLogic localTower: '..((localTower and localTower:GetTypeName()) or 'nil'))
 			if bDebugLines and localTower ~= nil then
 				local nTowerExtraRange = core.GetExtraRange(localTower)
 				local nMyExtraRange = core.GetExtraRange(unitSelf)
@@ -970,9 +973,9 @@ function core.GetFurthestLaneTower(tNodes, bTraverseForward, nTargetTeam)
 	if bDebugEchos then BotEcho('GetFurthestLaneTower - bForward: '..tostring(bTraverseForward)) end
 	
 	--Traverse backward down the lane nodes and seach in a 2000 unit radius for the creeps from each node
-	local wellNodePos = core.allyWell and core.allyWell:GetPosition() or nil
+	local wellNodePos = (core.allyWell and core.allyWell:GetPosition()) or nil
 	if nTargetTeam ~= core.myTeam then --hacky
-		wellNodePos = core.enemyWell and core.enemyWell:GetPosition() or nil
+		wellNodePos = (core.enemyWell and core.enemyWell:GetPosition()) or nil
 	end
 	if bDebugEchos then BotEcho("WellNodePos: "..tostring(wellNodePos).."  allyWell: "..tostring(core.allyWell)) end
 	
@@ -1160,7 +1163,7 @@ function core.InventoryContains(inventory, val, bIgnoreRecipes, bIncludeStash)
 	for slot = 1, nLast, 1 do
 		local curItem = inventory[slot]
 		if curItem then
-			--Echo(format("%d - Type:%s  Name:%s", slot, type(curItem), curItem.GetName and curItem:GetName() or "ERROR"))
+			--Echo(format("%d - Type:%s  Name:%s", slot, type(curItem), (curItem.GetName and curItem:GetName()) or "ERROR"))
 			--if type(curItem) == "table" then
 			--	printTable(curItem)
 			--end
@@ -1180,6 +1183,34 @@ end
 
 function core.IsCourier(unit)
 	return unit:IsUnitType("Courier")
+end
+
+function core.EnemyTeamHasHuman()
+	if core.bEnemyTeamHasHuman == nil then
+		local tEnemyHeroes = HoN.GetHeroes(core.enemyTeam)
+		for _, unitHero in pairs(tEnemyHeroes) do
+			if not unitHero:IsBotControlled() then
+				core.bEnemyTeamHasHuman = true
+				break
+			end
+		end
+	end
+
+	return core.bEnemyTeamHasHuman
+end
+
+function core.MyTeamHasHuman()
+	if core.bMyTeamHasHuman == nil then
+		local tAllyHeroes = HoN.GetHeroes(core.myTeam)
+		for _, unitHero in pairs(tAllyHeroes) do
+			if not unitHero:IsBotControlled() then
+				core.bMyTeamHasHuman = true
+				break
+			end
+		end
+	end
+
+	return core.bMyTeamHasHuman
 end
 
 function core.IsTowerSafe(unitEnemyTower, unitSelf)
@@ -1404,7 +1435,7 @@ function core.SortBuildings(tBuildingList, tSortedTable)
 		BotEcho("--enemyRax:")
 		core.printGetTypeNameTable(tSortedTable.enemyRax)
 		BotEcho("--enemyMainBaseStructure:")
-		BotEcho(tSortedTable.enemyMainBaseStructure and tSortedTable.enemyMainBaseStructure:GetTypeName() or "nil")
+		BotEcho((tSortedTable.enemyMainBaseStructure and tSortedTable.enemyMainBaseStructure:GetTypeName()) or "nil")
 		BotEcho("--enemyOtherBuildings:")
 		core.printGetTypeNameTable(tSortedTable.enemyOtherBuildings)
 		BotEcho("--allyTowers:")
@@ -1412,7 +1443,7 @@ function core.SortBuildings(tBuildingList, tSortedTable)
 		BotEcho("--allyRax:")
 		core.printGetTypeNameTable(tSortedTable.allyRax)
 		BotEcho("--allyMainBaseStructure:")
-		BotEcho(tSortedTable.allyMainBaseStructure and tSortedTable.allyMainBaseStructure:GetTypeName() or "nil")
+		BotEcho((tSortedTable.allyMainBaseStructure and tSortedTable.allyMainBaseStructure:GetTypeName()) or "nil")
 		BotEcho("--allyOtherBuildings:")
 		core.printGetTypeNameTable(tSortedTable.allyOtherBuildings)
 		BotEcho("--shops:")
@@ -1780,8 +1811,8 @@ function core.AoETargeting(unitSelf, nRange, nRadius, bPositionTargets, unitPrio
 	local nLineLength = 50	
 	
 	local vecMyPosition = unitSelf:GetPosition()
-	local target = nil --vec or unit
-	local nTargetID = unitPriorityTarget and unitPriorityTarget:GetUniqueID() or nil
+	local target = nil
+	local nTargetID = (unitPriorityTarget and unitPriorityTarget:GetUniqueID()) or nil
 	local nMyExtraRange = core.GetExtraRange(core.unitSelf)
 	
 	local teamBotBrain = core.teamBotBrain
@@ -1848,7 +1879,7 @@ function core.AoETargeting(unitSelf, nRange, nRadius, bPositionTargets, unitPrio
 		
 		if bDebugLines then
 			for _, unit in pairs(tBestTargets) do
-				local sColor = (unit == target) and 'red' or 'yellow'
+				local sColor = (unit == target and 'red') or 'yellow'
 				core.DrawXPosition(unit:GetPosition(), sColor)
 			end
 		end
@@ -1951,10 +1982,23 @@ function core.GetAttackSequenceProgress(unit)
 	return retVal
 end
 
+--unitCreepTarget is an optional parameter that will be passed in
+function core.GetAttackDamageMinOnCreep(unitCreepTarget)
+	local unitSelf = core.unitSelf
+	local nDamageMin = unitSelf:GetFinalAttackDamageMin()
+				
+	if core.itemHatchet then
+		nDamageMin = nDamageMin * core.itemHatchet.creepDamageMul
+	end	
+
+	return nDamageMin
+end
+
 
 ------------------ misc overrides and remanes ------------------
 function core.CanSeeUnit(botBrain, unit)
-	return botBrain:CanSeeUnit((unit and unit.object) or unit)
+	local unitParam = (unit ~= nil and unit.object) or unit
+	return botBrain:CanSeeUnit(unitParam)
 end
 
 --==== Item ====

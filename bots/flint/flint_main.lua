@@ -297,9 +297,12 @@ local function HarassHeroExecuteOverride(botBrain)
 			local nHealth = unitTarget:GetHealth()
 			local nDamageMultiplier = 1 - unitTarget:GetMagicResistance()
 			local nTrueDamage = nDamage * nDamageMultiplier
+			local bUseMoneyShot = ((core.nDifficulty ~= core.nEASY_DIFFCULTY) 
+								or (unitTarget:IsBotControlled() and nTrueDamage > nHealth) 
+								or (not unitTarget:IsBotControlled() and nHealth - nTrueDamage >= nMaxHealth * 0.12))
 			
 			--BotEcho(format("ultDamage: %d  damageMul: %g  trueDmg: %g  health: %d", nDamage, nDamageMultiplier, nTrueDamage, nHealth))
-			if nTrueDamage > nHealth then
+			if bUseMoneyShot then
 				bActionTaken = core.OrderAbilityEntity(botBrain, abilMoneyShot, unitTarget)
 			end
 		end
@@ -347,17 +350,15 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 local function funcFindItemsOverride(botBrain)
 	object.FindItemsOld(botBrain)
 
-	if core.itemStealth ~= nil and not core.itemStealth:IsValid() then
-		core.itemStealth = nil
-	end
+	core.ValidateItem(core.itemStealth)
 
 	--only update if we need to
 	if core.itemStealth then
 		return
 	end
 
-	local inventory = core.unitSelf:GetInventory(true)
-	for slot = 1, 12, 1 do
+	local inventory = core.unitSelf:GetInventory(false)
+	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
 		if curItem then
 			if core.itemStealth == nil and curItem:GetName() == "Item_Stealth" then

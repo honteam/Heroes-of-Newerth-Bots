@@ -103,7 +103,7 @@ function object:onthinkOverride(tGameVariables)
 		--if bHadTerrorLast ~= true then
 			--Update
 			local unitTarget = behaviorLib.heroTarget
-			if (true or core.GetCurrentBehaviorName(self) == "HarassHero") and unitTarget ~= nil then
+			if unitTarget ~= nil then
 				local nAddBonus = 0			
 				local bHasTerrorNow = unitTarget:HasState("State_Predator_Ability4")
 				

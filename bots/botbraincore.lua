@@ -48,11 +48,21 @@ core.nEasyAbilityRangeSq = 450*450
 core.bEasyRandomAggression = false
 core.nEasyAggroPercent = 0.066666
 core.nEasyAggroTime = 0
-core.nEasyAggroDuraiton = 2000
+core.nEasyAggroDuration = 2000
 core.nEasyAggroReassessTime = 0
 core.nEasyAggroReassessInterval = 60000
 core.nEasyAggroHarassBonus = 35
 core.nEasyAggroAbilityBonus = 30
+core.bEasyLowHumanHealthRunHarass = 0
+core.nEasyLowHumanHealthAggroStartTime = 0
+core.nEasyLowHumanHealthReassessTime = 0
+core.nEasyLowHumanHealthRecheckInterval = 5000
+core.nEasyLowHumanHealthCooldown = 20000
+core.nEasyLowHumanHealthDuration = 2000
+core.nEasyLowHumanHealthKillChance = 0.166666
+core.bEasyTurnOffHealAtWell = false
+core.nEasyTurnOffHealAtWellDuration = 5000
+core.nEasyTurnOffHealAtWellHumanLastSeenTime = 0
 
 --Called every frame the engine gives us during the pick phase
 function object:onpickframe()
@@ -105,7 +115,7 @@ function object:onthink(tGameVariables)
 		--  The end result is once an aggressive interval occurs, we will
 		--	not have another one for 30-60s
 	
-		if core.bEasyRandomAggression and nGameTime >= core.nEasyAggroTime + core.nEasyAggroDuraiton then
+		if core.bEasyRandomAggression and nGameTime >= core.nEasyAggroTime + core.nEasyAggroDuration then
 			--Done with this interval
 			core.bEasyRandomAggression = false
 		end
@@ -119,7 +129,7 @@ function object:onthink(tGameVariables)
 			else
 				-- off, try again in 2s
 				core.bEasyRandomAggression = false
-				core.nEasyAggroReassessTime = nGameTime + core.nEasyAggroDuraiton
+				core.nEasyAggroReassessTime = nGameTime + core.nEasyAggroDuration
 			end
 		end
 		
@@ -152,6 +162,27 @@ function object:onthink(tGameVariables)
 		core.UpdateLane()
 		core.FindItems(self)
 	StopProfile()
+	end
+
+	if core.nDifficulty == core.nEASY_DIFFICULTY then
+		local bDebugTurnOffHealAtWell = false
+		local bEnemyHumanNearby = false
+		local tLocalEnemyHeroes = core.localUnits['EnemyHeroes']
+		for _, unitHero in pairs(tLocalEnemyHeroes) do
+			if not unitHero:IsBotControlled() then
+				bEnemyHumanNearby = true
+				core.nEasyTurnOffHealAtWellHumanLastSeenTime = nGameTime
+				break
+			end
+		end
+
+		if bEnemyHumanNearby or nGameTime < core.nEasyTurnOffHealAtWellHumanLastSeenTime + core.nEasyTurnOffHealAtWellDuration then
+			if bDebugTurnOffHealAtWell then BotEcho("Turning off heal at well behavior") end
+			core.bEasyTurnOffHealAtWell = true
+		elseif nGameTime >= core.nEasyTurnOffHealAtWellHumanLastSeenTime + core.nEasyTurnOffHealAtWellDuration then
+			if bDebugTurnOffHealAtWell then BotEcho("Turning on heal at well behavior") end
+			core.bEasyTurnOffHealAtWell = false			
+		end
 	end
 	
 	if core.tMyLane ~= nil then
@@ -202,7 +233,12 @@ function object:onthink(tGameVariables)
 			self.sLastBehaviorName = self.sCurrentBehaviorName
 			for i=nFirstBehavior,#object.tEvaluatedBehaviors do
 				if object.tEvaluatedBehaviors[i].Behavior.Execute ~= nil then
+					local bRunBehaviorExecute = true
 					self.sCurrentBehaviorName = object.tEvaluatedBehaviors[i].Behavior.Name
+
+					if core.bEasyTurnOffHealAtWell and self.sCurrentBehaviorName == behaviorLib.HealAtWellBehavior["Name"] then
+						bRunBehaviorExecute = false
+					end
 					
 					--[Difficulty: Easy] Bots can't use abils if they aren't within a certain range 
 					--  and are above 50% HP. Also, for randomly for an interval, bots will be more 
@@ -230,15 +266,62 @@ function object:onthink(tGameVariables)
 									behaviorLib.lastHarassUtil = behaviorLib.lastHarassUtil + core.nEasyAggroAbilityBonus
 								end
 							end
+
+							if not heroTarget:IsBotControlled() then
+								--If a human player is the target of aggression, and is below
+								-- 25% or 300 HP (whichever is higher) there is a 16.666% chance
+								-- that the bot will follow through with the aggression, for a total of 2 seconds
+								--If the bot follows through with the aggression, there is a 20
+								-- second cooldown before it begins checking again
+								--Bot checks to see if it should follow through with agression
+								-- every 5 seconds
+								--Result: Once a bot aggresses a low health human for 2 seconds, it will wait
+								-- another 20-50 seconds before doing so again
+
+								local bDebugRunFromHuman = false
+								local nHealthPercent = heroTarget:GetHealthPercent()
+								local nCurrentHealth = heroTarget:GetHealth()
+								local bHumanHealthLow = (nHealthPercent <= 0.25) or (nCurrentHealth <= 300)
+
+								if bHumanHealthLow and core.bEasyLowHumanHealthRunHarass and nGameTime >= core.nEasyLowHumanHealthAggroStartTime + core.nEasyLowHumanHealthDuration then
+								 	core.bEasyLowHumanHealthRunHarass = false
+								end
+
+								if nGameTime >= core.nEasyLowHumanHealthReassessTime then
+								 	if bHumanHealthLow then
+								  		if bDebugRunFromHuman then BotEcho("Human player is below health threshold") end
+
+								  		if random() > core.nEasyLowHumanHealthKillChance then
+								   			if bDebugRunFromHuman then BotEcho("Choosing not to execute HarassHero") end
+								   			core.bEasyLowHumanHealthRunHarass = false
+								   			core.nEasyLowHumanHealthReassessTime = nGameTime + core.nEasyLowHumanHealthRecheckInterval
+								  		else
+								   			if bDebugRunFromHuman then BotEcho("ATTACKING HUMAN PLAYER EVEN THOUGH THEY HAVE LOW HEALTH") end
+											core.bEasyLowHumanHealthRunHarass = true
+											core.nEasyLowHumanHealthAggroStartTime = nGameTime
+											core.nEasyLowHumanHealthReassessTime = nGameTime + core.nEasyLowHumanHealthCooldown + core.nEasyLowHumanHealthDuration
+							  			end
+
+							  			if bDebugRunFromHuman then BotEcho("Setting new reassess time to: " .. core.nEasyLowHumanHealthReassessTime) end
+							  		elseif not core.bEasyLowHumanHealthRunHarass then
+							  			core.bEasyLowHumanHealthRunHarass = true
+							 		end
+								end
+
+						   		bRunBehaviorExecute = core.bEasyLowHumanHealthRunHarass
+						   	end
 						end
 					elseif self.bAbilityCommandsDefault then --don't set to true if the default is false
 						self.bAbilityCommands = true 
 					end
 					--[/Difficulty: Easy]
 					
-					StartProfile(object.tEvaluatedBehaviors[i].Behavior.Name .. " - Execute")
-					local bSuccessful = object.tEvaluatedBehaviors[i].Behavior.Execute(self)
-					StopProfile()
+					local bSuccessful = false
+					if bRunBehaviorExecute then
+						StartProfile(object.tEvaluatedBehaviors[i].Behavior.Name .. " - Execute")
+						bSuccessful = object.tEvaluatedBehaviors[i].Behavior.Execute(self)
+						StopProfile()
+					end
 					
 					--[Difficulty: Easy] Reset aggro
 					if nOldHarassUtility then
@@ -498,10 +581,12 @@ core.tRespawnChatKeys = { "respawn1", "respawn2", "respawn3", "respawn4", "respa
 function core.GetKillKeys(unitTarget)
 	local tChatKeys = core.CopyTable(core.tKillChatKeys)
 	
-	if unitTarget:IsBotControlled() then
-		core.InsertToTable(tChatKeys, core.tKillBotKeys)
-	else
-		core.InsertToTable(tChatKeys, core.tKillHumanKeys)
+	if unitTarget ~= nil then
+		if unitTarget:IsBotControlled() then
+			core.InsertToTable(tChatKeys, core.tKillBotKeys)
+		else
+			core.InsertToTable(tChatKeys, core.tKillHumanKeys)
+		end
 	end
 	
 	return tChatKeys
@@ -751,23 +836,28 @@ function core.UpdateLane()
 	end
 end
 
+function core.ValidateItem(item)
+	--if item ~= nil then BotEcho("item "..item:GetTypeName().." is in slot "..item:GetSlot()) end
+	if item ~= nil and (not item:IsValid() or item:GetSlot() > 6) then
+		item = nil
+	end	
+end
+
 function core.FindItems(botBrain)
 	--seach for the key Items of ours that we want to track
 	
-	if core.itemGhostMarchers ~= nil and not core.itemGhostMarchers:IsValid() then
-		core.itemGhostMarchers = nil
-	end
-	if core.itemHatchet ~= nil and not core.itemHatchet:IsValid() then
-		core.itemHatchet = nil
-	end	
-	if core.itemRoT ~= nil and not core.itemRoT:IsValid() then
-		core.itemRoT = nil
-	end
+	core.ValidateItem(core.itemGhostMarchers)
+	core.ValidateItem(core.itemHatchet)
+	core.ValidateItem(core.itemRoT)
 	
 	local unitSelf = core.unitSelf
 	
-	local inventory = unitSelf:GetInventory(true)
-	for slot = 1, 12, 1 do
+	if (core.itemGhostMarchers and core.itemHatchet and core.itemRoT) then
+		return
+	end	
+	
+	local inventory = unitSelf:GetInventory(false)
+	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
 		if curItem then
 			if core.itemGhostMarchers == nil and curItem:GetName() == "Item_EnhancedMarchers" then
@@ -803,7 +893,7 @@ function core.FindItems(botBrain)
 		end
 	end
 	
-	return true
+	return
 end
 
 function core.DecayBonus(botBrain)
@@ -833,7 +923,10 @@ function core.OrderAttack(botBrain, unit, unitTarget, bQueueCommand)
 		queue = "Back"
 	end
 	
-	botBrain:OrderEntity(unit.object or unit, "Attack", unitTarget.object or unitTarget, queue)
+	local unitParam = (unit ~= nil and unit.object) or unit
+	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
+		
+	botBrain:OrderEntity(unitParam, "Attack", targetParam, queue)
 	return true
 end
 
@@ -857,7 +950,10 @@ function core.OrderAttackClamp(botBrain, unit, unitTarget, bQueueCommand)
 		queue = "Back"
 	end
 	
-	botBrain:OrderEntity(unit.object or unit, "Attack", unitTarget.object or unitTarget, queue)
+	local unitParam = (unit ~= nil and unit.object) or unit
+	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
+	
+	botBrain:OrderEntity(unitParam, "Attack", targetParam, queue)
 	
 	core.nextOrderTime = curTimeMS + core.timeBetweenOrders
 	return true
@@ -905,7 +1001,10 @@ function core.OrderMoveToUnit(botBrain, unit, unitTarget, bInterruptAttacks, bQu
 		queue = "Back"
 	end
 	
-	botBrain:OrderEntity(unit.object or unit, "Move", unitTarget.object or unitTarget, queue)
+	local unitParam = (unit ~= nil and unit.object) or unit
+	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
+	
+	botBrain:OrderEntity(unitParam, "Move", targetParam, queue)
 	return true
 end
 
@@ -934,7 +1033,10 @@ function core.OrderFollow(botBrain, unit, target, bInterruptAttacks, bQueueComma
 		queue = "Back"
 	end
 	
-	botBrain:OrderEntity(unit.object or unit, "Follow", target.object or target, queue)
+	local unitParam = (unit ~= nil and unit.object) or unit
+	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
+	
+	botBrain:OrderEntity(unitParam, "Follow", targetParam, queue)
 	return true
 end
 
@@ -963,7 +1065,10 @@ function core.OrderTouch(botBrain, unit, target, bInterruptAttacks, bQueueComman
 		queue = "Back"
 	end
 	
-	botBrain:OrderEntity(unit.object or unit, "Touch", target.object or target, queue)
+	local unitParam = (unit ~= nil and unit.object) or unit
+	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
+	
+	botBrain:OrderEntity(unitParam, "Touch", targetParam, queue)
 	return true
 end
 
@@ -992,7 +1097,9 @@ function core.OrderStop(botBrain, unit, bInterruptAttacks, bQueueCommand)
 		queue = "Back"
 	end
 	
-	botBrain:Order(unit.object or unit, "Stop")
+	local unitParam = (unit ~= nil and unit.object) or unit
+	
+	botBrain:Order(unitParam, "Stop")
 	return true
 end
 
@@ -1038,7 +1145,9 @@ function core.OrderHold(botBrain, unit, bInterruptAttacks, bQueueCommand)
 		queue = "Back"
 	end
 	
-	botBrain:Order(unit.object or unit, "Hold", queue)
+	local unitParam = (unit ~= nil and unit.object) or unit
+	
+	botBrain:Order(unitParam, "Hold", queue)
 	return true
 end
 
@@ -1067,7 +1176,11 @@ function core.OrderGiveItem(botBrain, unit, target, item, bInterruptAttacks, bQu
 		queue = "Back"
 	end
 	
-	botBrain:OrderEntity(unit.object or unit, "GiveItem", target.object or target, queue, item)
+	local unitParam = (unit ~= nil and unit.object) or unit
+	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
+	local itemParam = (item ~= nil and item.object) or item
+	
+	botBrain:OrderEntity(unitParam, "GiveItem", targetParam, queue, itemParam)
 	return true
 end
 
@@ -1143,7 +1256,7 @@ function core.OrderMoveToPos(botBrain, unit, position, bInterruptAttacks, bQueue
 		queue = "Back"
 	end
 	
-	--BotEcho('C++ call: OrderPosition('..unit:GetTypeName()..', "Move", {'..tostring(position)..'}, '..tostring(bQueueCommand)..')')
+	local unitParam = (unit ~= nil and unit.object) or unit
 	
 	botBrain:OrderPosition(unit.object or unit, "Move", position, queue)
 	return true
@@ -1190,7 +1303,9 @@ function core.OrderAttackPosition(botBrain, unit, position, bInterruptAttacks, b
 		queue = "Back"
 	end
 	
-	botBrain:OrderPosition(unit.object or unit, "Attack", position, queue)
+	local unitParam = (unit ~= nil and unit.object) or unit
+	
+	botBrain:OrderPosition(unitParam, "Attack", position, queue)
 	return true
 end
 
@@ -1219,7 +1334,10 @@ function core.OrderDropItem(botBrain, unit, position, item, bInterruptAttacks, b
 		queue = "Back"
 	end
 	
-	botBrain:OrderPosition(unit.object or unit, "DropItem", position, queue, item.object or item)
+	local unitParam = (unit ~= nil and unit.object) or unit
+	local itemParam = (item ~= nil and item.object) or item
+	
+	botBrain:OrderPosition(unitParam, "DropItem", position, queue, itemParam)
 	return true
 end
 
@@ -1255,7 +1373,10 @@ function core.OrderItemEntityClamp(botBrain, unit, item, entity, bInterruptAttac
 		queue = "Back"
 	end
 	
-	botBrain:OrderItemEntity(item.object or item, entity.object or entity, queue)
+	local itemParam = (item ~= nil and item.object) or item
+	local entityParam = (entity ~= nil and entity.object) or entity
+	
+	botBrain:OrderItemEntity(itemParam, entityParam, queue)
 	
 	core.nextOrderTime = curTimeMS + core.timeBetweenOrders
 	return true
@@ -1292,7 +1413,9 @@ function core.OrderItemClamp(botBrain, unit, item, bInterruptAttacks, bQueueComm
 		queue = "Back"
 	end
 	
-	botBrain:OrderItem(item.object or item, queue)
+	local itemParam = (item ~= nil and item.object) or item
+	
+	botBrain:OrderItem(itemParam, queue)
 	
 	core.nextOrderTime = curTimeMS + core.timeBetweenOrders
 	return true
@@ -1323,7 +1446,9 @@ function core.OrderItemPosition(botBrain, unit, item, vecTarget, bInterruptAttac
 		queue = "Back"
 	end
 	
-	botBrain:OrderItemPosition(item.object or item, vecTarget)
+	local itemParam = (item ~= nil and item.object) or item
+	
+	botBrain:OrderItemPosition(itemParam, vecTarget)
 	return true
 end
 
@@ -1347,7 +1472,9 @@ function core.ToggleAutoCastItem(botBrain, item, bInterruptAttacks, bQueueComman
 		end
 	end
 	
-	botBrain:OrderItem2(item, bQueueCommand)
+	local itemParam = (item ~= nil and item.object) or item
+	
+	botBrain:OrderItem2(itemParam, bQueueCommand)
 	return true
 end
 
@@ -1372,7 +1499,9 @@ function core.OrderAbility(botBrain, ability, bInterruptAttacks, bQueueCommand)
 		end
 	end
 	
-	botBrain:OrderAbility(ability, bQueueCommand)
+	local abilityParam = (ability ~= nil and ability.object) or ability
+	
+	botBrain:OrderAbility(abilityParam, bQueueCommand)
 	return true
 end
 
@@ -1396,7 +1525,9 @@ function core.OrderAbilityPosition(botBrain, ability, vecTarget, bInterruptAttac
 		end
 	end
 	
-	botBrain:OrderAbilityPosition(ability, vecTarget, bQueueCommand)
+	local abilityParam = (ability ~= nil and ability.object) or ability
+	
+	botBrain:OrderAbilityPosition(abilityParam, vecTarget, bQueueCommand)
 	return true
 end
 
@@ -1420,7 +1551,10 @@ function core.OrderAbilityEntity(botBrain, ability, unitTarget, bInterruptAttack
 		end
 	end
 	
-	botBrain:OrderAbilityEntity(ability, unitTarget.object or unitTarget, bQueueCommand)
+	local abilityParam = (ability ~= nil and ability.object) or ability
+	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
+	
+	botBrain:OrderAbilityEntity(abilityParam, targetParam, bQueueCommand)
 	return true
 end
 
@@ -1443,8 +1577,10 @@ function core.ToggleAutoCastAbility(botBrain, ability, bInterruptAttacks, bQueue
 			return true
 		end
 	end
+		
+	local abilityParam = (ability ~= nil and ability.object) or ability
 	
-	botBrain:OrderAbility2(ability, bQueueCommand)
+	botBrain:OrderAbility2(abilityParam, bQueueCommand)
 	return true
 end
 
@@ -1468,7 +1604,10 @@ function core.OrderAbilityEntityVector(botBrain, ability, unitTarget, vecDelta, 
 		end
 	end
 	
-	botBrain:OrderAbilityEntityVector(ability, unitTarget.object or unitTarget, vecDelta, bQueueCommand)
+	local abilityParam = (ability ~= nil and ability.object) or ability
+	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
+	
+	botBrain:OrderAbilityEntityVector(abilityParam, targetParam, vecDelta, bQueueCommand)
 	return true
 end
 
