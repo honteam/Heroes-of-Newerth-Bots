@@ -144,7 +144,7 @@ shoppingLib.nBuyInterval = 250 -- One Shopping Round per Behavior utility call
 
 --Shopping Utility Values
 shoppingLib.nShoppingUtilityValue = 30
-shoppingLib.nShoppingPreGameUtilityValue = 100
+shoppingLib.nShoppingPreGameUtilityValue = 98
 
 --item is not avaible for shopping, retry it at a later time (mainly puzzlebox)
 shoppingLib.tDelayedItems = {}
@@ -430,6 +430,7 @@ end
 ----------------------------------------------------
 ----------------------------------------------------
 
+
 --tChanges
 --[[
 (first option is default)
@@ -496,6 +497,32 @@ function shoppingLib.Setup (tSetupOptions)
 	--Courier options
 	shoppingLib.bCourierCare = tSetupOptions.bCourierCare or shoppingLib.bCourierCare or false
 	
+end
+
+
+function shoppingLib.ProcessItemCode(itemCode)
+	local num = 1
+	local level = 1
+	local item = itemCode
+	local pos = strfind(itemCode, " ")
+	if pos then
+		local numTemp = strsub(itemCode, 1, pos - 1)
+		if tonumber(numTemp) ~= nil then
+			num = tonumber(numTemp)
+			item = strsub(itemCode, pos + 1)
+		end
+	end
+
+	pos = strfind(item, " ")
+	if pos then
+		local levelTemp = strsub(item, pos + 1)
+		if tonumber(levelTemp) ~= nil then
+			level = tonumber(levelTemp)
+			item = strsub(item, 1, pos - 1)
+		end
+	end
+
+	return item, num, level
 end
 
 --function GetCourier
@@ -789,10 +816,18 @@ function shoppingLib.CheckItemBuild()
 	--just convert the standard lists into the new shopping list
 	if shoppingLib.tItembuild then
 		if #shoppingLib.tItembuild == 0 then
-			core.InsertToTable(shoppingLib.tItembuild, behaviorLib.StartingItems)
-			core.InsertToTable(shoppingLib.tItembuild, behaviorLib.LaneItems)
-			core.InsertToTable(shoppingLib.tItembuild, behaviorLib.MidItems)
-			core.InsertToTable(shoppingLib.tItembuild, behaviorLib.LateItems)
+		
+			--compatibility for old bots
+			shoppingLib.StartingItems = behaviorLib.StartingItems or shoppingLib.StartingItems
+			shoppingLib.LaneItems = behaviorLib.LaneItems or shoppingLib.LaneItems
+			shoppingLib.MidItems = behaviorLib.MidItems or shoppingLib.MidItems
+			shoppingLib.LateItems = behaviorLib.LateItems or shoppingLib.LateItems
+			
+			--insert into new table
+			core.InsertToTable(shoppingLib.tItembuild, shoppingLib.StartingItems)
+			core.InsertToTable(shoppingLib.tItembuild, shoppingLib.LaneItems)
+			core.InsertToTable(shoppingLib.tItembuild, shoppingLib.MidItems)
+			core.InsertToTable(shoppingLib.tItembuild, shoppingLib.LateItems)
 		else
 			--we reached the end of our itemlist. Done with shopping
 			return false
@@ -1018,7 +1053,7 @@ local function GetNextItem()
 		
 		--get item definition
 		local nextItemCode = itemList[listPos]
-		local name, num, level = behaviorLib.ProcessItemCode(nextItemCode)
+		local name, num, level = shoppingLib.ProcessItemCode(nextItemCode)
 				
 		--care about ItemReservations?
 		if shoppingLib.bCheckItemReservation then
@@ -1103,7 +1138,7 @@ function shoppingLib.printAll()
 	for slot, item in ipairs(itemBuild) do
 		if item then
 			if slot == position then BotEcho("Future items:") end
-			local name = behaviorLib.ProcessItemCode(item)  or "Error, no item name found!"
+			local name = shoppingLib.ProcessItemCode(item)  or "Error, no item name found!"
 			BotEcho("Slot "..tostring(slot).." Itemname "..name)
 		end
 	end
@@ -1440,24 +1475,29 @@ function shoppingLib.SellItems (number, unit)
 	return bChanged, bStashOnly
 end
 
---function NumberSlotsOpenStash
---[[
-description:	Counts the number of open sots in the stash
-parameters: inventory: inventory of a unit
 
-returns the number of free stash slots
+--function NumberOfSlotsOpen
+--[[
+description:	Counts the number of open slots 
+parameters: inventory: inventory of a unit
+			bStashOnly:	Only count free stash slots
+			bHeroOnly: Only count free hero slots
+
+returns the number of free slots (all, stash or hero)
 --]]
-function shoppingLib.NumberSlotsOpenStash(inventory)
-	local numOpen = 0
-	--count only stash
-	for slot = 7, 12, 1 do
-		curItem = inventory[slot]
+function shoppingLib.NumberOfSlotsOpen(inventory, bStashOnly, bHeroOnly)
+	local nOpenSlots = 0
+	
+	local nStartIndex = (bStashOnly and 7) or 1
+	local nEndIndex = (not bStashOnly and bHeroOnly and 6) or 12
+	for nSlot = nStartIndex, nEndIndex, 1 do
+		curItem = inventory[nSlot]
 		if curItem == nil then
 			--no item is a free slot - count it
-			numOpen = numOpen + 1
+			nOpenSlots = nOpenSlots + 1
 		end
 	end
-	return numOpen
+	return nOpenSlots
 end
 
 -------------------
@@ -1587,7 +1627,7 @@ function shoppingLib.ShopExecute(botBrain)
 		if goldAmtBefore >= nItemCost then 
 			
 			--check number of stash items
-			local openSlots = shoppingLib.NumberSlotsOpenStash(inventory)
+			local openSlots = shoppingLib.NumberOfSlotsOpen(inventory, true)
 			
 			--enough space?
 			if openSlots < 1 then
@@ -1642,8 +1682,11 @@ function shoppingLib.ShopExecute(botBrain)
 		end
 	end
 end
+behaviorLib.ShopBehavior = {}
 behaviorLib.ShopBehavior["Utility"] = shoppingLib.ShopUtility
 behaviorLib.ShopBehavior["Execute"] = shoppingLib.ShopExecute
+behaviorLib.ShopBehavior["Name"] = "Shop"
+tinsert(behaviorLib.tBehaviors, behaviorLib.ShopBehavior)
 
 ----------------------------------------------------------
 --Stash-Functions
@@ -1716,58 +1759,6 @@ behaviorLib.StashBehavior["Execute"] = shoppingLib.StashExecute
 behaviorLib.StashBehavior["Name"] = "Stash"
 tinsert(behaviorLib.tBehaviors, behaviorLib.StashBehavior) 
 
----------------------------------------------------
--- Find Items
----------------------------------------------------
-
---function FindItems
---[[
-description:	compatibility to older bots, check for item references
-parameters: 	botBrain: 			botBrain
-
---]]
-function shoppingLib.FindItems(botBrain)	
-	
-	core.itemHatchet = itemHandler:GetItem("Item_LoggersHatchet") 
-	if core.itemHatchet and not core.itemHatchet.val then
-		core.itemHatchet.val = true
-		if core.unitSelf:GetAttackType() == "melee" then
-			core.itemHatchet.creepDamageMul = 1.32
-		else
-			core.itemHatchet.creepDamageMul = 1.12
-		end
-	end
-	
-	core.itemRoT = itemHandler:GetItem("Item_ManaRegen3") or itemHandler:GetItem("Item_LifeSteal5") or itemHandler:GetItem("Item_NomesWisdom")
-	if core.itemRoT and not core.itemRoT.val then
-		core.itemRoT.val = true
-		local modifierKey = core.itemRoT:GetActiveModifierKey()
-		core.itemRoT.bHeroesOnly = (modifierKey == "ringoftheteacher_heroes" or modifierKey == "abyssalskull_heroes" or modifierKey == "nomeswisdom_heroes") 
-		core.itemRoT.nNextUpdateTime = 0
-		core.itemRoT.Update = function() 
-		local nCurrentTime = HoN.GetGameTime()
-			if nCurrentTime > core.itemRoT.nNextUpdateTime then
-				local modifierKey = core.itemRoT:GetActiveModifierKey()
-				core.itemRoT.bHeroesOnly = (modifierKey == "ringoftheteacher_heroes" or modifierKey == "abyssalskull_heroes" or modifierKey == "nomeswisdom_heroes")
-				core.itemRoT.nNextUpdateTime = nCurrentTime + 800
-			end
-		end
-	end
-	
-	core.itemGhostMarchers = itemHandler:GetItem("Item_EnhancedMarchers")
-	if core.itemGhostMarchers and not core.itemGhostMarchers.val then
-		core.itemGhostMarchers.val = true
-		core.itemGhostMarchers.expireTime = 0
-		core.itemGhostMarchers.duration = 6000
-		core.itemGhostMarchers.msMult = 0.12
-	end	
-	
-	
-	--compatible
-	return true
-end
-shoppingLib.FindItemsOld = core.FindItems
-core.FindItems = shoppingLib.FindItems
 
 ---------------------------------------------------
 --Further Courier Functions
@@ -2106,3 +2097,102 @@ function shopping:onThinkShopping(tGameVariables)
 end
 object.onthinkPreShopOld = object.onthink
 object.onthink 	= shoppingLib.onThinkShopping
+
+
+---------------------------------------------------
+--Default items
+---------------------------------------------------
+
+--[[ list code:
+	"# Item" is "get # of these"
+	"Item #" is "get this level of the item" --]]
+shoppingLib.StartingItems = {"2 Item_DuckBoots", "2 Item_MinorTotem", "Item_HealthPotion", "Item_RunesOfTheBlight"}
+shoppingLib.LaneItems = {"Item_Marchers", "2 Item_Soulscream", "Item_EnhancedMarchers"}
+shoppingLib.MidItems = {"Item_Pierce 1", "Item_Immunity", "Item_Pierce 3"} --Pierce is Shieldbreaker, Immunity is Shrunken Head
+shoppingLib.LateItems = {"Item_Weapon3", "Item_Sicarius", "Item_ManaBurn2", "Item_BehemothsHeart", "Item_Damage9" } --Weapon3 is Savage Mace. Item_Sicarius is Firebrand. ManaBurn2 is Geomenter's Bane. Item_Damage9 is Doombringer
+
+---------------------------------------------------
+--Unused functions
+---------------------------------------------------
+--[[
+function behaviorLib.ShuffleCombine(botBrain, nextItemDef, unit)
+	local inventory = unit:GetInventory(true)
+
+	if behaviorLib.printShopDebug then
+		BotEcho("ShuffleCombine for "..nextItemDef:GetName())
+	end
+
+	--locate all my components
+	local componentDefs = nextItemDef:GetComponents()
+	local numComponents = #componentDefs
+	--printGetNameTable(componentDefs)
+	local slotsToMove = {}
+	if componentDefs and #componentDefs > 1 then
+		for slot = 1, 12, 1 do
+			local curItem = inventory[slot]
+			if curItem then
+				--if curItem IS the same type, check if it is our recipe and not another (completed) instance
+				local bRecipeCheck = curItem:GetTypeID() ~= nextItemDef:GetTypeID() or curItem:IsRecipe()
+
+				if behaviorLib.printShopDebug then
+					BotEcho("  Checking if "..tostring(slot)..", "..curItem:GetName().." is a component")
+					BotEcho("    NextItem Type check: "..tostring(curItem:GetTypeID()).." ~= "..tostring(nextItemDef:GetTypeID()).." is "..tostring(curItem:GetTypeID() ~= nextItemDef:GetTypeID()))
+					BotEcho("    IsRecipe chieck: "..tostring(curItem:IsRecipe()))
+				end
+
+				for compSlot, compDef in ipairs(componentDefs) do
+					if compDef then
+						if behaviorLib.printShopDebug then
+							BotEcho("    Component Type check: "..tostring(curItem:GetTypeID()).." == "..tostring(compDef:GetTypeID()).." is "..tostring(curItem:GetTypeID() == compDef:GetTypeID()))
+						end
+
+						if curItem:GetTypeID() == compDef:GetTypeID() and bRecipeCheck then
+							tinsert(slotsToMove, slot)
+							tremove(componentDefs, compSlot) --remove this out so we don't mark wrong duplicates
+
+							if behaviorLib.printShopDebug then
+								BotEcho("    Component found!")
+							end
+							break
+						end
+					end
+				end
+			elseif behaviorLib.printShopDebug then
+				BotEcho("  Checking if "..tostring(slot)..", EMPTY_SLOT is a component")
+			end
+		end
+
+		if behaviorLib.printShopDebug then
+			BotEcho("ShuffleCombine - numComponents "..numComponents.."  #slotsToMove "..#slotsToMove)
+			BotEcho("slotsToMove:")
+			core.printTable(slotsToMove)
+		end
+
+		if numComponents == #slotsToMove then
+			if behaviorLib.printShopDebug then
+				BotEcho("Finding Slots to swap into")
+			end
+
+			--swap all components into your stash to combine them, avoiding any components in your stash already
+			local destSlot = 7
+			for _, slot in ipairs(slotsToMove) do
+				if slot < 7 then
+					--Make sure we don't swap with another component
+					local num = core.tableContains(slotsToMove, destSlot)
+					while num > 0 do
+						destSlot = destSlot + 1
+						num = core.tableContains(slotsToMove, destSlot)
+					end
+
+					if behaviorLib.printShopDebug then
+						BotEcho("Swapping: "..slot.." to "..destSlot)
+					end
+
+					unit:SwapItems(slot, destSlot)
+					destSlot = destSlot + 1
+				end
+			end
+		end
+	end
+end
+--]]
