@@ -2064,7 +2064,7 @@ end
 ---------------------------------------------------
 -- On think: TeambotBrain  and Courier Control
 ---------------------------------------------------
-function shopping:onThinkShopping(tGameVariables)
+function shoppingLib:onThinkShopping(tGameVariables)
 
 	--old onThink
 	self:onthinkPreShoppingLib(tGameVariables)

@@ -15,6 +15,9 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
 local nSqrtTwo = math.sqrt(2)
 
 behaviorLib.tBehaviors = {}
+
+runfile "bots/shoppingLib.lua"
+
 behaviorLib.nNextBehaviorTime = HoN.GetGameTime()
 behaviorLib.nBehaviorAssessInterval = 250
 
