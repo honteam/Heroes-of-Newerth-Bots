@@ -466,14 +466,22 @@ function shoppingLib.Setup (tSetupOptions)
 	local tSetupOptions = tSetupOptions or {}
 	
 	--initialize shopping
-	shoppingLib.bBuyItems = shoppingLib.bBuyItems  or true
+	shoppingLib.bBuyItems = shoppingLib.bBuyItems  or shoppingLib.bBuyItems == nil -- hold status or true
 	shoppingLib.bSetupDone = true
 	
 	--Check, if item is already reserved by a bot or a player (basic) and update function for teambot
-	shoppingLib.bCheckItemReservation = tSetupOptions.bReserveItems or shoppingLib.bCheckItemReservation or true
+	if tSetupOptions.bReserveItems ~= nil then
+		shoppingLib.bCheckItemReservation = tSetupOptions.bReserveItems
+	else
+		shoppingLib.bCheckItemReservation = shoppingLib.bCheckItemReservation or shoppingLib.bCheckItemReservation == nil --hold status or true
+	end
 	
 	--Wait for lane decision before shopping?
-	shoppingLib.bWaitForLaneDecision = tSetupOptions.bWaitForLaneDecision or shoppingLib.bWaitForLaneDecision or false
+	if tSetupOptions.bWaitForLaneDecision ~= nil then
+		shoppingLib.bWaitForLaneDecision = tSetupOptions.bWaitForLaneDecision 
+	else
+		shoppingLib.bWaitForLaneDecision = shoppingLib.bWaitForLaneDecision or false
+	end
 	
 	--Consumables options
 	local tConsumableOptions = tSetupOptions.tConsumableOptions --can be a table or boolean
@@ -484,19 +492,22 @@ function shoppingLib.Setup (tSetupOptions)
 		shoppingLib.bBuyRegen = true
 		if type(tConsumableOptions) == "table" then
 			--found a table with changes, check each option
-			for itemDef, value in pairs (tConsumableOptions) do
-				if shoppingLib.tConsumables[itemDef] ~= nil then
-					shoppingLib.tConsumables[itemDef] = value
+			for sItemName, bValue in pairs (tConsumableOptions) do
+				if shoppingLib.tConsumables[sItemName] ~= nil then
+					shoppingLib.tConsumables[sItemName] = bValue
 				else
-					if shoppingLib.bDebugInfoGeneralInformation then BotEcho("Itemdefinition was not found in the default table: "..tostring(itemDef)) end
+					if shoppingLib.bDebugInfoGeneralInformation then BotEcho("Itemdefinition was not found in the default table: "..tostring(sItemName)) end
 				end
 			end
 		end
 	end
 	
 	--Courier options
-	shoppingLib.bCourierCare = tSetupOptions.bCourierCare or shoppingLib.bCourierCare or false
-	
+	if tSetupOptions.bCourierCare ~= nil then
+		shoppingLib.bCourierCare = tSetupOptions.bCourierCare 
+	else
+		shoppingLib.bCourierCare = shoppingLib.bCourierCare or false
+	end
 end
 
 
@@ -795,7 +806,7 @@ function shoppingLib.GetConsumables()
 				if shoppingLib.bDebugInfoShoppingFunctions then BotEcho("Item definition was not found: "..sQueueEntry) end
 			end
 			--remove entry
-			tremove(tRequestedItemsQueue, 1)
+			tremove(shoppingLib.tRequestedItemsQueue, 1)
 		else
 			--no entries left
 			bCheckEntries = false
@@ -1482,10 +1493,12 @@ parameters: inventory: inventory of a unit
 			bStashOnly:	Only count free stash slots
 			bHeroOnly: Only count free hero slots
 
-returns the number of free slots (all, stash or hero)
+returns:	the number of free slots (all, stash or hero)
+			index of the first free Slot
 --]]
 function shoppingLib.NumberOfSlotsOpen(inventory, bStashOnly, bHeroOnly)
 	local nOpenSlots = 0
+	local nFirstFreeSlot = nil
 	
 	local nStartIndex = (bStashOnly and 7) or 1
 	local nEndIndex = (not bStashOnly and bHeroOnly and 6) or 12
@@ -1494,9 +1507,12 @@ function shoppingLib.NumberOfSlotsOpen(inventory, bStashOnly, bHeroOnly)
 		if curItem == nil then
 			--no item is a free slot - count it
 			nOpenSlots = nOpenSlots + 1
+			if not nFirstFreeSlot then
+				nFirstFreeSlot = nSlot
+			end
 		end
 	end
-	return nOpenSlots
+	return nOpenSlots, nFirstFreeSlot
 end
 
 -------------------
@@ -1625,11 +1641,14 @@ function shoppingLib.ShopExecute(botBrain)
 		--enough gold to buy the item?
 		if nGoldAmtBefore >= nItemCost then 
 			
-			--check number of stash items
-			local nOpenStashSlots = shoppingLib.NumberOfSlotsOpen(tInventory, true)
+			--check base shop access
+			local bCanAccessStash = unitSelf:CanAccessStash()
+			
+			--check number of free slots
+			local nOpenSlotsAccessable, nExpectedSlot = shoppingLib.NumberOfSlotsOpen(tInventory, not bCanAccessStash)
 			
 			--enough space?
-			if nOpenStashSlots < 1 then
+			if nOpenSlotsAccessable < 1 then
 			
 				local bSuccess, bStashOnly = shoppingLib.SellItems (1)
 				--stop shopping, if we can't purchase items anymore, fix it with next stash access
@@ -1643,8 +1662,14 @@ function shoppingLib.ShopExecute(botBrain)
 				
 				--check purchase success
 				if bGoldReduced then 
-					if shoppingLib.bDebugInfoShoppingBehavior then BotEcho("item Purchased. removing it from shopping list") end
-					tremove(shoppingLib.tShoppingList,1)
+					local itemCurrent = tInventory[nExpectedSlot]
+					if not itemCurrent or itemCurrent:GetItemDefinition() == itemNextDef then
+						if shoppingLib.bDebugInfoShoppingBehavior then BotEcho("item Purchased. removing it from shopping list") end
+						tremove(shoppingLib.tShoppingList,1)
+					else
+						if shoppingLib.bDebugInfoShoppingBehavior then BotEcho("Puchased something else") end
+					end
+					
 					if shoppingLib.bDevelopeItemBuildSaver then SyncWithDatabse() end
 				else
 					local nMaxStock = itemNextDef:GetMaxStock()
