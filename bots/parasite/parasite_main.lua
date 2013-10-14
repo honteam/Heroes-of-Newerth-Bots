@@ -109,18 +109,18 @@ object.tSkills = {
 }
 
 -- Bonus aggression points if a skill/item is available for use
-object.nLeechUp = 5
+object.nLeechUp = 10
 object.nInfestUp = 0
-object.nFacehugUp = 10
-object.nNukeUp = 7
+object.nFacehugUp = 15
+object.nNukeUp = 12
 object.nChargedHammerUp = 4
 object.nSymbolOfRageUp = 4
 
 -- Bonus aggression points that are applied to the bot upon successfully using a skill/item
-object.nLeechUse = 10
+object.nLeechUse = 20
 object.nInfestUse = 0
-object.nFacehugUse = 20
-object.nNukeUse = 14
+object.nFacehugUse = 25
+object.nNukeUse = 20
 object.nChargedHammerUse = 8
 object.nSymbolOfRageUse = 8
 
@@ -142,6 +142,7 @@ behaviorLib.safeTreeAngle = 360
 ------------------------------
 
 jungleLib.currentMaxDifficulty = 200
+jungleLib.currentMinDifficulty = 85
 function object:SkillBuild()
 	core.VerboseLog("SkillBuild()")
 
@@ -164,7 +165,9 @@ function object:SkillBuild()
 		unitSelf:GetAbility(self.tSkills[i]):LevelUp()
 	end
 
-	if nLevel == 16 then
+	if nLevel >= 4 then
+		jungleLib.currentMinDifficulty = 40
+	elseif nLevel >= 16 then
 		jungleLib.currentMaxDifficulty = 300
 	end
 end
@@ -393,7 +396,13 @@ end
 
 jungleLib.nLastAttackPositionTime = 0
 object.unitInfestedUnit = nil
+object.unitInfestingUnit = nil --currently infesting this unit
 function jungleExecute(botBrain)
+
+	if (object.unitInfestingUnit and object.unitInfestingUnit:IsValid() and object.unitInfestingUnit:HasState("State_Parasite_Ability2_Target")) then
+		object.unitInfestedUnit = object.unitInfestingUnit
+		object.unitInfestingUnit = nil
+	end
 
 	--clear infested units
 	if (object.unitInfestedUnit and not object.unitInfestedUnit:IsAlive()) then
@@ -404,50 +413,43 @@ function jungleExecute(botBrain)
 	local debugMode = true
 
 	local vecMyPos = unitSelf:GetPosition()
-	local vecTargetPos, nCamp = jungleLib.getNearestCampPos(vecMyPos, 40, jungleLib.currentMaxDifficulty, unitSelf:GetTeam())
-	if nCamp==nil then return end --we have no position, abort!
+	local vecTargetPos, nCamp = jungleLib.getNearestCampPos(vecMyPos, jungleLib.currentMinDifficulty, jungleLib.currentMaxDifficulty, unitSelf:GetTeam())
 	
-	if jungleLib.jungleSpots and jungleLib.jungleSpots[nCamp] and jungleLib.jungleSpots[nCamp].outsidePos then vecTargetPos = jungleLib.jungleSpots[nCamp].outsidePos end
-	if not vecTargetPos and jungleLib.jungleSpots and jungleLib.jungleSpots[7] then
+	--if nCamp then vecTargetPos = jungleLib.jungleSpots[nCamp].outsidePos end
+	
+	if nCamp==nil then--we have no next position!
 		if core.myTeam == HoN.GetHellbourneTeam() then
-			return core.OrderMoveToPosAndHoldClamp(botBrain, unitSelf, jungleLib.jungleSpots[7].outsidePos)
+			nCamp=7
 		else
-			return core.OrderMoveToPosAndHoldClamp(botBrain, unitSelf, jungleLib.jungleSpots[1].outsidePos)
+			nCamp=1
 		end
-	end
-
+		vecTargetPos = jungleLib.jungleSpots[nCamp].outsidePos
+	end 
+	
 	if debugMode then core.DrawDebugArrow(vecMyPos, vecTargetPos, 'green') end
 		
 	local nOutsideDistanceSq = Vector3.Distance2DSq(vecMyPos, jungleLib.jungleSpots[nCamp].outsidePos)
 	local nDistanceSq = Vector3.Distance2DSq(vecMyPos, vecTargetPos)
 	
 	
-	--if object.unitInfestedUnit then
-	--	return core.OrderMoveToPosAndHoldClamp(botBrain, object.unitInfestedUnit, core.allyWell:GetPosition())
-	--end
-	
-	--[[
-	if (object.unitInfestedUnit) then
-		if object.unitInfestedUnit:GetAbility(0) ~= nil then BotEcho("Ability0: "..object.unitInfestedUnit:GetAbility(0):GetTypeName()) end
-		if object.unitInfestedUnit:GetAbility(1) ~= nil then BotEcho("Ability1: "..object.unitInfestedUnit:GetAbility(1):GetTypeName()) end
-		if object.unitInfestedUnit:GetAbility(2) ~= nil then BotEcho("Ability2: "..object.unitInfestedUnit:GetAbility(2):GetTypeName()) end
-		if object.unitInfestedUnit:GetAbility(3) ~= nil then BotEcho("Ability3: "..object.unitInfestedUnit:GetAbility(3):GetTypeName()) end
-		if object.unitInfestedUnit:GetAbility(4) ~= nil then BotEcho("Ability4: "..object.unitInfestedUnit:GetAbility(4):GetTypeName()) end
-		if object.unitInfestedUnit:GetAbility(5) ~= nil then BotEcho("Ability5: "..object.unitInfestedUnit:GetAbility(5):GetTypeName()) end
-		if object.unitInfestedUnit:GetAbility(6) ~= nil then BotEcho("Ability6: "..object.unitInfestedUnit:GetAbility(6):GetTypeName()) end
-		if object.unitInfestedUnit:GetAbility(7) ~= nil then BotEcho("Ability7: "..object.unitInfestedUnit:GetAbility(7):GetTypeName()) end
-	end
-	]]
-	
 	--BotEcho(math.sqrt(nTargetDistanceSq))
-	
 	if nOutsideDistanceSq > (800 * 800) then
 		if (object.unitInfestedUnit) then
-			if core.OrderAbility(botBrain, object.unitInfestedUnit:GetAbility(3)) then
-				object.unitInfestedUnit=nil
-				--BotEcho("getting rid of old unit")
-				return
+			--[[
+			BotEcho("getting rid of old unit")
+			
+			if (object.unitInfestedUnit) then
+				for n = 0, 8 do
+					if object.unitInfestedUnit:GetAbility(n) ~= nil then BotEcho("Ability "..n..": "..object.unitInfestedUnit:GetAbility(n):GetTypeName()) end
+				end
 			end
+			]]
+			if (object.unitInfestedUnit:GetAbility(3) == nil) then
+				BotEcho("Error, no ability to get out of unit!")
+			end
+			return core.OrderAbility(botBrain, object.unitInfestedUnit:GetAbility(3))
+		--else
+		--	BotEcho("not in a unit")
 		end
 		return core.OrderMoveToPosAndHoldClamp(botBrain, unitSelf, jungleLib.jungleSpots[nCamp].outsidePos)
 	else 
@@ -468,7 +470,7 @@ function jungleExecute(botBrain)
 				if unitStrongest then
 					bActionTaken = core.OrderAbilityEntity(botBrain, skills.abilInfest, unitStrongest, false)
 					if bActionTaken then
-						object.unitInfestedUnit = unitStrongest
+						object.unitInfestingUnit = unitStrongest
 						return
 					end
 				else
