@@ -357,3 +357,17 @@ if false then
 			unitSelf:GetCreepKills(), unitSelf:GetCreepDenies(), unitSelf:GetNeutralKills()))
 	end
 end
+
+-- Test GetHeading
+if false then
+	local unitSelf = core.unitSelf	
+	if unitSelf ~= nil then	
+		unitSelf:TeamShare()
+		local myPos = unitSelf:GetPosition()	
+		core.DrawDebugArrow(myPos, myPos + unitSelf:GetHeading() * 150, 'white')
+	end
+end
+
+
+
+

@@ -68,6 +68,9 @@ core.nEASY_DIFFICULTY 	= 1
 core.nMEDIUM_DIFFICULTY = 2
 core.nHARD_DIFFICULTY 	= 3
 
+core.bMyTeamHasHuman = nil
+core.bEnemyTeamHasHuman = nil
+
 core.nDifficulty = core.nEASY_DIFFICULTY
 
 core.coreInitialized = false
@@ -1182,6 +1185,34 @@ function core.IsCourier(unit)
 	return unit:IsUnitType("Courier")
 end
 
+function core.EnemyTeamHasHuman()
+	if core.bEnemyTeamHasHuman == nil then
+		local tEnemyHeroes = HoN.GetHeroes(core.enemyTeam)
+		for _, unitHero in pairs(tEnemyHeroes) do
+			if not unitHero:IsBotControlled() then
+				core.bEnemyTeamHasHuman = true
+				break
+			end
+		end
+	end
+
+	return core.bEnemyTeamHasHuman
+end
+
+function core.MyTeamHasHuman()
+	if core.bMyTeamHasHuman == nil then
+		local tAllyHeroes = HoN.GetHeroes(core.myTeam)
+		for _, unitHero in pairs(tAllyHeroes) do
+			if not unitHero:IsBotControlled() then
+				core.bMyTeamHasHuman = true
+				break
+			end
+		end
+	end
+
+	return core.bMyTeamHasHuman
+end
+
 function core.IsTowerSafe(unitEnemyTower, unitSelf)
 	--Is this tower safe to attack (as in it won't switch targets to me)
 	local bSafe = false
@@ -1953,6 +1984,18 @@ function core.GetAttackSequenceProgress(unit)
 	end
 	
 	return retVal
+end
+
+--unitCreepTarget is an optional parameter that will be passed in
+function core.GetAttackDamageMinOnCreep(unitCreepTarget)
+	local unitSelf = core.unitSelf
+	local nDamageMin = unitSelf:GetFinalAttackDamageMin()
+				
+	if core.itemHatchet then
+		nDamageMin = nDamageMin * core.itemHatchet.creepDamageMul
+	end	
+
+	return nDamageMin
 end
 
 
