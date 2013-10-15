@@ -87,6 +87,11 @@ local Clamp = core.Clamp
 
 BotEcho('loading schnasegrave_main...')
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 4, ShortSolo = 3, LongSolo = 2, ShortSupport = 4, LongSupport = 3, ShortCarry = 4, LongCarry = 3}
+
 object.heroName = 'Hero_Taint'
 
 --------------------------------
@@ -534,15 +539,6 @@ StopProfile()
 		end
 	end
 
-	--Use Sacrificial Stone
-	if not bActionTaken then
-		--Todo: remove all sac stone usage into its own behavior		
-		local itemSacStone = core.itemSacStone
-		if itemSacStone and itemSacStone:CanActivate() then
-			bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemSacStone, bActionTaken)
-		end
-	end
-
 	if not bActionTaken then
 		if bDebugEchos then BotEcho("  No action yet, proceeding with normal harass execute.") end
 		return object.harassExecuteOld(botBrain)
@@ -720,14 +716,15 @@ behaviorLib.RetreatFromThreatBehavior["Utility"] = CustomRetreatFromThreatUtilit
 ------------------------------------------------------------------
 --Retreat execute
 ------------------------------------------------------------------
-local function funcRetreatFromThreatExecuteOverride(botBrain)
+--  this is a great function to override with using retreating skills, such as blinks, travels, stuns or slows.
+function behaviorLib.CustomRetreatExecute(botBrain)
+	bActionTaken = false
 
 	local unitSelf = core.unitSelf
 	local unitTarget = behaviorLib.heroTarget
 
 	local vecRetreatPos = behaviorLib.PositionSelfBackUp()
 	local nlastRetreatUtil = behaviorLib.lastRetreatUtil
-
 	--Counting the enemies
 	local tEnemies = core.localUnits["EnemyHeroes"]
 	local nCount = 0
@@ -763,8 +760,7 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 				local nRange = itemSheepstick:GetRange()
 				if itemSheepstick:CanActivate() then
 					if nTargetDistanceSq < (nRange * nRange) then
-						core.OrderItemEntityClamp(botBrain, unitSelf, itemSheepstick, unitTarget)
-						return
+						return core.OrderItemEntityClamp(botBrain, unitSelf, itemSheepstick, unitTarget)
 					end
 				end
 			end
@@ -776,8 +772,7 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 				if not bTargetVuln or (nNow < object.nOneCorpseTossUseTime + 1050) then
 					local nRange = abilCorpseToss:GetRange()
 					if nTargetDistanceSq < (nRange * nRange) then
-						core.OrderAbilityEntity(botBrain, abilCorpseToss, unitTarget)
-						return
+						return core.OrderAbilityEntity(botBrain, abilCorpseToss, unitTarget)
 					end
 				end
 			end
@@ -807,24 +802,12 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 	if itemTablet then
 		if itemTablet:CanActivate() and nlastRetreatUtil >= object.nTabletRetreatTreshold then
 			--TODO: GetHeading math to ensure we're actually going backwards
-			core.OrderItemEntityClamp(botBrain, unitSelf, itemTablet, unitSelf)
-			return
+			return core.OrderItemEntityClamp(botBrain, unitSelf, itemTablet, unitSelf)
 		end
-	end
-
-	--Use Sacreficial Stone
-	--TODO: remove all sac stone usage into its own behavior
-	local itemSacStone = core.itemSacStone
-	if itemSacStone and itemSacStone:CanActivate() then
-		core.OrderItemClamp(botBrain, unitSelf, itemSacStone)
-		return
 	end
 
 	core.OrderMoveToPosClamp(botBrain, core.unitSelf, vecRetreatPos, false)
 end
-
-object.RetreatFromThreatExecuteOld = behaviorLib.RetreatFromThreatExecute
-behaviorLib.RetreatFromThreatBehavior["Execute"] = funcRetreatFromThreatExecuteOverride
 
 
 
@@ -844,15 +827,7 @@ local function PushExecuteFnOverride(botBrain)
 
 	local bActionTaken = false
 
-	--Use Sacreficial Stone
 	--Todo: remove all sac stone usage into its own behavior
-	if not bActionTaken then
-		local itemSacStone = core.itemSacStone
-		if itemSacStone and itemSacStone:CanActivate() then
-			bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemSacStone)
-		end
-	end
-
 	if not bActionTaken then
 		--use corpse explosion
 		if skills.abilCorpseExplosion:CanActivate() and core.unitSelf:GetManaPercent() > object.nCorpseExplosionManaPercentTreshold then
@@ -967,7 +942,6 @@ local function funcRemoveInvalidItems()
 	core.ValidateItem(core.itemSheepstick)
 	core.ValidateItem(core.itemFrostfieldPlate)
 	core.ValidateItem(core.itemSteamboots)
-	core.ValidateItem(core.itemSacStone)
 	core.ValidateItem(core.itemGhostMarchers)
 end
 
@@ -1000,8 +974,6 @@ local function funcFindItemsOverride(botBrain)
 				core.itemHellFlower = core.WrapInTable(curItem)
 			elseif core.itemSteamboots == nil and curItem:GetName() == "Item_Steamboots" then
 				core.itemSteamboots = core.WrapInTable(curItem)
-			elseif core.itemSacStone == nil and curItem:GetName() == "Item_SacrificialStone" then
-				core.itemSacStone = core.WrapInTable(curItem)
 			elseif core.itemGhostMarchers == nil and curItem:GetName() == "Item_EnhancedMarchers" then
 				core.itemGhostMarchers = core.WrapInTable(curItem)
 				core.itemGhostMarchers.expireTime = 0
