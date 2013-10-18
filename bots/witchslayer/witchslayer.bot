@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="WitchSlayerBot"
+	description="bot_description_witch_slayer"
+	heroname="Hero_WitchSlayer"
+	rootlua="witchslayer_main.lua"
+	defaultplayername="WitchSlayerBot"
+	precachepath="/heroes/witch_slayer/"
+/>
