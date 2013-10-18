@@ -1301,15 +1301,15 @@ function object:BuildLanes()
 	--Omit certain lane roles due to where human players are. *This will be handled in validLanes later, but this is for better processing time.
 	if (#tLongLane>0) then
 		tremove(tPossibleLanes,"LongSolo")
+		tremove(tPossibleLanes,"LongCarry")
 		if (#tLongLane>1) then
-			tremove(tPossibleLanes,"LongCarry")
 			tremove(tPossibleLanes,"LongSupport")
 		end
 	end
 	if (#tShortLane>0) then
 		tremove(tPossibleLanes,"ShortSolo")
+		tremove(tPossibleLanes,"ShortCarry")
 		if (#tShortLane>1) then
-			tremove(tPossibleLanes,"ShortCarry")
 			tremove(tPossibleLanes,"ShortSupport")
 		end
 	end
