@@ -52,6 +52,11 @@ local sqrtTwo = math.sqrt(2)
 
 BotEcho('loading flint_main...')
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 4, ShortSolo = 4, LongSolo = 2, ShortSupport = 2, LongSupport = 1, ShortCarry = 5, LongCarry = 5}
+
 object.heroName = 'Hero_FlintBeastwood'
 
 --------------------------------

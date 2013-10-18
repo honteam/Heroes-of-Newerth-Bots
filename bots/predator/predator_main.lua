@@ -52,6 +52,11 @@ local Clamp = core.Clamp
 
 BotEcho('loading predator_main...')
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 1, ShortSolo = 1, LongSolo = 1, ShortSupport = 1, LongSupport = 1, ShortCarry = 5, LongCarry = 5}
+
 object.heroName = 'Hero_Predator'
 
 --------------------------------
