@@ -1,5 +1,5 @@
 --MagmusBot v1.0
-
+--shoppingLib changes: Enable ReloadBots compatibility (lines 50-51)
 
 local _G = getfenv(0)
 local object = _G.object
@@ -46,6 +46,9 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
 
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
+
+--support ReloadBots (while testing)
+object.shoppingLib.bDevelopeItemBuildSaver = true
 
 BotEcho('loading magmus_main...')
 

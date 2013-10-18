@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<bot
-	name="AdvancedShopping-MagmusBot"
-	description="bot_description_magmar"
-	heroname="Hero_Magmar"
-	rootlua="ASmagmus_main.lua"
-	defaultplayername="MagmusBot"
-	precachepath="/heroes/magmar/"
-/>

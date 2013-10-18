@@ -24,12 +24,9 @@ Tip:
 	Take a look at the WitchSlayer-Bot to setting your shopping experience!
 
 Usage:
-	Underneath the other runfiles:
-		runfile "bots/advancedshoppingLib.lua"
-		
 	Set references:
 		local itemHandler = object.itemHandler
-		local shopping = object.shoppingLib
+		local shoppingLib = object.shoppingLib
 	
 	Use of ItemHandler:
 		itemHandler:GetItem(sItemName, unit)
@@ -510,30 +507,38 @@ function shoppingLib.Setup (tSetupOptions)
 	end
 end
 
+--function ProcessItemCode
+--[[
+description:	Decrypt the given itemcode-string
+parameters: 	sItemCode:	item Code String
 
-function shoppingLib.ProcessItemCode(itemCode)
-	local num = 1
-	local level = 1
-	local item = itemCode
-	local pos = strfind(itemCode, " ")
-	if pos then
-		local numTemp = strsub(itemCode, 1, pos - 1)
-		if tonumber(numTemp) ~= nil then
-			num = tonumber(numTemp)
-			item = strsub(itemCode, pos + 1)
+returns:		sItemName:	item name of the given code
+				nNum:		Amount of items 
+				nLevel:		Level of item
+--]]
+function shoppingLib.ProcessItemCode(sItemCode)
+	local nNum = 1
+	local nLevel = 1
+	local sItemName = sItemCode
+	local nPos = strfind(sItemCode, " ")
+	if nPos then
+		local sNumTemp = strsub(sItemCode, 1, nPos - 1)
+		if tonumber(sNumTemp) ~= nil then
+			nNum = tonumber(sNumTemp)
+			sItemName = strsub(sItemCode, nPos + 1)
 		end
 	end
 
-	pos = strfind(item, " ")
-	if pos then
-		local levelTemp = strsub(item, pos + 1)
-		if tonumber(levelTemp) ~= nil then
-			level = tonumber(levelTemp)
-			item = strsub(item, 1, pos - 1)
+	nPos = strfind(sItemName, " ")
+	if nPos then
+		local sLevelTemp = strsub(sItemName, nPos + 1)
+		if tonumber(sLevelTemp) ~= nil then
+			nLevel = tonumber(sLevelTemp)
+			sItemName = strsub(sItemName, 1, nPos - 1)
 		end
 	end
 
-	return item, num, level
+	return sItemName, nNum, nLevel
 end
 
 --function GetCourier
@@ -829,16 +834,16 @@ function shoppingLib.CheckItemBuild()
 		if #shoppingLib.tItembuild == 0 then
 		
 			--compatibility for old bots
-			shoppingLib.StartingItems = behaviorLib.StartingItems or shoppingLib.StartingItems
-			shoppingLib.LaneItems = behaviorLib.LaneItems or shoppingLib.LaneItems
-			shoppingLib.MidItems = behaviorLib.MidItems or shoppingLib.MidItems
-			shoppingLib.LateItems = behaviorLib.LateItems or shoppingLib.LateItems
+			local tStartingItems = behaviorLib.StartingItems or shoppingLib.tStartingItems
+			local tLaneItems = behaviorLib.LaneItems or shoppingLib.tLaneItems
+			local tMidItems = behaviorLib.MidItems or shoppingLib.tMidItems
+			local tLateItems = behaviorLib.LateItems or shoppingLib.tLateItems
 			
 			--insert into new table
-			core.InsertToTable(shoppingLib.tItembuild, shoppingLib.StartingItems)
-			core.InsertToTable(shoppingLib.tItembuild, shoppingLib.LaneItems)
-			core.InsertToTable(shoppingLib.tItembuild, shoppingLib.MidItems)
-			core.InsertToTable(shoppingLib.tItembuild, shoppingLib.LateItems)
+			core.InsertToTable(shoppingLib.tItembuild, tStartingItems)
+			core.InsertToTable(shoppingLib.tItembuild, tLaneItems)
+			core.InsertToTable(shoppingLib.tItembuild, tMidItems)
+			core.InsertToTable(shoppingLib.tItembuild, tLateItems)
 		else
 			--we reached the end of our itemlist. Done with shopping
 			return false
@@ -1662,11 +1667,22 @@ function shoppingLib.ShopExecute(botBrain)
 				
 				--check purchase success
 				if bGoldReduced then 
+					--gold was reduced, so we purchased something
 					local itemCurrent = tInventory[nExpectedSlot]
-					if not itemCurrent or itemCurrent:GetItemDefinition() == itemNextDef then
+					local itemDef = itemCurrent and itemCurrent:GetItemDefinition()
+					--purchase cases:
+					--1. item is not in its expected slot --> it has been combined elsewhere.
+					--2. item is in its expected slot and its definition matches --> sucessfully purchased
+					--3. another item is in its expected slot, but one of its components matches the purchased definition (Firebrand into Dawnbringer syndrom)
+					--4. another item is in its expected slot, but doesn't match --> different item was purchased (another component got lost for whatever reason)
+					if not itemCurrent or 
+							itemDef == itemNextDef or 
+							core.tableContains(shoppingLib.GetAllComponents(itemDef), itemNextDef) > 0 then
+						--purchase cases 1-3
 						if shoppingLib.bDebugInfoShoppingBehavior then BotEcho("item Purchased. removing it from shopping list") end
 						tremove(shoppingLib.tShoppingList,1)
 					else
+						--purchase case 4
 						if shoppingLib.bDebugInfoShoppingBehavior then BotEcho("Puchased something else") end
 					end
 					
@@ -1725,7 +1741,7 @@ function shoppingLib.StashUtility(botBrain)
 	if bCanAccessStash then
 		--increase util when porting greatly
 		if core.unitSelf:IsChanneling() then
-			nUtility = 125
+			nUtility = 100
 		elseif shoppingLib.bStashFunctionActivation then
 			nUtility = 30
 		end
@@ -2135,15 +2151,16 @@ object.onthink 	= shoppingLib.onThinkShopping
 --[[ list code:
 	"# Item" is "get # of these"
 	"Item #" is "get this level of the item" --]]
-shoppingLib.StartingItems = {"2 Item_DuckBoots", "2 Item_MinorTotem", "Item_HealthPotion", "Item_RunesOfTheBlight"}
-shoppingLib.LaneItems = {"Item_Marchers", "2 Item_Soulscream", "Item_EnhancedMarchers"}
-shoppingLib.MidItems = {"Item_Pierce 1", "Item_Immunity", "Item_Pierce 3"} --Pierce is Shieldbreaker, Immunity is Shrunken Head
-shoppingLib.LateItems = {"Item_Weapon3", "Item_Sicarius", "Item_ManaBurn2", "Item_BehemothsHeart", "Item_Damage9" } --Weapon3 is Savage Mace. Item_Sicarius is Firebrand. ManaBurn2 is Geomenter's Bane. Item_Damage9 is Doombringer
+shoppingLib.tStartingItems = {"2 Item_DuckBoots", "2 Item_MinorTotem", "Item_HealthPotion", "Item_RunesOfTheBlight"}
+shoppingLib.tLaneItems = {"Item_Marchers", "2 Item_Soulscream", "Item_EnhancedMarchers"}
+shoppingLib.tMidItems = {"Item_Pierce 1", "Item_Immunity", "Item_Pierce 3"} --Pierce is Shieldbreaker, Immunity is Shrunken Head
+shoppingLib.tLateItems = {"Item_Weapon3", "Item_Sicarius", "Item_ManaBurn2", "Item_BehemothsHeart", "Item_Damage9" } --Weapon3 is Savage Mace. Item_Sicarius is Firebrand. ManaBurn2 is Geomenter's Bane. Item_Damage9 is Doombringer
 
 ---------------------------------------------------
 --Unused functions
 ---------------------------------------------------
 --[[
+--I don't know, if this function is still usefull or needed anymore
 function behaviorLib.ShuffleCombine(botBrain, nextItemDef, unit)
 	local inventory = unit:GetInventory(true)
 

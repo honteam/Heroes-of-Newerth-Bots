@@ -1,5 +1,24 @@
 --WitchSlayerBot v1.0
+--[[
+Tutorial: Advanced ShoppingLib implementation
 
+This S2-Bot implements the advanced shopping system.
+The interesting parts are well commented for an easy implementation into your own bot
+
+Tutorial Contents:
+-Change standard behavior			-	Line 75
+-Requesting wards					-	Line 168 
+-Custom itembuild: Introduction		-	Line 190
+-The Item-Handler					-	Line 555
+	Call items by name -> easier search for items. 
+		Take a look at FlintBot for a usage without FindItems-function
+
+There are two types for comments:
+1.'--' short explanations
+2. '--[.[' and '--].]' for a detailed description (without '.')
+
+Please jump to line 75.
+--]]
 
 local _G = getfenv(0)
 local object = _G.object
@@ -51,6 +70,221 @@ local Clamp = core.Clamp
 BotEcho('loading witchslayer_main...')
 
 object.heroName = 'Hero_WitchSlayer'
+
+
+--------------------------------------
+-- Advanced ShoppingLib Implementation
+--------------------------------------
+ 
+ 
+ --[[
+Set some easy to remeber references to the shopping and item handler.
+
+shoppingLib: functions to change the shopping behavior
+item handler: functions for an easier usage of items
+ --]]
+--Set references to handlers
+local itemHandler = object.itemHandler
+local shoppingLib = object.shoppingLib
+ 
+ 
+--[[
+Because the itemlists and builds can be a dynamic process, you
+have to save them, while the bot is in developement.
+
+If 'bDevelopeItemBuildSaver' is off, the bot will lose its decisions
+after reloading the bot files midgame.
+
+Turn it off (or delete / comment out, if you are going to submit the bot)
+]]--
+--Enable ReloadBots compatibility while the bot is in developement
+shoppingLib.bDevelopeItemBuildSaver = true
+ 
+ 
+ --[[
+ Overview: Standard shopping behavior:
+	
+	(alternate options in brackets)
+	
+	- The bot will reserve team items and will not buy items, team-members already have
+		Examples of team items: Nomes Wisdom, Mock, Daemonic Breastplate
+		bReserveItems = true (false)
+	
+	- The bot will not wait for his lane before shopping
+		Turn it on, if you alter your item builds depending on your lane (mid, safe...)
+		bWaitForLaneDecision = false (true)
+	
+	- The bot will buy Health-Potions, Homecoming Stones and Blight Stones on his own.
+		You can turn on/off Health- and Mana-Potions, Homecoming- and Blight Stones 
+		or deactivate the automatic purchaise all together
+		tConsumableOptions = true ( tItems, false)
+		
+		tItems = {		
+			Item_HomecomingStone	= true, (false)
+			Item_HealthPotion		= true, (false)
+			Item_RunesOfTheBlight	= true, (false)
+			Item_ManaPotion			= true	(false)
+			}
+		
+	-The bot will use the courier, but they will never upgrade or rebuy it.
+		If you want to make them care, turn this switch on.
+		bCourierCare = false (true)
+	
+	If you want to change the behavior options, you only have to pass the changes. (see below)
+	You can change the behavior setup, whenever you like to do it (transition from support to carry etc.)
+	
+	
+Overview SetupOptions structure:
+
+	default setup options:
+		tSetupOptions = {
+			bReserveItems 			= true,	
+			bWaitForLaneDecision 	= false,
+			tConsumableOptions		={		
+				Item_HomecomingStone	= true,
+				Item_HealthPotion		= true,
+				Item_RunesOfTheBlight	= true,
+				Item_ManaPotion			= true 
+			},
+			bCourierCare			= false
+		}
+	
+
+This bot will support his team, so he should upgrade the courier, buy wards (disabled), but he shouldn't buy any Mana Potions
+ --]]
+--Implement changes to default settings
+local tSetupOptions = {
+		--upgrade courier
+		bCourierCare = true,
+		--wait for lane decision before shopping, because we want to change our starting items depending on lane decision
+		bWaitForLaneDecision = true,
+		--don't autobuy Mana Potions
+		tConsumableOptions = {Item_ManaPotion = false}
+		}
+--call setup function
+shoppingLib.Setup(tSetupOptions)
+ 
+ 
+ --Requesting Wards of Sight
+ --[[
+Because Wards are a cheap item, we have to reserve an item-slot for them.
+What is more, we have to call the purchase onto a regular basis. (take a look at the onthink-method line: XXX)
+
+ default item slots:
+ 1: Boots of Choice
+ 2: Magic Armor
+ 3: Potal Key
+ 6: Homecoming Stone
+ 
+ Good spots for custom decisions are slot 4, 5 and 3 (if you don't get a pk).
+ 
+ The following function will reserve item slot 4 for Wards of Sight
+ ]]--
+--Swap Wards into inventory-slot 4 
+shoppingLib.SetItemSlotNumber("Item_FlamingEye", 4)
+ 
+--start buying wards at 2 minutes
+object.nextWard = 2*60*1000
+ 
+ 
+ ----------------------
+ --Custom Item Build
+ ----------------------
+  
+--[[
+Overview:
+	If you want to use custom item build, you have to override the function 'shoppingLib.CheckItemBuild'.
+	
+	This function is called, whenever the bot runs out of items.
+	For a dynamic item build you may want to put only one item into the queue at any time (or just a few)
+	
+	"shoppingLib.tItemDecisions" is an empty table, which can be used to save your custom item decisions.
+	If "shoppingLib.bDevelopeItemBuildSaver" is turned on, "shoppingLib.tItemDecisions" will also be saved.
+	
+	Insert the item-codes into 'shopping.Itembuild'. 
+	
+This bot:
+	This bot will only change his start-items.
+		Mid: 		Blight Stones, 2 Minor Totem, 2 Mark of the Novice and a Health Potion
+		Not-Mid:	Guardian Ring, Ptretenders Crown, Minor Totem, Health Potion and Blight Stones
+		
+	This function is called 3 times over the bot game:
+	At start: Decide start items.
+	After finishing start items: Insert all the other items
+	After finishing: Will not find any new items and stop item shopping
+--]]
+--custom item build function
+local function WitchSlayerItemBuilder()
+		--called everytime your bot runs out of items, should return false if you are done with shopping
+		local debugInfo = false
+
+		if debugInfo then BotEcho("Checking itembuilder of Witch Slayer") end
+		
+		--variable for new items / keep shopping
+		local bNewItems = false
+	   
+		--get itembuild decision table 
+		local tItemDecisions = shoppingLib.tItemDecisions
+		if debugInfo then BotEcho("Found ItemDecisions"..type(tItemDecisions)) end
+	   
+		--If tItemDecisions["Lane"] is not set yet, choose lane items
+		if not tItemDecisions.Lane then		
+	   
+				if debugInfo then BotEcho("Choose starting items") end
+			   
+				--check our lane
+				local tLane = core.tMyLane
+				if tLane then
+					--we found our lane, checkout its information
+					
+					if debugInfo then BotEcho("Found my Lane") end
+					  
+					local tStartingItems = nil
+					 
+					if tLane.sLaneName == "middle" then
+						--our bot was assigned to the middle lane
+						if debugInfo then BotEcho("I will take the Mid-Lane.") end
+						tStartingItems = {"Item_RunesOfTheBlight", "2 Item_MinorTotem", "Item_HealthPotion", "2 Item_MarkOfTheNovice"}
+					else
+						--our bot was assigned to a side-lane lane
+						if debugInfo then BotEcho("Argh, I am not mid *sob*") end
+						tStartingItems = shoppingLib.tStartingItems
+					end
+					--insert decisions into our itembuild-table
+					core.InsertToTable(shoppingLib.tItembuild, tStartingItems)
+					
+					--we have implemented new items, so we can keep shopping
+					bNewItems = true
+					
+					--remember our decision
+					tItemDecisions.Lane = true
+				else
+					--lane is not set yet, this will cause issues in further item developement
+					if debugInfo then BotEcho("No Lane set. Bot will skip start items now") end
+				end
+		--If tItemDecisions["Rest"] is not set yet, insert all other items into our shopping list
+		elseif not tItemDecisions.Rest then
+			   
+				if debugInfo then BotEcho("Insert Rest of Items") end
+				
+				--insert decisions into our itembuild-table
+				core.InsertToTable(shoppingLib.tItembuild, shoppingLib.tLaneItems)
+				core.InsertToTable(shoppingLib.tItembuild, shoppingLib.tMidItems)
+				core.InsertToTable(shoppingLib.tItembuild, shoppingLib.tLateItems)
+				
+				--we have implemented new items, so we can keep shopping
+				bNewItems = true
+				
+				--remember our decision
+				tItemDecisions.Rest = true
+		end
+	   
+		if debugInfo then BotEcho("Reached end of itembuilder-function. Keep shopping? "..tostring(bNewItems)) end
+		return bNewItems
+end
+object.oldItembuilder = shoppingLib.CheckItemBuild
+shoppingLib.CheckItemBuild = WitchSlayerItemBuilder
+--please jump to line 555
 
 --------------------------------
 -- Skills
@@ -324,33 +558,20 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 ----------------------------------
 local function funcFindItemsOverride(botBrain)
 	object.FindItemsOld(botBrain)
-
-	core.ValidateItem(core.itemAstrolabe)
-	core.ValidateItem(core.itemSheepstick)
 	
-	--only update if we need to
-	if core.itemSheepstick and core.itemAstrolabe then
-		return
-	end
-
-	local inventory = core.unitSelf:GetInventory(false)
-	for slot = 1, 6, 1 do
-		local curItem = inventory[slot]
-		if curItem then
-			if core.itemAstrolabe == nil and curItem:GetName() == "Item_Astrolabe" then
-				core.itemAstrolabe = core.WrapInTable(curItem)
-				core.itemAstrolabe.nHealValue = 200
-				core.itemAstrolabe.nRadius = 600
-				--Echo("Saving astrolabe")
-			elseif core.itemSheepstick == nil and curItem:GetName() == "Item_Morph" then
-				core.itemSheepstick = core.WrapInTable(curItem)
-			end
-		end
+	--Just call for the item by name (Sheepstick here)
+	core.itemSheepstick = itemHandler:GetItem("Item_Morph") 
+	
+	--if you want to add additional information, use the following structure
+	core.itemAstrolabe = itemHandler:GetItem("Item_Astrolabe") 
+	if core.itemAstrolabe and not core.itemAstrolabe.nHealValue then
+		core.itemAstrolabe.nHealValue = 200
+		core.itemAstrolabe.nRadius = 600
 	end
 end
 object.FindItemsOld = core.FindItems
 core.FindItems = funcFindItemsOverride
-
+--This is the end of ShoppingLib tutorial
 
 ----------------------------------
 --	Witch Slayer's Help behavior
@@ -519,13 +740,13 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.HealBehavior)
 --[[ list code:
 	"# Item" is "get # of these"
 	"Item #" is "get this level of the item" --]]
-behaviorLib.StartingItems = 
+shoppingLib.tStartingItems = 
 	{"Item_GuardianRing", "Item_PretendersCrown", "Item_MinorTotem", "Item_HealthPotion", "Item_RunesOfTheBlight"}
-behaviorLib.LaneItems = 
+shoppingLib.tLaneItems = 
 	{"Item_ManaRegen3", "Item_Marchers", "Item_Striders", "Item_GraveLocket"} --ManaRegen3 is Ring of the Teacher
-behaviorLib.MidItems = 
+shoppingLib.tMidItems = 
 	{"Item_SacrificialStone", "Item_NomesWisdom", "Item_Astrolabe", "Item_Intelligence7"} --Intelligence7 is Staff of the Master
-behaviorLib.LateItems = 
+shoppingLib.tLateItems = 
 	{"Item_Morph", "Item_BehemothsHeart", 'Item_Damage9'} --Morph is Sheepstick. Item_Damage9 is Doombringer
 
 
