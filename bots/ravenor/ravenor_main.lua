@@ -68,8 +68,8 @@ object.heroName = 'Hero_Ravenor'
 --   item buy order. internal names  
 behaviorLib.StartingItems  = {"Item_LoggersHatchet", "Item_RunesOfTheBlight", "Item_IronBuckler"}
 behaviorLib.LaneItems  = {"Item_Marchers", "Item_BloodChalice", "Item_Lifetube"}
-behaviorLib.MidItems  = {"Item_Steamboots", "Item_Shield2", "Item_MagicArmor2"} -- Item_Shield2 is Helm of the black legion, Item_LifeSteal5 is Abyssal Skull, Item_MagicArmor2 is Shamans Headdress
-behaviorLib.LateItems  = {"Item_Freeze", "Item_Lightning2", "Item_Immunity"} -- Item_Freeze is Frostwolf Skull
+behaviorLib.MidItems  = {"Item_Steamboots", "Item_Shield2", "Item_MagicArmor2"} -- Item_Shield2 is Helm of the black legion, Item_MagicArmor2 is Shamans Headdress
+behaviorLib.LateItems  = {"Item_Freeze", "Item_Lightning2", "Item_Immunity"} -- Item_Freeze is Frostwolf Skull, Item_Lightning2 is charged hammer, Item_Immunity is shrunken head
 
 -- skillbuild table, 0 = ballLightening, 1 = stormBlades, 2 = electricalFeedback, 3 = powerOverwhelming, 4 = attri
 object.tSkills = {
@@ -244,7 +244,7 @@ local function HarassHeroExecuteOverride(botBrain)
 		if abilBlades:CanActivate() then
 			if nTargetDistanceSq < nAttackRangeSq then
 				-- only activate if we are close to the target
-				bActionTaken = core.OrderAbility(botBrain, abilBlades)
+				bActionTaken = core.OrderAbility(botBrain, abilBlades) --no clamp means that we can perform more actions in 50ms time.
 			end
 		end
 	end
