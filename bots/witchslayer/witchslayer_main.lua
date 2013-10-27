@@ -53,6 +53,11 @@ BotEcho('loading witchslayer_main...')
 object.heroName = 'Hero_WitchSlayer'
 
 --------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 2, ShortSolo = 2, LongSolo = 1, ShortSupport = 5, LongSupport = 5, ShortCarry = 2, LongCarry = 1}
+
+--------------------------------
 -- Skills
 --------------------------------
 function object:SkillBuild()

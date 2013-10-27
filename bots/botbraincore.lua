@@ -375,7 +375,13 @@ function core.BotBrainCoreInitialize(tGameVariables)
 	end
 	
 	core.unitSelf = core.teamBotBrain:CreateMemoryUnit(core.unitSelf)
-			
+	
+	--check for lane preferences
+	if core.tLanePreferences then
+		core.tLanePreferences.hero=core.unitSelf
+		core.teamBotBrain:SetLanePreferences(core.tLanePreferences)
+	end
+	
 	local tThreatMultipliers = behaviorLib.tThreatMultipliers
 	local tHeroes = HoN.GetHeroes(core.enemyTeam)
 	for _, unitHero in pairs(tHeroes) do
