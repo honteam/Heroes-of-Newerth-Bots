@@ -1,7 +1,7 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <bot
     name="KaisTrapperBalfagoreBot"
-    description="Kairus101's Trapagore."
+    description="bot_description_balphagore"
     heroname="Hero_Bephelgor"
     rootlua="balfagore_main.lua"
     defaultplayername="BalfagoreBot"
