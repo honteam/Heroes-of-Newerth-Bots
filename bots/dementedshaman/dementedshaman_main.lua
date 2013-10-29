@@ -564,7 +564,7 @@ function behaviorLib.HealUtility(botBrain)
 				sAbilName = "HealingWave"
 			end
 
-			if nUtility == 0 and (itemAstrolabe and itemAstrolabe:CanActivate()) then
+			if nUtility == 0 and (itemAstrolabe and itemAstrolabe:CanActivate() and itemAstrolabe:IsValid()) then
 				nUtility = nHighestUtility
 
 				sAbilName = "Astrolabe"

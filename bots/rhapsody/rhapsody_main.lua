@@ -576,7 +576,7 @@ function behaviorLib.HealUtility(botBrain)
 	local nTargetTimeToLive = nil
 	local sAbilName = ""
 	
-	if (itemAstrolabe and itemAstrolabe:CanActivate()) or abilMelody:CanActivate() then
+	if (itemAstrolabe and itemAstrolabe:CanActivate() and itemAstrolabe:IsValid()) or abilMelody:CanActivate() then
 		local tTargets = core.CopyTable(core.localUnits["AllyHeroes"])
 		tTargets[unitSelf:GetUniqueID()] = unitSelf --I am also a target
 		local nMyID = unitSelf:GetUniqueID()
@@ -609,7 +609,7 @@ function behaviorLib.HealUtility(botBrain)
 				sAbilName = "Protective Melody"
 			end
 			
-			if nUtility == 0 and (itemAstrolabe and itemAstrolabe:CanActivate()) then
+			if nUtility == 0 and (itemAstrolabe and itemAstrolabe:CanActivate() and itemAstrolabe:IsValid()) then
 				nUtility = nHighestUtility				
 				sAbilName = "Astrolabe"
 			end

@@ -431,7 +431,7 @@ function behaviorLib.HealUtility(botBrain)
 	local unitTarget = nil
 	local nTargetTimeToLive = nil
 	local sAbilName = ""
-	if itemAstrolabe and itemAstrolabe:CanActivate() then
+	if itemAstrolabe and itemAstrolabe:CanActivate() and itemAstrolabe:IsValid() then
 		local tTargets = core.CopyTable(core.localUnits["AllyHeroes"])
 		tTargets[unitSelf:GetUniqueID()] = unitSelf --I am also a target
 		for key, hero in pairs(tTargets) do
