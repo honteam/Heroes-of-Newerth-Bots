@@ -651,7 +651,7 @@ function behaviorLib.HealExecute(botBrain) -- this is used for Astrolabe ASWELL 
 	if unitHealTarget then 
 		if nHealTimeToLive <= nUltimateTTL and abilMelody:CanActivate() and unitHealTarget ~= unitSelf  then  --only attempt ult for other players (not for self, lol)
 			ProtectiveMelodyExecute(botBrain)
-		elseif itemAstrolabe and itemAstrolabe:CanActivate() then
+		elseif itemAstrolabe and itemAstrolabe:CanActivate() and itemAstrolabe:IsValid() then
 			local vecTargetPosition = unitHealTarget:GetPosition()
 			local nDistance = Vector3.Distance2D(unitSelf:GetPosition(), vecTargetPosition)
 			if nDistance < itemAstrolabe.nRadius then
