@@ -84,6 +84,11 @@ local Clamp = core.Clamp
 
 BotEcho('loading engineer_main...')
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 2, ShortSolo = 1, LongSolo = 1, ShortSupport = 5, LongSupport = 5, ShortCarry = 1, LongCarry = 1}
+
 object.heroName = 'Hero_Engineer'
 
 --[[for testing
