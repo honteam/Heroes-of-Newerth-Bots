@@ -602,7 +602,7 @@ function behaviorLib.HealExecute(botBrain)
 			core.OrderAbilityEntity(botBrain, abilUnbreakable, unitHealTarget)
 		elseif abilHealingWave:CanActivate() then
 			core.OrderAbilityEntity(botBrain, abilHealingWave, unitHealTarget)
-		elseif itemAstrolabe and itemAstrolabe:CanActivate() then
+		elseif itemAstrolabe and itemAstrolabe:CanActivate() and itemAstrolabe:IsValid() then
 			local unitSelf = core.unitSelf
 			local vecTargetPosition = unitHealTarget:GetPosition()
 			local nDistance = Vector3.Distance2D(unitSelf:GetPosition(), vecTargetPosition)

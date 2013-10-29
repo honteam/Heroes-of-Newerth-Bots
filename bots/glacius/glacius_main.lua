@@ -482,7 +482,7 @@ function behaviorLib.HealExecute(botBrain)
 	local unitHealTarget = behaviorLib.unitHealTarget
 	local nHealTimeToLive = behaviorLib.nHealTimeToLive
 	
-	if unitHealTarget and itemAstrolabe and itemAstrolabe:CanActivate() then 
+	if unitHealTarget and itemAstrolabe and itemAstrolabe:CanActivate() and itemAstrolabe:IsValid() then 
 		local unitSelf = core.unitSelf
 		local vecTargetPosition = unitHealTarget:GetPosition()
 		local nDistance = Vector3.Distance2D(unitSelf:GetPosition(), vecTargetPosition)
