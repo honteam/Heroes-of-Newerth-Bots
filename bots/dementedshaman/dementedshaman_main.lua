@@ -58,6 +58,11 @@ local sqrtTwo = math.sqrt(2)
 
 BotEcho('loading demetnedshaman_main...')
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 1, ShortSolo = 1, LongSolo = 1, ShortSupport = 5, LongSupport = 5, ShortCarry = 1, LongCarry = 1}
+
 object.heroName = 'Hero_Shaman'
 
 --------------------------------
@@ -597,7 +602,7 @@ function behaviorLib.HealExecute(botBrain)
 			core.OrderAbilityEntity(botBrain, abilUnbreakable, unitHealTarget)
 		elseif abilHealingWave:CanActivate() then
 			core.OrderAbilityEntity(botBrain, abilHealingWave, unitHealTarget)
-		elseif itemAstrolabe and itemAstrolabe:CanActivate() then
+		elseif itemAstrolabe and itemAstrolabe:CanActivate() and itemAstrolabe:IsValid() then
 			local unitSelf = core.unitSelf
 			local vecTargetPosition = unitHealTarget:GetPosition()
 			local nDistance = Vector3.Distance2D(unitSelf:GetPosition(), vecTargetPosition)

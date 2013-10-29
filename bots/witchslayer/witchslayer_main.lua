@@ -287,6 +287,11 @@ shoppingLib.CheckItemBuild = WitchSlayerItemBuilder
 --please jump to line 555
 
 --------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 2, ShortSolo = 2, LongSolo = 1, ShortSupport = 5, LongSupport = 5, ShortCarry = 2, LongCarry = 1}
+
+--------------------------------
 -- Skills
 --------------------------------
 function object:SkillBuild()
@@ -711,7 +716,7 @@ function behaviorLib.HealExecute(botBrain)
 	local unitHealTarget = behaviorLib.unitHealTarget
 	local nHealTimeToLive = behaviorLib.nHealTimeToLive
 	
-	if unitHealTarget and itemAstrolabe and itemAstrolabe:CanActivate() then 
+	if unitHealTarget and itemAstrolabe and itemAstrolabe:CanActivate() and itemAstrolabe:IsValid() then 
 		local unitSelf = core.unitSelf
 		local vecTargetPosition = unitHealTarget:GetPosition()
 		local nDistance = Vector3.Distance2D(unitSelf:GetPosition(), vecTargetPosition)

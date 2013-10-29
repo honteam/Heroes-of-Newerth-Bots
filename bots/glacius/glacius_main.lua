@@ -52,6 +52,11 @@ local sqrtTwo = math.sqrt(2)
 
 BotEcho('loading glacius_main...')
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 3, ShortSolo = 1, LongSolo = 1, ShortSupport = 5, LongSupport = 4, ShortCarry = 1, LongCarry = 1}
+
 object.heroName = 'Hero_Frosty'
 
 --------------------------------
@@ -477,7 +482,7 @@ function behaviorLib.HealExecute(botBrain)
 	local unitHealTarget = behaviorLib.unitHealTarget
 	local nHealTimeToLive = behaviorLib.nHealTimeToLive
 	
-	if unitHealTarget and itemAstrolabe and itemAstrolabe:CanActivate() then 
+	if unitHealTarget and itemAstrolabe and itemAstrolabe:CanActivate() and itemAstrolabe:IsValid() then 
 		local unitSelf = core.unitSelf
 		local vecTargetPosition = unitHealTarget:GetPosition()
 		local nDistance = Vector3.Distance2D(unitSelf:GetPosition(), vecTargetPosition)

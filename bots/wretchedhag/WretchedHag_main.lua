@@ -59,6 +59,11 @@ local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
  
 BotEcho('loading WretchedHag_main...')
+
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 5, ShortSolo = 4, LongSolo = 5, ShortSupport = 2, LongSupport = 2, ShortCarry = 4, LongCarry = 5}
  
 ---------------------------------
 --          Constants          --
