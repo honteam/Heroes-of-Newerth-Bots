@@ -320,3 +320,10 @@ behaviorLib.LateItems =
 --]]
 
 BotEcho('finished loading chronos_main')
+
+--[[
+function behaviorLib.ElderParasiteExecute(botBrain)
+	BotEcho("overriden!")
+end
+behaviorLib.ElderParasiteBehavior["Execute"] = behaviorLib.ElderParasiteExecute
+]]

@@ -7,7 +7,7 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
 
-function behaviorLib.addCurrentItemBehaviors()  --run on initialization
+function behaviorLib.addCurrentItemBehaviors()  --run on initialization, too add current item behaviors.
 	local inventory = core.unitSelf:GetInventory(false)
 	for slot = 1, 6 do
 		local curItem = inventory[slot]
@@ -18,7 +18,7 @@ function behaviorLib.addCurrentItemBehaviors()  --run on initialization
 end
 	
 function behaviorLib.addItemBehavior(itemName, remove)
-	local bDebugEchos = false
+	local bDebugEchos = true
 	remove = (remove == nil and false) or remove
 	behaviorLib.behaviorToModify=nil
 	
@@ -38,12 +38,16 @@ function behaviorLib.addItemBehavior(itemName, remove)
 		behaviorLib.behaviorToModify = behaviorLib.AstrolabeBehavior
 	elseif itemName=="Item_SacrificialStone" then
 		behaviorLib.behaviorToModify = behaviorLib.SacrificialStoneBehavior
+	elseif itemName=="Item_BloodChalice" then
+		behaviorLib.behaviorToModify = behaviorLib.BloodChaliceBehavior
+	elseif itemName=="Item_Lightning2" then
+		behaviorLib.behaviorToModify = behaviorLib.ChargedHammerBehavior
+	elseif itemName=="Item_ElderParasite" then
+		behaviorLib.behaviorToModify = behaviorLib.ElderParasiteBehavior	
 	end
 	
 	
 	if behaviorLib.behaviorToModify~=nil then
-		--BotEcho("^gfound behavior for item! "..itemName)
-		--core.printTable(behaviorLib.behaviorToModify)
 		if remove then
 			if core.RemoveByValue(behaviorLib.tBehaviors, behaviorLib.behaviorToModify) then
 				if bDebugEchos then BotEcho("^rRemoved "..itemName) end
@@ -82,7 +86,7 @@ function behaviorLib.RingOfSorceryUtility(botBrain)
 		nUtility = (1-unitSelf:GetManaPercent())*25 --this bots mana pool
 		local tTargets = core.localUnits["AllyHeroes"]  -- Get allies close to the bot
 		for key, hero in pairs(tTargets) do
-			nRoSRange = 700
+			local nRoSRange = 700
 			if (Vector3.Distance2DSq(vecMyPosition, hero:GetPosition()) < nRoSRange*nRoSRange) then
 				nUtility = nUtility + (1-hero:GetManaPercent())*25 --another bots mana pool
 			end
@@ -188,7 +192,7 @@ function behaviorLib.UseManaPotExecute(botBrain)
 	local unitSelf = core.unitSelf
 	local vecSelfPos = unitSelf:GetPosition()
 	
-	if not core.IsTableEmpty(tManaPots) then
+	if behaviorLib.itemManaPot then
 		local vecRetreatDirection = behaviorLib.GetSafeDrinkDirection()
 		-- Check if it is safe to drink
 		if vecRetreatDirection then
@@ -317,7 +321,7 @@ function behaviorLib.UseHealthPotExecute(botBrain)
 	local unitSelf = core.unitSelf
 	local vecSelfPos = unitSelf:GetPosition()
 	
-	if not core.IsTableEmpty(tHealthPots) then
+	if behaviorLib.itemHealthPot then
 		local vecRetreatDirection = behaviorLib.GetSafeDrinkDirection()
 		-- Check if it is safe to drink
 		if vecRetreatDirection then
@@ -625,65 +629,14 @@ behaviorLib.AstrolabeBehavior["Execute"] = behaviorLib.AstrolabeExecute
 behaviorLib.AstrolabeBehavior["Name"] = "UseAstrolabe"
 
 
-
-function behaviorLib.AstrolabeUtility(botBrain)
-	local bDebugEchos = false
-	local nUtility = 0
-
-	local unitSelf = core.unitSelf
-	behaviorLib.unitHealTarget = nil
-	
-	behaviorLib.itemAstrolabe = core.GetItem("Item_Astrolabe")
-	
-	local nHighestUtility = 0
-	local unitTarget = nil
-	local nTargetTimeToLive = nil
-	local sAbilName = ""
-	if behaviorLib.itemAstrolabe and behaviorLib.itemAstrolabe:CanActivate() then
-		local tTargets = core.CopyTable(core.localUnits["AllyHeroes"])
-		tTargets[unitSelf:GetUniqueID()] = unitSelf --I am also a target
-		for key, hero in pairs(tTargets) do
-			--Don't heal ourself if we are going to head back to the well anyway, 
-			--	as it could cause us to retrace half a walkback
-			if hero:GetUniqueID() ~= unitSelf:GetUniqueID() or core.GetCurrentBehaviorName(botBrain) ~= "HealAtWell" then
-				local nCurrentUtility = 0
-				
-				local nHealthUtility = behaviorLib.HealHealthUtilityFn(hero) * behaviorLib.nHealHealthUtilityMul
-				local nTimeToLiveUtility = nil
-				local nCurrentTimeToLive = nil
-				nTimeToLiveUtility, nCurrentTimeToLive = behaviorLib.TimeToLiveUtilityFn(hero)
-				nTimeToLiveUtility = nTimeToLiveUtility * behaviorLib.nHealTimeToLiveUtilityMul
-				nCurrentUtility = nHealthUtility + nTimeToLiveUtility
-				
-				if nCurrentUtility > nHighestUtility then
-					nHighestUtility = nCurrentUtility
-					nTargetTimeToLive = nCurrentTimeToLive
-					unitTarget = hero
-					if bDebugEchos then BotEcho(format("%s Heal util: %d  health: %d  ttl:%d", hero:GetTypeName(), nCurrentUtility, nHealthUtility, nTimeToLiveUtility)) end
-				end
-			end
-		end
-
-		if unitTarget then
-			nUtility = nHighestUtility
-			behaviorLib.unitHealTarget = unitTarget
-			behaviorLib.nHealTimeToLive = nTargetTimeToLive
-		end		
-	end
-	
-	nUtility = nUtility * behaviorLib.nHealUtilityMul
-	if botBrain.bDebugUtility == true and nUtility ~= 0 then
-		BotEcho(format("  HelpUtility: %g", nUtility))
-	end
-	return nUtility
-end
-
-
+------------------------------------
+--   	Sacrificial Stone 		  --
+------------------------------------
 
 function behaviorLib.SacrificialStoneUtility(botBrain)
 	local unitSelf = core.unitSelf
 	behaviorLib.itemSacrificialStone = core.GetItem("Item_SacrificialStone")
-	if (behaviorLib.itemSacrificialStone~=nil and behaviorLib.itemSacrificialStone:CanActivate()) then
+	if (behaviorLib.itemSacrificialStone and behaviorLib.itemSacrificialStone:CanActivate()) then
 		return 100
 	else
 		return 0
@@ -698,3 +651,95 @@ behaviorLib.SacrificialStoneBehavior = {}
 behaviorLib.SacrificialStoneBehavior["Utility"] = behaviorLib.SacrificialStoneUtility
 behaviorLib.SacrificialStoneBehavior["Execute"] = behaviorLib.SacrificialStoneExecute
 behaviorLib.SacrificialStoneBehavior["Name"] = "UseSacrificialStone"
+
+
+------------------------------------
+--  		Blood Chalice 		  --
+------------------------------------
+function behaviorLib.BloodChaliceUtility(botBrain)
+	local unitSelf = core.unitSelf
+	behaviorLib.itemBloodChalice = core.GetItem("Item_BloodChalice")
+	if (behaviorLib.itemBloodChalice and behaviorLib.itemBloodChalice:CanActivate()) then
+		
+		local unitTarget = behaviorLib.heroTarget
+		if unitTarget and unitTarget:GetHealthPercent() <= .2 and Vector3.Distance2DSq(unitSelf:GetPosition(), unitTarget:GetPosition()) < (700*700) then
+			--about to get a kill! Yay! Congrats! Use chalice and reap the benefits of being an AI who has 1200 APM.
+			return 100
+		end
+		if unitSelf:GetManaPercent() < 0.3 and unitSelf:GetHealthPercent() > 0.7 then
+			return 100
+		end
+	end
+	return 0
+end
+
+function behaviorLib.BloodChaliceExecute(botBrain)
+	local unitSelf = core.unitSelf
+	return core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemBloodChalice)
+end
+behaviorLib.BloodChaliceBehavior = {}
+behaviorLib.BloodChaliceBehavior["Utility"] = behaviorLib.BloodChaliceUtility
+behaviorLib.BloodChaliceBehavior["Execute"] = behaviorLib.BloodChaliceExecute
+behaviorLib.BloodChaliceBehavior["Name"] = "UseBloodChalice"
+
+------------------------------------
+--  		Charged Hammer 		  --
+------------------------------------
+behaviorLib.unitChargedHammerTarget = nil
+function behaviorLib.ChargedHammerUtility(botBrain)
+	local unitSelf = core.unitSelf
+	behaviorLib.itemChargedHammer = core.GetItem("Item_Lightning2")
+	if behaviorLib.itemChargedHammer and behaviorLib.itemChargedHammer:CanActivate() and behaviorLib.heroTarget then --only when we have a target
+		local tAllyHeroes = HoN.GetHeroes(core.myTeam)
+		behaviorLib.unitChargedHammerTarget = unitSelf
+		local nRange = behaviorLib.itemChargedHammer:GetRange()
+		for i, hero in pairs(tAllyHeroes) do
+			--core.DrawDebugArrow(unitSelf:GetPosition(), hero:GetPosition(), 'white')
+			local nDistanceSq = Vector3.Distance2DSq(unitSelf:GetPosition(), hero:GetPosition())
+			if hero:IsValid() and hero:IsAlive() and not hero:HasState("State_Item5C") and behaviorLib.unitChargedHammerTarget:GetHealthPercent() > hero:GetHealthPercent() and nDistanceSq < nRange * nRange then
+				behaviorLib.unitChargedHammerTarget = hero
+			end
+		end
+		if behaviorLib.unitChargedHammerTarget ~= nil then
+			--core.DrawDebugArrow(unitSelf:GetPosition(), behaviorLib.unitChargedHammerTarget:GetPosition(), 'green')
+			return Clamp(80-behaviorLib.unitChargedHammerTarget:GetHealthPercent()*100, 0, 100)
+		end
+	end
+	return 0
+end
+
+function behaviorLib.ChargedHammerExecute(botBrain)
+	local unitSelf = core.unitSelf
+	return core.OrderItemEntityClamp(botBrain, unitSelf, behaviorLib.itemChargedHammer, behaviorLib.unitChargedHammerTarget, false)
+end
+behaviorLib.ChargedHammerBehavior = {}
+behaviorLib.ChargedHammerBehavior["Utility"] = behaviorLib.ChargedHammerUtility
+behaviorLib.ChargedHammerBehavior["Execute"] = behaviorLib.ChargedHammerExecute
+behaviorLib.ChargedHammerBehavior["Name"] = "UseChargedHammer"
+
+------------------------------------
+--  		Elder Parasite		  --
+------------------------------------
+behaviorLib.nElderParasiteThreshhold = 30
+function behaviorLib.ElderParasiteUtility(botBrain)
+	local unitSelf = core.unitSelf
+	behaviorLib.itemElderParasite = core.GetItem("Item_ElderParasite")
+	if behaviorLib.itemElderParasite and behaviorLib.itemElderParasite:CanActivate() and not unitSelf:IsImmobilized() and not unitSelf:IsStunned() then
+		if (behaviorLib.lastHarassUtil > behaviorLib.nElderParasiteThreshhold) and behaviorLib.heroTarget then	--only when we have a target
+			return 100
+		end
+		if core.GetLastBehaviorName(botBrain) == "RetreatFromThreat" or core.GetLastBehaviorName(botBrain) == "HealAtWell" then --we are RUNNING FOR OUR LIVES!
+			return 100
+		end
+	end
+	return 0
+end
+
+function behaviorLib.ElderParasiteExecute(botBrain)
+	local unitSelf = core.unitSelf
+	return core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemElderParasite)
+end
+behaviorLib.ElderParasiteBehavior = {}
+behaviorLib.ElderParasiteBehavior["Utility"] = behaviorLib.ElderParasiteUtility
+behaviorLib.ElderParasiteBehavior["Execute"] = behaviorLib.ElderParasiteExecute
+behaviorLib.ElderParasiteBehavior["Name"] = "UseElderParasite"
