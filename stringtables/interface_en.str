@@ -658,6 +658,8 @@ options_label_hold_keybind					Order Hold
 options_label_cancel_and_hold_keybind				Order Cancel And Hold
 options_label_move_keybind					Order Move
 options_label_patrol_keybind				Order Patrol
+options_label_user_best_courier 			Use Courier
+options_label_user_best_courier_tip 		Causes the courier to get your items from your stash and deliver them to you as fast as possible.
 options_label_next_unit_keybind				Next Unit
 options_label_previous_unit_keybind			Previous Unit
 options_label_next_centered_keybind			Next Unit (Centered)
@@ -3622,10 +3624,18 @@ mstore_product1905_name     Superhero Bundle
 mstore_product1905_desc     Feel the heroic blood running through your veins
 mstore_product1906_name     Alien Bundle
 mstore_product1906_desc     I want to believe.
+mstore_product1907_name		Sylvia
+mstore_product1908_name		Hero Alt- Sylvia
 mstore_product1909_name		TDMonkey King
 mstore_product1910_name		Hero Alt- TDMonkey King
+mstore_product1911_name		Snot Keeper
+mstore_product1912_name		Hero Alt- Snot Keeper
+mstore_product1913_name		Earthroc Pebbles
+mstore_product1914_name		Hero Alt- Earthroc Pebbles
 mstore_product1915_name		Cossack
 mstore_product1916_name		Hero Alt- Cossack
+mstore_product1917_name		Ogre Blacksmith
+mstore_product1918_name		Hero Alt- Ogre Blacksmith
 mstore_product1921_name		Cowardly Night Hound
 mstore_product1922_name		Hero Alt- Cowardly Night Hound
 mstore_product1923_name		Robotron
@@ -3639,6 +3649,18 @@ mstore_product1930_name		Hero Alt- Tin Hammer
 mstore_product1931_name		Good Witch Pearl
 mstore_product1932_name		Hero Alt- Good Witch Pearl
 mstore_product1933_name     Hero Alt- Golden Pebbles
+mstore_product1934_name     El Diablo
+mstore_product1935_name     Hero Alt- El Diablo
+mstore_product1936_name     Hades
+mstore_product1937_name     Hero Alt- Hades
+mstore_product1938_name     Set
+mstore_product1939_name     Hero Alt- Set
+mstore_product1940_name     Ymir
+mstore_product1941_name     Hero Alt- Ymir
+mstore_product1942_name     Camazotz
+mstore_product1943_name     Hero Alt- Camazotz
+mstore_product1944_name     Hel
+mstore_product1945_name     Hero Alt- Hel
 mstore_product1986_name     Hero Alt- Dreadknight Salforis
 mstore_product1987_name     Hero Alt- Legendary Valkyrie
 mstore_product1988_name     Hero Alt- Sachi Swiftblade
@@ -3652,36 +3674,11 @@ mstore_product1995_name     Iron Maiden
 mstore_product1996_name     Hero Alt- Iron Maiden
 mstore_product1997_name     Poison Circe
 mstore_product1998_name     Hero Alt- Poison Circe
-mstore_product1999_name     Pirate Announcer
-mstore_product1999_desc		Yar, it be a fine day to announce victory from the topsails! Yar, yar, MMR!
-mstore_product2000_name     Rainbow Taunt
-mstore_product2000_desc		It's all rainbows and sparkles when you're this good.
-mstore_product2001_name     Super Taunt
-mstore_product2001_desc		Use the taunt as super as you are!
-mstore_product2002_name     RoboReaper
-mstore_product2003_name     Hero Alt- RoboReaper
-mstore_product2004_name     Cyber Master of Arms
-mstore_product2005_name     Hero Alt- Cyber Master of Arms
-mstore_product2006_name     Sally Slither
-mstore_product2007_name     Hero Alt- Sally Slither
-mstore_product2008_name     Bobbi Bramble
-mstore_product2009_name     Hero Alt- Bobbi Bramble
-mstore_product2010_name     Amanda Panda
-mstore_product2011_name     Hero Alt- Amanda Panda
-mstore_product2012_name     Basher Behemoth
-mstore_product2013_name     Hero Alt- Basher Behemoth
-mstore_product2014_name     Ultimate Prophet
-mstore_product2015_name     Hero Alt- Ultimate Prophet
-mstore_product2018_name     Arbinger
-mstore_product2019_name     Hero Alt- Arbinger
-mstore_product2020_name     Orbode
-mstore_product2021_name     Hero Alt- Orbode
-mstore_product2022_name     Omen
-mstore_product2023_name     Hero Alt- Omen
-mstore_product2024_name     Edium
-mstore_product2025_name     Hero Alt- Edium
-mstore_product2026_name     Augur
-mstore_product2027_name     Hero Alt- Augur
+mstore_product2061_name     Cinema Savant
+mstore_product2062_name		Circe the Deceiver
+mstore_product2063_name		Iron Maiden
+mstore_product2064_name		Poison Circe
+mstore_product2065_name     GM Badge Icon
 
 mstore_product999999001_name	Default Account Icon
 mstore_product999999002_name	Default Chat Symbol
@@ -4032,26 +4029,26 @@ mstore_collectorsEditionSet15_owned_tip		This avatar is part of the Sang-La Pack
 mstore_collectorsEditionSet15_expired		Sang-La Pack - Unavailable
 mstore_collectorsEditionSet15_expired_tip	This avatar is part of the Sang-La Pack and is not currently available for purchase.
 
-mstore_collectorsEditionSet16				Legion Robots
-mstore_collectorsEditionSet16_tip			This avatar is part of the Legion Robots pack.
-mstore_collectorsEditionSet16_owned			Legion Robots
-mstore_collectorsEditionSet16_owned_tip		This avatar is part of the Legion Robots pack.
-mstore_collectorsEditionSet16_expired		Legion Robots - Unavailable
-mstore_collectorsEditionSet16_expired_tip	This avatar is part of the Legion Robots pack and is not currently available for purchase.
+mstore_collectorsEditionSet16				Heroes of Oz
+mstore_collectorsEditionSet16_tip			This avatar is part of the Heroes of Oz pack.
+mstore_collectorsEditionSet16_owned			Heroes of Oz
+mstore_collectorsEditionSet16_owned_tip		This avatar is part of the Heroes of Oz pack.
+mstore_collectorsEditionSet16_expired		Heroes of Oz - Unavailable
+mstore_collectorsEditionSet16_expired_tip	This avatar is part of the Heroes of Oz pack and is not currently available for purchase.
 
-mstore_collectorsEditionSet17				Hellbourne Robots
-mstore_collectorsEditionSet17_tip			This avatar is part of the Hellbourne Robots pack.
-mstore_collectorsEditionSet17_owned			Hellbourne Robots
-mstore_collectorsEditionSet17_owned_tip		This avatar is part of the Hellbourne Robots pack.
-mstore_collectorsEditionSet17_expired		Hellbourne Robots - Unavailable
-mstore_collectorsEditionSet17_expired_tip	This avatar is part of the Hellbourne Robots pack and is not currently available for purchase.
+mstore_collectorsEditionSet17				Elder Evils
+mstore_collectorsEditionSet17_tip			This avatar is part of the Elder Evils pack.
+mstore_collectorsEditionSet17_owned			Elder Evils
+mstore_collectorsEditionSet17_owned_tip		This avatar is part of the Elder Evils pack.
+mstore_collectorsEditionSet17_expired		Elder Evils - Unavailable
+mstore_collectorsEditionSet17_expired_tip	This avatar is part of the Elder Evils pack and is not currently available for purchase.
 
-mstore_collectorsEditionSet18				The Blind Disciples
-mstore_collectorsEditionSet18_tip			This avatar is part of The Blind Disciples pack.
-mstore_collectorsEditionSet18_owned			The Blind Disciples
-mstore_collectorsEditionSet18_owned_tip		This avatar is part of The Blind Disciples pack.
-mstore_collectorsEditionSet18_expired		The Blind Disciples - Unavailable
-mstore_collectorsEditionSet18_expired_tip	This avatar is part of The Blind Disciples pack and is not currently available for purchase.
+mstore_collectorsEditionSet18				Revenge of the Neutrals
+mstore_collectorsEditionSet18_tip			This avatar is part of the Revenge of the Neutrals pack.
+mstore_collectorsEditionSet18_owned			Revenge of the Neutrals
+mstore_collectorsEditionSet18_owned_tip		This avatar is part of the Revenge of the Neutrals pack.
+mstore_collectorsEditionSet18_expired		Revenge of the Neutrals - Unavailable
+mstore_collectorsEditionSet18_expired_tip	This avatar is part of the Revenge of the Neutrals pack and is not currently available for purchase.
 
 mstore_ultimateedition					Ultimate Avatar
 mstore_ultimateedition_tip				This avatar is an Ultimate Avatar.
@@ -4498,6 +4495,7 @@ mstore_Hero_Bushwack_name			Bushwack
 mstore_Hero_Salomon_name			Salomon
 mstore_Hero_Prisoner_name			Prisoner 945
 mstore_Hero_SirBenzington_name		Sir Benzington
+mstore_Hero_Circe_name				Circe the Deceiver
 
 //Account Icons
 mstore_unlock_icon_btn				Unlock Icon Slot
@@ -5066,7 +5064,7 @@ courier_state_Returning_desc				The courier is returning to the well!
 courier_state_Roaming_desc					The courier is out, being controlled by someone. However, it is not performing any particular task.
 courier_state_Dead_desc						The courier is dead!
 
-courier_action 								Courier
+courier_action 								Use Courier
 courier_action_desc 						Clicking this will cause the courier to collect what it can carry from your stash, deliver them to you as fast as it can, and then return to the well!
 
 courier_status_dead 						Courier Dead
@@ -5081,6 +5079,8 @@ courier_no_controller 						Unused
 courier_no_controller_desc					Currently there is no player using or controlling the courier.
 
 courier_controller_desc 					The courier is currently being controlled by, or executing actions for {playerName}.
+
+courier_uncontrollable 						This courier cannot be controlled by you because the player whom owns it has has not shared it with you.
 
 // game_chat.package
 gamechat_button_send_message				Send Message
@@ -9387,6 +9387,11 @@ hero_tip_offensive_tip_Hero_SirBenzington_1		Lance-A-Long can deal a large amoun
 hero_tip_offensive_tip_Hero_SirBenzington_2		Knightfall is an amazing initiation tool but can also be used defensively. Don't forget to activate your ult when in danger to survive for a few more seconds.
 hero_tip_defensive_tip_Hero_SirBenzington_1		Joust allows Benzington to charge in a line at considerable distances, the ability however has a considerable wind up, try to sidestep to dodge it.
 hero_tip_defensive_tip_Hero_SirBenzington_2		Knightfall can deal alot of damage in a big area, but will also follow the target he chooses. Try to avoid clumping up from the target declared by Benzington.
+
+hero_tip_offensive_tip_Hero_Circe_1				Doppelgangers have a low mana cost and cooldown. Use them to scout ahead safely or build up an army prior to a fight.
+hero_tip_offensive_tip_Hero_Circe_2				Deceive can be used as both a ganking or escape skill. Take advantage of the invisibility time to setup a good position for your Twisted Visage.
+hero_tip_defensive_tip_Hero_Circe_1				Doppelgangers add alot of damage to a team fight however they are very vulnerable when attacked.
+hero_tip_defensive_tip_Hero_Circe_2				Twisted Visage has a notable link and channel time before Circe can clone the enemy. This can be disrupted by moving out of range or by interrupting Circe.
 
 // Match Rewards
 match_stat_rewards_player_breakdown				Player Breakdown:
