@@ -972,7 +972,7 @@ Note:
 	"Jungle" is considered a lane.
 	"Short" = bot lane solo for legion, top for hellbourne
 	"Long" = top lane solo for legion, bot for hellbourne
-	Trilanes and dual mid lanes are not currently supported, but could be implemented in the future?
+	Trilanes and dual mid lanes are not currently supported, but could be implemented in the future!
 
 Each bot can specify a preference for the following 8 lanes+role combinations:
 	Jungle (allied jungle only, I assume?)
@@ -997,16 +997,16 @@ Rough psuedo code ideas for calculating initial lane assignment:
 
 Method 2 (bot preference based):
 1) Scan team and import tables of bot preferences.  (If no table exists for a bot, fill it with default values).
-2) Scan all possible combinations of lanes and find the highest sum of the preferences. On easy mode, these values should randomely get
-	numbers added/subttracted to them, for odd laning combinations.
-3) Decide tie-breakers via: 2-1-1 w/jungle then 2-1-2, then splitting ranged, then longest range mid, then random between remaining combos.
-4) Echo back to bots their lane assignments (purely to give bots a chance to select an item build appropriate for their lane)
+2) Scan "all possible combinations" of lanes and find the highest sum of the preferences. On easy mode, these values should randomely get
+	numbers added/subttracted to them, for odd laning combinations. Can exit combos early if a better score can't be reached.
+3) Echo back to bots their lane assignments (purely to give bots a chance to select an item build appropriate for their lane)
 
 --]]
 
 object.nLaneProximityThreshold = 0.60 --how close you need to be (percentage-wise) to be "in" a lane
 
 object.lanePreferences = {
+--	This is an example of how this table will look:
 --	{ Jungle = 0, Mid = 1, ShortSolo = 1, LongSolo = 1, ShortSupport = 5, LongSupport = 5, ShortCarry = 1, LongCarry = 1 , hero = nil },
 --	{ Jungle = 0, Mid = 5, ShortSolo = 2, LongSolo = 1, ShortSupport = 1, LongSupport = 1, ShortCarry = 3, LongCarry = 3 , hero = nil },
 --	{ Jungle = 5, Mid = 2, ShortSolo = 2, LongSolo = 1, ShortSupport = 1, LongSupport = 1, ShortCarry = 2, LongCarry = 2 , hero = nil },
@@ -1014,12 +1014,12 @@ object.lanePreferences = {
 --	{ Jungle = 0, Mid = 5, ShortSolo = 4, LongSolo = 1, ShortSupport = 1, LongSupport = 1, ShortCarry = 4, LongCarry = 3 , hero = nil }
 }
 
-local nHighestCombo = -500
+local nHighestCombo = -9999
 object.tCombinations = {}
 
 -- This is to make sure that a terrible lane for a bot won't be forced onto it unless absolutely necessary.
-local tValueMultipliers = {-3, -1, 1, 2, 3, 5, 5}
-
+--   This is a preference-to-score map.
+local tValueMultipliers = { -3, -1, 1, 2, 3, 5, 5}
 
 local function validLanes(tNewCurrentLanes)	
 	--core.printTable(tNewCurrentLanes) --uncomment to see lane checking in progress
@@ -1028,7 +1028,6 @@ local function validLanes(tNewCurrentLanes)
 	local nShort=0
 	local nJungle=0
 	for key, value in pairs(tNewCurrentLanes) do
-		local hero = object.lanePreferences[key].hero
 		if string.find(value, "Short") then
 			nShort=nShort+1
 		elseif string.find(value, "Long") then
@@ -1084,14 +1083,15 @@ local function sumPreferences(tPossibleLanes, nIndex, nSum, tCurrentLanes)
 				nHighestCombo = nSum
 				object.tCombinations = {}
 				tinsert(object.tCombinations, tCurrentLanes)
-			-- we are only going to choose the first best combination. This is in here for possible
-			--future development.
+				
+			-- TODO:we are only going to choose the first best combination. This is in here for possible
+			--   future development.
 			--elseif nSum == nHighestCombo and validLanes(tNewCurrentLanes) then 
 				--tinsert(object.tCombinations, tNewCurrentLanes)
 			end
 		else --not finished looking at units yet.
 			--             /   multiplier  /  look into bots table  /  get bot     /get lane
-			nSum = nOrigSum + tValueMultipliers[object.lanePreferences[nIndex][tPossibleLanes[i]] + 1]-- +1 as lanePreferences starts at 0
+			nSum = nOrigSum + tValueMultipliers[object.lanePreferences[nIndex][tPossibleLanes[i]] + 1] -- +1 as lanePreferences starts at 0
 			-- Stop looking through this branch if there is no way we could beat the current highest score
 			if nSum + ((core.NumberElements(object.tBotsLeft) - nIndex) * tValueMultipliers[#tValueMultipliers]) >= nHighestCombo then 
 				local tNewCurrentLanes = core.CopyTable(tCurrentLanes)
@@ -1274,8 +1274,8 @@ function object:BuildLanes()
 	end	
 	-- /Tutorial
 
-	object.lanePreferences={}
-	nHighestCombo=-500
+	object.lanePreferences = {}
+	nHighestCombo = -9999
 	-- Get preferences from bots.
 	if core.NumberElements(object.lanePreferences) < core.NumberElements(object.tBotsLeft) then
 		for _, unitHero in pairs(object.tBotsLeft) do
@@ -1299,10 +1299,10 @@ function object:BuildLanes()
 	end
 	
 	--Omit certain lane roles due to where human players are. *This will be handled in validLanes later, but this is for better processing time.
-	if (#tLongLane>0) then
+	if (#tLongLane > 0) then
 		tremove(tPossibleLanes,"LongSolo")
 		tremove(tPossibleLanes,"LongCarry")
-		if (#tLongLane>1) then
+		if (#tLongLane > 1) then
 			tremove(tPossibleLanes,"LongSupport")
 		end
 	end
