@@ -309,11 +309,10 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 local function funcFindItemsOverride(botBrain)
 	object.FindItemsOld(botBrain)
 
-	core.ValidateItem(core.itemAstrolabe)
 	core.ValidateItem(core.itemShrunkenHead)
 	--core.ValidateItem(core.itemWardOfSight)
 	
-	if --[[core.itemWardOfSight and --]] core.itemAstrolabe and core.itemShrunkenHead then
+	if --[[core.itemWardOfSight and --]] core.itemShrunkenHead then
 		return
 	end
 
@@ -321,15 +320,7 @@ local function funcFindItemsOverride(botBrain)
 	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
 		if curItem then
-			if core.itemAstrolabe == nil and curItem:GetName() == "Item_Astrolabe" then
-				core.itemAstrolabe = core.WrapInTable(curItem)
-				core.itemAstrolabe.nHealValue = 200
-				core.itemAstrolabe.nRadius = 600
-			--[[	
-			elseif core.itemWardOfSight == nil and curItem:GetName() == "Item_FlamingEye" then
-				core.itemWardOfSight = core.WrapInTable(curItem)
-				core.itemWardOfSight.nRadius = 600 --]]
-			elseif core.itemShrunkenHead == nil and curItem:GetName() == "Item_Immunity" then
+			if core.itemShrunkenHead == nil and curItem:GetName() == "Item_Immunity" then
 				core.itemShrunkenHead = core.WrapInTable(curItem)
 			end
 		end
@@ -561,8 +552,6 @@ function behaviorLib.HealUtility(botBrain)
 	local unitSelf = core.unitSelf
 	behaviorLib.unitHealTarget = nil
 	
-	local itemAstrolabe = core.itemAstrolabe
-	
 	local abilMelody = skills.abilProtectiveMelody
 	local nUltimateTTL = object.GetUltimateTimeToLiveThreshold() 
 	
@@ -571,7 +560,7 @@ function behaviorLib.HealUtility(botBrain)
 	local nTargetTimeToLive = nil
 	local sAbilName = ""
 	
-	if (itemAstrolabe and itemAstrolabe:CanActivate()) or abilMelody:CanActivate() then
+	if abilMelody:CanActivate() then
 		local tTargets = core.CopyTable(core.localUnits["AllyHeroes"])
 		tTargets[unitSelf:GetUniqueID()] = unitSelf --I am also a target
 		local nMyID = unitSelf:GetUniqueID()
@@ -604,11 +593,6 @@ function behaviorLib.HealUtility(botBrain)
 				sAbilName = "Protective Melody"
 			end
 			
-			if nUtility == 0 and (itemAstrolabe and itemAstrolabe:CanActivate()) then
-				nUtility = nHighestUtility				
-				sAbilName = "Astrolabe"
-			end
-			
 			if nUtility ~= 0 then
 				behaviorLib.unitHealTarget = unitTarget
 				behaviorLib.nHealTimeToLive = nTargetTimeToLive
@@ -630,7 +614,6 @@ end
 
 function behaviorLib.HealExecute(botBrain) -- this is used for Astrolabe ASWELL as Ultimate triggering
 	local abilMelody = skills.abilProtectiveMelody
-	local itemAstrolabe = core.itemAstrolabe
 	
 	local nUltimateTTL = object.GetUltimateTimeToLiveThreshold () 
 	local unitHealTarget = behaviorLib.unitHealTarget
@@ -646,14 +629,6 @@ function behaviorLib.HealExecute(botBrain) -- this is used for Astrolabe ASWELL 
 	if unitHealTarget then 
 		if nHealTimeToLive <= nUltimateTTL and abilMelody:CanActivate() and unitHealTarget ~= unitSelf  then  --only attempt ult for other players (not for self, lol)
 			ProtectiveMelodyExecute(botBrain)
-		elseif itemAstrolabe and itemAstrolabe:CanActivate() then
-			local vecTargetPosition = unitHealTarget:GetPosition()
-			local nDistance = Vector3.Distance2D(unitSelf:GetPosition(), vecTargetPosition)
-			if nDistance < itemAstrolabe.nRadius then
-				core.OrderItemClamp(botBrain, unitSelf, itemAstrolabe)
-			else
-				core.OrderMoveToUnitClamp(botBrain, unitSelf, unitHealTarget)
-			end
 		else 
 			return false
 		end

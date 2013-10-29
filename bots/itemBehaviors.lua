@@ -7,6 +7,9 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
 
+--this is so that developers can tell this code to ignore certain items they have written bot-specific code for.
+behaviorLib.tDontUseDefaultItemBehavior = {}
+
 function behaviorLib.addCurrentItemBehaviors()  --run on initialization, too add current item behaviors.
 	local inventory = core.unitSelf:GetInventory(false)
 	for slot = 1, 6 do
@@ -16,38 +19,52 @@ function behaviorLib.addCurrentItemBehaviors()  --run on initialization, too add
 		end
 	end
 end
+
 	
 function behaviorLib.addItemBehavior(itemName, remove)
-	local bDebugEchos = true
-	remove = (remove == nil and false) or remove
-	behaviorLib.behaviorToModify=nil
+	local bDebugEchos = false
 	
-	if itemName=="Item_Replenish" then
+	-- Ignore items on our ignore list
+	if core.tableContains(behaviorLib.tDontUseDefaultItemBehavior, itemName) > 0 then
+		if bDebugEchos then BotEcho("^rDisabled "..itemName) end
+		return
+	end
+	
+	remove = (remove == nil and false) or remove
+	behaviorLib.behaviorToModify = nil
+	
+	if itemName == "Item_Replenish" then
 		behaviorLib.behaviorToModify = behaviorLib.RingOfSorceryBehavior
-	elseif itemName=="Item_ManaPotion" then
+	elseif itemName == "Item_ManaPotion" then
 		behaviorLib.behaviorToModify = behaviorLib.UseManaPotBehavior
-	elseif itemName=="Item_Bottle" then
+	elseif itemName == "Item_Bottle" then
 		behaviorLib.behaviorToModify = behaviorLib.UseBottleBehavior
-	elseif itemName=="Item_HealthPotion" then
+	elseif itemName == "Item_HealthPotion" then
 		behaviorLib.behaviorToModify = behaviorLib.UseHealthPotBehavior
-	elseif itemName=="Item_RunesOfTheBlight" then
+	elseif itemName == "Item_RunesOfTheBlight" then
 		behaviorLib.behaviorToModify = behaviorLib.UseRunesOfTheBlightBehavior
-	elseif (itemName=="Item_ManaBattery" or itemName=="Item_PowerSupply") then
+	elseif (itemName == "Item_ManaBattery" or itemName == "Item_PowerSupply") then
 		behaviorLib.behaviorToModify = behaviorLib.UseBatterySupplyBehavior
-	elseif itemName=="Item_Astrolabe" then
+	elseif itemName == "Item_Astrolabe" then
 		behaviorLib.behaviorToModify = behaviorLib.AstrolabeBehavior
-	elseif itemName=="Item_SacrificialStone" then
+	elseif itemName == "Item_SacrificialStone" then
 		behaviorLib.behaviorToModify = behaviorLib.SacrificialStoneBehavior
-	elseif itemName=="Item_BloodChalice" then
+	elseif itemName == "Item_BloodChalice" then
 		behaviorLib.behaviorToModify = behaviorLib.BloodChaliceBehavior
-	elseif itemName=="Item_Lightning2" then
+	elseif itemName == "Item_Lightning2" then
 		behaviorLib.behaviorToModify = behaviorLib.ChargedHammerBehavior
-	elseif itemName=="Item_ElderParasite" then
-		behaviorLib.behaviorToModify = behaviorLib.ElderParasiteBehavior	
+	elseif itemName == "Item_ElderParasite" then
+		behaviorLib.behaviorToModify = behaviorLib.ElderParasiteBehavior
+	elseif itemName == "Item_Stealth" then
+		behaviorLib.behaviorToModify = behaviorLib.AssassinsShroudBehavior
+	elseif itemName == "Item_Immunity" then
+		behaviorLib.behaviorToModify = behaviorLib.ShrunkenHeadBehavior
+	elseif itemName == "Item_ManaBurn2" then
+		behaviorLib.behaviorToModify = behaviorLib.GeomancersBehavior
 	end
 	
 	
-	if behaviorLib.behaviorToModify~=nil then
+	if behaviorLib.behaviorToModify ~= nil then
 		if remove then
 			if core.RemoveByValue(behaviorLib.tBehaviors, behaviorLib.behaviorToModify) then
 				if bDebugEchos then BotEcho("^rRemoved "..itemName) end
@@ -83,12 +100,12 @@ function behaviorLib.RingOfSorceryUtility(botBrain)
 	local nUtility = 0
 	
 	if behaviorLib.itemRingOfSorcery and behaviorLib.itemRingOfSorcery:CanActivate() then
-		nUtility = (1-unitSelf:GetManaPercent())*25 --this bots mana pool
+		nUtility = (1 - unitSelf:GetManaPercent()) * 25 --this bots mana pool
 		local tTargets = core.localUnits["AllyHeroes"]  -- Get allies close to the bot
 		for key, hero in pairs(tTargets) do
 			local nRoSRange = 700
-			if (Vector3.Distance2DSq(vecMyPosition, hero:GetPosition()) < nRoSRange*nRoSRange) then
-				nUtility = nUtility + (1-hero:GetManaPercent())*25 --another bots mana pool
+			if (Vector3.Distance2DSq(vecMyPosition, hero:GetPosition()) < nRoSRange * nRoSRange) then
+				nUtility = nUtility + (1 - hero:GetManaPercent()) * 25 --another bots mana pool
 			end
 		end		
 		return nUtility
@@ -108,7 +125,7 @@ behaviorLib.RingOfSorceryBehavior["Name"] = "RingOfSorcery"
 
 
 --------------------------------------
---          	UseRegen            --
+--  			UseRegen   		 --
 --------------------------------------
 -------- Global Constants & Variables --------
 behaviorLib.bUseBatterySupplyForHealth = true
@@ -160,11 +177,11 @@ function behaviorLib.GetSafeDrinkDirection()
 end
 
 ------------------------------------
---          Mana Potion           --
+--  		Mana Potion 		  --
 ------------------------------------
 function behaviorLib.UseManaPotUtility(botBrain)
-	-- Roughly 20+ when we are missing 100 mana
-	-- Function which crosses 20 at x=100 and 30 at x=200, convex down
+	-- Roughly 20 + when we are missing 100 mana
+	-- Function which crosses 20 at x = 100 and 30 at x = 200, convex down
 	
 	local unitSelf = core.unitSelf
 	behaviorLib.itemManaPot = core.GetItem("Item_ManaPotion")
@@ -211,11 +228,12 @@ behaviorLib.UseManaPotBehavior["Execute"] = behaviorLib.UseManaPotExecute
 behaviorLib.UseManaPotBehavior["Name"] = "UseManaPot"
 
 ------------------------------------
---             Bottle             --
+
+--  		   Bottle   		  --
 ------------------------------------
 function behaviorLib.BottleHealthUtilFn(nHealthMissing, nHealthRegen)
-	-- Roughly 20+ when we are missing 135 hp
-	-- Function which crosses 20 at x=135 and 30 at x=220, convex down
+	-- Roughly 20 + when we are missing 135 hp
+	-- Function which crosses 20 at x = 135 and 30 at x = 220, convex down
 	if (not behaviorLib.bUseBottleForHealth) then
 		return 0
 	end
@@ -231,8 +249,8 @@ function behaviorLib.BottleHealthUtilFn(nHealthMissing, nHealthRegen)
 end
 
 function behaviorLib.BottleManaUtilFn(nManaMissing, nManaRegen)
-	-- Roughly 20+ when we are missing 70 mana
-	-- Function which crosses 20 at x=70 and 30 at x=140, convex down
+	-- Roughly 20 + when we are missing 70 mana
+	-- Function which crosses 20 at x = 70 and 30 at x = 140, convex down
 	if (not behaviorLib.bUseBottleForMana) then
 		return 0
 	end
@@ -256,8 +274,8 @@ function behaviorLib.UseBottleUtility(botBrain)
 	behaviorLib.itemBottle = core.GetItem("Item_Bottle")
 	
 	if behaviorLib.itemBottle and not unitSelf:HasState("State_Bottle") and behaviorLib.itemBottle:GetActiveModifierKey() ~= "bottle_empty" then
-		local nBottleHealthFn=behaviorLib.BottleHealthUtilFn(nHealthMissing, nHealthRegen)
-		local nBottleManaFn=behaviorLib.BottleManaUtilFn(nManaMissing, nManaRegen)
+		local nBottleHealthFn = behaviorLib.BottleHealthUtilFn(nHealthMissing, nHealthRegen)
+		local nBottleManaFn = behaviorLib.BottleManaUtilFn(nManaMissing, nManaRegen)
 		
 		return max(
 			nBottleHealthFn * .8 + nBottleManaFn * .2, --health
@@ -291,11 +309,11 @@ behaviorLib.UseBottleBehavior["Execute"] = behaviorLib.UseBottleExecute
 behaviorLib.UseBottleBehavior["Name"] = "UseBottle"
 
 ------------------------------------
---          Health Potion         --
+--  		Health Potion   	  --
 ------------------------------------
 function behaviorLib.UseHealthPotUtility(botBrain)
-	-- Roughly 20+ when we are missing 400 hp
-	-- Function which crosses 20 at x=400 and 40 at x=650, convex down
+	-- Roughly 20 + when we are missing 400 hp
+	-- Function which crosses 20 at x = 400 and 40 at x = 650, convex down
 
 	local unitSelf = core.unitSelf
 	behaviorLib.itemHealthPot = core.GetItem("Item_HealthPotion")
@@ -340,11 +358,11 @@ behaviorLib.UseHealthPotBehavior["Name"] = "UseHealthPot"
 
 
 ------------------------------------
---       Runes OfThe Blight       --
+--  	 Runes OfThe Blight 	  --
 ------------------------------------
 function behaviorLib.UseRunesOfTheBlightUtility(botBrain)
-	-- Roughly 20+ when we are missing 115 hp
-	-- Function which crosses 20 at x=115 and is 30 at roughly x=600, convex down
+	-- Roughly 20 + when we are missing 115 hp
+	-- Function which crosses 20 at x = 115 and is 30 at roughly x = 600, convex down
 
 	local unitSelf = core.unitSelf
 	local tInventory = unitSelf:GetInventory()
@@ -432,11 +450,11 @@ end
 
 function behaviorLib.BatterySupplyHealthUtilFn(nHealthMissing, nCharges)
 	-- With 1 Charge:
-	-- Roughly 20+ when we are missing 30 health
-	-- Function which crosses 20 at x=30 and 30 at x=140, convex down
+	-- Roughly 20 + when we are missing 30 health
+	-- Function which crosses 20 at x = 30 and 30 at x = 140, convex down
 	-- With 15 Charges:
-	-- Roughly 20+ when we are missing 170 health
-	-- Function which crosses 20 at x=170 and 30 at x=330, convex down
+	-- Roughly 20 + when we are missing 170 health
+	-- Function which crosses 20 at x = 170 and 30 at x = 330, convex down
 	if (not behaviorLib.bUseBatterySupplyForHealth) then
 		return 0
 	end
@@ -453,11 +471,11 @@ end
 
 function behaviorLib.BatterySupplyManaUtilFn(nManaMissing, nCharges)
 	-- With 1 Charge:
-	-- Roughly 20+ when we are missing 40 mana
-	-- Function which crosses 20 at x=40 and 30 at x=100, convex down
+	-- Roughly 20 + when we are missing 40 mana
+	-- Function which crosses 20 at x = 40 and 30 at x = 100, convex down
 	-- With 15 Charges:
-	-- Roughly 20+ when we are missing 280 mana
-	-- Function which crosses 20 at x=280 and 30 at x=470, convex down
+	-- Roughly 20 + when we are missing 280 mana
+	-- Function which crosses 20 at x = 280 and 30 at x = 470, convex down
 	if (not behaviorLib.bUseBatterySupplyForMana) then
 		return 0
 	end
@@ -611,7 +629,7 @@ function behaviorLib.AstrolabeExecute(botBrain)
 		local unitSelf = core.unitSelf
 		local vecTargetPosition = unitHealTarget:GetPosition()
 		local nDistance = Vector3.Distance2DSq(unitSelf:GetPosition(), vecTargetPosition)
-		if nDistance < 500*500 then
+		if nDistance < 500 * 500 then
 			core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemAstrolabe)
 		else
 			core.OrderMoveToUnitClamp(botBrain, unitSelf, unitHealTarget)
@@ -662,7 +680,7 @@ function behaviorLib.BloodChaliceUtility(botBrain)
 	if (behaviorLib.itemBloodChalice and behaviorLib.itemBloodChalice:CanActivate()) then
 		
 		local unitTarget = behaviorLib.heroTarget
-		if unitTarget and unitTarget:GetHealthPercent() <= .2 and Vector3.Distance2DSq(unitSelf:GetPosition(), unitTarget:GetPosition()) < (700*700) then
+		if unitTarget and unitTarget:GetHealthPercent() <= .2 and Vector3.Distance2DSq(unitSelf:GetPosition(), unitTarget:GetPosition()) < (700 * 700) then
 			--about to get a kill! Yay! Congrats! Use chalice and reap the benefits of being an AI who has 1200 APM.
 			return 100
 		end
@@ -702,7 +720,7 @@ function behaviorLib.ChargedHammerUtility(botBrain)
 		end
 		if behaviorLib.unitChargedHammerTarget ~= nil then
 			--core.DrawDebugArrow(unitSelf:GetPosition(), behaviorLib.unitChargedHammerTarget:GetPosition(), 'green')
-			return Clamp(80-behaviorLib.unitChargedHammerTarget:GetHealthPercent()*100, 0, 100)
+			return Clamp(80 - behaviorLib.unitChargedHammerTarget:GetHealthPercent() * 100, 0, 100)
 		end
 	end
 	return 0
@@ -721,14 +739,17 @@ behaviorLib.ChargedHammerBehavior["Name"] = "UseChargedHammer"
 --  		Elder Parasite		  --
 ------------------------------------
 behaviorLib.nElderParasiteThreshhold = 30
+behaviorLib.nElderParasiteRetreatThreshold = 50
 function behaviorLib.ElderParasiteUtility(botBrain)
 	local unitSelf = core.unitSelf
 	behaviorLib.itemElderParasite = core.GetItem("Item_ElderParasite")
 	if behaviorLib.itemElderParasite and behaviorLib.itemElderParasite:CanActivate() and not unitSelf:IsImmobilized() and not unitSelf:IsStunned() then
+		--offensive
 		if (behaviorLib.lastHarassUtil > behaviorLib.nElderParasiteThreshhold) and behaviorLib.heroTarget then	--only when we have a target
 			return 100
 		end
-		if core.GetLastBehaviorName(botBrain) == "RetreatFromThreat" or core.GetLastBehaviorName(botBrain) == "HealAtWell" then --we are RUNNING FOR OUR LIVES!
+		--defensive
+		if behaviorLib.lastRetreatUtil >= behaviorLib.nElderParasiteRetreatThreshold and (core.GetLastBehaviorName(botBrain) == "RetreatFromThreat" or core.GetLastBehaviorName(botBrain) == "HealAtWell") then --we are RUNNING FOR OUR LIVES!
 			return 100
 		end
 	end
@@ -743,3 +764,90 @@ behaviorLib.ElderParasiteBehavior = {}
 behaviorLib.ElderParasiteBehavior["Utility"] = behaviorLib.ElderParasiteUtility
 behaviorLib.ElderParasiteBehavior["Execute"] = behaviorLib.ElderParasiteExecute
 behaviorLib.ElderParasiteBehavior["Name"] = "UseElderParasite"
+
+------------------------------------
+--  	  Assassins Shroud		  --
+------------------------------------
+behaviorLib.nAssassinsShroudThreshhold = 50
+behaviorLib.nAssassinsShroudRetreatThreshhold = 50
+function behaviorLib.AssassinsShroudUtility(botBrain)
+	local unitSelf = core.unitSelf
+	behaviorLib.itemAssassinsShroud = core.GetItem("Item_Stealth")
+	if behaviorLib.itemAssassinsShroud and behaviorLib.itemAssassinsShroud:CanActivate() then
+		--offensive
+		if (behaviorLib.lastHarassUtil > behaviorLib.nAssassinsShroudThreshhold) and behaviorLib.heroTarget then	--only when we have a target
+			return 100
+		end
+		--defensive
+		if behaviorLib.lastRetreatUtil >= behaviorLib.nAssassinsShroudRetreatThreshhold and (core.GetLastBehaviorName(botBrain) == "RetreatFromThreat" or core.GetLastBehaviorName(botBrain) == "HealAtWell") then --we are RUNNING FOR OUR LIVES!
+			return 100
+		end
+	end
+	return 0
+end
+
+function behaviorLib.AssassinsShroudExecute(botBrain)
+	local unitSelf = core.unitSelf
+	return core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemAssassinsShroud)
+end
+behaviorLib.AssassinsShroudBehavior = {}
+behaviorLib.AssassinsShroudBehavior["Utility"] = behaviorLib.AssassinsShroudUtility
+behaviorLib.AssassinsShroudBehavior["Execute"] = behaviorLib.AssassinsShroudExecute
+behaviorLib.AssassinsShroudBehavior["Name"] = "UseAssassinsShroud"
+
+------------------------------------
+--  	   Shrunken Head		  --
+------------------------------------
+behaviorLib.nShrunkenHeadThreshhold = 70
+function behaviorLib.ShrunkenHeadUtility(botBrain)
+	local unitSelf = core.unitSelf
+	behaviorLib.itemShrunkenHead = core.GetItem("Item_Immunity")
+	if behaviorLib.itemShrunkenHead and behaviorLib.itemShrunkenHead:CanActivate() then
+		--offensive
+		if (behaviorLib.lastHarassUtil > behaviorLib.nShrunkenHeadThreshhold) and behaviorLib.heroTarget then	--only when we have a target
+			return 100
+		end
+		--defensive
+		--possibility to have it cast on retreat, however due to game mechanics, I would consider this a bad move.
+	end
+	return 0
+end
+
+function behaviorLib.ShrunkenHeadExecute(botBrain)
+	local unitSelf = core.unitSelf
+	return core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemShrunkenHead)
+end
+behaviorLib.ShrunkenHeadBehavior = {}
+behaviorLib.ShrunkenHeadBehavior["Utility"] = behaviorLib.ShrunkenHeadUtility
+behaviorLib.ShrunkenHeadBehavior["Execute"] = behaviorLib.ShrunkenHeadExecute
+behaviorLib.ShrunkenHeadBehavior["Name"] = "UseShrunkenHead"
+
+------------------------------------
+--  	   Geomancers Bane		  --
+------------------------------------
+behaviorLib.nGeomancersThreshhold = 40
+behaviorLib.nGeomancersRetreatThreshhold = 50
+function behaviorLib.GeomancersUtility(botBrain)
+	local unitSelf = core.unitSelf
+	behaviorLib.itemGeomancers = core.GetItem("Item_ManaBurn2")
+	if behaviorLib.itemGeomancers and behaviorLib.itemGeomancers:CanActivate() then
+		--offensive
+		if (behaviorLib.lastHarassUtil > behaviorLib.nGeomancersThreshhold) and behaviorLib.heroTarget then	--only when we have a target
+			return 100
+		end
+		--defensive
+		if behaviorLib.lastRetreatUtil >= behaviorLib.nGeomancersRetreatThreshhold and (core.GetLastBehaviorName(botBrain) == "RetreatFromThreat" or core.GetLastBehaviorName(botBrain) == "HealAtWell") then --we are RUNNING FOR OUR LIVES!
+			return 100
+		end
+	end
+	return 0
+end
+
+function behaviorLib.GeomancersExecute(botBrain)
+	local unitSelf = core.unitSelf
+	return core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemGeomancers)
+end
+behaviorLib.GeomancersBehavior = {}
+behaviorLib.GeomancersBehavior["Utility"] = behaviorLib.GeomancersUtility
+behaviorLib.GeomancersBehavior["Execute"] = behaviorLib.GeomancersExecute
+behaviorLib.GeomancersBehavior["Name"] = "UseGeomancers"

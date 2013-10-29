@@ -322,6 +322,7 @@ behaviorLib.LateItems =
 BotEcho('finished loading chronos_main')
 
 --[[
+-- example of how to override default item behaviors. To disable the default, use tinsert(behaviorLib.tDontUseDefaultItemBehavior, "Item_ElderParasite")
 function behaviorLib.ElderParasiteExecute(botBrain)
 	BotEcho("overriden!")
 end
