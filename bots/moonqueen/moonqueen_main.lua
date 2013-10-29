@@ -236,14 +236,13 @@ object.onthink 	= object.onthinkOverride
 ---------------------------
 -- Togle aura and bounce --
 ---------------------------
-local function PushExecuteOverride(botBrain)
+function behaviorLib.customPushExecute(botBrain)
 	object.toggleBounce(botBrain, true)
 	object.toggleAura(botBrain, true)
 	SteamBootsLib.setAttributeBonus("agi")
 	object.PushExecuteOld(botBrain)
+	return false
 end
-object.PushExecuteOld = behaviorLib.PushBehavior["Execute"]
-behaviorLib.PushBehavior["Execute"] = PushExecuteOverride
 
 function behaviorLib.PositionSelfExecuteOverride(botBrain)
 	object.toggleBounce(botBrain, false)

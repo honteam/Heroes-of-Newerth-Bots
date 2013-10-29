@@ -619,7 +619,7 @@ local function getAngToPoint(vecOrigin, vecTarget)
         return nAng
 end
  
--- Find the point D such that the lenght of CD is equal to nRange
+-- Find the point D such that the length of CD is equal to nRange
 --  A-----D---------B
 --   \   /
 --    \ /
@@ -758,11 +758,11 @@ object.HealAtWellBehaviorOld = behaviorLib.HealAtWellBehavior["Execute"]
 behaviorLib.HealAtWellBehavior["Execute"] = HealAtWellOveride
  
 -------------------------------------------
---          PushExecute Overide          --
+--          	 Pushing				 --
 -------------------------------------------
  
 -- These are modified from fane_maciuca's Rhapsody Bot
-local function AbilityPush(botBrain)
+function behaviorLib.customPushExecute(botBrain)
         local bSuccess = false
         local abilScream = skills.abilScream
         local unitSelf = core.unitSelf
@@ -793,23 +793,5 @@ local function AbilityPush(botBrain)
        
         return bSuccess
 end
- 
-local function PushExecuteOverride(botBrain)
-        if not AbilityPush(botBrain) then
-                return object.PushExecuteOld(botBrain)
-        end
-end
- 
-object.PushExecuteOld = behaviorLib.PushBehavior["Execute"]
-behaviorLib.PushBehavior["Execute"] = PushExecuteOverride
- 
-local function TeamGroupBehaviorOverride(botBrain)
-        if not AbilityPush(botBrain) then
-                return object.TeamGroupBehaviorOld(botBrain)
-        end
-end
- 
-object.TeamGroupBehaviorOld = behaviorLib.TeamGroupBehavior["Execute"]
-behaviorLib.TeamGroupBehavior["Execute"] = TeamGroupBehaviorOverride
  
 BotEcho(object:GetName()..' finished loading WretchedHag_main')
