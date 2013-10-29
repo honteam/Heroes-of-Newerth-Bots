@@ -418,12 +418,7 @@ behaviorLib.CustomHarassUtility = CustomHarassUtilityOverride
 ----------------------------------------------------
 --  		   Heal At Well Override			  --
 ----------------------------------------------------
---return to well more often. --2000 gold adds 8 to return utility, 0 % mana also adds 8.
 --When returning to well, use skills and items.
-local function HealAtWellUtilityOverride(botBrain)
-		if (Vector3.Distance2DSq(core.unitSelf:GetPosition(), core.allyWell and core.allyWell:GetPosition() or behaviorLib.PositionSelfBackUp()) < 400 * 400 and core.unitSelf:GetManaPercent() * 100 < 95) then return 80 end
-		return object.HealAtWellUtilityOld(botBrain) * 1.75 + (botBrain:GetGold() * 8 / 2000) + 8-(core.unitSelf:GetManaPercent() * 8) --couragously flee back to base.
-end
 local function HealAtWellExecuteOverride(botBrain)
 		local vecWellPos = core.allyWell and core.allyWell:GetPosition() or behaviorLib.PositionSelfBackUp()
 		if (Vector3.Distance2DSq(core.unitSelf:GetPosition(), vecWellPos) > 600 * 600)then
@@ -440,9 +435,7 @@ local function HealAtWellExecuteOverride(botBrain)
 		end
 		return object.HealAtWellExecuteOld(botBrain)
 end
-object.HealAtWellUtilityOld = behaviorLib.HealAtWellBehavior["Utility"]
 object.HealAtWellExecuteOld = behaviorLib.HealAtWellBehavior["Execute"]
-behaviorLib.HealAtWellBehavior["Utility"] = HealAtWellUtilityOverride
 behaviorLib.HealAtWellBehavior["Execute"] = HealAtWellExecuteOverride
  
 ----------------------------------------
