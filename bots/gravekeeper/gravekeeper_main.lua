@@ -1060,7 +1060,7 @@ local function GravekeeperItemBuilder()
 			local nXPM = core.unitSelf:GetXPM()
 			
 			--check  for agressive or passive route
-			if nXPM < 170 and nMatchTime > core.MinToMS(5) then
+			if nXPM <= 175 and nMatchTime > core.MinToMS(5) then
 				--Bad early game: go for more defensive items
 				sBootsChosen = "Item_Steamboots"
 				tMidItems = {"Item_MysticVestments", "Item_Scarab",  "Item_SacrificialStone", "Item_Silence"}
@@ -1086,7 +1086,7 @@ local function GravekeeperItemBuilder()
 			tItemDecisions.bItemBuildRoute = true
 			
 	--need Tablet?
-		elseif not tItemDecisions.bGetTablet and core.unitSelf:GetLevel() > 10 and nGPM < 240 then
+		elseif not tItemDecisions.bGetTablet and core.unitSelf:GetLevel() > 10 and nGPM <= 250 then
 			--Mid game: Bad farm, so go for a tablet
 			
 			--insert decisions into our itembuild-table

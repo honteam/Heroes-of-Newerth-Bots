@@ -1466,7 +1466,7 @@ function shoppingLib.SellItems (nNumber, unitSelected)
 	
 	--sell Items
 	while nNumber > 0 do
-		local tValueEntry = tValueList[#tValueList]
+		local tValueEntry = tValueList[1]
 		local nSellingSlot = tValueEntry and tValueEntry[2]
 		if nSellingSlot then
 			if shoppingLib.bDebugInfoShoppingFunctions then BotEcho("I am selling slotnumber"..tostring(nSellingSlot)) end
@@ -1478,7 +1478,7 @@ function shoppingLib.SellItems (nNumber, unitSelected)
 			end
 			
 			--remove from list
-			tremove (tValueList)
+			tremove (tValueList, 1)
 			bChanged = true			
 		else
 			--no item to sell
@@ -1681,6 +1681,7 @@ function shoppingLib.ShopExecute(botBrain)
 						--purchase cases 1-3
 						if shoppingLib.bDebugInfoShoppingBehavior then BotEcho("item Purchased. removing it from shopping list") end
 						tremove(shoppingLib.tShoppingList,1)
+						itemHandler:UpdateDatabase()
 					else
 						--purchase case 4
 						if shoppingLib.bDebugInfoShoppingBehavior then BotEcho("Puchased something else") end
@@ -1713,8 +1714,7 @@ function shoppingLib.ShopExecute(botBrain)
 	if bChanged == false then
 		if shoppingLib.bDebugInfoShoppingBehavior then BotEcho("Finished Buying!") end
 		shoppingLib.bFinishedBuying = true
-		shoppingLib.bStashFunctionActivation = true
-		itemHandler:UpdateDatabase()
+		shoppingLib.bStashFunctionActivation = true		
 		local bCanAccessStash = unitSelf:CanAccessStash()
 		if not bCanAccessStash then 
 			if shoppingLib.bDebugInfoShoppingBehavior then  BotEcho("CourierStart") end
