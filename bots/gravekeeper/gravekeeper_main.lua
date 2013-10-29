@@ -1,5 +1,5 @@
 --[[
-Gravekeeper v1.0b by Schnarchnase
+Gravekeeper v1.1 by Schnarchnase
 
 The skills:
 
@@ -36,7 +36,8 @@ credits:
 -V1P3R` Engi Bot (Kill Messages)
 -using code paradoxon870 (Laning)
 
-
+v1.1: update shoppingLib
+v1.0b: initial bot
 --]]
 local _G = getfenv(0)
 local object = _G.object
@@ -84,8 +85,14 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
 
+--shoppingLib implementation
+local itemHandler = object.itemHandler
+local shoppingLib = object.shoppingLib
 
-BotEcho('loading schnasegrave_main...')
+--support ReloadBots (while testing)
+shoppingLib.bDevelopeItemBuildSaver = true
+
+BotEcho('loading gravekeeper_main...')
 
 object.heroName = 'Hero_Taint'
 
@@ -958,160 +965,174 @@ object.HealAtWellExecuteOld = behaviorLib.HealAtWellExecute
 behaviorLib.HealAtWellBehavior["Execute"] = HealAtWellExecuteFnOverride
 
 
---Function removes any item that is not valid
-local function funcRemoveInvalidItems()
-	core.ValidateItem(core.itemPostHaste)
-	core.ValidateItem(core.itemTablet)
-	core.ValidateItem(core.itemPortalKey)
-	core.ValidateItem(core.itemHellFlower)
-	core.ValidateItem(core.itemSheepstick)
-	core.ValidateItem(core.itemFrostfieldPlate)
-	core.ValidateItem(core.itemSteamboots)
-	core.ValidateItem(core.itemSacStone)
-	core.ValidateItem(core.itemGhostMarchers)
-end
-
 ----------------------------------
 --  FindItems Override
 ----------------------------------
 local function funcFindItemsOverride(botBrain)
-
-	--Alternate item wasn't checked, so you don't need to look for new items.
-	if core.bCheckForAlternateItems then return end
-
-	funcRemoveInvalidItems()
-
-	--We only need to know about our current inventory. Stash items are not important.
-	local inventory = core.unitSelf:GetInventory(true)
-	for slot = 1, 6, 1 do
-		local curItem = inventory[slot]
-		if curItem then
-			if core.itemPostHaste == nil and curItem:GetName() == "Item_PostHaste" then
-				core.itemPostHaste = core.WrapInTable(curItem)
-			elseif core.itemTablet == nil and curItem:GetName() == "Item_PushStaff" then
-				core.itemTablet = core.WrapInTable(curItem)
-			elseif core.itemPortalKey == nil and curItem:GetName() == "Item_PortalKey" then
-				core.itemPortalKey = core.WrapInTable(curItem)
-			elseif core.itemFrostfieldPlate == nil and curItem:GetName() == "Item_FrostfieldPlate" then
-				core.itemFrostfieldPlate = core.WrapInTable(curItem)
-			elseif core.itemSheepstick == nil and curItem:GetName() == "Item_Morph" then
-				core.itemSheepstick = core.WrapInTable(curItem)
-			elseif core.itemHellFlower == nil and curItem:GetName() == "Item_Silence" then
-				core.itemHellFlower = core.WrapInTable(curItem)
-			elseif core.itemSteamboots == nil and curItem:GetName() == "Item_Steamboots" then
-				core.itemSteamboots = core.WrapInTable(curItem)
-			elseif core.itemSacStone == nil and curItem:GetName() == "Item_SacrificialStone" then
-				core.itemSacStone = core.WrapInTable(curItem)
-			elseif core.itemGhostMarchers == nil and curItem:GetName() == "Item_EnhancedMarchers" then
-				core.itemGhostMarchers = core.WrapInTable(curItem)
-				core.itemGhostMarchers.expireTime = 0
-				core.itemGhostMarchers.duration = 6000
-				core.itemGhostMarchers.msMult = 0.12
-			end
-		end
-		
-	end
+	object.FindItemsOld(botBrain)
+	--shoppingLib update - call item by name (itemHandler)
+	core.itemPostHaste = itemHandler:GetItem("Item_PostHaste") 
+	core.itemTablet = itemHandler:GetItem("Item_PushStaff") 
+	core.itemPortalKey = itemHandler:GetItem("Item_PortalKey") 
+	core.itemFrostfieldPlate = itemHandler:GetItem("Item_FrostfieldPlate") 
+	core.itemSacStone = itemHandler:GetItem("Item_SacrificialStone") 
+	core.itemSheepstick = itemHandler:GetItem("Item_Morph") 
+	core.itemHellFlower = itemHandler:GetItem("Item_Silence") 
 end
 object.FindItemsOld = core.FindItems
 core.FindItems = funcFindItemsOverride
 
-
---Check for alternate items before shopping
-local function funcCheckforAlternateItemBuild(botbrain)
-
-	--no further check till next shopping round
-	core.bCheckForAlternateItems = false
-
-	local unitSelf = core.unitSelf
-
-	--initialize item choices
-	if unitSelf.getPK == nil then
-		--BotEcho("Initialize item choices")
-		unitSelf.getSteamboots = false
-		unitSelf.getPushStaff = false
-		unitSelf.getPK = false
-	end
-
-
-	local nGPM = botbrain:GetGPM()
-	local nXPM = unitSelf:GetXPM()
-	local nMatchTime = HoN.GetMatchTime()
-	local bBuyStateLow = behaviorLib.buyState < behaviorLib.BuyStateMidItems
-
-	--Bad early game: skip GhostMarchers and go for more defensive items
-	if bBuyStateLow and nXPM < 170 and nMatchTime > core.MinToMS(5) and not unitSelf.getSteamboots then
-		--BotEcho("My early Game sucked. I will go for a defensive Build.")
-		unitSelf.getSteamboots = true
-		behaviorLib.MidItems =
-		{"Item_Steamboots", "Item_MysticVestments", "Item_Scarab",  "Item_SacrificialStone", "Item_Silence"}
-
-	--Boots finished
-	elseif core.itemGhostMarchers or core.itemSteamboots then
-
-		--Mid game: Bad farm, so go for a tablet
-		if unitSelf:GetLevel() > 10 and nGPM < 240 and not unitSelf.getPushStaff then
-			--BotEcho("Well, it's not going as expected. Let's try a Tablet!")
-			unitSelf.getPushStaff = true
-			tinsert(behaviorLib.curItemList, 1, "Item_PushStaff")
-
-		--Good farm and you finished your Boots. Now it is time to pick a portal key
-		elseif nGPM >= 300 and not unitSelf.getPK then
-			--BotEcho("The Game is going good. Soon I will kill them with a fresh PK!")
-			unitSelf.getPK = true
-			tinsert(behaviorLib.curItemList, 1, "Item_PortalKey")
-		end
-	end
-end
-
-
 ----------------------------------
---      Gravekeeper Standard Item Build
+--      Gravekeeper Item Build
 ----------------------------------
 --[[ list code:
 	"# Item" is "get # of these"
 	"Item #" is "get this level of the item" --]]
 
-behaviorLib.StartingItems =
-	{"Item_RunesOfTheBlight", "2 Item_MarkOfTheNovice", "2 Item_MinorTotem", "Item_HealthPotion"}
-behaviorLib.LaneItems =
-	{"Item_Marchers","Item_GraveLocket"}
-behaviorLib.MidItems =
-	{"Item_EnhancedMarchers", "Item_Silence"}
-behaviorLib.LateItems =
-	{"Item_Morph", "Item_FrostfieldPlate", "Item_PostHaste", "Item_Freeze", "Item_Damage9"}
+--ItemBuild
 
+--1.Starting items
+shoppingLib.tStartingItems = {"Item_RunesOfTheBlight", "2 Item_MarkOfTheNovice", "2 Item_MinorTotem", "Item_HealthPotion"}
 
+--2.Lane items
+shoppingLib.tLaneItems = {"Item_Marchers","Item_GraveLocket"}
 
+--3.1 item route bad
+--shoppingLib.tMidItems =	{"Item_EnhancedMarchers", "Item_Silence"} --Ghost Marchers and Hellflower
+	
+--3.2 item route good
+--shoppingLib.tMidItems = {"Item_Steamboots", "Item_MysticVestments", "Item_Scarab",  "Item_SacrificialStone", "Item_Silence"}
 
---[[
-Shopping Override:
-At start of shopping check for alternate items
-Usual Shopping
-After finished check for new Items
---]]
+--4 late game items
+shoppingLib.tLateItems = {"Item_Morph", "Item_FrostfieldPlate", "Item_PostHaste", "Item_Freeze", "Item_Damage9"}
 
-core.bCheckForAlternateItems = true
-local function funcShopExecuteOverride(botBrain)
-	--check item choices
-	if core.bCheckForAlternateItems then
-		--BotEcho("Checking Alternate Builds")
-		funcCheckforAlternateItemBuild(botBrain)
-	end
+--situational tablet
+--poor farm (<240 gpm at lvl 11+ and boots finished)
 
-	local bOldShopping = object.ShopExecuteOld (botBrain)
+--situational pk
+--well farmed (>= 300 gpm after boots finished)
 
-	--update item links and reset the check
-	if behaviorLib.finishedBuying then
-		core.FindItems()
-		core.bCheckForAlternateItems = true
-		--BotEcho("FindItems")
-	end
-
-	return bOldShopping
+--Gravekeeper Shopping function
+local function GravekeeperItemBuilder()
+	--called everytime your bot runs out of items, should return false if you are done with shopping
+	local debugInfo = false
+    
+	if debugInfo then BotEcho("Checking itembuilder of Gravekeeper") end
+	
+	--variable for new items / keep shopping
+	local bNewItems = false
+	  
+	--get itembuild decision table 
+	local tItemDecisions = shoppingLib.tItemDecisions
+	if debugInfo then BotEcho("Found ItemDecisions"..type(tItemDecisions)) end
+	
+	--decision helper
+	local nGPM = object:GetGPM()
+	
+	--early game (start items and lane items
+	
+	--If tItemDecisions["bStartingItems"] is not set yet, choose start and lane items
+		if not tItemDecisions.bStartingItems then
+			--insert decisions into our itembuild-table
+			core.InsertToTable(shoppingLib.tItembuild, shoppingLib.tStartingItems)
+			core.InsertToTable(shoppingLib.tItembuild, shoppingLib.tLaneItems)
+			
+					
+			--we have implemented new items, so we can keep shopping
+			bNewItems = true
+					
+			--remember our decision
+			tItemDecisions.bStartingItems = true
+		
+	--If tItemDecisions["bItemBuildRoute"] is not set yet, choose boots and item route
+		elseif not tItemDecisions.bItemBuildRoute then
+			
+			local sBootsChosen = nil
+			local tMidItems = nil
+			
+			--decision helper
+			local nMatchTime = HoN.GetMatchTime()
+			local nXPM = core.unitSelf:GetXPM()
+			
+			--check  for agressive or passive route
+			if nXPM < 170 and nMatchTime > core.MinToMS(5) then
+				--Bad early game: go for more defensive items
+				sBootsChosen = "Item_Steamboots"
+				tMidItems = {"Item_MysticVestments", "Item_Scarab",  "Item_SacrificialStone", "Item_Silence"}
+			else
+				--go aggressive
+				sBootsChosen = "Item_EnhancedMarchers"
+				tMidItems = {"Item_Silence"}
+			end
+			
+			--insert decisions into our itembuild-table: the boots
+			tinsert(shoppingLib.tItembuild, sBootsChosen)
+			
+			--insert items into default itemlist (Mid and Late-Game items)
+			tItemDecisions.tItemList = {}
+			tItemDecisions.nItemListPosition = 1
+			core.InsertToTable(tItemDecisions.tItemList, tMidItems)
+			core.InsertToTable(tItemDecisions.tItemList, shoppingLib.tLateItems)
+					
+			--we have implemented new items, so we can keep shopping
+			bNewItems = true
+					
+			--remember our decision
+			tItemDecisions.bItemBuildRoute = true
+			
+	--need Tablet?
+		elseif not tItemDecisions.bGetTablet and core.unitSelf:GetLevel() > 10 and nGPM < 240 then
+			--Mid game: Bad farm, so go for a tablet
+			
+			--insert decisions into our itembuild-table
+			tinsert(shoppingLib.tItembuild, "Item_PushStaff")
+			
+			--we have implemented new items, so we can keep shopping
+			bNewItems = true
+			
+			--remember our decision
+			tItemDecisions.bGetTablet = true
+			
+	--need Portal Key?	
+		elseif not tItemDecisions.bGetPK and nGPM >= 300 then
+			--Mid game: High farm, so go for pk 
+			
+			--insert decisions into our itembuild-table
+			tinsert(shoppingLib.tItembuild, "Item_PortalKey")
+			
+			--we have implemented new items, so we can keep shopping
+			bNewItems = true
+			--remember our decision
+			tItemDecisions.bGetPK = true
+			
+	--all other items
+		else
+		
+			--put default items into the item build list (One after another)
+			local tItemList = tItemDecisions.tItemList
+			local nItemListPosition = tItemDecisions.nItemListPosition
+			
+			local sItemCode = tItemList[nItemListPosition]
+			if sItemCode then
+				--got a new item code 
+				
+				--insert decisions into our itembuild-table
+				tinsert(shoppingLib.tItembuild, sItemCode)
+				
+				--next item position
+				tItemDecisions.nItemListPosition = nItemListPosition + 1
+				
+				--we have implemented new items, so we can keep shopping
+				bNewItems = true
+			end
+			
+		end
+	   
+	if debugInfo then BotEcho("Reached end of itembuilder-function. Keep shopping? "..tostring(bNewItems)) end
+	return bNewItems
 end
-object.ShopExecuteOld = behaviorLib.ShopExecute
-behaviorLib.ShopBehavior["Execute"] = funcShopExecuteOverride
-
+object.oldItembuilder = shoppingLib.CheckItemBuild
+shoppingLib.CheckItemBuild = GravekeeperItemBuilder
 
 --####################################################################
 --####################################################################
@@ -1171,4 +1192,4 @@ end
 object.funcGetDeathKeysOld = core.GetDeathKeys
 core.GetDeathKeys = GetDeathKeysOverride
 
-BotEcho('finished loading schnasegrave_main')
+BotEcho('finished loading gravekeeper_main')
