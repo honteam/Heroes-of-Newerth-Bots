@@ -576,7 +576,7 @@ function behaviorLib.HealUtility(botBrain)
 	local nTargetTimeToLive = nil
 	local sAbilName = ""
 	
-	if (itemAstrolabe and itemAstrolabe:CanActivate()) or abilMelody:CanActivate() then
+	if (itemAstrolabe and itemAstrolabe:CanActivate() and itemAstrolabe:IsValid()) or abilMelody:CanActivate() then
 		local tTargets = core.CopyTable(core.localUnits["AllyHeroes"])
 		tTargets[unitSelf:GetUniqueID()] = unitSelf --I am also a target
 		local nMyID = unitSelf:GetUniqueID()
@@ -609,7 +609,7 @@ function behaviorLib.HealUtility(botBrain)
 				sAbilName = "Protective Melody"
 			end
 			
-			if nUtility == 0 and (itemAstrolabe and itemAstrolabe:CanActivate()) then
+			if nUtility == 0 and (itemAstrolabe and itemAstrolabe:CanActivate() and itemAstrolabe:IsValid()) then
 				nUtility = nHighestUtility				
 				sAbilName = "Astrolabe"
 			end
@@ -651,7 +651,7 @@ function behaviorLib.HealExecute(botBrain) -- this is used for Astrolabe ASWELL 
 	if unitHealTarget then 
 		if nHealTimeToLive <= nUltimateTTL and abilMelody:CanActivate() and unitHealTarget ~= unitSelf  then  --only attempt ult for other players (not for self, lol)
 			ProtectiveMelodyExecute(botBrain)
-		elseif itemAstrolabe and itemAstrolabe:CanActivate() then
+		elseif itemAstrolabe and itemAstrolabe:CanActivate() and itemAstrolabe:IsValid() then
 			local vecTargetPosition = unitHealTarget:GetPosition()
 			local nDistance = Vector3.Distance2D(unitSelf:GetPosition(), vecTargetPosition)
 			if nDistance < itemAstrolabe.nRadius then

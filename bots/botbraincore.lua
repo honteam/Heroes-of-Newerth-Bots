@@ -418,8 +418,6 @@ function core.BotBrainCoreInitialize(tGameVariables)
 		core.bTutorialBehaviorReset = false
 	end
 	
-	behaviorLib.addCurrentItemBehaviors()
-	
 	core.botBrainInitialized = true
 end
 
@@ -936,12 +934,16 @@ function core.OrderAttack(botBrain, unit, unitTarget, bQueueCommand)
 	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
 	
 	if (core.bBetterErrors) then
+		local bErrored = false
 		if (unitParam == nil) then 
 			BotEcho("OrderAttack failed! Entity is nil!")
-			return false
+			bErrored=true
 		end
 		if (targetParam == nil) then 
 			BotEcho("OrderAttack failed! Target is nil!")
+			bErrored=true
+		end
+		if bErrored then
 			return false
 		end
 	end
@@ -974,12 +976,16 @@ function core.OrderAttackClamp(botBrain, unit, unitTarget, bQueueCommand)
 	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
 	
 	if (core.bBetterErrors) then
+		local bErrored = false
 		if (unitParam == nil) then 
 			BotEcho("OrderAttackClamp failed! Entity is nil!")
-			return false
+			bErrored=true
 		end
 		if (targetParam == nil) then 
 			BotEcho("OrderAttackClamp failed! Target is nil!")
+			bErrored=true
+		end
+		if bErrored then
 			return false
 		end
 	end
@@ -1036,12 +1042,16 @@ function core.OrderMoveToUnit(botBrain, unit, unitTarget, bInterruptAttacks, bQu
 	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
 	
 	if (core.bBetterErrors) then
+		local bErrored = false
 		if (unitParam == nil) then 
 			BotEcho("OrderMoveToUnit failed! Entity is nil!")
-			return false
+			bErrored=true
 		end
 		if (targetParam == nil) then 
 			BotEcho("OrderMoveToUnit failed! Target is nil!")
+			bErrored=true
+		end
+		if bErrored then
 			return false
 		end
 	end
@@ -1079,12 +1089,16 @@ function core.OrderFollow(botBrain, unit, target, bInterruptAttacks, bQueueComma
 	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
 	
 	if (core.bBetterErrors) then
+		local bErrored = false
 		if (unitParam == nil) then 
 			BotEcho("OrderFollow failed! Entity is nil!")
-			return false
+			bErrored=true
 		end
 		if (targetParam == nil) then 
 			BotEcho("OrderFollow failed! Target is nil!")
+			bErrored=true
+		end
+		if bErrored then
 			return false
 		end
 	end
@@ -1122,12 +1136,16 @@ function core.OrderTouch(botBrain, unit, target, bInterruptAttacks, bQueueComman
 	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
 	
 	if (core.bBetterErrors) then
+		local bErrored = false
 		if (unitParam == nil) then 
 			BotEcho("OrderTouch failed! Entity is nil!")
-			return false
+			bErrored=true
 		end
 		if (targetParam == nil) then 
 			BotEcho("OrderTouch failed! Target is nil!")
+			bErrored=true
+		end
+		if bErrored then
 			return false
 		end
 	end
@@ -1259,17 +1277,26 @@ function core.OrderGiveItem(botBrain, unit, target, item, bInterruptAttacks, bQu
 	local itemParam = (item ~= nil and item.object) or item
 	
 	if (core.bBetterErrors) then
+		local bErrored = false
 		if (unitParam == nil) then 
 			BotEcho("OrderGiveItem failed! Entity is nil!")
-			return false
+			bErrored=true
 		end
 		if (targetParam == nil) then 
 			BotEcho("OrderGiveItem failed! Target is nil!")
-			return false
+			bErrored=true
 		end
 		if (itemParam == nil) then 
 			BotEcho("OrderGiveItem failed! Item is nil!")
 			core.ValidateItem(item)
+			bErrored=true
+		end
+		if (not item:IsValid()) then
+			BotEcho("OrderGiveItem failed! Item not valid!")
+			core.ValidateItem(item)
+			bErrored=true
+		end
+		if bErrored then
 			return false
 		end
 	end
@@ -1353,12 +1380,16 @@ function core.OrderMoveToPos(botBrain, unit, position, bInterruptAttacks, bQueue
 	local unitParam = (unit ~= nil and unit.object) or unit
 	
 	if (core.bBetterErrors) then
+		local bErrored = false
 		if (unitParam == nil) then 
 			BotEcho("OrderMoveToPos failed! Entity is nil!")
-			return false
+			bErrored=true
 		end
 		if (position == nil) then 
 			BotEcho("OrderMoveToPos failed! Vector is nil!")
+			bErrored=true
+		end
+		if bErrored then
 			return false
 		end
 	end
@@ -1411,12 +1442,16 @@ function core.OrderAttackPosition(botBrain, unit, position, bInterruptAttacks, b
 	local unitParam = (unit ~= nil and unit.object) or unit
 	
 	if (core.bBetterErrors) then
+		local bErrored = false
 		if (unit == nil) then 
 			BotEcho("OrderAttackPosition failed! Entity is nil!")
-			return false
+			bErrored=true
 		end
 		if (position == nil) then 
 			BotEcho("OrderAttackPosition failed! target position is nil!")
+			bErrored=true
+		end
+		if bErrored then
 			return false
 		end
 	end
@@ -1454,13 +1489,22 @@ function core.OrderDropItem(botBrain, unit, position, item, bInterruptAttacks, b
 	local itemParam = (item ~= nil and item.object) or item
 	
 	if (core.bBetterErrors) then
+		local bErrored = false
 		if (itemParam == nil) then
 			BotEcho("OrderDropItem failed! Item is nil!")
 			core.ValidateItem(item)
-			return false
+			bErrored=true
+		end
+		if (not item:IsValid()) then
+			BotEcho("OrderDropItem failed! Item not valid!")
+			core.ValidateItem(item)
+			bErrored=true
 		end
 		if (unitParam == nil) then 
 			BotEcho("OrderDropItem failed! Entity is nil!")
+			bErrored=true
+		end
+		if bErrored then
 			return false
 		end
 	end
@@ -1505,13 +1549,22 @@ function core.OrderItemEntityClamp(botBrain, unit, item, entity, bInterruptAttac
 	local entityParam = (entity ~= nil and entity.object) or entity
 	
 	if (core.bBetterErrors) then
+		local bErrored = false
 		if (itemParam == nil) then
 			BotEcho("OrderItemEntityClamp failed! Item is nil!")
 			core.ValidateItem(item)
-			return false
+			bErrored=true
+		end
+		if (not item:IsValid()) then
+			BotEcho("OrderItemEntityClamp failed! Item not valid!")
+			core.ValidateItem(item)
+			bErrored=true
 		end
 		if (entityParam == nil) then 
 			BotEcho("OrderItemEntityClamp failed! Entity is nil!")
+			bErrored=true
+		end
+		if bErrored then
 			return false
 		end
 	end
@@ -1556,9 +1609,18 @@ function core.OrderItemClamp(botBrain, unit, item, bInterruptAttacks, bQueueComm
 	local itemParam = (item ~= nil and item.object) or item
 	
 	if (core.bBetterErrors) then
+		local bErrored = false
 		if (itemParam == nil) then
 			BotEcho("OrderItemClamp failed! Item is nil!")
 			core.ValidateItem(item)
+			bErrored=true
+		end
+		if (not item:IsValid()) then
+			BotEcho("OrderItemClamp failed! Item not valid!")
+			core.ValidateItem(item)
+			bErrored=true
+		end
+		if bErrored then
 			return false
 		end
 	end
@@ -1597,13 +1659,22 @@ function core.OrderItemPosition(botBrain, unit, item, vecTarget, bInterruptAttac
 	local itemParam = (item ~= nil and item.object) or item
 	
 	if (core.bBetterErrors) then
+		local bErrored = false
 		if (itemParam == nil) then
 			BotEcho("OrderItemPosition failed! Item is nil!")
 			core.ValidateItem(item)
-			return false
+			bErrored=true
+		end
+		if (not item:IsValid()) then
+			BotEcho("OrderItemPosition failed! Item not valid!")
+			core.ValidateItem(item)
+			bErrored=true
 		end
 		if (vecTarget == nil) then
 			BotEcho("OrderItemPosition failed! vector is nil!")
+			bErrored=true
+		end
+		if bErrored then
 			return false
 		end
 	end
@@ -1635,9 +1706,18 @@ function core.ToggleAutoCastItem(botBrain, item, bInterruptAttacks, bQueueComman
 	local itemParam = (item ~= nil and item.object) or item
 	
 	if (core.bBetterErrors) then
+		local bErrored = false
 		if (itemParam == nil) then
 			BotEcho("ToggleAutoCastItem failed! Item is nil!")
 			core.ValidateItem(item)
+			bErrored=true
+		end
+		if (not item:IsValid()) then
+			BotEcho("ToggleAutoCastItem failed! Item not valid!")
+			core.ValidateItem(item)
+			bErrored=true
+		end
+		if bErrored then
 			return false
 		end
 	end
@@ -1703,12 +1783,16 @@ function core.OrderAbilityPosition(botBrain, ability, vecTarget, bInterruptAttac
 	local abilityParam = (ability ~= nil and ability.object) or ability
 	
 	if (core.bBetterErrors) then
+		local bErrored = false
 		if (abilityParam == nil) then
 			BotEcho("OrderAbilityPosition failed! Ability is nil!")
-			return false
+			bErrored=true
 		end
 		if (vecTarget == nil) then
 			BotEcho("OrderAbilityPosition failed! vector is nil!")
+			bErrored=true
+		end
+		if bErrored then
 			return false
 		end
 	end
@@ -1741,12 +1825,16 @@ function core.OrderAbilityEntity(botBrain, ability, unitTarget, bInterruptAttack
 	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
 	
 	if (core.bBetterErrors) then
+		local bErrored = false
 		if (abilityParam == nil) then
 			BotEcho("OrderAbilityEntity failed! Ability is nil!")
-			return false
+			bErrored=true
 		end
 		if (targetParam == nil) then
 			BotEcho("OrderAbilityEntity failed! target unit is nil!")
+			bErrored=true
+		end
+		if bErrored then
 			return false
 		end
 	end
@@ -1812,12 +1900,16 @@ function core.OrderAbilityEntityVector(botBrain, ability, unitTarget, vecDelta, 
 	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
 	
 	if (core.bBetterErrors) then
+		local bErrored = false
 		if (abilityParam == nil) then
 			BotEcho("OrderAbilityEntityVector failed! Ability is nil!")
-			return false
+			bErrored=true
 		end
 		if (targetParam == nil) then
 			BotEcho("OrderAbilityEntityVector failed! target unit is nil!")
+			bErrored=true
+		end
+		if bErrored then
 			return false
 		end
 	end
@@ -1830,13 +1922,17 @@ end
 
 function core.GetRemainingCooldownTime(unit, itemDefinition)
 	if (core.bBetterErrors) then
+		local bErrored = false
 		if (unit == nil) then
 			BotEcho("GetRemainingCooldownTime failed! Unit is nil!")
-			return false
+			bErrored=true
 		end
 		if (itemDefinition == nil) then
 			BotEcho("GetRemainingCooldownTime failed! item is nil!")
 			core.ValidateItem(itemDefinition)
+			bErrored=true
+		end
+		if bErrored then
 			return false
 		end
 	end

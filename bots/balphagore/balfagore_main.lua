@@ -625,20 +625,20 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.getCorpses)
  
  --@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ PERSONALITY
 core.tKillChatKeys = {
-		" * Spews all over keyboard * ", 
-		"Get trashed kid.", 
-		"BWAHAHAHAHA!", 
-		"Yummy!", 
-		"Feeling.. trapped?"
+		"kairus101_balphagore_kill1",
+		"kairus101_balphagore_kill2",
+		"kairus101_balphagore_kill3",
+		"kairus101_balphagore_kill4",
+		"kairus101_balphagore_kill5"
 }
 core.tDeathChatKeys = {
-		"Going to leave me here to rot?", 
-		"Bargh, my minions got stuck..", 
-		"You make me sick!", 
-		"I got S2'd..", 
-		"Team? TEAM??", 
-		"Hey, you used a cheat code!", 
-		"Go my minions!"
+		"kairus101_balphagore_death1",
+		"kairus101_balphagore_death2",
+		"kairus101_balphagore_death3",
+		"kairus101_balphagore_death4",
+		"kairus101_balphagore_death5",
+		"kairus101_balphagore_death6",
+		"kairus101_balphagore_death7"
 }
  
  --@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ SIGN OFF
