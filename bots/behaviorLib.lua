@@ -2899,11 +2899,11 @@ end
 
 -- people can/well override this function to heal at well better (bottle sip etc) called the whole time
 function behaviorLib.CustomHealAtWellExecute(botBrain)
-	return 0
+	return false
 end
 -- people can/well override this function to return to well easier (blinks, ports etc) called only when getting to well
 function behaviorLib.CustomReturnToWellExecute(botBrain)
-	return 0
+	return false
 end
 
 function behaviorLib.HealAtWellExecute(botBrain)

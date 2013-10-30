@@ -1684,7 +1684,7 @@ function core.OrderItemPosition(botBrain, unit, item, vecTarget, bInterruptAttac
 end
 
 function core.OrderBlinkItemToEscape(botBrain, unit, item, bInterruptAttacks, bQueueCommand)
-	if not item or not item:CanActivate() or not item:GetRange() then -- passed a bad ability..
+	if not item or not item:CanActivate() or not item:GetRange() then -- passed a bad item..
 		return false
 	end
 	local abilityParam = (ability ~= nil and ability.object) or ability
