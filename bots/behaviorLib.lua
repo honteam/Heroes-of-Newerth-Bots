@@ -2897,10 +2897,26 @@ function behaviorLib.HealAtWellUtility(botBrain)
 	return utility
 end
 
+-- people can/well override this function to heal at well better (bottle sip etc) called the whole time
+function behaviorLib.CustomHealAtWellExecute(botBrain)
+	return 0
+end
+-- people can/well override this function to return to well easier (blinks, ports etc) called only when getting to well
+function behaviorLib.CustomReturnToWellExecute(botBrain)
+	return 0
+end
+
 function behaviorLib.HealAtWellExecute(botBrain)
-	--BotEcho("Returning to well!")
 	local wellPos = (core.allyWell and core.allyWell:GetPosition()) or behaviorLib.PositionSelfBackUp()
-	core.OrderMoveToPosAndHoldClamp(botBrain, core.unitSelf, wellPos, false)
+	-- call the custom functions
+	local bActionTaken = behaviorLib.CustomHealAtWellExecute(botBrain)
+	if not bActionTaken and Vector3.Distance2DSq(core.unitSelf:GetPosition(), wellPos) > 1200 * 1200 then
+		bActionTaken = behaviorLib.CustomReturnToWellExecute(botBrain)
+	end
+	
+	if not bActionTaken then
+		core.OrderMoveToPosAndHoldClamp(botBrain, core.unitSelf, wellPos, false)
+	end
 end
 
 behaviorLib.HealAtWellBehavior = {}
