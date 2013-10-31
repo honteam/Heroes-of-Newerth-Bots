@@ -240,7 +240,6 @@ function behaviorLib.customPushExecute(botBrain)
 	object.toggleBounce(botBrain, true)
 	object.toggleAura(botBrain, true)
 	SteamBootsLib.setAttributeBonus("agi")
-	object.PushExecuteOld(botBrain)
 	return false
 end
 
