@@ -118,6 +118,8 @@ general_mode_random_draft					Random Draft
 general_mode_random_draft_desc				Limits hero selection to 20 heroes then alternates picking between players.
 general_mode_allrandom						All Random
 general_mode_allrandom_desc					All players are given a random hero they have access to. All players start the match with more gold.
+general_mode_balancedrandom					Balanced Random
+general_mode_balancedrandom_desc			All players are given a random hero they have access to. All players start the match with more gold.
 general_mode_blindban						Blind Banning
 general_mode_blindban_desc					Players begin with the full pool of heroes. Three heroes are then banned by the players in the Blue and Pink positions simultaneously without the other team knowing which heroes the other team chose to ban. Players are then shown the bans and are all given the ability to choose from the remaining heroes simultaneously.
 general_mode_blindbanningpick				Blind Banning
@@ -129,9 +131,12 @@ general_mode_lockpick_desc					Lock Pick requires that you have a full group of 
 general_mode_lockpick_desc_short			Lock Pick is the official game type for competitive play. Lock Pick games require a full group of 5 players and may only be played on the Forests of Caldavar map. The group leader will be made the team captain.
 general_mode_lockpick_desc_short2			Unselecting the Competitive Mode option below will allow you to play additional game modes.
 general_mode_botmatch						Bot Match
+general_mode_captainsmode					Captains Pick
+general_mode_captainsmode_desc				Group leaders are the captains of the team and do all of the banning and picking for the team.
 general_mode_gated							Core Pool
 general_mode_gated_desc						Players choose from a crafted pool of 40 heroes. 
 general_mode_restrictivemodes				Restrictive Modes
+general_mode_restrictivemode				Restrictive Mode
 general_mode_tournament						Competitive Mode
 general_mode_tournament_dec					Competitive mode requires that you have a full group of 5 players. These games can only be played on Normal Forests of Caldavar using the Lock Pick game mode.
 general_mode_singledraft					Single Draft
@@ -140,6 +145,8 @@ general_mode_banningdraft					Banning Draft
 general_mode_banningdraft_desc				Players begin with a pool of 24 heroes. The Blue and Pink players then alternate banning 2 heroes each. After the banning, players take turns choosing their heroes from the remaining pool.
 general_mode_random							Random Hero
 general_mode_verified						Verified Only
+general_mode_ranked 						Ranked
+general_mode_unranked 						Unranked
 general_mode_bots							Bot Match
 general_mode_allPlayers						Basic and Verified							
 general_mode_easy_mode						Easy Mode
@@ -211,6 +218,7 @@ general_hard 								Hard
 general_or 									or
 general_pass 								Pass
 general_fail 								Fail
+general_loading 							Loading...
 
 // main.interface
 main_peel_tip								Watch HoN TV
@@ -273,6 +281,12 @@ confirm_lang_title							Restart HoN
 confirm_lang_desc							You must restart HoN for your language changes to properly take effect.
 confirm_lang_restart						Restart Now
 confirm_lang_later							Restart Later
+
+confirm_lang_header_new 					Change Langauge?
+confirm_lang_title_new 						Restart HoN
+confirm_lang_desc_new 						In order to change your language, you must restart HoN.
+confirm_lang_restart_new 					Restart Now
+confirm_lang_later_new 						Cancel
 
 confirm_disconnect_title					Disconnect from the game?
 confirm_disconnect_msg						Are you sure you want to disconnect from this game?
@@ -644,6 +658,8 @@ options_label_hold_keybind					Order Hold
 options_label_cancel_and_hold_keybind				Order Cancel And Hold
 options_label_move_keybind					Order Move
 options_label_patrol_keybind				Order Patrol
+options_label_user_best_courier 			Use Courier
+options_label_user_best_courier_tip 		Causes the courier to get your items from your stash and deliver them to you as fast as possible.
 options_label_next_unit_keybind				Next Unit
 options_label_previous_unit_keybind			Previous Unit
 options_label_next_centered_keybind			Next Unit (Centered)
@@ -1097,6 +1113,9 @@ options_simple_lockcam 			Locks the camera to stay on the hero at all times
 options_radial_delay 			Radial Menu Delay (ms)
 options_radial_delay_tip 		How long you have to hold your ping before the radial menu will appear.
 
+options_altportraits 			Show Alt Avatar Portraits
+options_altportraits_tip 		If enabled the hero portraits for other players will reflect what alt avatar they have selected, not just the hero.
+
 // create_account.package
 create_acc_nickname							Nickname:
 create_acc_referrer							Referrer:
@@ -1195,25 +1214,25 @@ web_form_resetstats_description_short		You can clear only certain statistics or 
 web_form_upgradefriend_title				Upgrade Friend
 web_form_resetstats_pubstats				Public Game Statistics
 web_form_resetstats_casualstats				Casual Mode Statistics
-web_form_resetstats_casualstats_tip			Statistics gained from playing casual mode matchmaking games. This includes MMR.
-web_form_resetstats_pubstats_tip			Statistics gained from playing public games. This includes PSR.
+web_form_resetstats_casualstats_tip			Statistics gained from playing Casual mode matchmaking games. This does not includes CMR.
+web_form_resetstats_pubstats_tip			Statistics gained from playing Public games. This does not include PSR.
 web_form_resetstats_rankedstats				Normal Mode Statistics
-web_form_resetstats_rankedstats_tip			Statistics gained from playing ranked matches through the matchmaking feature in Heroes of Newerth.  This includes MMR.
+web_form_resetstats_rankedstats_tip			Statistics gained from playing Normal mode matchmaking games.  This does not include MMR.
 web_form_resetstats_psr						Public Skill Rating (PSR)
-web_form_resetstats_psr_tip					Public rank gained by playing public games.  This includes PSR.
+web_form_resetstats_psr_tip					The rank gained by playing Public games.
 web_form_resetstats_midwars					Mid Wars Statistics
-web_form_resetstats_midwars_tip				Statistics gained from playing mid wars mode matchmaking games.
+web_form_resetstats_midwars_tip				Statistics gained from playing Mid Wars matchmaking games.
 web_form_resetstats_disconnects				Disconnects
 web_form_resetstats_disconnects_tip			The number of times you have disconnected from a game before the game was conclude
-web_form_resetstats_smr						Normal Mode MMR
-web_form_resetstats_casual_mmr				Casual Mode MMR
+web_form_resetstats_smr						Normal Mode Rating (MMR)
+web_form_resetstats_casual_mmr				Casual Mode Rating (CMR)
 web_form_resetstats_midwars_mmr				Midwars MMR
-web_form_resetstats_midwars_mmr_tip			The rank gained by playing midwars mode matchmaking games.
-web_form_resetstats_smr_tip					The rank gained by playing normal mode matchmaking games.
-web_form_resetstats_casual_tip				The rank gained by playing casual mode matchmaking games.
+web_form_resetstats_midwars_mmr_tip			The rank gained by playing Midwars mode matchmaking games.
+web_form_resetstats_smr_tip					The rank gained by playing Normal mode matchmaking games.
+web_form_resetstats_casual_tip				The rank gained by playing Casual mode matchmaking games.
 web_form_resetstats_tmr						Team Match Rank (TMR)
 web_form_resetstats_tmr_tip					The rank gained by playing ranked games in a team.
-web_form_resetstats_blurb					You can clear certain statistics or wipe all of an account's statistics for $20. Disconnects will also be reset with public statistics.  ^rResetting Public Statistics will also reset your PSR.
+web_form_resetstats_blurb					You can clear certain statistics or wipe all of an account's statistics for $20. Disconnects will also be reset with public statistics.
 web_form_resetstats_warning					Be Aware: There will be another statistics reset before the release of Heroes of Newerth.
 web_form_resetstats_button					Reset Stats
 web_form_resetstats_about					About Resetting Stats
@@ -2415,7 +2434,8 @@ mstore_product690_desc		Arising from the Damned to send chills down your spine.
 mstore_product691_name		Royal Status Bundle
 mstore_product691_desc		All that you need for the rise to royalty. Appear above Diamond Blue players.
 mstore_product692_name		In Your FACE!
-mstore_product692_desc		Taunt your kill in their face with a three pack of taunts and U MAD? icon free. 
+mstore_product692_desc		Taunt your kill in their face with a three pack of taunts and U MAD? icon free.
+mstore_product693_name		Master of Arms
 mstore_product694_name		Master of Arms
 mstore_product695_name		Support Hero Alts
 mstore_product695_desc		Save 10% off both the gold and silver costs!
@@ -2601,6 +2621,7 @@ mstore_product915_desc		A fairy tale made in Newerth.
 mstore_product916_name		Mother Nature Keeper
 mstore_product917_name		Hero Alt- Mother Nature Keeper
 mstore_product918_name		Mentor Wings
+mstore_product918_desc		Given to Epoch officers and distinguished mentors. Keep up the good work!
 mstore_product919_name		Dominatrix Torturer
 mstore_product920_name		Hero Alt- Dominatrix Torturer
 mstore_product921_name		Santa Midas
@@ -3366,6 +3387,8 @@ mstore_product1654_name     Hammer Lord
 mstore_product1655_name     Hero Alt- Hammer Lord
 mstore_product1656_name     Fat Nymphora
 mstore_product1657_name     Hero Alt- Fat Nymphora
+mstore_product1658_name		Rift Devourer
+mstore_product1659_name		Hero Alt- Rift Devourer
 mstore_product1660_name     Tommy TwoGun
 mstore_product1661_name     Hero Alt- Tommy TwoGun
 mstore_product1662_name     Rift Predator
@@ -3397,6 +3420,8 @@ mstore_product1688_name     Rift Arachna
 mstore_product1689_name     Hero Alt- Rift Arachna
 mstore_product1690_name     Tequila Master
 mstore_product1691_name     Hero Alt- Tequila Master
+mstore_product1692_name		Smuggler Flint
+mstore_product1693_name		Hero Alt- Smuggler Flint
 mstore_product1694_name     Elementbringer
 mstore_product1695_name     Hero Alt- Elementbringer
 mstore_product1696_name     Sir Benzington
@@ -3486,12 +3511,22 @@ mstore_product1765_name     Hunter Rally
 mstore_product1766_name     Hero Alt- Hunter Rally
 mstore_product1767_name     Rift Slither
 mstore_product1768_name     Hero Alt- Rift Slither
+mstore_product1769_name     Hunter Gunblade
+mstore_product1770_name     Hero Alt- Hunter Gunblade
+mstore_product1771_name     Queen Riftwalker
+mstore_product1772_name     Hero Alt- Queen Riftwalker
+mstore_product1773_name     Rift Warden
+mstore_product1774_name     Hero Alt- Rift Warden
+mstore_product1775_name     Hunter Witch Slayer
+mstore_product1776_name     Hero Alt- Hunter Witch Slayer
 mstore_product1777_name     Sun Wukong
 mstore_product1778_name		Hero Alt- Sun Wukong
 mstore_product1779_name		Primal Dracon
 mstore_product1780_name		Hero Alt- Primal Dracon
 mstore_product1781_name     Ruin Revenant
 mstore_product1782_name     Hero Alt- Ruin Revenant
+mstore_product1783_name		Pandasoul
+mstore_product1784_name		Hero Alt- Pandasoul
 mstore_product1785_name     Elementals
 mstore_product1785_desc     Unleash the power of the four elements and bring havoc to your enemies!
 mstore_product1786_name     Dark Magic
@@ -3521,12 +3556,129 @@ mstore_product1811_name     Heroes on the Street Purple
 mstore_product1812_name     Heroes on the Street Red
 mstore_product1813_name     Heroes on the Street White
 mstore_product1814_name     Heroes on the Street Yellow
+mstore_product1815_name     Yanluo Wang
+mstore_product1816_name     Hero Alt- Yanluo Wang
 mstore_product1817_name		Throwback Bundle
 mstore_product1817_desc		All the Throwback Avatars.
 mstore_product1818_name		Brasil
 mstore_product1819_name		Latam
 mstore_product1823_name     Team Impunity
 mstore_product1824_name     Garena 2nd Year
+mstore_product1825_name     Tangseng
+mstore_product1826_name     Hero Alt- Tangseng
+mstore_product1827_name     Bajie
+mstore_product1828_name     Hero Alt- Bajie
+mstore_product1829_name     Shaolin Magebane
+mstore_product1830_name     Hero Alt- Shaolin Magebane
+mstore_product1831_name     Jeet Kune Dragon
+mstore_product1832_name     Hero Alt- Jeet Kune Dragon
+mstore_product1833_name		Steampunk Pyromancer
+mstore_product1834_name		Hero Alt- Steampunk Pyromancer
+mstore_product1835_name		Drillex
+mstore_product1836_name		Hero Alt- Drillex
+mstore_product1837_name		Mortracksus
+mstore_product1838_name		Hero Alt- Mortracksus
+mstore_product1839_name		Organ Grinder
+mstore_product1840_name		Hero Alt- Organ Grinder
+mstore_product1841_name		Steamoth
+mstore_product1842_name		Hero Alt- Steamoth
+mstore_product1845_name     Nightmare Predator
+mstore_product1846_name     Hero Alt- Nightmare Predator
+mstore_product1847_name		Hang Tuah
+mstore_product1848_name		Hero Alt- Hang Tuah
+mstore_product1856_name     Power Level
+mstore_product1878_name     Wicked Hag of the West
+mstore_product1879_name     Hero Alt- Wicked Hag of the West
+mstore_product1880_name     Guanyin
+mstore_product1881_name     Hero Alt- Guanyin
+mstore_product1882_name     Conquistador Aluna
+mstore_product1883_name     Hero Alt- Conquistador Aluna
+mstore_product1884_name     Djinn Salomon
+mstore_product1885_name     Hero Alt- Djinn Salomon
+mstore_product1886_name     Swarm Pestilence
+mstore_product1887_name     Hero Alt- Swarm Pestilence
+mstore_product1888_name     Rift Ravenor
+mstore_product1889_name     Hero Alt- Rift Ravenor
+mstore_product1890_name     Ghatotkacha
+mstore_product1891_name     Hero Alt- Ghatotkacha
+mstore_product1892_name     Baron of Blackwal
+mstore_product1893_name     Hero Alt- Baron of Blackwal
+mstore_product1894_name     Gorilla Warfare Artillery
+mstore_product1895_name     Hero Alt- Gorilla Warfare Artillery
+mstore_product1896_name     Flash Blitz
+mstore_product1897_name     Hero Alt- Flash Blitz
+mstore_product1898_name     Hero Alt- Jade Warrior
+mstore_product1899_name		Comic-Con Aluna Bundle
+mstore_product1899_desc		Get Stardust Aluna and Conquistador Aluna!
+mstore_product1900_name     Reset Bundle
+mstore_product1900_desc     Start from the begining at the best price.
+mstore_product1901_name     Sol's Bundle
+mstore_product1901_desc     Destroy the infidels with Sol's Blessing
+mstore_product1902_name     Party Bundle
+mstore_product1902_desc     What are you waiting for to get this party started?
+mstore_product1903_name     Horsemen Bundle
+mstore_product1903_desc     The 4 Apocalypse Horsemen and it's Leader Included!
+mstore_product1904_name     Cyber Bundle
+mstore_product1904_desc     Join the technology age by aquiring this bundle.
+mstore_product1905_name     Superhero Bundle
+mstore_product1905_desc     Feel the heroic blood running through your veins
+mstore_product1906_name     Alien Bundle
+mstore_product1906_desc     I want to believe.
+mstore_product1907_name		Sylvia
+mstore_product1908_name		Hero Alt- Sylvia
+mstore_product1909_name		TDMonkey King
+mstore_product1910_name		Hero Alt- TDMonkey King
+mstore_product1911_name		Snot Keeper
+mstore_product1912_name		Hero Alt- Snot Keeper
+mstore_product1913_name		Earthroc Pebbles
+mstore_product1914_name		Hero Alt- Earthroc Pebbles
+mstore_product1915_name		Cossack
+mstore_product1916_name		Hero Alt- Cossack
+mstore_product1917_name		Ogre Blacksmith
+mstore_product1918_name		Hero Alt- Ogre Blacksmith
+mstore_product1921_name		Cowardly Night Hound
+mstore_product1922_name		Hero Alt- Cowardly Night Hound
+mstore_product1923_name		Robotron
+mstore_product1924_name		Hero Alt- Robotron
+mstore_product1925_name		Scarecrow Fayde
+mstore_product1926_name		Hero Alt- Scarecrow Fayde
+mstore_product1927_name		Gravewood Deadyard
+mstore_product1928_name		Hero Alt- Gravewood Deadyard
+mstore_product1929_name		Tin Hammer
+mstore_product1930_name		Hero Alt- Tin Hammer
+mstore_product1931_name		Good Witch Pearl
+mstore_product1932_name		Hero Alt- Good Witch Pearl
+mstore_product1933_name     Hero Alt- Golden Pebbles
+mstore_product1934_name     El Diablo
+mstore_product1935_name     Hero Alt- El Diablo
+mstore_product1936_name     Hades
+mstore_product1937_name     Hero Alt- Hades
+mstore_product1938_name     Set
+mstore_product1939_name     Hero Alt- Set
+mstore_product1940_name     Ymir
+mstore_product1941_name     Hero Alt- Ymir
+mstore_product1942_name     Camazotz
+mstore_product1943_name     Hero Alt- Camazotz
+mstore_product1944_name     Hel
+mstore_product1945_name     Hero Alt- Hel
+mstore_product1986_name     Hero Alt- Dreadknight Salforis
+mstore_product1987_name     Hero Alt- Legendary Valkyrie
+mstore_product1988_name     Hero Alt- Sachi Swiftblade
+mstore_product1989_name     Hero Alt- Leprechaun Blacksmith
+mstore_product1990_name     Axeso 5
+mstore_product1991_name     Casters
+mstore_product1992_name     Haiku Hero
+mstore_product1993_name     Circe the Deceiver
+mstore_product1994_name     Hero- Circe the Deceiver
+mstore_product1995_name     Iron Maiden
+mstore_product1996_name     Hero Alt- Iron Maiden
+mstore_product1997_name     Poison Circe
+mstore_product1998_name     Hero Alt- Poison Circe
+mstore_product2061_name     Cinema Savant
+mstore_product2062_name		Circe the Deceiver
+mstore_product2063_name		Iron Maiden
+mstore_product2064_name		Poison Circe
+mstore_product2065_name     GM Badge Icon
 
 mstore_product999999001_name	Default Account Icon
 mstore_product999999002_name	Default Chat Symbol
@@ -3658,6 +3810,8 @@ mstore_eapdesc_garena	Play the newest heroes today!  Get early access to the her
 mstore_eapdesc_f2p		Own the newest heroes and be one of the first players to play them!
 mstore_eapupdate		Update Required
 mstore_eapupdate_body	A new Early Access hero is available.  You must update HoN before it can be displayed.
+mstore_eapnone			Early Access Not Available
+mstore_eapnone_body 	There is no Early Access hero at this time.
 mstore_viewspecials		View Specials
 mstore_specials		Specials
 mstore_specials_tip		Items in this section are often offered for low prices and for a limited time.
@@ -3737,22 +3891,17 @@ mstore_eap_right_aa_1				Alt Avatar
 // Eligibility Items
 mstore_elig_only					Unlock Me!
 mstore_elig							Unlockable Item
+mstore_elig_required 				Required Items: 
 mstore_elig_tip						This is an unlockable item, these are made available by participation in promotional events.
 
-mstore_elig_package_1				This item is unlocked by participation in the Four Horsemen event! Purchase each of the horsemen to unlock this alt-avatar!
-mstore_elig_package_2				Releases 1/14/13. Get Early Access by purchasing the four Risen Ra avatars listed below.
-mstore_elig_package_3				This item is unlocked by X
-mstore_elig_package_4				This item is unlocked by X
-mstore_elig_package_5				This item is unlocked by X
-mstore_elig_package_16				Releases 1/14/13. Get Early Access by purchasing the four Risen Ra avatars listed below.
+/// These use the product ID that the eligibility stuff applies to ///
+mstore_elig_package_983				This item is unlocked by participation in the Four Horsemen event! Purchase each of the horsemen to unlock this alt-avatar!
+mstore_elig_package_1771			This item is unlocked by participation in the Rift Wars event! Purchase each member of the Riftspawn to unlock this avatar!
+mstore_elig_package_1769			This item is unlocked by participation in the Rift Wars event! Purchase each member of the Hunter's Guild to unlock this avatar!
 
-mstore_elig_requirements_1			977|981|975|979
-mstore_elig_requirements_2			1448|1467|1368|1372
-mstore_elig_requirements_3
-mstore_elig_requirements_4
-mstore_elig_requirements_5
-mstore_elig_requirements_16			1448|1467|1368|1372
-
+mstore_elig_requirements_983		977|981|975|979
+mstore_elig_requirements_1771		1662|1688|1763|1767|1773
+mstore_elig_requirements_1769		1757|1759|1761|1765|1775
 
 mstore_goldcollection				Gold Collection
 mstore_goldcollection_tip			This avatar is part of the Gold Collection, which is a series of rare and high-quality avatars. It is only available for a very limited time.
@@ -3872,6 +4021,34 @@ mstore_collectorsEditionSet14_owned			Debut Edition
 mstore_collectorsEditionSet14_owned_tip		This avatar is part of the Debut Edition Avatar set.
 mstore_collectorsEditionSet14_expired		Debut Edition Avatar - Unavailable
 mstore_collectorsEditionSet14_expired_tip	This avatar is part of the Debut Edition Avatar set and is not currently available for purchase.
+
+mstore_collectorsEditionSet15				Sang-La Pack
+mstore_collectorsEditionSet15_tip			This avatar is part of the Sang-La Pack.
+mstore_collectorsEditionSet15_owned			Sang-La Pack
+mstore_collectorsEditionSet15_owned_tip		This avatar is part of the Sang-La Pack.
+mstore_collectorsEditionSet15_expired		Sang-La Pack - Unavailable
+mstore_collectorsEditionSet15_expired_tip	This avatar is part of the Sang-La Pack and is not currently available for purchase.
+
+mstore_collectorsEditionSet16				Heroes of Oz
+mstore_collectorsEditionSet16_tip			This avatar is part of the Heroes of Oz pack.
+mstore_collectorsEditionSet16_owned			Heroes of Oz
+mstore_collectorsEditionSet16_owned_tip		This avatar is part of the Heroes of Oz pack.
+mstore_collectorsEditionSet16_expired		Heroes of Oz - Unavailable
+mstore_collectorsEditionSet16_expired_tip	This avatar is part of the Heroes of Oz pack and is not currently available for purchase.
+
+mstore_collectorsEditionSet17				Elder Evils
+mstore_collectorsEditionSet17_tip			This avatar is part of the Elder Evils pack.
+mstore_collectorsEditionSet17_owned			Elder Evils
+mstore_collectorsEditionSet17_owned_tip		This avatar is part of the Elder Evils pack.
+mstore_collectorsEditionSet17_expired		Elder Evils - Unavailable
+mstore_collectorsEditionSet17_expired_tip	This avatar is part of the Elder Evils pack and is not currently available for purchase.
+
+mstore_collectorsEditionSet18				Revenge of the Neutrals
+mstore_collectorsEditionSet18_tip			This avatar is part of the Revenge of the Neutrals pack.
+mstore_collectorsEditionSet18_owned			Revenge of the Neutrals
+mstore_collectorsEditionSet18_owned_tip		This avatar is part of the Revenge of the Neutrals pack.
+mstore_collectorsEditionSet18_expired		Revenge of the Neutrals - Unavailable
+mstore_collectorsEditionSet18_expired_tip	This avatar is part of the Revenge of the Neutrals pack and is not currently available for purchase.
 
 mstore_ultimateedition					Ultimate Avatar
 mstore_ultimateedition_tip				This avatar is an Ultimate Avatar.
@@ -4077,7 +4254,7 @@ mstore_buycoins_regcur_info_garena_tr	Shells can be purchased at the Garena webs
 mstore_buycoins_regcur_info_ntreev	Treecash can be purchased at the Ntreev website - ntreev.com
 mstore_buycoins_regcur_info_axeso5 	AxesoCash can be purchased at the Axeso5 website - axeso5.com
 mstore_resetstats_form_title		Reset Stats
-mstore_resetstats_form_body			Use this form to redeem a purchased stat reset.  Simply select the desired statistics and submit the form to reset your stats. \\n\\n ^rClearing Statistics for any mode also resets your MMR or PSR for that mode. \\n ^rClearing Statistics for any mode also resets your total games played and disconnects for ALL modes.
+mstore_resetstats_form_body			Use this form to redeem a purchased stat reset.  Simply select the desired statistics and submit the form to reset your stats. \\n\\n ^rClearing Statistics for any mode also resets your total games played and disconnects for ALL modes.
 mstore_nickchange_form_title		Change Nickname
 mstore_buy_subaccount_form_title	Buy Subaccount
 mstore_cancel						Cancel
@@ -4318,6 +4495,7 @@ mstore_Hero_Bushwack_name			Bushwack
 mstore_Hero_Salomon_name			Salomon
 mstore_Hero_Prisoner_name			Prisoner 945
 mstore_Hero_SirBenzington_name		Sir Benzington
+mstore_Hero_Circe_name				Circe the Deceiver
 
 //Account Icons
 mstore_unlock_icon_btn				Unlock Icon Slot
@@ -4871,6 +5049,38 @@ game_mentor_help_8	Mouse
 game_mentor_help_9	Ping location 
 game_mentor_help_13 You can view this screen at any time from the menu dropdown
 game_mentor_help_15 Transmit your cursor
+
+courier_state_Idle 							Courier Idle
+courier_state_GettingStashItems 			Courier Getting Stash Items
+courier_state_DeliveringItems 				Courier Delivering Items
+courier_state_Returning						Courier Returning
+courier_state_Roaming						Courier Roaming
+courier_state_Dead							Courier Dead
+
+courier_state_Idle_desc 					The courier is idle and waiting to serve you!
+courier_state_GettingStashItems_desc		The courier is loading up with stashed items!
+courier_state_DeliveringItems_desc			The courier is on his way and will be delivering the items he is carrying soon!
+courier_state_Returning_desc				The courier is returning to the well!
+courier_state_Roaming_desc					The courier is out, being controlled by someone. However, it is not performing any particular task.
+courier_state_Dead_desc						The courier is dead!
+
+courier_action 								Use Courier
+courier_action_desc 						Clicking this will cause the courier to collect what it can carry from your stash, deliver them to you as fast as it can, and then return to the well!
+
+courier_status_dead 						Courier Dead
+courier_status_private 						Private Courier
+courier_status_shared 						Shared Courier
+
+courier_status_dead_desc					The courier is dead, there is no courier that can deliver items to you!
+courier_status_private_desc					You own a private courier that you can choose to share with your teammates.
+courier_status_shared_desc					You are using a courier that is shared between you and your teammates.
+
+courier_no_controller 						Unused
+courier_no_controller_desc					Currently there is no player using or controlling the courier.
+
+courier_controller_desc 					The courier is currently being controlled by, or executing actions for {playerName}.
+
+courier_uncontrollable 						This courier cannot be controlled by you because the player whom owns it has has not shared it with you.
 
 // game_chat.package
 gamechat_button_send_message				Send Message
@@ -5460,10 +5670,10 @@ mainlobby_label_single_draft				Single Draft
 mainlobby_label_banning_draft				Banning Draft
 mainlobby_label_banning_pick				Banning Pick
 mainlobby_label_lockpick					Lockpick
-mainlobby_label_botmatch						Bot Match
+mainlobby_label_botmatch					Bot Match
+mainlobby_label_captainsmode 				Captains Pick
 mainlobby_label_all_random					All Random
-mainlobby_label_captains_draft				Captains Draft
-mainlobby_label_captains_mode				Captains Mode
+mainlobby_label_balanced_random 			Balanced Random
 mainlobby_label_deathmatch					Deathmatch
 mainlobby_label_blind_ban					Blind Ban
 mainlobby_label_blindban					Blind Ban
@@ -5672,12 +5882,14 @@ mainlobby_gamelist_lockpick_title			Lockpick
 mainlobby_gamelist_banningpick_desc			Team captains take turns banning three players per team, and then players alternate picking from the remaining hero pool.
 mainlobby_gamelist_captainsdraft_title		Captains Draft
 mainlobby_gamelist_captainsdraft_desc		Captains first take turns banning heroes from a random pool and then take turns selecting a lineup for their teammates.
-mainlobby_gamelist_captainsmode_title		Captains Mode
-mainlobby_gamelist_captainsmode_desc		Captains first take turns banning heroes and then take turns selecting a lineup for their teammates.
+mainlobby_gamelist_captainsmode_title		Captains Pick
+mainlobby_gamelist_captainsmode_desc		Group leaders are the captains of the team and do all of the banning and picking for the team.
 mainlobby_gamelist_deathmatch_title			Deathmatch
 mainlobby_gamelist_deathmatch_desc			After dying, players are forced to select a new hero.
 mainlobby_gamelist_random_title				All Random
 mainlobby_gamelist_random_desc				Heroes are randomly distributed to all players.
+mainlobby_gamelist_balanced_random_title	Balanced Random
+mainlobby_gamelist_balanced_random_desc		Heroes are randomly distributed to all players.
 mainlobby_gamelist_blindban					Blind Banning
 mainlobby_gamelist_blindban_title			Blind Banning
 mainlobby_gamelist_blindban_desc			Players begin with the full pool of heroes. Three heroes are then banned by the players in the Blue and Pink positions simultaneously without the other team knowing which heroes the other team chose to ban. Players are then shown the bans and are all given the ability to choose from the remaining heroes simultaneously.
@@ -5957,7 +6169,7 @@ filter_favorites_tip						Highlights your favorited heroes! Heroes can be favori
 filter_reset_tip							Resets and clears the currently selected filters and search.
 
 filters_tip_title 							Hero Filters
-filters_tip_body 							Filter heroes by categories, left click a category to enable it, right click it to enable only that category.\n\nThe requriements for heroes to match the filters drops as you enable more filters. 
+filters_tip_body 							Filter heroes by categories. Left click a category to enable it, right click to enable only that category. The requirements for heroes to match your filters drops as you enable more filters.
 
 // game_menu.interface
 game_menu_header							Game Menu
@@ -6204,9 +6416,21 @@ stats_tip_matches_played					All Matches Played
 stats_tip_disconnects						All Disconnects
 player_stats_ranked_normal					Ranked Normal
 player_stats_ranked_casual					Ranked Casual
+player_stats_unranked_normal				Unranked Normal
+player_stats_unranked_casual				Unranked Casual
 player_stats_public							Public
 player_stats_midwars						Mid Wars
 player_stats_used							Used:
+
+player_stats_ranked_tab						Normal Mode Stats
+player_stats_casual_tab 					Casual Mode Stats
+player_stats_public_tab 					Public Game Stats
+player_stats_event_tab 						Tournament Stats
+player_stats_event_selection				Event
+
+player_stats_event_player 					This player has not participated in any recent events...
+player_Stats_event_main 					To view current and upcoming tournaments and events visit http://hontour.com/!
+
 
 // game_setup.package
 game_setup_spcectators_label				Spectators
@@ -6232,6 +6456,7 @@ game_setup_no_leavers_tip					Players with a high leave percentage will not be a
 game_setup_record_stats						Record Stats
 game_setup_record_stats_tip					Record stats for this match.
 game_setup_local							Local
+game_setup_local_dedicated 					Local Dedicated
 game_setup_automatic						Automatic
 game_setup_browse							Browse...
 game_setup_one_v_one						One versus One
@@ -6248,8 +6473,7 @@ game_setup_lockpick							Lockpick
 game_setup_botmatch							Bot Match
 game_setup_gated							Core Pool
 game_setup_gated_desc						Players choose from a crafted pool of 40 heroes. 
-game_setup_captainsdraft					Captains Draft
-game_setup_captainsmode						Captains Mode
+game_setup_captainsmode						Captains Pick
 game_setup_deathmatch						Deathmatch
 game_setup_blindban							Blind Ban
 game_setup_advanced_options					Display Advanced Game Options
@@ -6668,7 +6892,8 @@ mm3_coop_localgamepanel			Region selection is not required. \n\nYour match will 
 mm3_bots_mode					Co-Op vs AI
 
 mm3_pvp_map 					3. Choose Your Map
-mm3_pvp_gamemodes 				4. Select Your Game Modes
+mm3_pvp_gameoptions 			4. Select Your Game Options
+mm3_pvp_gamemodes 				5. Select Your Game Modes
 mm3_pvp_simplemode				Simple Mode...
 mm3_pvp_advancedmode			Advanced Options...
 mm3_pvp_simplemaps 				Maps
@@ -6693,8 +6918,15 @@ mm3_verified_enabled_tip 		By disabling this option, you will include basic acco
 mm3_verified_disabled_tip		By enabling this options, basic accounts will be excluded when searching for your match.
 mm3_verified_disabledbasic_tip	This option is disabled because someone on your team only has a basic account.
 
+mm3_ranked_disabled 			You are currently unable to play in ranked matches with this account. Play more unranked matches to reach level {level} and unlock this option!
+mm3_ranked_disable				By playing a ranked game you will be matched up with players closer to your skill rating and stats will be recorded. You may experience longer queue times.
+mm3_ranked_enable 				By playing unranked games you will be matched against players with a wider range of skill rating compared to yours, but stats will not be recorded. You should experience shorter queue times.
+mm3_ranked_disabled_unranked	This option is disabled because someone on your team is not high enough level to participate in ranked matches.
+mm3_ranked_midwars 				Ranked play is not available on Midwars.
+
 mm3_host 						Host
 mm3_error 						Can't Continue
+mm3_ingame 						In-Game
 mm3_ready 						Ready
 mm3_notready 					Not Ready
 
@@ -6709,6 +6941,7 @@ mm3_random_bot 					Random Bot
 mm3_random_desc 				Automatically select a random bot out of the currently available bots!
 
 mm3_player_is_host 				This player is the host.
+mm3_player_in_game				This player is currently in a game.
 
 
 // MatchmakingV2
@@ -6779,7 +7012,8 @@ mm_queue_low					Low
 mm_queue_disparity_high			High Group Disparity
 mm_queue_disparity_med			High Group Disparity
 mm_queue_disparity_high_tip		If the MMR of the players in your group are vastly different you may experience greatly increased queue times and reduced MMR gain.
-mm_popularity					Allowing more Game Modes and Server Regions will increase the popularity of your matchmaking settings, resulting in shorter queue times. \\n\\n Map Selection: {map} \\n Mode Selection: {mode} \\n Region Selection: {region} 
+mm_popularity					Allowing more Game Modes and Server Regions will increase the popularity of your matchmaking settings, resulting in shorter queue times. \\n\\n Map Selection: {map} \\n Mode Selection: {mode} \\n Region Selection: {region}
+mm_popularity2					Allowing more Game Modes and Server Regions will increase the popularity of your matchmaking settings, resulting in shorter queue times. \\n\\n Mode Selection: {mode} \\n Region Selection: {region} 
 mm_queue_enter_btn				Enter Queue
 mm_queue_leave_btn				Leave Queue
 mm_ready_btn					Ready
@@ -6794,6 +7028,7 @@ mm_group_txt					Invite players to your group by using your friends list to the 
 mm_group_disband				Disband This Group
 mm_queue_fidelity1				Match Fidelity
 mm_queue_fidelity1b				Match Fidelity ^r(Host Only)^*
+mm_queue_fidelity1c				Match Fidelity ^r(Ranked Only)^*
 mm_queue_fidelity2				Shorter Queues
 mm_queue_fidelity3				Fairer Matches
 mm_queue_fidelity_tt_desc		While searching for a match, you are able to prioritize getting into a game faster, or finding a game in which the players are more closely skilled.
@@ -6942,6 +7177,19 @@ mm_br_region 					Brazil
 mm_isleaver_onopen				Unable to join Matchmaking
 mm_isleaver_onopen_body			You are not currently allowed to join matchmaking due to your leaver status.  With your current games played of ^960{gamesplayed}^* and leaver percentage of ^922{leaverpercent}^*, you'll need to play ^g{matchestoclear}^* more matches without leaving before you can play matches using the Matchmaking system.
 mm_leaver_resetstats			Alternatively, you can purchase a stats reset to clear your leaver percentage and instantly gain access to Matchmaking and other non-leaver games.
+
+mm_game_found 					Matchmaking Game Found!
+mm_timeout_desc 				A matchmaking game has been found! However, you must accept this match before you can continue otherwise you will be removed from the matchmaking queue.
+mm_timeout_time 				{seconds} seconds to accept...
+mm_accept_button 				Accept Match
+mm_players_accepted 			{accepted} / {total} Players Accepted...
+mm_accepted 					Accepted!
+
+mm_group_timeout 				TMM Timeout
+mm_group_timeout_others 		Your group did not enter the match because the following players did not accept the match:
+mm_group_timeout_self_others 	Your group did not enter the match because you and the following players did not accept the match:
+mm_group_timeout_self 			Your group did not enter the match because you did not accept the match.
+mm_group_timeout_unknown 		Your group did not enter the match because of an unknown error.
 
 
 // Matchmaking
@@ -7378,6 +7626,8 @@ news_honcast_offline						Honcast live feed is currently offline. Visit site for
 news_honcast_online							Honcast is currently broadcasting LIVE!
 news_honcast_copyURL						Click To Copy URL
 
+news_time_left								Time Left To Buy
+
 //tournaments.package
 tournament_name								Tournament Name
 tournament_teams							Teams:
@@ -7490,8 +7740,8 @@ confirm_need_tokens_msg						You need to buy tokens to play this mode.
 confirm_warn_tokens_title					Token Required
 confirm_warn_tokens_msg						You will use a token in order to play this match if you choose a hero you do not own.
 confirm_token_warn_da						Don\'t warn me again
-confirm_warn_unverified_title				Unverified Player
-confirm_warn_unverified_msg					{player} is unverified, your settings will be altered if you accept them into your Matchmaking group.
+confirm_warn_unverified_title				Unranked Player
+confirm_warn_unverified_msg					{player} cannot participate in ranked matches, your settings will be altered if you accept them into your Matchmaking group.
 confirm_warn_unverified_yes					Change Settings
 confirm_warn_unverified_no					Remove Player
 
@@ -9063,10 +9313,10 @@ hero_tip_offensive_tip_Hero_Gunblade_2			Crippling Slugs and Grappling Shot both
 hero_tip_defensive_tip_Hero_Gunblade_1			Gunblade gains bonus damage for being close to you; try to keep your distance when attacking him.
 hero_tip_defensive_tip_Hero_Gunblade_2			Gunblade excels at killing a single target but is quite vulnerable to crowd control. Focus him down quickly if he tries to gain the benefits of his Lethal Range.
 
-hero_tip_offensive_tip_Hero_Artillery_1			LRM can be cast from an extremely long range, allowing Artillery to deal damage from a safe distance. Be sure to enable Bunker Down for even more damage.
-hero_tip_offensive_tip_Hero_Artillery_2			Artillery Barrage deals large amounts of area of effect damage and has a push back on it that can be used to escape enemies.
+hero_tip_offensive_tip_Hero_Artillery_1			LRM can be cast from an extremely long range, allowing Artillery to deal damage from a safe distance. While channeling, you can retarget the skill by activating it again.
+hero_tip_offensive_tip_Hero_Artillery_2			Mortar shot can slow enemies in a large area, more importantly the skill can be used while channeling LRM to land a few more shots.
 hero_tip_defensive_tip_Hero_Artillery_1			LRM is a channeling ability. Look to disable or silence him when he's channeling. Be careful, though, because he can continuously change which direction he is firing.
-hero_tip_defensive_tip_Hero_Artillery_2			Artillery gains bonus damage from standing in his Bunker Down zone. Focus him and ensure he leaves the area.
+hero_tip_defensive_tip_Hero_Artillery_2			Homing Missile can stun enemies for an extremely long duration but travels very slowly. Be sure to move away from your allies if you've been targetted by the missile!
 
 hero_tip_offensive_tip_Hero_Kenisis_1			Inherent Defense allows Kinesis to gain more survivability for doing damage. Look to hit as many enemies as possible with Mass Control.
 hero_tip_offensive_tip_Hero_Kenisis_2			Kinesis is entirely environment dependent. Try to avoid fighting in rivers where there is a lack of trees.
@@ -9123,10 +9373,10 @@ hero_tip_offensive_tip_Hero_Bushwack_2			Jungle Toxin deals more damage the more
 hero_tip_defensive_tip_Hero_Bushwack_1			Bushwack has alot of mobility and can kite enemies very well however has very low hit points. Hit him with a quick disable like Kuldra's Sheepstick to prevent his use of Side Step.
 hero_tip_defensive_tip_Hero_Bushwack_2			Spliter Shot deals damage to enemies behind Bushwack's target. Try to avoid standing in a line with your allies to avoid the extra splash damage.
 
-hero_tip_offensive_tip_Hero_Salomon_1			Guardian Spirit can mitigate alot of damage but does take a while to build up. Try to avoid engaging enemies until you've maximized your shield.
-hero_tip_offensive_tip_Hero_Salomon_2			Salomon's ultimate Last Wish can be very difficult to land, try using it in combination with Sacred Grounds to lineup the enemy with your orbs for maximum damage potential.
-hero_tip_defensive_tip_Hero_Salomon_1			Sacred Grounds leaves a trail that hastes allies while slowing enemies and lasts for decent time but has a long cooldown. Try to disable him when you see it active and avoid running directly along the trail.
-hero_tip_defensive_tip_Hero_Salomon_2			Salomon's ultimate will deal a large amount of damage to enemies close to him but does have a significant delay period before retracting. Avoid running directly behind him to dodge the return damage.
+hero_tip_offensive_tip_Hero_Salomon_1			Salomon gains a large amount of gold from killing creeps with his passive Wish For Wealth. To maximize this effect, be sure to clear a large number of creeps in a short period of time.
+hero_tip_offensive_tip_Hero_Salomon_2			Salomon's Ultimate is both a great offensive and defensive tool granting access to all new abilities. Keep in mind that the health pool of your main hero is untouched while this form is active.
+hero_tip_defensive_tip_Hero_Salomon_1			Cosmic Cleave hits a very wide area but is always a predetermined range. Rather than side stepping to dodge this skill, run directly forward or back.
+hero_tip_defensive_tip_Hero_Salomon_2			Salomon is a threat to be wary of in his ultimate form. His form however has a very limited lifepool that can be destroyed very quickly. Be sure to focus him down to mitigate his damage output.
 
 hero_tip_offensive_tip_Hero_Prisoner_1			Ball and Chain is easier to hit the further away enemies are. Try to avoid using your hook on enemies in close range unless they are disabled.
 hero_tip_offensive_tip_Hero_Prisoner_2			Prison Break can hit multiple enemies but also has a significant delay. Don't be too greedy trying to hit multiple enemies or you risk hitting none.
@@ -9137,6 +9387,11 @@ hero_tip_offensive_tip_Hero_SirBenzington_1		Lance-A-Long can deal a large amoun
 hero_tip_offensive_tip_Hero_SirBenzington_2		Knightfall is an amazing initiation tool but can also be used defensively. Don't forget to activate your ult when in danger to survive for a few more seconds.
 hero_tip_defensive_tip_Hero_SirBenzington_1		Joust allows Benzington to charge in a line at considerable distances, the ability however has a considerable wind up, try to sidestep to dodge it.
 hero_tip_defensive_tip_Hero_SirBenzington_2		Knightfall can deal alot of damage in a big area, but will also follow the target he chooses. Try to avoid clumping up from the target declared by Benzington.
+
+hero_tip_offensive_tip_Hero_Circe_1				Doppelgangers have a low mana cost and cooldown. Use them to scout ahead safely or build up an army prior to a fight.
+hero_tip_offensive_tip_Hero_Circe_2				Deceive can be used as both a ganking or escape skill. Take advantage of the invisibility time to setup a good position for your Twisted Visage.
+hero_tip_defensive_tip_Hero_Circe_1				Doppelgangers add alot of damage to a team fight however they are very vulnerable when attacked.
+hero_tip_defensive_tip_Hero_Circe_2				Twisted Visage has a notable link and channel time before Circe can clone the enemy. This can be disrupted by moving out of range or by interrupting Circe.
 
 // Match Rewards
 match_stat_rewards_player_breakdown				Player Breakdown:
@@ -9456,6 +9711,7 @@ bot_description_soul_reaper			Soul Reaper is a strong, versatile hero who can he
 bot_description_engineer			A capable ganker, Engineer also provides a lot of teamfight capability. Authored by V1P3R`!
 bot_description_gravekeeper			Gravekeeper is a versatile hero with solid Magic and Physical damage. Authored by Schnarchnase!
 bot_description_ellonia				Ellonia is a ranged intelligence hero known for her frost spells, freezing the opposition! Authored by Mellow_Ink!
+bot_description_balphagore			Balphagore is a melee strength hero, with insane pushing potential die to his minions. Authored by Kairus101!
 
 // Maintenance
 maintenance_general 			Under Maintenance

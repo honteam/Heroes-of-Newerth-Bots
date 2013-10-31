@@ -49,6 +49,11 @@ local Clamp = core.Clamp
 
 BotEcho('loading magmus_main...')
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 1, ShortSolo = 3, LongSolo = 2, ShortSupport = 4, LongSupport = 4, ShortCarry = 4, LongCarry = 4}
+
 object.heroName = 'Hero_Magmar'
 
 

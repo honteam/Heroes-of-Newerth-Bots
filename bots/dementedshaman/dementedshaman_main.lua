@@ -58,6 +58,11 @@ local sqrtTwo = math.sqrt(2)
 
 BotEcho('loading demetnedshaman_main...')
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 1, ShortSolo = 1, LongSolo = 1, ShortSupport = 5, LongSupport = 5, ShortCarry = 1, LongCarry = 1}
+
 object.heroName = 'Hero_Shaman'
 
 --------------------------------

@@ -93,6 +93,11 @@ behaviorLib.LaneItems  = {"Item_Marchers", "Item_HelmOfTheVictim", "Item_Steambo
 behaviorLib.MidItems  = {"Item_Sicarius", "Item_WhisperingHelm", "Item_Immunity"}
 behaviorLib.LateItems  = {"Item_ManaBurn2", "Item_LifeSteal4", "Item_Evasion"}
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 3, ShortSolo = 4, LongSolo = 2, ShortSupport = 1, LongSupport = 1, ShortCarry = 5, LongCarry = 4}
+
 ------------------------------
 --     skills               --
 ------------------------------
