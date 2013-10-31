@@ -339,6 +339,10 @@ function core.AngleBetween(vec1, vec2)
 	return radians
 end
 
+function core.HeadingDifference(unit, vecTargetPos)
+	return core.AngleBetween(unit:GetHeading(), vecTargetPos-unit:GetPosition())
+end
+
 function core.Clamp(val, low, high)
 	local retVal = val
 	if low <= high then
@@ -1187,7 +1191,8 @@ function core.GetItem(val, bIncludeStash)
 	for slot = 1, nLast, 1 do
 		local curItem = inventory[slot]
 		if curItem then
-			if curItem:GetName() == val then
+			if curItem:GetTypeName() == val and not curItem:IsRecipe() then --ignore recipies!
+				--BotEcho("Found " .. val)
 				return core.WrapInTable(curItem)
 			end
 		end

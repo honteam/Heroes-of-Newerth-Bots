@@ -61,6 +61,11 @@ function behaviorLib.addItemBehavior(itemName, remove)
 		behaviorLib.behaviorToModify = behaviorLib.ShrunkenHeadBehavior
 	elseif itemName == "Item_ManaBurn2" then
 		behaviorLib.behaviorToModify = behaviorLib.GeomancersBehavior
+	elseif itemName == "Item_PushStaff" then --waiting on healAtWell fixes
+		behaviorLib.behaviorToModify = behaviorLib.TabletBehavior
+	elseif itemName == "Item_PlatedGreaves" then
+		behaviorLib.behaviorToModify = behaviorLib.PlatedGreavesBehavior
+		
 	end
 	
 	
@@ -851,3 +856,62 @@ behaviorLib.GeomancersBehavior = {}
 behaviorLib.GeomancersBehavior["Utility"] = behaviorLib.GeomancersUtility
 behaviorLib.GeomancersBehavior["Execute"] = behaviorLib.GeomancersExecute
 behaviorLib.GeomancersBehavior["Name"] = "UseGeomancers"
+
+
+------------------------------------
+--  	   		Tablet			  --
+------------------------------------
+
+behaviorLib.nTabletThreshhold = 50
+behaviorLib.nTabletRetreatThreshhold = 50
+function behaviorLib.TabletUtility(botBrain)
+	local unitSelf = core.unitSelf
+	behaviorLib.itemTablet = core.GetItem("Item_PushStaff")
+	if behaviorLib.itemTablet and behaviorLib.itemTablet:CanActivate() then
+		--offensive
+		if (behaviorLib.lastHarassUtil > behaviorLib.nTabletThreshhold) and behaviorLib.heroTarget and core.HeadingDifference(unitSelf, behaviorLib.heroTarget:GetPosition()) < 0.5
+		  and Vector3.Distance2DSq(unitSelf:GetPosition(), behaviorLib.heroTarget:GetPosition()) > 500 * 500 then	--only when we have a target
+			return 100
+		end
+		--defensive (TODO HEAL AT WELL/BLINK FIXES when healAtWell fixes are implemented)
+		if behaviorLib.lastRetreatUtil >= behaviorLib.nTabletRetreatThreshhold and (core.GetLastBehaviorName(botBrain) == "RetreatFromThreat" or core.GetLastBehaviorName(botBrain) == "HealAtWell")
+		  and core.allyWell and core.HeadingDifference(unitSelf, --[[core.GetBestBlinkRetreatLocation(behaviorLib.itemTablet:GetRange())]]core.allyWell:GetPosition() ) < 0.5 then --we are RUNNING FOR OUR LIVES!
+			return 100
+		end
+	end
+	return 0
+end
+
+function behaviorLib.TabletExecute(botBrain)
+	local unitSelf = core.unitSelf
+	return core.OrderItemEntityClamp(botBrain, unitSelf, behaviorLib.itemTablet, unitSelf)
+end
+behaviorLib.TabletBehavior = {}
+behaviorLib.TabletBehavior["Utility"] = behaviorLib.TabletUtility
+behaviorLib.TabletBehavior["Execute"] = behaviorLib.TabletExecute
+behaviorLib.TabletBehavior["Name"] = "UseTablet"
+
+
+------------------------------------
+--   	   Plated Greaves 		  --
+------------------------------------
+
+function behaviorLib.PlatedGreavesUtility(botBrain)
+	local unitSelf = core.unitSelf
+	behaviorLib.itemPlatedGreaves = core.GetItem("Item_PlatedGreaves")
+	
+	if (behaviorLib.itemPlatedGreaves and behaviorLib.itemPlatedGreaves:CanActivate() and not unitSelf:HasState("State_PlatedGreaves_Armor") and core.GetLastBehaviorName(botBrain) == "Push") then
+		return 100
+	else
+		return 0
+	end
+end
+
+function behaviorLib.PlatedGreavesExecute(botBrain)
+	local unitSelf = core.unitSelf
+	return core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemPlatedGreaves)
+end
+behaviorLib.PlatedGreavesBehavior = {}
+behaviorLib.PlatedGreavesBehavior["Utility"] = behaviorLib.PlatedGreavesUtility
+behaviorLib.PlatedGreavesBehavior["Execute"] = behaviorLib.PlatedGreavesExecute
+behaviorLib.PlatedGreavesBehavior["Name"] = "UsePlatedGreaves"

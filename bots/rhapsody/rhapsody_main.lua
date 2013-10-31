@@ -437,7 +437,7 @@ behaviorLib.TeamGroupBehavior["Execute"] = TeamGroupBehaviorOverride
 ------------------------------------------------------------
 --	Rhapsody Help behavior
 --	
---	Execute: Use Astrolabe / Protective Melody
+--	Execute: Use Protective Melody
 --  The following few functions are a necesary 
 --  copy pasta from GlaciusBot(with adaptaions for rhapsody's skills, ofc)
 ------------------------------------------------------------
@@ -612,7 +612,7 @@ function behaviorLib.HealUtility(botBrain)
 	return nUtility
 end
 
-function behaviorLib.HealExecute(botBrain) -- this is used for Astrolabe ASWELL as Ultimate triggering
+function behaviorLib.HealExecute(botBrain) -- this is used for Ultimate triggering
 	local abilMelody = skills.abilProtectiveMelody
 	
 	local nUltimateTTL = object.GetUltimateTimeToLiveThreshold () 
@@ -625,7 +625,7 @@ function behaviorLib.HealExecute(botBrain) -- this is used for Astrolabe ASWELL 
 		return
 	end
 	
-	--Priority order is Ultimate > Astrolabe
+	--Priority order is Ultimate
 	if unitHealTarget then 
 		if nHealTimeToLive <= nUltimateTTL and abilMelody:CanActivate() and unitHealTarget ~= unitSelf  then  --only attempt ult for other players (not for self, lol)
 			ProtectiveMelodyExecute(botBrain)
