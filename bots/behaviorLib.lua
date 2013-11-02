@@ -3610,33 +3610,33 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.ShopBehavior)
 ---------------
 -- Pick Rune --
 ---------------
-behaviorLib.runeToPick = nil
-
+behaviorLib.tRuneToPick = nil
+behaviorLib.nRuneGrabRange = 1000
 -- 30 if there is rune within 1000 and we see it
 function behaviorLib.PickRuneUtility(botBrain)
 	local rune = core.teamBotBrain.GetNearestRune(core.unitSelf:GetPosition(), true)
-	if rune == nil or Vector3.Distance2DSq(rune.location, core.unitSelf:GetPosition()) > 1000*1000 then
+	if rune == nil or Vector3.Distance2DSq(rune.vecLocation, core.unitSelf:GetPosition()) > behaviorLib.nRuneGrabRange * behaviorLib.nRuneGrabRange then
 		return 0
 	end
 
-	behaviorLib.runeToPick = rune
+	behaviorLib.tRuneToPick = rune
 
 	return 30
 end
 
 function behaviorLib.pickRune(botBrain, rune)
-	if rune == nil or rune.location == nil or rune.picked then
+	if rune == nil or rune.vecLocation == nil or rune.bPicked then
 		return false
 	end
-	if not HoN.CanSeePosition(rune.location) or rune.unit == nil then
-		return behaviorLib.MoveExecute(botBrain, rune.location)
+	if not HoN.CanSeePosition(rune.vecLocation) or rune.unit == nil then
+		return behaviorLib.MoveExecute(botBrain, rune.vecLocation)
 	else
 		return core.OrderTouch(botBrain, core.unitSelf, rune.unit)
 	end
 end
 
 function behaviorLib.PickRuneExecute(botBrain)
-	return behaviorLib.pickRune(botBrain, behaviorLib.runeToPick)
+	return behaviorLib.pickRune(botBrain, behaviorLib.tRuneToPick)
 end
 
 behaviorLib.PickRuneBehavior = {}
