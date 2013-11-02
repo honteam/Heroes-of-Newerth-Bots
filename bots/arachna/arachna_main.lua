@@ -53,6 +53,11 @@ BotEcho('loading arachna_main...')
 object.heroName = 'Hero_Arachna'
 
 --------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 5, ShortSolo = 4, LongSolo = 3, ShortSupport = 1, LongSupport = 1, ShortCarry = 5, LongCarry = 4}
+
+--------------------------------
 -- Skills
 --------------------------------
 function object:SkillBuild()
@@ -195,12 +200,17 @@ local function HarassHeroExecuteOverride(botBrain)
 		local sting = skills.spiderSting
 		local stingRange = sting and (sting:GetRange() + core.GetExtraRange(unitSelf) + core.GetExtraRange(unitTarget)) or 0
 		local web = skills.webbedShot
+
+		local bUseSting = true
+		if core.nDifficulty == core.nEASY_DIFFICULTY and not unitTarget:IsBotControlled() then
+			bUseSting = false
+		end
 		
-		if sting and sting:CanActivate() and dist < stingRange then
+		if sting and sting:CanActivate() and bUseSting and dist < stingRange then
 			bActionTaken = core.OrderAbilityEntity(botBrain, sting, unitTarget)
 		elseif dist < attkRange and unitSelf:IsAttackReady() and web and web:CanActivate() then
 			bActionTaken = core.OrderAbilityEntity(botBrain, web, unitTarget)
-		elseif (sting and sting:CanActivate() and dist > stingRange) then
+		elseif (sting and sting:CanActivate() and bUseSting and dist > stingRange) then
 			--move in when we want to ult			
 			local desiredPos = unitTarget:GetPosition()
 			

@@ -53,6 +53,11 @@ BotEcho('loading witchslayer_main...')
 object.heroName = 'Hero_WitchSlayer'
 
 --------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 2, ShortSolo = 2, LongSolo = 1, ShortSupport = 5, LongSupport = 5, ShortCarry = 2, LongCarry = 1}
+
+--------------------------------
 -- Skills
 --------------------------------
 function object:SkillBuild()
@@ -285,7 +290,19 @@ local function HarassHeroExecuteOverride(botBrain)
 		if not bActionTaken and nLastHarassUtility > botBrain.nSilverBulletThreshold then
 			if bDebugEchos then BotEcho("  No action yet, checking silver bullet") end
 			local abilSilverBullet = skills.abilSilverBullet
-			if abilSilverBullet:CanActivate() --[[and CanKillWithUlt?]] then
+			local nDamage = 500
+			if nLevel == 2 then
+				nDamage = 650
+			elseif nLevel == 3 then
+				nDamage = 850
+			end
+			
+			local nMaxHealth = unitTarget:GetMaxHealth()
+			local nHealth = unitTarget:GetHealth()
+			local nDamageMultiplier = 1 - unitTarget:GetMagicResistance()
+			local nTrueDamage = nDamage * nDamageMultiplier
+			local bUseBullet = (core.nDifficulty ~= core.nEASY_DIFFCULTY) or unitTarget:IsBotControlled() or (nHealth - nTrueDamage >= nMaxHealth * 0.12)
+			if abilSilverBullet:CanActivate() and bUseBullet then
 				local nRange = abilSilverBullet:GetRange()
 				if nTargetDistanceSq < (nRange * nRange) then
 					bActionTaken = core.OrderAbilityEntity(botBrain, abilSilverBullet, unitTarget)
@@ -427,7 +444,7 @@ function behaviorLib.HealUtility(botBrain)
 	local unitTarget = nil
 	local nTargetTimeToLive = nil
 	local sAbilName = ""
-	if itemAstrolabe and itemAstrolabe:CanActivate() then
+	if itemAstrolabe and itemAstrolabe:CanActivate() and itemAstrolabe:IsValid() then
 		local tTargets = core.CopyTable(core.localUnits["AllyHeroes"])
 		tTargets[unitSelf:GetUniqueID()] = unitSelf --I am also a target
 		for key, hero in pairs(tTargets) do
@@ -478,7 +495,7 @@ function behaviorLib.HealExecute(botBrain)
 	local unitHealTarget = behaviorLib.unitHealTarget
 	local nHealTimeToLive = behaviorLib.nHealTimeToLive
 	
-	if unitHealTarget and itemAstrolabe and itemAstrolabe:CanActivate() then 
+	if unitHealTarget and itemAstrolabe and itemAstrolabe:CanActivate() and itemAstrolabe:IsValid() then 
 		local unitSelf = core.unitSelf
 		local vecTargetPosition = unitHealTarget:GetPosition()
 		local nDistance = Vector3.Distance2D(unitSelf:GetPosition(), vecTargetPosition)

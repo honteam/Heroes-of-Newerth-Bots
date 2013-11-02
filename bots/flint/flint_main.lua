@@ -52,6 +52,11 @@ local sqrtTwo = math.sqrt(2)
 
 BotEcho('loading flint_main...')
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 4, ShortSolo = 4, LongSolo = 2, ShortSupport = 2, LongSupport = 1, ShortCarry = 5, LongCarry = 5}
+
 object.heroName = 'Hero_FlintBeastwood'
 
 --------------------------------
@@ -297,9 +302,12 @@ local function HarassHeroExecuteOverride(botBrain)
 			local nHealth = unitTarget:GetHealth()
 			local nDamageMultiplier = 1 - unitTarget:GetMagicResistance()
 			local nTrueDamage = nDamage * nDamageMultiplier
+			local bUseMoneyShot = ((core.nDifficulty ~= core.nEASY_DIFFCULTY) 
+								or (unitTarget:IsBotControlled() and nTrueDamage > nHealth) 
+								or (not unitTarget:IsBotControlled() and nHealth - nTrueDamage >= nMaxHealth * 0.12))
 			
 			--BotEcho(format("ultDamage: %d  damageMul: %g  trueDmg: %g  health: %d", nDamage, nDamageMultiplier, nTrueDamage, nHealth))
-			if nTrueDamage > nHealth then
+			if bUseMoneyShot then
 				bActionTaken = core.OrderAbilityEntity(botBrain, abilMoneyShot, unitTarget)
 			end
 		end

@@ -87,6 +87,11 @@ local Clamp = core.Clamp
 
 BotEcho('loading schnasegrave_main...')
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 4, ShortSolo = 3, LongSolo = 2, ShortSupport = 4, LongSupport = 3, ShortCarry = 4, LongCarry = 3}
+
 object.heroName = 'Hero_Taint'
 
 --------------------------------
@@ -536,6 +541,7 @@ StopProfile()
 
 	--Use Sacrificial Stone
 	if not bActionTaken then
+		--Todo: remove all sac stone usage into its own behavior		
 		local itemSacStone = core.itemSacStone
 		if itemSacStone and itemSacStone:CanActivate() then
 			bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemSacStone, bActionTaken)
@@ -552,187 +558,19 @@ object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 
 
-----------------------
--- altered vers for last hitting. Using Defiling Touch for Damage Amp
--- credits base version: paradox870
-----------------
- local function funcValidateCreepTarget(nDamageMin, unitCreepTarget, tAttackingCreeps, tAttackingTowers)
-	if not unitCreepTarget then 
-		return
-	end
-
+local function GetAttackDamageMinOnCreep(unitCreepTarget)
 	local unitSelf = core.unitSelf
-	local nTargetHealth = unitCreepTarget:GetHealth()
-	local nExpectedCreepDamage = 0
-	local nExpectedTowerDamage = 0
-	local vecSelfPosition = unitSelf:GetPosition()
-	local nProjectileSpeed = unitSelf:GetAttackProjectileSpeed()
+	local nDamageMin = object.GetAttackDamageMinOnCreepOld(unitCreepTarget)
 
-	local vecTargetPos = unitCreepTarget:GetPosition()
-	local nProjectileTravelTime = Vector3.Distance2D(vecSelfPosition, vecTargetPos) / nProjectileSpeed
-
-	--Determine the damage expected on the creep by other creeps
-	for i, unitCreep in pairs(tAttackingCreeps) do
-		if unitCreep:GetAttackTarget() == unitCreepTarget then
-			local nCreepAttacks = 1 + math.floor(unitCreep:GetAttackSpeed() * nProjectileTravelTime)
-			nExpectedCreepDamage = nExpectedCreepDamage + unitCreep:GetFinalAttackDamageMin() * nCreepAttacks
-		end
-	end
-
-	--Determine the damage expected on the creep by towers
-	for i, unitTower in pairs(tAttackingTowers) do
-		if unitTower:GetAttackTarget() == unitCreepTarget then
-			local nTowerAttacks = 1 + math.floor(unitTower:GetAttackSpeed() * nProjectileTravelTime)
-			nExpectedTowerDamage = nExpectedTowerDamage + unitTower:GetFinalAttackDamageMin() * nTowerAttacks
-		end
-	end
-	 --Only attack if, by the time our attack reaches the target
-	-- the damage done by other sources brings the target's health
-	-- below our minimum damage
-	if nDamageMin >= (nTargetHealth - nExpectedCreepDamage - nExpectedTowerDamage) then
-
-		return unitCreepTarget
-	end
-
-	return
- end
-
-local function GetCreepAttackTarget(botBrain, unitEnemyCreep, unitAllyCreep) --called pretty much constantly
-
-  local unitSelf = core.unitSelf
-	local nDamageMin = unitSelf:GetFinalAttackDamageMin()
-	local unitCreepTarget = nil
-
-	if unitEnemyCreep and core.CanSeeUnit(botBrain, unitEnemyCreep) then
-		local nDefileDamage = 0 
-		
-		--increase dmgMin
+	if unitCreepTarget and unitCreepTarget:GetTeam() ~= unitSelf:GetTeam() then
 		if (skills.abilDefilingTouch:GetCharges() > 0) then
-			nDefileDamage = skills.abilDefilingTouch:GetLevel() * 15
+			nDamageMin = nDamageMin + skills.abilDefilingTouch:GetLevel() * 15
 		end
-		
-		local tAttackingCreeps = core.localUnits['AllyCreeps']
-		local tAttackingTowers = core.localUnits['AllyTowers']
-		unitCreepTarget = funcValidateCreepTarget(nDamageMin + nDefileDamage, unitEnemyCreep, tAttackingCreeps, tAttackingTowers)
 	end
-
-	--if there is no creep to last hit, check for deny
-	if unitAllyCreep and not unitCreepTarget then
-		local tAttackingCreeps = core.localUnits['EnemyCreeps']
-		local tAttackingTowers = core.localUnits['EnemyTowers']
-		unitCreepTarget = funcValidateCreepTarget(nDamageMin, unitAllyCreep, tAttackingCreeps, tAttackingTowers)
-	end
-
-	return unitCreepTarget
-
+	return nDamageMin
 end
- object.GetCreepAttackTargetOld = behaviorLib.GetCreepAttackTarget
- behaviorLib.GetCreepAttackTarget = GetCreepAttackTarget
-
-local function AttackCreepsExecuteOverride(botBrain)
-	--TODO: Fix/Generalize
-	local unitSelf = core.unitSelf
-	local unitCreepTarget = core.unitCreepTarget
-	local vecSelfPos = unitSelf:GetPosition()
-
-	if unitCreepTarget and core.CanSeeUnit(botBrain, unitCreepTarget) then
-		--Get info about the target we are about to attack
-		local vecTargetPos = unitCreepTarget:GetPosition()
-		local nDistSq = Vector3.Distance2DSq(vecSelfPos, vecTargetPos)
-		local nAttackRangeSq = core.GetAbsoluteAttackRangeToUnit(unitSelf, currentTarget, true)
-		local nTargetHealth = unitCreepTarget:GetHealth()
-		local nDamageMin = unitSelf:GetFinalAttackDamageMin()
-
-
-		--Get projectile info
-		local nProjectileSpeed = unitSelf:GetAttackProjectileSpeed()
-		local nProjectileTravelTime = Vector3.Distance2D(vecSelfPos, vecTargetPos) / nProjectileSpeed
-		if bDebugEchos then BotEcho ("Projectile travel time: " .. nProjectileTravelTime ) end
-
-		local nExpectedCreepDamage = 0
-		local nExpectedTowerDamage = 0
-		local tNearbyAttackingCreeps = nil
-		local tNearbyAttackingTowers = nil
-
-
-		--Get the creeps and towers on the opposite team
-		-- of our target
-		if unitCreepTarget:GetTeam() == unitSelf:GetTeam() then
-			tNearbyAttackingCreeps = core.localUnits['EnemyCreeps']
-			tNearbyAttackingTowers = core.localUnits['EnemyTowers']
-		else
-			tNearbyAttackingCreeps = core.localUnits['AllyCreeps']
-			tNearbyAttackingTowers = core.localUnits['AllyTowers']
-			if (skills.abilDefilingTouch:GetCharges() > 0) then
-				nDamageMin = nDamageMin + skills.abilDefilingTouch:GetLevel() * 15
-			end
-		end
-
-		--Determine the damage expected on the creep by other creeps
-		for i, unitCreep in pairs(tNearbyAttackingCreeps) do
-			if unitCreep:GetAttackTarget() == unitCreepTarget then
-				local nCreepAttacks = 1 + math.floor(unitCreep:GetAttackSpeed() * nProjectileTravelTime)
-				nExpectedCreepDamage = nExpectedCreepDamage + unitCreep:GetFinalAttackDamageMin() * nCreepAttacks
-			end
-		end
-
-		--Determine the damage expected on the creep by other towers
-		for i, unitTower in pairs(tNearbyAttackingTowers) do
-			if unitTower:GetAttackTarget() == unitCreepTarget then
-				local nTowerAttacks = 1 + math.floor(unitTower:GetAttackSpeed() * nProjectileTravelTime)
-				nExpectedTowerDamage = nExpectedTowerDamage + unitTower:GetFinalAttackDamageMin() * nTowerAttacks
-			end
-		end
-
-
-
-		--Only attack if, by the time our attack reaches the target
-		-- the damage done by other sources brings the target's health
-		-- below our minimum damage, and we are in range and can attack right now
-		if nDistSq < nAttackRangeSq and unitSelf:IsAttackReady() and nDamageMin >= (nTargetHealth - nExpectedCreepDamage - nExpectedTowerDamage) then
-			core.OrderAttackClamp(botBrain, unitSelf, unitCreepTarget)
-
-
-		--Otherwise get within 70% of attack range if not already
-		-- This will decrease travel time for the projectile
-		elseif (nDistSq > nAttackRangeSq * 0.5) then
-			local vecDesiredPos = core.AdjustMovementForTowerLogic(vecTargetPos)
-			core.OrderMoveToPosClamp(botBrain, unitSelf, vecDesiredPos, false)
-
-
-		--If within a good range, just hold tight
-		else
-			core.OrderHoldClamp(botBrain, unitSelf, false)
-		end
-	else
-		--TODO: Separate into a different behavior
-		local abilDefilingTouch = skills.abilDefilingTouch
-		if abilDefilingTouch:GetLevel() > 0 and abilDefilingTouch:GetCharges() == 0 then
-			local tCorpses = HoN.GetUnitsInRadius(vecSelfPos, 400, core.UNIT_MASK_CORPSE + core.UNIT_MASK_UNIT)
-			if core.NumberElements(tCorpses) > 0 then
-				local closestCorpse = nil
-				local nClosestCorpseDistSq = 9999*9999
-				for key, v in pairs(tCorpses) do
-					local vecCorpsePosition = v:GetPosition()
-					--"safe" corpses aren't toward the opponents.
-					if not behaviorLib.vecLaneForward or abs(core.RadToDeg(core.AngleBetween(vecCorpsePosition - vecSelfPos, -behaviorLib.vecLaneForward)) ) < 130 then
-						local nDistSq = Vector3.Distance2DSq(vecCorpsePosition, vecSelfPos)
-						if nDistSq < nClosestCorpseDistSq then
-							closestCorpse = v
-							nClosestCorpseDistSq = nDistSq
-						end
-					end
-				end
-				if closestCorpse then
-					vecDesiredPos = closestCorpse:GetPosition()
-				end
-				behaviorLib.MoveExecute(botBrain, vecDesiredPos)
-			end
-		end
-	end
-end
-object.AttackCreepsExecuteOld = behaviorLib.AttackCreepsBehavior["Execute"]
-behaviorLib.AttackCreepsBehavior["Execute"] = AttackCreepsExecuteOverride
+object.GetAttackDamageMinOnCreepOld = core.GetAttackDamageMinOnCreep
+core.GetAttackDamageMinOnCreep = GetAttackDamageMinOnCreep
 
 
 --------------------
@@ -840,8 +678,10 @@ local function funcGetThreatOfEnemy(unitEnemy)
 	-- T(700²) = 2, T(1100²) = 1.5, T(2000²)= 0.75
 	local y = (3 * ((-1) * nDistanceSq + 112810000)) / 
 			  (4 * (  19 * nDistanceSq +  32810000))	
-			  -- curse your magic numbers! you can totally represent the 0.75 <= y <= 2 portion with a linear function
-			  -- To see the graph, punch "graph y = (3 * ((-1) * x^2+ 112810000)) / (4 * (  19 * x^2 +  32810000))" into Google.
+			  -- There's no reason for these magic numbers. You can totally represent the 0.75 <= y <= 2 portion 
+			  -- of the resultant graph (which is the part you use) with a linear function. --[S2]malloc
+			  -- To see the graph, punch "graph y = (3 * ((-1) * x^2+ 112810000)) / (4 * (  19 * x^2 +  32810000))" 
+			  -- into Google.
 	
 	nThreat = Clamp (y, 0.75, 2) * nThreat
 
@@ -859,7 +699,7 @@ local function CustomRetreatFromThreatUtilityFnOverride(botBrain)
 	local nUtility = object.RetreatFromThreatUtilityOld(botBrain) * object.nOldRetreatFactor
 
 	--decay with a maximum of 4 utilitypoints per frame to ensure a longer retreat time
-	if nUtilityOld > nUtility +4 then
+	if nUtilityOld > nUtility + 4 then
 		nUtility = nUtilityOld -4
 	end
 
@@ -868,19 +708,15 @@ local function CustomRetreatFromThreatUtilityFnOverride(botBrain)
 	local nAllies = core.NumberElements(allies) + 1
 
 	--get enemy heroes
-	local tEnemyTeam = core.teamBotBrain.tEnemyHeroes
+	local tEnemyTeam = HoN.GetHeroes(core.enemyTeam)
 
 	--calculate the threat-value and increase utility value
-	local nThreatUtility = 0
 	for id, enemy in pairs(tEnemyTeam) do
 	--BotEcho (id.." Hero "..enemy:GetTypeName())
-		nThreatUtility = nThreatUtility + funcGetThreatOfEnemy(enemy)
+		nUtility = nUtility + funcGetThreatOfEnemy(enemy) / nAllies
 	end
 	
-	nUtility = nUtility + nThreatUtility / nAllies
-	
 	return Clamp(nUtility, 0, 100)
-
 end
 object.RetreatFromThreatUtilityOld =  behaviorLib.RetreatFromThreatUtility
 behaviorLib.RetreatFromThreatBehavior["Utility"] = CustomRetreatFromThreatUtilityFnOverride
@@ -890,17 +726,18 @@ behaviorLib.RetreatFromThreatBehavior["Utility"] = CustomRetreatFromThreatUtilit
 --Retreat execute
 ------------------------------------------------------------------
 local function funcRetreatFromThreatExecuteOverride(botBrain)
+
 	local unitSelf = core.unitSelf
 	local unitTarget = behaviorLib.heroTarget
 
-	local vecPos = behaviorLib.PositionSelfBackUp()
+	local vecRetreatPos = behaviorLib.PositionSelfBackUp()
 	local nlastRetreatUtil = behaviorLib.lastRetreatUtil
 
-	local bCanSeeAggressor = unitTarget and core.CanSeeUnit(botBrain, unitTarget)
-	
 	--Counting the enemies
 	local tEnemies = core.localUnits["EnemyHeroes"]
 	local nCount = 0
+
+	local bCanSeeUnit = unitTarget and core.CanSeeUnit(botBrain, unitTarget)
 	for id, unitEnemy in pairs(tEnemies) do
 		if core.CanSeeUnit(botBrain, unitEnemy) then
 			nCount = nCount + 1
@@ -914,12 +751,12 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 		local itemPortalKey = core.itemPortalKey
 		if itemPortalKey and nlastRetreatUtil >= object.nPKTRetreathreshold then
 			if itemPortalKey:CanActivate()  then
-				core.OrderItemPosition(botBrain, unitSelf, itemPortalKey, vecPos)
+				core.OrderItemPosition(botBrain, unitSelf, itemPortalKey, vecRetreatPos)
 				return
 			end
 		end
 
-		if bCanSeeAggressor then
+		if bCanSeeUnit then
 			local vecMyPosition = unitSelf:GetPosition()
 			local vecTargetPosition = unitTarget:GetPosition()
 			local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
@@ -940,8 +777,8 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 			--Stun
 			local abilCorpseToss = skills.abilCorpseToss
 			local nNow = HoN.GetGameTime()
-			if abilCorpseToss:CanActivate() and nNow > (object.nOneCorpseTossUseTime + 900) then
-				if not bTargetVuln or nNow < (object.nOneCorpseTossUseTime + 1050) then
+			if abilCorpseToss:CanActivate() and (nNow > object.nOneCorpseTossUseTime + 900) then
+				if not bTargetVuln or (nNow < object.nOneCorpseTossUseTime + 1050) then
 					local nRange = abilCorpseToss:GetRange()
 					if nTargetDistanceSq < (nRange * nRange) then
 						core.OrderAbilityEntity(botBrain, abilCorpseToss, unitTarget)
@@ -954,51 +791,47 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 			local itemFrostfieldPlate = core.itemFrostfieldPlate
 			if itemFrostfieldPlate then
 				local nRange = itemFrostfieldPlate:GetTargetRadius()
-				if itemFrostfieldPlate:CanActivate()  then
-					if nTargetDistanceSq < (nRange * nRange) then
-						core.OrderItemClamp(botBrain, unitSelf, itemFrostfieldPlate)
-						return
-					end
+				if itemFrostfieldPlate:CanActivate() and nTargetDistanceSq < (nRange * nRange) then
+					core.OrderItemClamp(botBrain, unitSelf, itemFrostfieldPlate)
+					return
 				end
 			end
 		end
-	end
+		
+	end -- critical situation
 
 	--Activate ghost marchers if we can
 	local itemGhostMarchers = core.itemGhostMarchers
-	if itemGhostMarchers and itemGhostMarchers:CanActivate() then
-		if behaviorLib.lastRetreatUtil >= behaviorLib.retreatGhostMarchersThreshold then
-			core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
-			return
-		end
+	if itemGhostMarchers and itemGhostMarchers:CanActivate() and behaviorLib.lastRetreatUtil >= behaviorLib.retreatGhostMarchersThreshold then
+		core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
+		return
 	end
 
 	--Just use Tablet if you are in great danger
 	local itemTablet = core.itemTablet
 	if itemTablet then
 		if itemTablet:CanActivate() and nlastRetreatUtil >= object.nTabletRetreatTreshold then
-			--TODO: check heading when that's exposed in the API
+			--TODO: GetHeading math to ensure we're actually going backwards
 			core.OrderItemEntityClamp(botBrain, unitSelf, itemTablet, unitSelf)
 			return
 		end
 	end
 
 	--Use Sacreficial Stone
+	--TODO: remove all sac stone usage into its own behavior
 	local itemSacStone = core.itemSacStone
 	if itemSacStone and itemSacStone:CanActivate() then
 		core.OrderItemClamp(botBrain, unitSelf, itemSacStone)
 		return
 	end
 
-	core.OrderMoveToPosClamp(botBrain, core.unitSelf, vecPos, false)
+	core.OrderMoveToPosClamp(botBrain, core.unitSelf, vecRetreatPos, false)
 end
 
 object.RetreatFromThreatExecuteOld = behaviorLib.RetreatFromThreatExecute
 behaviorLib.RetreatFromThreatBehavior["Execute"] = funcRetreatFromThreatExecuteOverride
 
 
---TODO: I feel like there are alltogether too many places where we're turning on Sac Stone. Perhaps it should be 
---  its own behavior that's like 99 as long as it's off (since its cooldown matches its duration)
 
 ----------------------------------
 --Push
@@ -1017,6 +850,7 @@ local function PushExecuteFnOverride(botBrain)
 	local bActionTaken = false
 
 	--Use Sacreficial Stone
+	--Todo: remove all sac stone usage into its own behavior
 	if not bActionTaken then
 		local itemSacStone = core.itemSacStone
 		if itemSacStone and itemSacStone:CanActivate() then
@@ -1032,18 +866,19 @@ local function PushExecuteFnOverride(botBrain)
 			local nNumberEnemyCreeps =  core.NumberElements(core.localUnits["EnemyCreeps"])
 			if unitTarget and nNumberEnemyCreeps > object.nRequiredCorpses then
 				local vecTargetPosition = unitTarget:GetPosition()
-				--looking for creep corpses (tCorpses) and summoned corpses (tPets) in range // no API = high costly
+StartProfile('Push - LookForCorpses')
+				--looking for creep corpses (tCorpses) and summoned corpses (tPets) in range // no API = high cost
 				local tCorpses = HoN.GetUnitsInRadius(vecTargetPosition, 225, core.UNIT_MASK_CORPSE + core.UNIT_MASK_UNIT)
 				local tPets = HoN.GetUnitsInRadius(vecTargetPosition, 225, core.UNIT_MASK_ALIVE + core.UNIT_MASK_UNIT)
 				local nNumberCorpses = core.NumberElements(tCorpses)
 
 				for x, creep in pairs(tPets) do
 					--Different summon types
-					if creep:GetTypeName() == "Pet_Taint_Ability3" or creep:GetTypeName() == "Pet_Taint_Ability4_Explode"then
+					if creep:GetTypeName() == "Pet_Taint_Ability3" or creep:GetTypeName() == "Pet_Taint_Ability4_Explode" then
 						nNumberCorpses = nNumberCorpses + 1
 					end
 				end
-				
+StopProfile()				
 				--enough corpses in range?
 				if nNumberCorpses >= object.nRequiredCorpses  then
 					bActionTaken = core.OrderAbilityPosition(botBrain, skills.abilCorpseExplosion, vecTargetPosition)
@@ -1065,24 +900,24 @@ behaviorLib.PushBehavior["Execute"] = PushExecuteFnOverride
 --Heal at well utility
 ------------------------------------------------------------------
 local function CustomHealAtWellUtilityFnOverride(botBrain)
-	local utility = 0
-	local hpPercent = core.unitSelf:GetHealthPercent()
-	local mpPercent = core.unitSelf:GetManaPercent()
+	local nUtility = 0
+	local nHPPercent = core.unitSelf:GetHealthPercent()
+	local nMPPercent = core.unitSelf:GetManaPercent()
 
 	--low hp increases wish to go home
-	if hpPercent < 0.90 then
+	if nHPPercent < 0.90 then
 		local wellPos = core.allyWell and core.allyWell:GetPosition() or Vector3.Create()
 		local nDist = Vector3.Distance2D(wellPos, core.unitSelf:GetPosition())
 
-		utility = behaviorLib.WellHealthUtility(hpPercent) + behaviorLib.WellProximityUtility(nDist)
+		nUtility = behaviorLib.WellHealthUtility(nHPPercent) + behaviorLib.WellProximityUtility(nDist)
 	end
 	
 	--low mana increases wish to go home
-	if mpPercent < 0.90 then
-		utility = utility + mpPercent * 10
+	if nMPPercent < 0.90 then
+		nUtility = nUtility + nMPPercent * 10
 	end
 
-	return Clamp(utility, 0, 50)
+	return Clamp(nUtility, 0, 50)
 end
 object.HealAtWellUtilityOld =  behaviorLib.HealAtWellUtility
 behaviorLib.HealAtWellBehavior["Utility"] = CustomHealAtWellUtilityFnOverride
@@ -1093,12 +928,12 @@ behaviorLib.HealAtWellBehavior["Utility"] = CustomHealAtWellUtilityFnOverride
 ------------------------------------------------------------------
 local function HealAtWellExecuteFnOverride(botBrain)
 	--BotEcho("Returning to well!")
-	local wellPos = core.allyWell and core.allyWell:GetPosition() or behaviorLib.PositionSelfBackUp()
-	local distanceWellSq =  Vector3.Distance2DSq(core.unitSelf:GetPosition(), wellPos)
+	local vecWellPos = core.allyWell and core.allyWell:GetPosition() or behaviorLib.PositionSelfBackUp()
+	local nDistanceWellSq =  Vector3.Distance2DSq(core.unitSelf:GetPosition(), vecWellPos)
 
 	--Activate ghost marchers if we can
 	local itemGhostMarchers = core.itemGhostMarchers
-	if itemGhostMarchers and itemGhostMarchers:CanActivate() and distanceWellSq > (500 * 500) then
+	if itemGhostMarchers and itemGhostMarchers:CanActivate() and nDistanceWellSq > (500 * 500) then
 		core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
 		return
 	end
@@ -1106,23 +941,23 @@ local function HealAtWellExecuteFnOverride(botBrain)
 	--Just use Tablet
 	local itemTablet = core.itemTablet
 	if itemTablet then
-		if itemTablet:CanActivate() and distanceWellSq > (500 * 500) then
-		--TODO: check heading when that's exposed in the API
+		if itemTablet:CanActivate() and nDistanceWellSq > (500 * 500) then		
+			--TODO: GetHeading math to ensure we're actually going in the right direction
 			core.OrderItemEntityClamp(botBrain, core.unitSelf, itemTablet, core.unitSelf)
 			return
 		end
 	end
 
-			--Portal Key: Port away
+	--Portal Key: Port away
 	local itemPortalKey = core.itemPortalKey
 	if itemPortalKey then
-		if itemPortalKey:CanActivate()  and distanceWellSq > (1000 * 1000) then
-			core.OrderItemPosition(botBrain, unitSelf, itemPortalKey, wellPos)
+		if itemPortalKey:CanActivate() and nDistanceWellSq > (1000 * 1000) then
+			core.OrderItemPosition(botBrain, unitSelf, itemPortalKey, vecWellPos)
 			return
 		end
 	end
 
-	core.OrderMoveToPosAndHoldClamp(botBrain, core.unitSelf, wellPos, false)
+	core.OrderMoveToPosAndHoldClamp(botBrain, core.unitSelf, vecWellPos, false)
 end
 object.HealAtWellExecuteOld = behaviorLib.HealAtWellExecute
 behaviorLib.HealAtWellBehavior["Execute"] = HealAtWellExecuteFnOverride
@@ -1146,17 +981,13 @@ end
 ----------------------------------
 local function funcFindItemsOverride(botBrain)
 
---local bUpdated = object.FindItemsOld(botBrain)
-
 	--Alternate item wasn't checked, so you don't need to look for new items.
-	if core.bCheckForAlternateItems then 
-		return 
-	end
+	if core.bCheckForAlternateItems then return end
 
 	funcRemoveInvalidItems()
 
 	--We only need to know about our current inventory. Stash items are not important.
-	local inventory = core.unitSelf:GetInventory(false)
+	local inventory = core.unitSelf:GetInventory(true)
 	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
 		if curItem then
@@ -1182,8 +1013,8 @@ local function funcFindItemsOverride(botBrain)
 				core.itemGhostMarchers.duration = 6000
 				core.itemGhostMarchers.msMult = 0.12
 			end
-
 		end
+		
 	end
 end
 object.FindItemsOld = core.FindItems
@@ -1210,14 +1041,14 @@ local function funcCheckforAlternateItemBuild(botbrain)
 	local nGPM = botbrain:GetGPM()
 	local nXPM = unitSelf:GetXPM()
 	local nMatchTime = HoN.GetMatchTime()
-	local bBuyStateLow = behaviorLib.buyState < 3
+	local bBuyStateLow = behaviorLib.buyState < behaviorLib.BuyStateMidItems
 
 	--Bad early game: skip GhostMarchers and go for more defensive items
-	if bBuyStateLow and nXPM < 170 and nMatchTime > 300000  and not unitSelf.getSteamboots   then
+	if bBuyStateLow and nXPM < 170 and nMatchTime > core.MinToMS(5) and not unitSelf.getSteamboots then
 		--BotEcho("My early Game sucked. I will go for a defensive Build.")
 		unitSelf.getSteamboots = true
 		behaviorLib.MidItems =
-			{"Item_Steamboots", "Item_MysticVestments", "Item_Scarab",  "Item_SacrificialStone", "Item_Silence"}
+		{"Item_Steamboots", "Item_MysticVestments", "Item_Scarab",  "Item_SacrificialStone", "Item_Silence"}
 
 	--Boots finished
 	elseif core.itemGhostMarchers or core.itemSteamboots then
@@ -1234,7 +1065,6 @@ local function funcCheckforAlternateItemBuild(botbrain)
 			unitSelf.getPK = true
 			tinsert(behaviorLib.curItemList, 1, "Item_PortalKey")
 		end
-
 	end
 end
 
@@ -1273,7 +1103,7 @@ local function funcShopExecuteOverride(botBrain)
 		funcCheckforAlternateItemBuild(botBrain)
 	end
 
-	local oldShopping = object.ShopExecuteOld (botBrain)
+	local bOldShopping = object.ShopExecuteOld (botBrain)
 
 	--update item links and reset the check
 	if behaviorLib.finishedBuying then
@@ -1282,7 +1112,7 @@ local function funcShopExecuteOverride(botBrain)
 		--BotEcho("FindItems")
 	end
 
-	return oldShopping
+	return bOldShopping
 end
 object.ShopExecuteOld = behaviorLib.ShopExecute
 behaviorLib.ShopBehavior["Execute"] = funcShopExecuteOverride
@@ -1292,11 +1122,9 @@ behaviorLib.ShopBehavior["Execute"] = funcShopExecuteOverride
 --####################################################################
 --#								 									##
 --#   CHAT FUNCTIONSS					       						##
---#																	##
+--#								 									##
 --####################################################################
 --####################################################################
-
-
 
 object.tCustomKillKeys = {
 	"schnarchnase_grave_kill1",
@@ -1305,7 +1133,7 @@ object.tCustomKillKeys = {
 	"schnarchnase_grave_kill4",
 	"schnarchnase_grave_kill5",
 	"schnarchnase_grave_kill6",
-	"schnarchnase_grave_kill7"  }
+	"schnarchnase_grave_kill7"   }
 
 local function GetKillKeysOverride(unitTarget)
 	local tChatKeys = object.funcGetKillKeysOld(unitTarget)
@@ -1335,8 +1163,7 @@ object.tCustomDeathKeys = {
 	"schnarchnase_grave_death1",
 	"schnarchnase_grave_death2",
 	"schnarchnase_grave_death3",
-	"schnarchnase_grave_death4",
-	"schnarchnase_grave_death5"  }
+	"schnarchnase_grave_death4"  }
 
 local function GetDeathKeysOverride(unitSource)
 	local tChatKeys = object.funcGetDeathKeysOld(unitSource)
