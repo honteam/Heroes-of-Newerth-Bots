@@ -185,13 +185,13 @@ function object:onthink(tGameVariables)
 		self:GroupAndPushLogic()
 	end
 	StopProfile()
-	
+
 	StartProfile('Defense Logic')
 	if self.bDefense ~= false then
 		self:DefenseLogic()
 	end
 	StopProfile()
-	
+
 	time = HoN.GetMatchTime()
 	if time and time > object.runeNextSpawnCheck then
 		object.runeNextSpawnCheck = object.runeNextSpawnCheck + 120000
@@ -217,6 +217,7 @@ function object.checkRunes()
 		if HoN.CanSeePosition(rune.location) then
 			units = HoN.GetUnitsInRadius(rune.location, 50, core.UNIT_MASK_POWERUP + core.UNIT_MASK_ALIVE)
 			local runeFound = false
+			local runeNames = {"Powerup_Damage", "Powerup_Illusion", "Powerup_Stealth", "Powerup_Refresh", "Powerup_Regen", "Powerup_MoveSpeed", "Powerup_Super"}
 			for _,unit in pairs(units) do
 				local typeName = unit:GetTypeName()
 				if core.tableContains(runeNames, typeName) then
