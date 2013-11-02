@@ -100,7 +100,7 @@ function jungleLib.assess(botBrain)
 			for key, unit in pairs(uUnits) do
 				if unit:GetTeam() ~= core.myTeam and unit:GetTeam() ~= core.enemyTeam then
 					nUnitsNearCamp = nUnitsNearCamp + 1
-					core.DrawXPosition(unit:GetPosition(), 'red')
+					if (debug) then core.DrawXPosition(unit:GetPosition(), 'red') end
 					creepDifficulty = jungleLib.creepDifficulty[unit:GetTypeName()] --add difficult units
 					if addedDifficulty then
 						jungleSpot.creepDifficulty = jungleSpot.creepDifficulty + creepDifficulty
