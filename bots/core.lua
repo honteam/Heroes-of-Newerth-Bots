@@ -1765,9 +1765,9 @@ end
 --    \ /   mad props to DarkFire ^_^
 --     C
 -- Where A is the previous node, B is the current node, and C is the Bots position
-function core.GetBestBlinkRetreatLocation(nBlinkRange)
-	local vecCurrentPosition = core.unitSelf:GetPosition()
-	local vecEndPosition = core.allyWell:GetPosition()
+function core.GetBestBlinkLocation(position, position2, nBlinkRange)
+	local vecCurrentPosition = position
+	local vecEndPosition = position2
 	local vecBlinkPosition = nil
 	-- Get a path from current position back to well
 	local tPath = BotMetaData.FindPath(vecCurrentPosition, vecEndPosition)
