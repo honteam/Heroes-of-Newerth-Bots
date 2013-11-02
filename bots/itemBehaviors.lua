@@ -22,7 +22,7 @@ end
 
 	
 function behaviorLib.addItemBehavior(itemName, remove)
-	local bDebugEchos = false
+	local bDebugEchos = true
 	
 	-- Ignore items on our ignore list
 	if core.tableContains(behaviorLib.tDontUseDefaultItemBehavior, itemName) > 0 then
@@ -65,7 +65,6 @@ function behaviorLib.addItemBehavior(itemName, remove)
 		behaviorLib.behaviorToModify = behaviorLib.TabletBehavior
 	elseif itemName == "Item_PlatedGreaves" then
 		behaviorLib.behaviorToModify = behaviorLib.PlatedGreavesBehavior
-		
 	end
 	
 	
@@ -863,7 +862,7 @@ behaviorLib.GeomancersBehavior["Name"] = "UseGeomancers"
 ------------------------------------
 
 behaviorLib.nTabletThreshhold = 50
-behaviorLib.nTabletRetreatThreshhold = 50
+behaviorLib.nTabletRetreatThreshhold = 40
 function behaviorLib.TabletUtility(botBrain)
 	local unitSelf = core.unitSelf
 	behaviorLib.itemTablet = core.GetItem("Item_PushStaff")
@@ -875,7 +874,7 @@ function behaviorLib.TabletUtility(botBrain)
 		end
 		--defensive (TODO HEAL AT WELL/BLINK FIXES when healAtWell fixes are implemented)
 		if behaviorLib.lastRetreatUtil >= behaviorLib.nTabletRetreatThreshhold and (core.GetLastBehaviorName(botBrain) == "RetreatFromThreat" or core.GetLastBehaviorName(botBrain) == "HealAtWell")
-		  and core.allyWell and core.HeadingDifference(unitSelf, --[[core.GetBestBlinkRetreatLocation(behaviorLib.itemTablet:GetRange())]]core.allyWell:GetPosition() ) < 0.5 then --we are RUNNING FOR OUR LIVES!
+		  and core.allyWell and core.HeadingDifference(unitSelf, --[[core.GetBestBlinkRetreatLocation(500)]]core.allyWell:GetPosition() ) < 0.5 then --we are RUNNING FOR OUR LIVES!
 			return 100
 		end
 	end
