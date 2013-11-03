@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="NymphoraBot"
+	description="Best bot EVA!!! Created by Terrifico"
+	heroname="Hero_Fairy"
+	rootlua="nymphora_main.lua"
+	defaultplayername="NymphoraBot"
+	precachepath="/heroes/fairy/"
+/>

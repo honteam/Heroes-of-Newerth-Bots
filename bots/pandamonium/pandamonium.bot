@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+    name="PandamoniumBot"
+    description="Pandamonium Bot by tchackie"
+    heroname="Hero_Panda"
+    rootlua="pandamonium_main.lua"
+    defaultplayername="PandamoniumBot"
+    precachepath="/heroes/panda/"
+/>

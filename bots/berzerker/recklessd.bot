@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="recklessd"
+	description="Choose me if you want to see a fierce carry ! I might be a bit reckless sometimes but tagging along a support, I'm Unstoppable ! I AM the RECKLESS DISASTER !"
+	heroname="Hero_Berzerker"
+	rootlua="recklessd_main.lua"
+	defaultplayername="BerzerkBot"
+	precachepath="/heroes/berzerker"
+/>

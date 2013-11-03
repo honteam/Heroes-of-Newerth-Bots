@@ -144,7 +144,7 @@ function core.CoreInitialize(controller)
 			core.printTableTable(tSorted)
 		end
 	end
-
+	
 	core.coreInitialized = true
 end
 
@@ -1177,6 +1177,24 @@ function core.InventoryContains(inventory, val, bIgnoreRecipes, bIncludeStash)
     return tableOfThings
 end
 
+--Finds an item on your hero.
+function core.GetItem(val, bIncludeStash)
+	inventory = core.unitSelf:GetInventory()
+	if bIncludeStash == nil then
+		bIncludeStash = false
+	end
+	local nLast = (bIncludeStash and 12) or 6
+	for slot = 1, nLast, 1 do
+		local curItem = inventory[slot]
+		if curItem then
+			if curItem:GetName() == val then
+				return core.WrapInTable(curItem)
+			end
+		end
+	end
+    return nil
+end
+
 function core.IsLaneCreep(unit)
 	return (strfind(unit:GetTypeName(), "Creep") ~= nil)
 end
@@ -1503,7 +1521,7 @@ function core.TimeToPosition(position, myLocation, moveSpeed, itemGhostMarchers)
 	
 	if itemGhostMarchers == nil then
 		timeMS = totalDist / moveSpeedPerMS
-	else
+	elseif itemGhostMarchers.expireTime then
 		local bGhostOn = HoN.GetGameTime() < itemGhostMarchers.expireTime
 		local curCDTimeMS = itemGhostMarchers:GetRemainingCooldownTime()
 		

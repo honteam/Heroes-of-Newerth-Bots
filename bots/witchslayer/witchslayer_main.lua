@@ -330,11 +330,10 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 local function funcFindItemsOverride(botBrain)
 	object.FindItemsOld(botBrain)
 
-	core.ValidateItem(core.itemAstrolabe)
 	core.ValidateItem(core.itemSheepstick)
 	
 	--only update if we need to
-	if core.itemSheepstick and core.itemAstrolabe then
+	if core.itemSheepstick then
 		return
 	end
 
@@ -342,12 +341,7 @@ local function funcFindItemsOverride(botBrain)
 	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
 		if curItem then
-			if core.itemAstrolabe == nil and curItem:GetName() == "Item_Astrolabe" then
-				core.itemAstrolabe = core.WrapInTable(curItem)
-				core.itemAstrolabe.nHealValue = 200
-				core.itemAstrolabe.nRadius = 600
-				--Echo("Saving astrolabe")
-			elseif core.itemSheepstick == nil and curItem:GetName() == "Item_Morph" then
+			if core.itemSheepstick == nil and curItem:GetName() == "Item_Morph" then
 				core.itemSheepstick = core.WrapInTable(curItem)
 			end
 		end
@@ -355,168 +349,6 @@ local function funcFindItemsOverride(botBrain)
 end
 object.FindItemsOld = core.FindItems
 core.FindItems = funcFindItemsOverride
-
-
-----------------------------------
---	Witch Slayer's Help behavior
---	
---	Utility: 
---	Execute: Use Astrolabe
-----------------------------------
-behaviorLib.nHealUtilityMul = 0.8
-behaviorLib.nHealHealthUtilityMul = 1.0
-behaviorLib.nHealTimeToLiveUtilityMul = 0.5
-
-function behaviorLib.HealHealthUtilityFn(unitHero)
-	local nUtility = 0
-	
-	local nYIntercept = 100
-	local nXIntercept = 100
-	local nOrder = 2
-
-	nUtility = core.ExpDecay(unitHero:GetHealthPercent() * 100, nYIntercept, nXIntercept, nOrder)
-	
-	return nUtility
-end
-
-function behaviorLib.TimeToLiveUtilityFn(unitHero)
-	--Increases as your time to live based on your damage velocity decreases
-	local nUtility = 0
-	
-	local nHealthVelocity = unitHero:GetHealthVelocity()
-	local nHealth = unitHero:GetHealth()
-	local nTimeToLive = 9999
-	if nHealthVelocity < 0 then
-		nTimeToLive = nHealth / (-1 * nHealthVelocity)
-		
-		local nYIntercept = 100
-		local nXIntercept = 20
-		local nOrder = 2
-		nUtility = core.ExpDecay(nTimeToLive, nYIntercept, nXIntercept, nOrder)
-	end
-	
-	nUtility = Clamp(nUtility, 0, 100)
-	
-	--BotEcho(format("%d timeToLive: %g  healthVelocity: %g", HoN.GetGameTime(), nTimeToLive, nHealthVelocity))
-	
-	return nUtility, nTimeToLive
-end
-
-behaviorLib.nHealCostBonus = 10
-behaviorLib.nHealCostBonusCooldownThresholdMul = 4.0
-function behaviorLib.AbilityCostBonusFn(unitSelf, ability)
-	local bDebugEchos = false
-	
-	local nCost =		ability:GetManaCost()
-	local nCooldownMS =	ability:GetCooldownTime()
-	local nRegen =		unitSelf:GetManaRegen()
-	
-	local nTimeToRegenMS = nCost / nRegen * 1000
-	
-	if bDebugEchos then BotEcho(format("AbilityCostBonusFn - nCost: %d  nCooldown: %d  nRegen: %g  nTimeToRegen: %d", nCost, nCooldownMS, nRegen, nTimeToRegenMS)) end
-	if nTimeToRegenMS < nCooldownMS * behaviorLib.nHealCostBonusCooldownThresholdMul then
-		return behaviorLib.nHealCostBonus
-	end
-	
-	return 0
-end
-
-behaviorLib.unitHealTarget = nil
-behaviorLib.nHealTimeToLive = nil
-function behaviorLib.HealUtility(botBrain)
-	local bDebugEchos = false
-	
-	--[[
-	if object.myName == "Bot1" then
-		bDebugEchos = true
-	end
-	--]]
-	if bDebugEchos then BotEcho("HealUtility") end
-	
-	local nUtility = 0
-
-	local unitSelf = core.unitSelf
-	behaviorLib.unitHealTarget = nil
-	
-	local itemAstrolabe = core.itemAstrolabe
-	
-	local nHighestUtility = 0
-	local unitTarget = nil
-	local nTargetTimeToLive = nil
-	local sAbilName = ""
-	if itemAstrolabe and itemAstrolabe:CanActivate() and itemAstrolabe:IsValid() then
-		local tTargets = core.CopyTable(core.localUnits["AllyHeroes"])
-		tTargets[unitSelf:GetUniqueID()] = unitSelf --I am also a target
-		for key, hero in pairs(tTargets) do
-			--Don't heal ourself if we are going to head back to the well anyway, 
-			--	as it could cause us to retrace half a walkback
-			if hero:GetUniqueID() ~= unitSelf:GetUniqueID() or core.GetCurrentBehaviorName(botBrain) ~= "HealAtWell" then
-				local nCurrentUtility = 0
-				
-				local nHealthUtility = behaviorLib.HealHealthUtilityFn(hero) * behaviorLib.nHealHealthUtilityMul
-				local nTimeToLiveUtility = nil
-				local nCurrentTimeToLive = nil
-				nTimeToLiveUtility, nCurrentTimeToLive = behaviorLib.TimeToLiveUtilityFn(hero)
-				nTimeToLiveUtility = nTimeToLiveUtility * behaviorLib.nHealTimeToLiveUtilityMul
-				nCurrentUtility = nHealthUtility + nTimeToLiveUtility
-				
-				if nCurrentUtility > nHighestUtility then
-					nHighestUtility = nCurrentUtility
-					nTargetTimeToLive = nCurrentTimeToLive
-					unitTarget = hero
-					if bDebugEchos then BotEcho(format("%s Heal util: %d  health: %d  ttl:%d", hero:GetTypeName(), nCurrentUtility, nHealthUtility, nTimeToLiveUtility)) end
-				end
-			end
-		end
-
-		if unitTarget then
-			nUtility = nHighestUtility				
-			sAbilName = "Astrolabe"
-		
-			behaviorLib.unitHealTarget = unitTarget
-			behaviorLib.nHealTimeToLive = nTargetTimeToLive
-		end		
-	end
-	
-	if bDebugEchos then BotEcho(format("    abil: %s util: %d", sAbilName, nUtility)) end
-	
-	nUtility = nUtility * behaviorLib.nHealUtilityMul
-	
-	if botBrain.bDebugUtility == true and nUtility ~= 0 then
-		BotEcho(format("  HelpUtility: %g", nUtility))
-	end
-	
-	return nUtility
-end
-
-function behaviorLib.HealExecute(botBrain)
-	local itemAstrolabe = core.itemAstrolabe
-	
-	local unitHealTarget = behaviorLib.unitHealTarget
-	local nHealTimeToLive = behaviorLib.nHealTimeToLive
-	
-	if unitHealTarget and itemAstrolabe and itemAstrolabe:CanActivate() and itemAstrolabe:IsValid() then 
-		local unitSelf = core.unitSelf
-		local vecTargetPosition = unitHealTarget:GetPosition()
-		local nDistance = Vector3.Distance2D(unitSelf:GetPosition(), vecTargetPosition)
-		if nDistance < itemAstrolabe.nRadius then
-			core.OrderItemClamp(botBrain, unitSelf, itemAstrolabe)
-		else
-			core.OrderMoveToUnitClamp(botBrain, unitSelf, unitHealTarget)
-		end
-	else
-		return false
-	end
-	
-	return true
-end
-
-behaviorLib.HealBehavior = {}
-behaviorLib.HealBehavior["Utility"] = behaviorLib.HealUtility
-behaviorLib.HealBehavior["Execute"] = behaviorLib.HealExecute
-behaviorLib.HealBehavior["Name"] = "Heal"
-tinsert(behaviorLib.tBehaviors, behaviorLib.HealBehavior)
-
 
 ----------------------------------
 --	Witch Slayer items

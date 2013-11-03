@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+    name="Magina"
+    description="bot_description"
+    heroname="Hero_Javaras"
+    rootlua="mage_main.lua"
+    defaultplayername="MageBot"
+    precachepath="/heroes/javanas/"
+/>

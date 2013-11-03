@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="GrinexBot"
+	description="Community Built Bot by DarkFire"
+	heroname="Hero_Grinex"
+	rootlua="Grinex_main.lua"
+	defaultplayername="GrinexBot"
+	precachepath="/heroes/grinex/"
+/>
