@@ -418,8 +418,6 @@ function core.BotBrainCoreInitialize(tGameVariables)
 		core.bTutorialBehaviorReset = false
 	end
 	
-	behaviorLib.addCurrentItemBehaviors()
-	
 	core.botBrainInitialized = true
 end
 
@@ -1685,6 +1683,15 @@ function core.OrderItemPosition(botBrain, unit, item, vecTarget, bInterruptAttac
 	return true
 end
 
+function core.OrderBlinkItemToEscape(botBrain, unit, item, bInterruptAttacks, bQueueCommand)
+	if not item or not item:CanActivate() or not item:GetRange() and core.allyWell and core.allyWell:GetPosition() then -- passed a bad item/well doesn't exist..
+		return false
+	end
+	local abilityParam = (ability ~= nil and ability.object) or ability
+	local vecTarget = core.GetBestBlinkLocation(core.unitSelf:GetPosition(), core.allyWell:GetPosition(), item:GetRange())
+	return core.OrderItemPosition(botBrain, unit, item, vecTarget, bInterruptAttacks, bQueueCommand)
+end
+
 function core.ToggleAutoCastItem(botBrain, item, bInterruptAttacks, bQueueCommand)
 	if object.bRunCommands == false or object.bAbilityCommands == false then
 		return false
@@ -1801,6 +1808,15 @@ function core.OrderAbilityPosition(botBrain, ability, vecTarget, bInterruptAttac
 	
 	botBrain:OrderAbilityPosition(abilityParam, vecTarget, bQueueCommand)
 	return true
+end
+
+function core.OrderBlinkAbilityToEscape(botBrain, ability, bInterruptAttacks, bQueueCommand)
+	if not ability or not ability:CanActivate() or not ability:GetRange() and core.allyWell and core.allyWell:GetPosition() then -- passed a bad ability/well doesn't exist..
+		return false
+	end
+	local abilityParam = (ability ~= nil and ability.object) or ability
+	local vecTarget = core.GetBestBlinkLocation(core.unitSelf:GetPosition(), core.allyWell:GetPosition(), ability:GetRange())
+	return core.OrderAbilityPosition(botBrain, ability, vecTarget, bInterruptAttacks, bQueueCommand)
 end
 
 function core.OrderAbilityEntity(botBrain, ability, unitTarget, bInterruptAttacks, bQueueCommand)

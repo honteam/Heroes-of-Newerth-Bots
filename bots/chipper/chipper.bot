@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+    name="BusDriver"
+    description="xx...xx"
+    heroname="Hero_Chipper"
+    rootlua="chipper_main.lua"
+    defaultplayername="BusDriverBot"
+    precachepath="/heroes/chipper/"
+/>

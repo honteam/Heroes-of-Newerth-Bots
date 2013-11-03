@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="scaraboss"
+	description="Enter The Pestilence"
+	heroname="Hero_Pestilence"
+	rootlua="scaraboss_main.lua"
+	defaultplayername="Scaraboss"
+	precachepath="/heroes/pestilence"
+/>

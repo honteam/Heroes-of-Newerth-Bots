@@ -1,0 +1,9 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<bot
+	name="Hiruma's Valk Bot"
+	description="Catch Dat Arrow!"
+	heroname="Hero_Valkyrie"
+	rootlua="valkyrie_main.lua"
+	defaultplayername="Hiruma's Valk Bot"
+	precachepath="/heroes/Valkyrie/"
+/>

@@ -283,6 +283,14 @@ end
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 
+-----------------------
+-- Return to well
+-----------------------
+--this is a great function to override with using retreating skills, such as blinks, travels, stuns or slows.
+function behaviorLib.CustomReturnToWellExecute(botBrain)
+	core.OrderBlinkAbilityToEscape(botBrain, skills.abilTimeLeap, true)
+end
+
 
 ----------------------------------
 --	Chronos items

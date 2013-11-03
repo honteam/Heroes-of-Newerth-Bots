@@ -219,6 +219,25 @@ general_or 									or
 general_pass 								Pass
 general_fail 								Fail
 general_loading 							Loading...
+general_courier 							Courier
+general_leave 								Leave
+general_tickets 							Tickets
+general_how_many 							How Many?
+general_confirm 							Confirm
+general_bundle 								Bundle
+general_okay 								Okay
+general_dontPrompt 							Don't Prompt Again
+
+general_product_type_cc 					Chat Color
+general_product_type_cs						Chat Symbol
+general_product_type_ai						Account Icon
+general_product_type_aa						Alt Avatar
+general_product_type_av 					Announcer
+general_product_type_t						Taunt
+general_product_type_h 						Hero
+general_product_type_eap 					Early Access
+general_product_type_s 						Status
+general_product_type_m 						Miscellaneous
 
 // main.interface
 main_peel_tip								Watch HoN TV
@@ -3582,6 +3601,8 @@ mstore_product1839_name		Organ Grinder
 mstore_product1840_name		Hero Alt- Organ Grinder
 mstore_product1841_name		Steamoth
 mstore_product1842_name		Hero Alt- Steamoth
+mstore_product1843_name		Steampunk Aluna
+mstore_product1844_name		Hero Alt- Steampunk Aluna
 mstore_product1845_name     Nightmare Predator
 mstore_product1846_name     Hero Alt- Nightmare Predator
 mstore_product1847_name		Hang Tuah
@@ -3636,6 +3657,8 @@ mstore_product1915_name		Cossack
 mstore_product1916_name		Hero Alt- Cossack
 mstore_product1917_name		Ogre Blacksmith
 mstore_product1918_name		Hero Alt- Ogre Blacksmith
+mstore_product1919_name		Willow Keeper
+mstore_product1920_name		Hero Alt- Willow Keeper
 mstore_product1921_name		Cowardly Night Hound
 mstore_product1922_name		Hero Alt- Cowardly Night Hound
 mstore_product1923_name		Robotron
@@ -3661,6 +3684,10 @@ mstore_product1942_name     Camazotz
 mstore_product1943_name     Hero Alt- Camazotz
 mstore_product1944_name     Hel
 mstore_product1945_name     Hero Alt- Hel
+mstore_product1948_name     Gundromeda
+mstore_product1949_name     Hero Alt- Gundromeda
+mstore_product1950_name     Pentinent Lodestone
+mstore_product1951_name     Hero Alt- Pentinent Lodestone
 mstore_product1986_name     Hero Alt- Dreadknight Salforis
 mstore_product1987_name     Hero Alt- Legendary Valkyrie
 mstore_product1988_name     Hero Alt- Sachi Swiftblade
@@ -3674,11 +3701,16 @@ mstore_product1995_name     Iron Maiden
 mstore_product1996_name     Hero Alt- Iron Maiden
 mstore_product1997_name     Poison Circe
 mstore_product1998_name     Hero Alt- Poison Circe
+mstore_product2031_name		Samuel L. Jackson Pack
+mstore_product2031_desc		Unleash your inner BAMF with the Samuel L. Jackson announcer pack.
 mstore_product2061_name     Cinema Savant
 mstore_product2062_name		Circe the Deceiver
 mstore_product2063_name		Iron Maiden
 mstore_product2064_name		Poison Circe
 mstore_product2065_name     GM Badge Icon
+mstore_product2107_name		RCT
+mstore_product2108_name		Samuel L. Jackson Pack
+mstore_product2108_desc		Unleash your inner BAMF with the Samuel L. Jackson announcer pack.
 
 mstore_product999999001_name	Default Account Icon
 mstore_product999999002_name	Default Chat Symbol
@@ -4050,6 +4082,19 @@ mstore_collectorsEditionSet18_owned_tip		This avatar is part of the Revenge of t
 mstore_collectorsEditionSet18_expired		Revenge of the Neutrals - Unavailable
 mstore_collectorsEditionSet18_expired_tip	This avatar is part of the Revenge of the Neutrals pack and is not currently available for purchase.
 
+mstore_collectorsEditionSet19				Iron Legion
+mstore_collectorsEditionSet19_tip			This avatar is part of the Iron Legion pack.
+mstore_collectorsEditionSet19_owned			Legion Robots
+mstore_collectorsEditionSet19_owned_tip		This avatar is part of the Iron Legion pack.
+mstore_collectorsEditionSet19_expired		Iron Legion - Unavailable
+mstore_collectorsEditionSet19_expired_tip	This avatar is part of the Iron Legion pack and is not currently available for purchase.
+
+mstore_collectorsEditionSet20				Hell Forged
+mstore_collectorsEditionSet20_tip			This avatar is part of the Hell Forged pack.
+mstore_collectorsEditionSet20_owned			Hell Forged
+mstore_collectorsEditionSet20_owned_tip		This avatar is part of the Hell Forged pack.
+mstore_collectorsEditionSet20_expired		Hell Forged - Unavailable
+mstore_collectorsEditionSet20_expired_tip	This avatar is part of the Hell Forged pack and is not currently available for purchase.
 mstore_ultimateedition					Ultimate Avatar
 mstore_ultimateedition_tip				This avatar is an Ultimate Avatar.
 mstore_ultimateedition_owned			Ultimate Avatar
@@ -8520,6 +8565,7 @@ ccu_region_TR	Turkey
 tpp_selected_unit			Selected Unit
 tpp_refresh					Refresh!
 tpp_kill					Kill
+tpp_delete 					Delete Unit
 tpp_exp						Exp
 tpp_lvl						Lvl
 tpp_give_gold				+15000 Gold
@@ -9711,7 +9757,7 @@ bot_description_soul_reaper			Soul Reaper is a strong, versatile hero who can he
 bot_description_engineer			A capable ganker, Engineer also provides a lot of teamfight capability. Authored by V1P3R`!
 bot_description_gravekeeper			Gravekeeper is a versatile hero with solid Magic and Physical damage. Authored by Schnarchnase!
 bot_description_ellonia				Ellonia is a ranged intelligence hero known for her frost spells, freezing the opposition! Authored by Mellow_Ink!
-bot_description_balphagore			Balphagore is a melee strength hero, with insane pushing potential die to his minions. Authored by Kairus101!
+bot_description_blacksmith			A powerful, luck-based intelligence hero who has a nuke with a high damage cap! Authored by Kormoranos!
 
 // Maintenance
 maintenance_general 			Under Maintenance
@@ -9771,5 +9817,84 @@ radial_comingToHelp				Coming to Help Here
 eightBitButton_tip 				Click this button to opt-in and out of the new experimental graphics mode.
 eightBitHeader 					Experimental Graphics Mode
 eightBitBody 					A new experimental graphics mode is available for testing. If you would like to try it out click accept! You can opt-out of the testing anytime using the button on the system bar.
+
+// Plinko
+plinko_name 					HoN Plinko
+plinko_ticket 					Ticket
+plinko_redemption 				Redemption
+plinko_ticket_redemption		Ticket\nRedemption
+plinko_buy_drops 				Buy Chips
+plinko_drops 					Chips
+plinko_drops_amount 			{amount} Chips
+plinko_drop 					Drop!
+plinko_board_header				Play Using
+plinko_cost 					Cost:
+
+plinko_drop_gold_header			Play Using Gold
+plinko_drop_gold_body			Do you want to play plinko using gold? This will cost you {cost} gold.
+
+plinko_drop_tickets_header		Play Using Tickets
+plinko_drop_tickets_body		Do you want to play plinko using tickets? This will cost you {cost} tickets.
+
+plinko_no_gold_header			Not Enough Gold
+plinko_no_gold_body				You do not have enough gold coins to play Plinko. You can purchase more gold coins in the store.
+
+plinko_no_tickets_header		Not Enough Tickets
+plinko_no_tickets_body			You do not have enough tickets to play Plinko. You can win more tickets by playing Plinko with gold coins.
+
+plinko_ticket_tooltip_aa 		This is an Alt Avatar for the hero {heroName}!\n\nAlt Avatars allow you to change how your hero appears in-game!
+plinko_ticket_tooltip_cc 		This is a Chat Color!\n\nChat Colors change color of your name in the chat userlist as well as your placement in it!
+plinko_ticket_tooltip_cs		This is a Chat Symbol!\n\nChat Symbols are the icon that appears to the right of your name in the chat userlist as well as other places.
+plinko_ticket_tooltip_ai		This is an Account Icon!\n\nAccount Icons are the icon that appears to the left of your name in teh chat userlist as well as other places.
+plinko_ticket_tooltip_av 		This is an Announcer!\n\nAnnouncers changes what the in-game announcer sounds like as well as its animations.
+plinko_ticket_tooltip_t			This is a Taunt!\n\nTaunts changes how your in-game taunt looks and sounds when used.
+plinko_ticket_tooltip_h 		This is a Hero! By selecting this item, you will be given this hero permanently to play!
+plinko_ticket_tooltip_eap		This gives you early access to the hero {heroName}!
+plinko_ticket_tooltip_s 		This is a status!
+plinko_ticket_tooltip_m 		This is a miscellaneous item!
+plinko_ticket_tooltip_courier 	This is a courier!\n\nCouriers allow you to change the look of your in-game courier while playing.
+plinko_ticket_tooltip_bundle 	This is a bundle!\n\nThis can include all kinds of different products!
+plinko_ticket_tooltip_owned 	^gYou already own this item!^*
+
+plinko_ticket_tooltip_cost 		^rYou don't have enough tickets for this item!^*
+
+plinko_ticket_purchase 			This item costs ^994{ticketCost}^* tickets! This will leave you with ^994{ticketsLeft}^* tickets after the transction!
+
+plinko_prize_tier_1 			Diamond Chest
+plinko_prize_tier_2 			Gold Chest
+plinko_prize_tier_3 			Silver Chest
+plinko_prize_tier_4 			Bronze Chest
+plinko_prize_tier_5 			60 Tickets
+plinko_prize_tier_6 			30 Tickets
+
+plinko_prize_tier_1_tip 		The Diamond Chest includes a chance for any Gold Edition Avatars.
+plinko_prize_tier_2_tip			The Gold Chest includes a chance for any Limited or Holiday Edition Avatars.
+plinko_prize_tier_3_tip			The Silver Chest includes a chance for any Premium Avatars.
+plinko_prize_tier_4_tip			The Bronze Chest includes a chance for any Basic Avatars.
+plinko_prize_tier_5_tip			This prize is 60 tickets.
+plinko_prize_tier_6_tip			This prize is 30 tickets.
+
+plinko_won_tickets 				You have won {amount} tickets!
+plinko_products_exhausted		You have received tickets because you already own all the products currently available for this tier!
+
+plinko_request_net_error 		There was an error processing your request. You can retry, or try again later.
+plinko_area_net_error			There was an error loading this area. You can retry or leave and try again later.
+plinko_request_net_error_title	An Error Has Occurred
+plinko_request_retry_error		There was an error when attempting to retry your request.
+
+plinko_ticket_request_status_0	There was an error processing your request. Please try again later.
+plinko_ticket_request_status_1	Your request has been processed successfully!
+plinko_ticket_request_status_2	You do not have enough tickets to purchase this item.
+plinko_ticket_request_status_3	The product could not be assigned to your account, you may already own it.
+plinko_ticket_request_status_4	There was an error processing your request, we were unable to load the product. Please try again later.
+
+plinko_drop_request_status_0	There was an error processing your request. Please try again later.
+plinko_drop_request_status_1	Your request has been processed successfully!
+plinko_drop_request_status_2	You don't have enough tickets to complete this request.
+plinko_drop_request_status_3	You don't have enough gold to complete this request.
+plinko_drop_request_status_4	A currency was not specified in the request.
+
+plinko_tickets_redeemed 		Your tickets have successfully been redeemed for your prize!
+plinko_drops_bought 			You have successfully bought more Chips!
 
 // End - do not delete this line

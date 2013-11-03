@@ -118,14 +118,6 @@ object.nSheepstickThreshold = 20
 object.nFrostplateThreshold = 20
 object.nChargedThreshold = 18
 
---Quick fix for better returning to well ty Kairus
-function HealAtWellUtilityOverride(botBrain)
-    return object.HealAtWellUtilityOld(botBrain)*1.75+(botBrain:GetGold()*8/2000)+ 8-(core.unitSelf:GetManaPercent()*8)
-end
-object.HealAtWellUtilityOld = behaviorLib.HealAtWellBehavior["Utility"]
-behaviorLib.HealAtWellBehavior["Utility"] = HealAtWellUtilityOverride
-
-
 --#####################################################################
 --#####################################################################
 --##                                                                 ##

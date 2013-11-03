@@ -110,7 +110,7 @@ function object:oncombatevent(EventData)
 		end
 	elseif EventData.Type == "Item" then
 		--BotEcho("ITEM EVENT!  InflictorName: "..EventData.InflictorName)		
-		if core.itemGhostMarchers ~= nil and EventData.InflictorName == core.itemGhostMarchers:GetName() then
+		if core.itemGhostMarchers ~= nil and EventData.InflictorName == core.itemGhostMarchers:GetName() and core.itemGhostMarchers.duration then
 			--BotEcho("Ghost marchers used!")
 			core.itemGhostMarchers.expireTime = curTimeMS + core.itemGhostMarchers.duration
 			addBonus = addBonus + 15

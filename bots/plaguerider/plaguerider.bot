@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="Plague Rider Bot"
+	description="Reldnahc's very own bot!"
+	heroname="Hero_DiseasedRider"
+	rootlua="plaguerider_main.lua"
+	defaultplayername="Plague Rider Bot"
+	precachepath="/heroes/diseased_rider"
+/>

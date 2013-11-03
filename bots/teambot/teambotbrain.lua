@@ -1985,6 +1985,57 @@ function object:GetDefenseTarget(unitAsking)
 end
 
 
+object.tItemReservations = {
+      --AbyssalSkull
+      Item_LifeSteal5 = false,
+      --Nomes Wisdom
+      Item_NomesWisdom = false,
+      --Sols Bulwark
+      Item_SolsBulwark = false,
+      --Daemonic Breastplate
+      Item_DaemonicBreastplate = false,
+      --Barrier Idol
+      Item_BarrierIdol = false,
+      --Astrolabe
+      Item_Astrolabe = false,
+      --Mock of Brilliance
+      Item_Damage10 = false
+  }
+  
+function object.ReserveItem(itemName)
+	local debugTeamBotBrain = false
+	if not itemName then return false end
+	--check if reserved
+	local tReservationTable = object.tItemReservations
+	local bReserved = tReservationTable[itemName]
+	if debugTeamBotBrain then BotEcho(itemName.." was found in reservation table: "..tostring(bReserved)) end
+		--if item is not reserved or not tracked, you can buy it 
+	if	bReserved ~= false then
+		return not bReserved
+	end
+	--item is not reserved... need further checks
+	local bFoundItem = false
+	--check if an instance of the item is in the inventory of not supported heroes (without this lib or human players)
+	local tAllyHeroes= object.tAllyHeroes
+	for index, hero in pairs(tAllyHeroes) do
+		--we can only check the inventory... :(
+		local inventory = hero:GetInventory (false)
+		bFoundItem = core.InventoryContains(inventory, itemName, false, false)
+		if #bFoundItem > 0 then
+			if debugTeamBotBrain then BotEcho(itemName.." was found in an allies inventory: ") end
+			bFoundItem = true
+			break
+		else
+			bFoundItem = false
+		end
+	end
+	--Reserve item 
+	tReservationTable[itemName] = true
+	--if item was not found, we can buy it
+	return not bFoundItem
+end
+
+
 --[[ colors:
 	red
 	aqua == cyan

@@ -716,14 +716,15 @@ behaviorLib.RetreatFromThreatBehavior["Utility"] = CustomRetreatFromThreatUtilit
 ------------------------------------------------------------------
 --Retreat execute
 ------------------------------------------------------------------
-local function funcRetreatFromThreatExecuteOverride(botBrain)
+--  this is a great function to override with using retreating skills, such as blinks, travels, stuns or slows.
+function behaviorLib.CustomRetreatExecute(botBrain)
+	bActionTaken = false
 
 	local unitSelf = core.unitSelf
 	local unitTarget = behaviorLib.heroTarget
 
 	local vecRetreatPos = behaviorLib.PositionSelfBackUp()
 	local nlastRetreatUtil = behaviorLib.lastRetreatUtil
-
 	--Counting the enemies
 	local tEnemies = core.localUnits["EnemyHeroes"]
 	local nCount = 0
@@ -759,8 +760,7 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 				local nRange = itemSheepstick:GetRange()
 				if itemSheepstick:CanActivate() then
 					if nTargetDistanceSq < (nRange * nRange) then
-						core.OrderItemEntityClamp(botBrain, unitSelf, itemSheepstick, unitTarget)
-						return
+						return core.OrderItemEntityClamp(botBrain, unitSelf, itemSheepstick, unitTarget)
 					end
 				end
 			end
@@ -772,8 +772,7 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 				if not bTargetVuln or (nNow < object.nOneCorpseTossUseTime + 1050) then
 					local nRange = abilCorpseToss:GetRange()
 					if nTargetDistanceSq < (nRange * nRange) then
-						core.OrderAbilityEntity(botBrain, abilCorpseToss, unitTarget)
-						return
+						return core.OrderAbilityEntity(botBrain, abilCorpseToss, unitTarget)
 					end
 				end
 			end
@@ -803,16 +802,13 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 	if itemTablet then
 		if itemTablet:CanActivate() and nlastRetreatUtil >= object.nTabletRetreatTreshold then
 			--TODO: GetHeading math to ensure we're actually going backwards
-			core.OrderItemEntityClamp(botBrain, unitSelf, itemTablet, unitSelf)
-			return
+			return core.OrderItemEntityClamp(botBrain, unitSelf, itemTablet, unitSelf)
 		end
 	end
 
 	core.OrderMoveToPosClamp(botBrain, core.unitSelf, vecRetreatPos, false)
 end
 
-object.RetreatFromThreatExecuteOld = behaviorLib.RetreatFromThreatExecute
-behaviorLib.RetreatFromThreatBehavior["Execute"] = funcRetreatFromThreatExecuteOverride
 
 
 ----------------------------------
@@ -895,47 +891,6 @@ local function CustomHealAtWellUtilityFnOverride(botBrain)
 end
 object.HealAtWellUtilityOld =  behaviorLib.HealAtWellUtility
 behaviorLib.HealAtWellBehavior["Utility"] = CustomHealAtWellUtilityFnOverride
-
-
-------------------------------------------------------------------
---Heal at well execute
-------------------------------------------------------------------
-local function HealAtWellExecuteFnOverride(botBrain)
-	--BotEcho("Returning to well!")
-	local vecWellPos = core.allyWell and core.allyWell:GetPosition() or behaviorLib.PositionSelfBackUp()
-	local nDistanceWellSq =  Vector3.Distance2DSq(core.unitSelf:GetPosition(), vecWellPos)
-
-	--Activate ghost marchers if we can
-	local itemGhostMarchers = core.itemGhostMarchers
-	if itemGhostMarchers and itemGhostMarchers:CanActivate() and nDistanceWellSq > (500 * 500) then
-		core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
-		return
-	end
-
-	--Just use Tablet
-	local itemTablet = core.itemTablet
-	if itemTablet then
-		if itemTablet:CanActivate() and nDistanceWellSq > (500 * 500) then		
-			--TODO: GetHeading math to ensure we're actually going in the right direction
-			core.OrderItemEntityClamp(botBrain, core.unitSelf, itemTablet, core.unitSelf)
-			return
-		end
-	end
-
-	--Portal Key: Port away
-	local itemPortalKey = core.itemPortalKey
-	if itemPortalKey then
-		if itemPortalKey:CanActivate() and nDistanceWellSq > (1000 * 1000) then
-			core.OrderItemPosition(botBrain, unitSelf, itemPortalKey, vecWellPos)
-			return
-		end
-	end
-
-	core.OrderMoveToPosAndHoldClamp(botBrain, core.unitSelf, vecWellPos, false)
-end
-object.HealAtWellExecuteOld = behaviorLib.HealAtWellExecute
-behaviorLib.HealAtWellBehavior["Execute"] = HealAtWellExecuteFnOverride
-
 
 --Function removes any item that is not valid
 local function funcRemoveInvalidItems()
@@ -1088,6 +1043,32 @@ end
 object.ShopExecuteOld = behaviorLib.ShopExecute
 behaviorLib.ShopBehavior["Execute"] = funcShopExecuteOverride
 
+-----------------------
+-- Return to well
+-----------------------
+--this is a great function to override with using retreating skills, such as blinks, travels, stuns or slows.
+function behaviorLib.CustomReturnToWellExecute(botBrain)
+local vecWellPos = core.allyWell and core.allyWell:GetPosition() or behaviorLib.PositionSelfBackUp()
+	local nDistanceWellSq =  Vector3.Distance2DSq(core.unitSelf:GetPosition(), vecWellPos)
+
+	--Activate ghost marchers if we can
+	local itemGhostMarchers = core.itemGhostMarchers
+	if itemGhostMarchers and itemGhostMarchers:CanActivate() and nDistanceWellSq > (500 * 500) then
+		core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
+		return
+	end
+
+	--Just use Tablet
+	local itemTablet = core.itemTablet
+	if itemTablet then
+		if itemTablet:CanActivate() and nDistanceWellSq > (500 * 500) then		
+			--TODO: GetHeading math to ensure we're actually going in the right direction
+			core.OrderItemEntityClamp(botBrain, core.unitSelf, itemTablet, core.unitSelf)
+			return
+		end
+	end
+	return core.OrderBlinkItemToEscape(botBrain, core.unitSelf, core.itemPortalKey, true)
+end
 
 --####################################################################
 --####################################################################

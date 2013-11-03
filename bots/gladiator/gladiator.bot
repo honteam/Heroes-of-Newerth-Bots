@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+    name="GladiatorBot"
+    description="Gladiator Bot by tchackie"
+    heroname="Hero_Gladiator"
+    rootlua="gladiator_main.lua"
+    defaultplayername="GladiatorBot"
+    precachepath="/heroes/gladiator/"
+/>
