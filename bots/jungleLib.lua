@@ -28,7 +28,7 @@ jungleLib.jungleSpots={
 {pos=Vector3.Create(11300,4400), description="L camp above pull camp" ,difficulty=55  ,stacks=0, creepDifficulty=0 ,outsidePos=Vector3.Create(11300,3800)	,corpseBlocking=false, side=legion },
 {pos=Vector3.Create(4900,8100),  description="L ancients"             ,difficulty=250 ,stacks=0, creepDifficulty=0 ,outsidePos=Vector3.Create(5500,7800)	,corpseBlocking=false, side=legion },
 --Hellbourne
-{pos=Vector3.Create(9400,11200), description="H closest to well"      ,difficulty=100 ,stacks=0, creepDifficulty=0 ,outsidePos=Vector3.Create(8800,11300)	,corpseBlocking=false, side=Hellbourne },
+{pos=Vector3.Create(9350,11200), description="H closest to well"      ,difficulty=100 ,stacks=0, creepDifficulty=0 ,outsidePos=Vector3.Create(8800,11300)	,corpseBlocking=false, side=Hellbourne },
 {pos=Vector3.Create(7800,11600), description="H easy camp"            ,difficulty=30  ,stacks=0, creepDifficulty=0 ,outsidePos=Vector3.Create(7400,12200)	,corpseBlocking=false, side=Hellbourne },
 {pos=Vector3.Create(6500,10400), description="H below easy camp"      ,difficulty=55  ,stacks=0, creepDifficulty=0 ,outsidePos=Vector3.Create(6700,11000)	,corpseBlocking=false, side=Hellbourne },
 {pos=Vector3.Create(5100,12450), description="H pullable camp"        ,difficulty=55  ,stacks=0, creepDifficulty=0 ,outsidePos=Vector3.Create(5100,13100)	,corpseBlocking=false, side=Hellbourne },
