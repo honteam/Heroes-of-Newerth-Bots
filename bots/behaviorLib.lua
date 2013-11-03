@@ -2499,11 +2499,11 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.RetreatFromThreatBehavior)
 
 function behaviorLib.WellProximityUtility(nDist)
 	local maxVal = 15
-	local farX = 5000
+	local farX = 8000
 
 	local util = 0
 	util = util + core.ParabolicDecayFn(nDist, maxVal, farX)
-
+	
 	if nDist <= 600 then
 		util = util + 20
 	end
@@ -2516,25 +2516,29 @@ end
 
 function behaviorLib.WellHealthUtility(healthPercent)
 	local height = 100
-	local vCriticalPoint = Vector3.Create(0.25, 20)
+	local vCriticalPoint = Vector3.Create(0.30, 25)--up from 0.25,20
 
 	local util = height / ( (height/vCriticalPoint.y) ^ (healthPercent/vCriticalPoint.x) )
 	--BotEcho("WellHealthUtil: "..util.."  percent: "..healthPercent)
 	return util
 end
 
+behaviorLib.HealAtWellEmptyManaPoolUtility = 8
 -------- Behavior Fns --------
 function behaviorLib.HealAtWellUtility(botBrain)
 	local utility = 0
 	local hpPercent = core.unitSelf:GetHealthPercent()
+	local mpPercent = core.unitSelf:GetManaPercent()
 
-	if hpPercent < 0.95 then
+	if hpPercent < 0.95 or mpPercent < 0.95 then
 		local wellPos = (core.allyWell and core.allyWell:GetPosition()) or Vector3.Create()
 		local nDist = Vector3.Distance2D(wellPos, core.unitSelf:GetPosition())
 
 		utility = behaviorLib.WellHealthUtility(hpPercent) + behaviorLib.WellProximityUtility(nDist)
 	end
-
+	-- add (1 - 0.3%) * 8 for default utility and 30% mana remaining.
+	utility = utility + (1 - (core.unitSelf:GetManaPercent())) * behaviorLib.HealAtWellEmptyManaPoolUtility
+	
 	if botBrain.bDebugUtility == true and utility ~= 0 then
 		BotEcho(format("  HealAtWellUtility: %g", utility))
 	end
@@ -2542,10 +2546,26 @@ function behaviorLib.HealAtWellUtility(botBrain)
 	return utility
 end
 
+-- people can/well override this function to heal at well better (bottle sip etc) called the whole time
+function behaviorLib.CustomHealAtWellExecute(botBrain)
+	return false
+end
+-- people can/well override this function to return to well easier (blinks, ports etc) called only when getting to well
+function behaviorLib.CustomReturnToWellExecute(botBrain)
+	return false
+end
+
 function behaviorLib.HealAtWellExecute(botBrain)
-	--BotEcho("Returning to well!")
 	local wellPos = (core.allyWell and core.allyWell:GetPosition()) or behaviorLib.PositionSelfBackUp()
-	core.OrderMoveToPosAndHoldClamp(botBrain, core.unitSelf, wellPos, false)
+	-- call the custom functions
+	local bActionTaken = behaviorLib.CustomHealAtWellExecute(botBrain)
+	if not bActionTaken and Vector3.Distance2DSq(core.unitSelf:GetPosition(), wellPos) > 1200 * 1200 then
+		bActionTaken = behaviorLib.CustomReturnToWellExecute(botBrain)
+	end
+	
+	if not bActionTaken then
+		core.OrderMoveToPosAndHoldClamp(botBrain, core.unitSelf, wellPos, false)
+	end
 end
 
 behaviorLib.HealAtWellBehavior = {}
