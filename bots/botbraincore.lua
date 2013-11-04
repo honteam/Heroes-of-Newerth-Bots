@@ -851,56 +851,40 @@ function core.ValidateItem(item)
 end
 
 function core.FindItems(botBrain)
-	--seach for the key Items of ours that we want to track
 	
-	core.ValidateItem(core.itemGhostMarchers)
-	core.ValidateItem(core.itemHatchet)
-	core.ValidateItem(core.itemRoT)
+	local itemHandler = object.itemHandler
+	if not itemHandler then return end
 	
-	local unitSelf = core.unitSelf
+	core.itemHatchet = itemHandler:GetItem("Item_LoggersHatchet") 
+	if core.itemHatchet and not core.itemHatchet.creepDamageMul then
+		if core.unitSelf:GetAttackType() == "melee" then
+			core.itemHatchet.creepDamageMul = 1.32
+		else
+			core.itemHatchet.creepDamageMul = 1.12
+		end
+	end
 	
-	if (core.itemGhostMarchers and core.itemHatchet and core.itemRoT) then
-		return
-	end	
-	
-	local inventory = unitSelf:GetInventory(false)
-	for slot = 1, 6, 1 do
-		local curItem = inventory[slot]
-		if curItem then
-			if core.itemGhostMarchers == nil and curItem:GetName() == "Item_EnhancedMarchers" then
-				core.itemGhostMarchers = core.WrapInTable(curItem)
-				core.itemGhostMarchers.expireTime = 0
-				core.itemGhostMarchers.duration = 6000
-				core.itemGhostMarchers.msMult = 0.12
-				--Echo("Saving ghostmarchers")
-			end
-			
-			if core.itemHatchet == nil and curItem:GetName() == "Item_LoggersHatchet" then
-				core.itemHatchet = core.WrapInTable(curItem)
-				if unitSelf:GetAttackType() == "melee" then
-					core.itemHatchet.creepDamageMul = 1.32
-				else
-					core.itemHatchet.creepDamageMul = 1.12
-				end
-				--Echo("Saving hatchet")
-			end
-			
-			if core.itemRoT == nil and curItem:GetName() == "Item_ManaRegen3" then
-				core.itemRoT = core.WrapInTable(curItem)
-				core.itemRoT.bHeroesOnly = (curItem:GetActiveModifierKey() == "ringoftheteacher_heroes")
-				core.itemRoT.nNextUpdateTime = 0
-				core.itemRoT.Update = function() 
-					local nCurrentTime = HoN.GetGameTime()
-					if nCurrentTime > core.itemRoT.nNextUpdateTime then
-						core.itemRoT.bHeroesOnly = (core.itemRoT:GetActiveModifierKey() == "ringoftheteacher_heroes")
-						core.itemRoT.nNextUpdateTime = nCurrentTime + 800
-					end
-				end
+	core.itemRoT = itemHandler:GetItem("Item_ManaRegen3") or itemHandler:GetItem("Item_LifeSteal5") or itemHandler:GetItem("Item_NomesWisdom")
+	if core.itemRoT and not core.itemRoT.nNextUpdateTime then
+		local modifierKey = core.itemRoT:GetActiveModifierKey()
+		core.itemRoT.bHeroesOnly = (modifierKey == "ringoftheteacher_heroes" or modifierKey == "abyssalskull_heroes" or modifierKey == "nomeswisdom_heroes") 
+		core.itemRoT.nNextUpdateTime = 0
+		core.itemRoT.Update = function() 
+		local nCurrentTime = HoN.GetGameTime()
+			if nCurrentTime > core.itemRoT.nNextUpdateTime then
+				local modifierKey = core.itemRoT:GetActiveModifierKey()
+				core.itemRoT.bHeroesOnly = (modifierKey == "ringoftheteacher_heroes" or modifierKey == "abyssalskull_heroes" or modifierKey == "nomeswisdom_heroes")
+				core.itemRoT.nNextUpdateTime = nCurrentTime + 800
 			end
 		end
 	end
 	
-	return
+	core.itemGhostMarchers = itemHandler:GetItem("Item_EnhancedMarchers")
+	if core.itemGhostMarchers and not core.itemGhostMarchers.expireTime then
+		core.itemGhostMarchers.expireTime = 0
+		core.itemGhostMarchers.duration = 6000
+		core.itemGhostMarchers.msMult = 0.12
+	end	
 end
 
 function core.DecayBonus(botBrain)

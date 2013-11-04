@@ -1,5 +1,10 @@
 --FlintBot v1.0
-
+--[[
+shoppingLib advanced implementations:
+-custom options: no item reservations and no purchase of consumables (62-85) (disabled) 
+-findItems is not needed (376-403)
+-itemHandler (Shroud) (line 419)
+--]]
 
 local _G = getfenv(0)
 local object = _G.object
@@ -58,6 +63,31 @@ BotEcho('loading flint_main...')
 core.tLanePreferences = {Jungle = 0, Mid = 4, ShortSolo = 4, LongSolo = 2, ShortSupport = 2, LongSupport = 1, ShortCarry = 5, LongCarry = 5}
 
 object.heroName = 'Hero_FlintBeastwood'
+
+--------------------------------------
+-- ShoppingLib Implementation
+--------------------------------------
+ 
+--setup references 
+local itemHandler = object.itemHandler
+local shoppingLib = object.shoppingLib
+ 
+--Example of setup-options
+--[[
+--changes to default settings
+local tSetupOptions = {
+		--no item reservations (do not care about items the team will get)
+        bReserveItems = false,
+		--will not buy any consumables (potions, homecoming stones)
+        tConsumableOptions = false
+        }
+		
+--setup Shopping-Behavior || custom call, because we want to change the default behavior
+shoppingLib.Setup(tSetupOptions)
+--]]
+
+--support ReloadBots (while testing)
+shoppingLib.bDevelopeItemBuildSaver = true
 
 --------------------------------
 -- Skills
@@ -348,7 +378,7 @@ end
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 
-
+--[[
 ----------------------------------
 --  FindItems Override
 ----------------------------------
@@ -375,7 +405,7 @@ local function funcFindItemsOverride(botBrain)
 end
 object.FindItemsOld = core.FindItems
 core.FindItems = funcFindItemsOverride
-
+--]]
 
 ----------------------------------
 --  RetreatFromThreat Override
@@ -391,7 +421,7 @@ function funcRetreatFromThreatExecuteOverride(botBrain)
 	if bDebugEchos then BotEcho("Checkin Shroud") end
 	if not bActionTaken then
 		--Shroud use
-		local itemStealth = core.itemStealth
+		local itemStealth = itemHandler:GetItem("Item_Stealth")
 		if itemStealth and itemStealth:CanActivate() then
 			if bDebugEchos then BotEcho("CanActivate!  nRetreatUtil: "..behaviorLib.lastRetreatUtil.."  thresh: "..object.nRetreatStealthThreshold) end
 			if behaviorLib.lastRetreatUtil >= object.nRetreatStealthThreshold then
