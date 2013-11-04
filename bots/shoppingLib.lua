@@ -299,7 +299,8 @@ function itemHandler:GetItem(sItemName, unitSelected, bIncludeStash)
 	   
 	   --get the item
 		local nUnitID = unitSelected:GetUniqueID()
-		local itemEntry = nUnitID and itemHandler.tItems[nUnitID..sItemName]
+		local sItemKey = nUnitID..sItemName
+		local itemEntry = nUnitID and itemHandler.tItems[sItemKey]
 		
 		--test if there is an item and if its still usable
 		if itemEntry and itemEntry:IsValid() then 
@@ -309,12 +310,12 @@ function itemHandler:GetItem(sItemName, unitSelected, bIncludeStash)
 			local nSlot = itemEntry:GetSlot()
 			local bInUnitsInventory = nSlot <= 6
 			
-			if shoppingLib.bDebugInfoItemHandler then BotEcho("Access to item "..sItemName.." in slot "..tostring(nSlot).." granted: "..tostring(access)) end
+			if shoppingLib.bDebugInfoItemHandler then BotEcho("Access to item "..sItemName.." in slot "..tostring(nSlot).." granted: "..tostring(bAccess)) end
 			
 			--don't delete if its acessable or in stash
 			if bInUnitsInventory and not bAccess then
 				--outdated entry
-				itemHandler.tItems[nUnitID..sItemName] = nil
+				itemHandler.tItems[sItemKey] = nil
 			elseif bAccess or bIncludeStash then
 				if shoppingLib.bDebugInfoItemHandler then BotEcho("Return Item: "..sItemName) end
 				
@@ -323,7 +324,7 @@ function itemHandler:GetItem(sItemName, unitSelected, bIncludeStash)
 			end
 		else
 			--item is not usable --> delete it
-			itemHandler.tItems[nUnitID..sItemName] = nil
+			itemHandler.tItems[sItemKey] = nil
 		end
 end
  
@@ -401,15 +402,26 @@ function itemHandler:UpdateDatabase(bClear)
 	   
 	--all other inventory units (Couriers, Booboo)
 	local tInventoryUnits = core.tControllableUnits and core.tControllableUnits["InventoryUnits"]
+	local unitCourier = shoppingLib.GetCourier()
 	
 	if tInventoryUnits then	
 		--do the same as above (insert all items)
 		for _, unit in ipairs(tInventoryUnits) do
 			if unit:IsValid() then
 				local unitInventory = unit:GetInventory()
-				for slot = 1, 6, 1 do
-					local itemCurrent = unitInventory[slot]
-					itemHandler:AddItem(itemCurrent, unit)
+				--courier-unit has problems with multi-share
+				if unit == unitCourier then
+					local  tCourierSlots =  shoppingLib.tCourierSlots
+					for _, tCourierEntry in ipairs (tCourierSlots) do
+						local nSlot = tCourierEntry[1]
+						local itemCurrent = unitInventory[nSlot]
+						itemHandler:AddItem(itemCurrent, unit)
+					end
+				else					
+					for nSlot = 1, 6, 1 do
+						local itemCurrent = unitInventory[nSlot]
+						itemHandler:AddItem(itemCurrent, unit)
+					end
 				end
 			end
 		end	
@@ -679,6 +691,9 @@ function  shoppingLib.Autobuy()
 	local unitCourier = shoppingLib.GetCourier()
 	local nMyGold = object:GetGold()
 	
+	--read-Only ShoppingList
+	local tShoppingList = shoppingLib.tShoppingList
+	
 	--Regen
 	if shoppingLib.bBuyRegen then
 		
@@ -692,32 +707,34 @@ function  shoppingLib.Autobuy()
 		
 		--only buy Health-Regen as long we can use it 
 		if nMaxHealth <= shoppingLib.nMaxHealthTreshold then
-			if tConsumables[shoppingLib.sNameBlightRunes] then
+			local sNameBlightRunes = shoppingLib.sNameBlightRunes
+			if tConsumables[sNameBlightRunes] then
 				bBuyRegen = true
 				--only buy Runes if we don't have some
-				local itemBlightRunes = itemHandler:GetItem(shoppingLib.sNameBlightRunes, nil, true) or itemHandler:GetItem(shoppingLib.sNameBlightRunes, unitCourier)
-				if not itemBlightRunes and nHealthPercent < 0.8 and nHealthPercent >= 0.6 then
-					local itemDef = HoN.GetItemDefinition(shoppingLib.sNameBlightRunes)
+				local itemBlightRunes = itemHandler:GetItem(sNameBlightRunes, nil, true) or itemHandler:GetItem(sNameBlightRunes, unitCourier)
+				local itemDef = HoN.GetItemDefinition(sNameBlightRunes)
+				if not itemBlightRunes and core.tableContains (tShoppingList, itemDef) == 0 and nHealthPercent < 0.8 and nHealthPercent >= 0.6 then
 					local nCost = itemDef:GetCost()
 					
 					--check if we can afford them
 					if nMyGold >= nCost then
-						shoppingLib.RequestConsumable (shoppingLib.sNameBlightRunes, 1)
+						shoppingLib.RequestConsumable (sNameBlightRunes, 1)
 						nMyGold = nMyGold - nCost
 					end
 				end
 			end
-			if tConsumables[shoppingLib.sNameHealthPostion] then
+			local sNameHealthPostion = shoppingLib.sNameHealthPostion
+			if tConsumables[sNameHealthPostion] then
 				bBuyRegen = true
 				--only buy potions if we don't have some
-				local itemHealthPotion = itemHandler:GetItem(shoppingLib.sNameHealthPostion, nil, true) or itemHandler:GetItem(shoppingLib.sNameHealthPostion, unitCourier)
-				if not itemHealthPotion and nHealthPercent < 0.6 and nManaPercent > 0.4 then
-					local itemDef = HoN.GetItemDefinition(shoppingLib.sNameHealthPostion)
+				local itemHealthPotion = itemHandler:GetItem(sNameHealthPostion, nil, true) or itemHandler:GetItem(sNameHealthPostion, unitCourier)
+				local itemDef = HoN.GetItemDefinition(sNameHealthPostion)
+				if not itemHealthPotion and core.tableContains (tShoppingList, itemDef) == 0 and nHealthPercent < 0.6 and nManaPercent > 0.4 then
 					local nCost = itemDef:GetCost()
 					
 					--check if we can afford them
 					if nMyGold >= nCost then
-						shoppingLib.RequestConsumable (shoppingLib.sNameHealthPostion, 1)
+						shoppingLib.RequestConsumable (sNameHealthPostion, 1)
 						nMyGold = nMyGold - nCost
 					end
 				end
@@ -726,16 +743,18 @@ function  shoppingLib.Autobuy()
 		
 		--only buy Mana-Regen as long we can use it 
 		if nMaxMana < shoppingLib.nMaxManaTreshold then
-			if tConsumables[shoppingLib.sNameManaPotions] then
+			local sNameManaPotions = shoppingLib.sNameManaPotions
+			if tConsumables[sNameManaPotions] then
 				bBuyRegen = true
 				--only buy mana, if we don't have some
-				local itemManaPotion = itemHandler:GetItem(shoppingLib.sNameManaPotions, nil, true) or itemHandler:GetItem(shoppingLib.sNameManaPotions, unitCourier)
-				if not itemManaPotion and nManaPercent < 0.4 and nHealthPercent > 0.5 then
-					local itemDef = HoN.GetItemDefinition(shoppingLib.sNameManaPotions)
+				local itemManaPotion = itemHandler:GetItem(sNameManaPotions, nil, true) or itemHandler:GetItem(sNameManaPotions, unitCourier)
+				local itemDef = HoN.GetItemDefinition(sNameManaPotions)
+				if not itemManaPotion and core.tableContains (tShoppingList, itemDef) == 0 and nManaPercent < 0.4 and nHealthPercent > 0.5 then
+					
 					local nCost = itemDef:GetCost()
 					
 					if nMyGold >= nCost then
-						shoppingLib.RequestConsumable (shoppingLib.sNameManaPotions, 1)
+						shoppingLib.RequestConsumable (sNameManaPotions, 1)
 						nMyGold = nMyGold - nCost
 					end
 				end
@@ -748,17 +767,21 @@ function  shoppingLib.Autobuy()
 	
 	
 	--homeomcing stones
-	if tConsumables[shoppingLib.sNameHomecomingStone] then
+	local sNameHomecomingStone = shoppingLib.sNameHomecomingStone
+	if tConsumables[sNameHomecomingStone] then
 		--only buy stones if we have not Post Haste
-		local itemPostHaste = itemHandler:GetItem(shoppingLib.sNamePostHaste, nil, true) or itemHandler:GetItem(shoppingLib.sNamePostHaste, unitCourier)
+		local sNamePostHaste = shoppingLib.sNamePostHaste
+		local itemPostHaste = itemHandler:GetItem(sNamePostHaste, nil, true) or itemHandler:GetItem(sNamePostHaste, unitCourier)
 		if itemPostHaste then 
-			tConsumables[shoppingLib.sNameHomecomingStone] = false
+			tConsumables[sNameHomecomingStone] = false
+			shoppingLib.SetItemSlotNumber(sNameHomecomingStone)
 		else
 			bKeepBuyingConsumables = true
 			--only buy stones if we don't have some
-			local itemHomecomingStone = itemHandler:GetItem(shoppingLib.sNameHomecomingStone, nil, true) or itemHandler:GetItem(shoppingLib.sNameHomecomingStone, unitCourier)
-			if not itemHomecomingStone then
-				local itemDef = HoN.GetItemDefinition(shoppingLib.sNameHomecomingStone)
+			local itemHomecomingStone = itemHandler:GetItem(sNameHomecomingStone, nil, true) or itemHandler:GetItem(sNameHomecomingStone, unitCourier)
+			local itemDef = HoN.GetItemDefinition(sNameHomecomingStone)
+			if not itemHomecomingStone and core.tableContains (tShoppingList, itemDef) == 0 then
+				
 				local nCost = itemDef:GetCost()
 				local nAmount = 0
 				
@@ -772,7 +795,7 @@ function  shoppingLib.Autobuy()
 				end
 				
 				if nAmount > 0 then
-					shoppingLib.RequestConsumable (shoppingLib.sNameHomecomingStone, nAmount)
+					shoppingLib.RequestConsumable (sNameHomecomingStone, nAmount)
 					nMyGold = nMyGold - nAmount * nCost
 				end
 			end
@@ -968,7 +991,8 @@ function shoppingLib.CheckItemsInventory (tComponents)
 	local unitCourier = shoppingLib.GetCourier()
 	if unitCourier then
 		local tCourierInventory = unitCourier:GetInventory(false)
-		for _, nSlot in ipairs (shoppingLib.tCourierSlots) do
+		for _, tCourierEntry in ipairs (shoppingLib.tCourierSlots) do
+			local nSlot = tCourierEntry and tCourierEntry[1]
 			if nSlot then
 				tinsert(tInventory, tCourierInventory[nSlot])
 			end
@@ -1419,16 +1443,21 @@ end
 description:	Sell a number of items from the unit's inventory (inc.stash)
 parameters: 	nNumber: Number of items to sell; 
 				unitSelected: Unit which should sell its items
-
+				tRestrictionSlotTable: table with accessable slots (courier related)
+				
 returns:		true if the items were succcessfully sold
 --]]
-function shoppingLib.SellItems (nNumber, unitSelected)
+function shoppingLib.SellItems (nNumber, unitSelected, tRestrictionSlotTable)
 	local bChanged = false
+	
+	local unitSelf = core.unitSelf
 	
 	--default unit: hero-unit
 	if not unitSelected then 
-		unitSelected = core.unitSelf 
+		unitSelected = unitSelf
 	end
+	
+	if shoppingLib.bDebugInfoShoppingFunctions then BotEcho("Sell items! Amount: "..tostring(nNumber).." Unit: "..tostring(unitSelected:GetTypeName())) end
 	
 	--default number: 1; return if there is a negative value
 	if not nNumber then 
@@ -1438,25 +1467,42 @@ function shoppingLib.SellItems (nNumber, unitSelected)
 	end
 	
 	--get inventory
-	local tInventory = unitSelected:GetInventory(true)
+	local tInventory = unitSelected:GetInventory()
+	local tStash = unitSelf:GetInventory(true)
 	
 	--list of cost and slot pairs
 	local tValueList = {}
 	
-	--index all items
-	for nSlot, item in pairs (tInventory) do
-		--insert only non recipe items
-		if not item:IsRecipe() then 
-			local nItemTotalCost = item:GetTotalCost()
-			local sItemName = item:GetName()
-			--give the important items a bonus in gold (Boots, Mystic Vestments etc.)
-			if nSlot == shoppingLib.GetItemSlotNumber(sItemName) then
-				nItemTotalCost = nItemTotalCost + shoppingLib.nSellBonusValue
+	--Create an accesstable (you can not check item ownership)(12)
+	local tAccess = nil
+	--if we have restircted slots, only use them
+	if tRestrictionSlotTable then
+		tAccess = {false,false,false,false,false,false,true,true,true,true,true,true}
+		for _, tEntry in pairs(tRestrictionSlotTable) do
+			nSlot = tEntry[1] or tEntry -- SPecial case for courier-slots 
+			tAccess[nSlot] = true
+		end
+	else
+		tAccess = {true,true,true,true,true,true,true,true,true,true,true,true}
+	end
+	
+	--index items
+	for nSlot=1, 12, 1 do
+		if tAccess[nSlot] then
+			local tCurrentInventory = nSlot < 7 and tInventory or tStash
+			local itemCurrent = tCurrentInventory[nSlot]
+			if itemCurrent and not itemCurrent:IsRecipe() then
+				local nItemTotalCost = itemCurrent:GetTotalCost()
+				local sItemName = itemCurrent:GetName()
+				--give the important items a bonus in gold (Boots, Mystic Vestments etc.)
+				if unitSelf == unitSelected and nSlot == shoppingLib.GetItemSlotNumber(sItemName) then
+					nItemTotalCost = nItemTotalCost + shoppingLib.nSellBonusValue
+				end
+				--insert item in the list
+				tinsert(tValueList, {nItemTotalCost, nSlot})
+				if shoppingLib.bDebugInfoShoppingFunctions then BotEcho("Insert Slotnumber: "..tostring(nSlot).." Item "..sItemName.." Price "..tostring(nItemTotalCost)) end
 			end
-			--insert item in the list
-			tinsert(tValueList, {nItemTotalCost, nSlot})
-			if shoppingLib.bDebugInfoShoppingFunctions then BotEcho("Insert Slotnumber: "..tostring(nSlot).." Item "..sItemName.." Price "..tostring(nItemTotalCost)) end
-		end				
+		end
 	end
 	
 	--sort list (itemcost Down->Top)
@@ -1469,22 +1515,26 @@ function shoppingLib.SellItems (nNumber, unitSelected)
 		local tValueEntry = tValueList[1]
 		local nSellingSlot = tValueEntry and tValueEntry[2]
 		if nSellingSlot then
-			if shoppingLib.bDebugInfoShoppingFunctions then BotEcho("I am selling slotnumber"..tostring(nSellingSlot)) end
+			if shoppingLib.bDebugInfoShoppingFunctions then BotEcho("I am selling slotnumber "..tostring(nSellingSlot)) end
+						
 			--Sell item by lowest TotalCost
-			unitSelected:SellBySlot(nSellingSlot)
-			
 			if nSellingSlot <= 6 then
 				bStashOnly = false
+				unitSelected:SellBySlot(nSellingSlot)
+			else
+				unitSelf:SellBySlot(nSellingSlot)
 			end
 			
+			bChanged = true	
+			
+			nNumber = nNumber -1	
+			
 			--remove from list
-			tremove (tValueList, 1)
-			bChanged = true			
+			tremove (tValueList, 1)	
 		else
 			--no item to sell
 			break
 		end
-		nNumber = nNumber -1
 	end
 	
 	return bChanged, bStashOnly
@@ -1743,7 +1793,7 @@ function shoppingLib.StashUtility(botBrain)
 		if core.unitSelf:IsChanneling() then
 			nUtility = 100
 		elseif shoppingLib.bStashFunctionActivation then
-			nUtility = 30
+			nUtility = HoN.GetMatchTime() > 0 and shoppingLib.nShoppingUtilityValue or shoppingLib.nShoppingPreGameUtilityValue
 		end
 	else
 		shoppingLib.bStashFunctionActivation = true
@@ -1757,6 +1807,11 @@ end
 function shoppingLib.StashExecute(botBrain)
 	
 	local bSuccess = false
+	
+	--no need to use stash?
+	if not shoppingLib.bStashFunctionActivation then
+		return bSuccess
+	end
 	
 	local unitSelf = core.unitSelf
 	local bCanAccessStash = unitSelf:CanAccessStash()
@@ -1788,7 +1843,6 @@ function shoppingLib.StashExecute(botBrain)
 		--now we should have a new free slot, so we can resort the stash
 		shoppingLib.bStashFunctionActivation = true
 	end
-	
 	
 	return bSuccess
 end
@@ -1834,7 +1888,9 @@ function shoppingLib.FillCourier(unitCourier)
 		if itemCurrent and nFreeSlot then
 			if shoppingLib.bDebugInfoCourierRelated then BotEcho("Swap "..tostring(nSlot).." with "..tostring(nFreeSlot)) end
 			unitCourier:SwapItems(nSlot, nFreeSlot)
-			tinsert(shoppingLib.tCourierSlots, nFreeSlot)
+			local itemDef = itemCurrent:GetItemDefinition()
+			local tCourierEntry = {nFreeSlot, itemDef}
+			tinsert(shoppingLib.tCourierSlots, tCourierEntry)
 			nOpenSlot = nOpenSlot + 1
 			bSuccess = true
 		end
@@ -1862,7 +1918,7 @@ function shoppingLib.FillStash(unitCourier)
 	--any items to return to stash?
 	local tCourierSlots = shoppingLib.tCourierSlots
 	if not tCourierSlots then 
-		return bSuccess 
+		return true 
 	end
 	
 	if shoppingLib.bDebugInfoCourierRelated then BotEcho("Fill Stash") end
@@ -1871,28 +1927,31 @@ function shoppingLib.FillStash(unitCourier)
 	local nLastItemSlot = #tCourierSlots
 	for nSlot=7, 12, 1 do 
 		local itemInStashSlot = tStash[nSlot]
-		local nItemSlot = tCourierSlots[nLastItemSlot]
+		local tCourierEntry = tCourierSlots[nLastItemSlot]
+		local nItemSlot = tCourierEntry and tCourierEntry[1]
 		local itemInSlot = nItemSlot and tInventory[nItemSlot]
 		if not itemInSlot then
 			if shoppingLib.bDebugInfoCourierRelated then BotEcho("No item in Slot "..tostring(nItemSlot)) end
 			tremove(shoppingLib.tCourierSlots)
 			nLastItemSlot = nLastItemSlot - 1
-		else
-			if not itemInStashSlot then
+		elseif not itemInStashSlot then
+			local bIsTrackedItem = tCourierEntry[2] == itemInSlot:GetItemDefinition()
+			if shoppingLib.bDebugInfoCourierRelated then BotEcho("Was this item tracked? Name: "..tostring(itemInSlot:GetName()).." Tracked: "..tostring(bIsTrackedItem)) end
+			if bIsTrackedItem then
 				if shoppingLib.bDebugInfoCourierRelated then BotEcho("Swap "..tostring(nItemSlot).." with "..tostring(nSlot)) end
 				unitCourier:SwapItems(nItemSlot, nSlot)
-				tremove(shoppingLib.tCourierSlots)
-				nLastItemSlot = nLastItemSlot - 1
-				bSuccess = true
 			end
+			tremove(shoppingLib.tCourierSlots)
+			nLastItemSlot = nLastItemSlot - 1
 		end
 	end
 	
 	local nCourierSlotsUsed = #shoppingLib.tCourierSlots
-	if nCourierSlotsUsed > 0 then
+	if nCourierSlotsUsed == 0 then
+		bSuccess = true
+	else
 		if shoppingLib.bDebugInfoCourierRelated then BotEcho("Still items remaining. Selling number of items: "..tostring(nCourierSlotsUsed)) end
-		shoppingLib.SellItems (nCourierSlotsUsed, unitCourier)
-		return shoppingLib.FillStash(unitCourier)
+		shoppingLib.SellItems (nCourierSlotsUsed, unitCourier, tCourierSlots)
 	end
 	
 	return bSuccess 
@@ -2007,9 +2066,11 @@ local function CourierMission(botBrain, unitCourier)
 					
 					--remove item entries successfully delivered (item transfer bug protection)
 					local tInventory = unitCourier:GetInventory(false)
+					local tCourierSlots = shoppingLib.tCourierSlots
 					local nIndex = 1
-					while nIndex <= #shoppingLib.tCourierSlots do
-						local nSlot = shoppingLib.tCourierSlots[nIndex]
+					while nIndex <= #tCourierSlots do
+						local tCourierEntry = tCourierSlots[nIndex]
+						local nSlot = tCourierEntry[1]
 						local item = nSlot and tInventory[nSlot]
 						if item then
 							nIndex = nIndex + 1
@@ -2037,11 +2098,13 @@ local function CourierMission(botBrain, unitCourier)
 			if unitCourier:CanAccessStash() then
 				if shoppingLib.bDebugInfoCourierRelated then BotEcho("Courier can access stash. Ending mission") end
 				
-				shoppingLib.FillStash(unitCourier)
-				shoppingLib.nCourierState = 1 --Filling
+				local bSuccess = shoppingLib.FillStash(unitCourier)
+				if bSuccess then
+					shoppingLib.nCourierState = 1 --Filling
 				
-				bOnMission = false
-				if shoppingLib.bDevelopeItemBuildSaver then SyncWithDatabse() end
+					bOnMission = false
+					if shoppingLib.bDevelopeItemBuildSaver then SyncWithDatabse() end
+				end
 			end
 			--Home Complete
 		end
