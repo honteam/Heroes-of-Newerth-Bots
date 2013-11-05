@@ -2789,7 +2789,7 @@ function behaviorLib.RetreatFromThreatUtility(botBrain)
 		local unitAggroTarget = tower:GetAttackTarget()
 		if bDebugEchos then BotEcho(tower:GetTypeName().." target: "..(unitAggroTarget and unitAggroTarget:GetTypeName() or 'nil')) end
 		if unitAggroTarget ~= nil and unitAggroTarget == core.unitSelf then
-			nTowerAggroUtility = behaivorLib.nTowerAggroUtility
+			nTowerAggroUtility = behaviorLib.nTowerAggroUtility
 			break
 		end
 	end
