@@ -1768,26 +1768,23 @@ end
 function core.GetBestBlinkLocation(position, position2, nBlinkRange)
 	local vecCurrentPosition = position
 	local vecEndPosition = position2
-	local vecBlinkPosition = nil
 	-- Get a path from current position back to well
 	local tPath = BotMetaData.FindPath(vecCurrentPosition, vecEndPosition)
-	if tPath then
+	if tPath and #tPath > 0 then
 		local nIndex = 1
 		local vecPreviousNodePosition = vecCurrentPosition
 		local vecNodePosition = nil
-		local nDistanceSq = nil
+		local blinkRangeSq = nBlinkRange * nBlinkRange
 		while nIndex < #tPath do
 			vecNodePosition = tPath[nIndex]:GetPosition()
-			nDistanceSq = Vector3.Distance2DSq(vecCurrentPosition, vecNodePosition)
 			-- Find the first node on the path that is outside of blink range
-			if nDistanceSq > (nBlinkRange * nBlinkRange) then
+			if Vector3.Distance2DSq(vecCurrentPosition, vecNodePosition) > (blinkRangeSq) then
 				if nIndex == 1 then
-					vecBlinkPosition = vecNodePosition
+					return vecNodePosition
 				else
-					local vecBlinkPosition = nil
 					local vecA = vecPreviousNodePosition
 					local vecB = vecNodePosition
-					local vecC = core.unitSelf:GetPosition()
+					local vecC = vecCurrentPosition
 					vecA.z = 0 --we don't care about z co-ords
 					vecB.z = 0
 					vecC.z = 0
@@ -1796,16 +1793,12 @@ function core.GetBestBlinkLocation(position, position2, nBlinkRange)
 					local nAngleA = core.AngleBetween(vecB - vecA, vecAC)
 					local vecACDirection = Vector3.Normalize(vecA - vecC) * nBlinkRange
 
-					if nLengthAC and nAngleA and vecACDirection then
+					if nLengthAC and vecACDirection then
 						local nAngleD = asin((nLengthAC * sin(nAngleA)) / nBlinkRange) -- Law of Sines
 						local nAngleC = (pi - nAngleD - nAngleA)
 						local nAngleB = core.AngleBetween(vecB, vecC) - core.AngleBetween(vecB, vecA) -- This is the angle ABC in the drawing
-						vecBlinkPosition = vecC + core.RotateVec2DRad(vecACDirection, nAngleB > 0 and -nAngleC or nAngleC)               
-						if vecBlinkPosition then
-							return vecBlinkPosition
-						end
+						return vecC + core.RotateVec2DRad(vecACDirection, nAngleB > 0 and -nAngleC or nAngleC)
 					end
-					return vecBlinkPosition
 				end
 				break
 			end
@@ -1813,7 +1806,7 @@ function core.GetBestBlinkLocation(position, position2, nBlinkRange)
 			nIndex = nIndex + 1
 		end
 	end
-	return vecBlinkPosition
+	return nil -- We have no path.. how can we do anything?
 end
 
 function core.GetTowersThreateningPosition(vecPosition, nTargetExtraRange, nTeamToIgnore)
