@@ -60,7 +60,7 @@ function behaviorLib.addItemBehavior(itemName, remove)
 	elseif itemName == "Item_Immunity" then
 		behaviorLib.behaviorToModify = behaviorLib.ShrunkenHeadBehavior
 	elseif itemName == "Item_ManaBurn2" then
-		behaviorLib.behaviorToModify = behaviorLib.GeomancersBehavior
+		behaviorLib.behaviorToModify = behaviorLib.GeometersBehavior
 	elseif itemName == "Item_PushStaff" then --waiting on healAtWell fixes
 		behaviorLib.behaviorToModify = behaviorLib.TabletBehavior
 	elseif itemName == "Item_PlatedGreaves" then
@@ -827,34 +827,34 @@ behaviorLib.ShrunkenHeadBehavior["Execute"] = behaviorLib.ShrunkenHeadExecute
 behaviorLib.ShrunkenHeadBehavior["Name"] = "UseShrunkenHead"
 
 ------------------------------------
---  	   Geomancers Bane		  --
+--  	   Geometers Bane		  --
 ------------------------------------
-behaviorLib.nGeomancersThreshhold = 40
-behaviorLib.nGeomancersRetreatThreshhold = 50
-function behaviorLib.GeomancersUtility(botBrain)
+behaviorLib.nGeometersThreshhold = 40
+behaviorLib.nGeometersRetreatThreshhold = 50
+function behaviorLib.GeometersUtility(botBrain)
 	local unitSelf = core.unitSelf
-	behaviorLib.itemGeomancers = core.GetItem("Item_ManaBurn2")
-	if behaviorLib.itemGeomancers and behaviorLib.itemGeomancers:CanActivate() then
+	behaviorLib.itemGeometers = core.GetItem("Item_ManaBurn2")
+	if behaviorLib.itemGeometers and behaviorLib.itemGeometers:CanActivate() then
 		--offensive
-		if (behaviorLib.lastHarassUtil > behaviorLib.nGeomancersThreshhold) and behaviorLib.heroTarget then	--only when we have a target
+		if (behaviorLib.lastHarassUtil > behaviorLib.nGeometersThreshhold) and behaviorLib.heroTarget then	--only when we have a target
 			return 100
 		end
 		--defensive
-		if behaviorLib.lastRetreatUtil >= behaviorLib.nGeomancersRetreatThreshhold and (core.GetLastBehaviorName(botBrain) == "RetreatFromThreat" or core.GetLastBehaviorName(botBrain) == "HealAtWell") then --we are RUNNING FOR OUR LIVES!
+		if behaviorLib.lastRetreatUtil >= behaviorLib.nGeometersRetreatThreshhold and (core.GetLastBehaviorName(botBrain) == "RetreatFromThreat" or core.GetLastBehaviorName(botBrain) == "HealAtWell") then --we are RUNNING FOR OUR LIVES!
 			return 100
 		end
 	end
 	return 0
 end
 
-function behaviorLib.GeomancersExecute(botBrain)
+function behaviorLib.GeometersExecute(botBrain)
 	local unitSelf = core.unitSelf
-	return core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemGeomancers)
+	return core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemGeometers)
 end
-behaviorLib.GeomancersBehavior = {}
-behaviorLib.GeomancersBehavior["Utility"] = behaviorLib.GeomancersUtility
-behaviorLib.GeomancersBehavior["Execute"] = behaviorLib.GeomancersExecute
-behaviorLib.GeomancersBehavior["Name"] = "UseGeomancers"
+behaviorLib.GeometersBehavior = {}
+behaviorLib.GeometersBehavior["Utility"] = behaviorLib.GeometersUtility
+behaviorLib.GeometersBehavior["Execute"] = behaviorLib.GeometersExecute
+behaviorLib.GeometersBehavior["Name"] = "UseGeometers"
 
 
 ------------------------------------
