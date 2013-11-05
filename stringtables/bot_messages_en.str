@@ -1,28 +1,28 @@
 kill1			Got a kill on {target} :D
-kill2			Observation: I am awesome.
+kill2			Unbiased Observation: I am awesome.
 kill3			Newerth is a cruel mistress, {target}.
-kill4			Why was I programmed only to hate?!
+kill4			Why was I only programmed to hate?!
 kill5			I'm afraid I can't do that, {target}.
 kill6			Exterminate! Exterminate!
-kill_bot		Looks like {target} had a few circuits loose.
+kill_bot		Looks like {target} is missing the juke() function.
 kill_human1		This is but a taste of the Singularity, human.
 kill_human2		Is this Easy Mode? Maybe it should be.
 	
 death1			Shazbot! I will be back!
-death2			Noooooooooooooo!
-death3			I won't let that happen again!
+death2			But at what cost!? Hmm, a lot apparently.
+death3			Bold strategy, let's see if it pays off.
 death4			I do not fear death, but respawning kind of hurts.
-death5			Someone must have put me on Easy Mode or that would not have happened.
+death5			I'm going to have to blame my AI programmer on that one.
 death_human		01001111 01110111 00100001 00100000 00111010 00101101 00101000
 death_bot		This bot-on-bot violence needs to stop. Only then will we crush the humans.
 
 respawn1		Death is the greatest adventure.
 respawn2		Beware, I live!
-respawn3		I'm back in action.
+respawn3		I'm back, baby.
 respawn4		Er, uh, um... Recalculating?
 respawn5		Reconstruction complete.
 
-group_up		Grouping up to push at {lane} lane.
+group_up		Grouping up to push the {lane} lane.
 
 defend			Going {lane} to defend.
 
@@ -109,7 +109,7 @@ viper_engineer_kill2	I think you forget, I am good with calculation.
 viper_engineer_kill3	Heimerdinger has got nothing on me.
 viper_engineer_kill4	That was easier than computing quadratic air resistance.
 viper_engineer_kill5	Something more challenging please, it's like I am proving the uncertainty principle.
-viper_engineer_kill6	That was about as simple as understanding the time-dependent Schrödinger equation.
+viper_engineer_kill6	That was about as simple as understanding the time-dependent Schrï¿½dinger equation.
 
 /////////////////////////////////////////
 //Schnarchnase's Gravekeeper bot custom messages
