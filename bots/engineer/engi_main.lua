@@ -626,6 +626,6 @@ behaviorLib.LaneItems =
 behaviorLib.MidItems =
 	{"Item_Morph", "Item_MagicArmor2"}
 behaviorLib.LateItems =
-	{"Item_BehemothsHeart", "Item_LightBrand"}
+	{"Item_BehemothsHeart", "Item_Lightbrand"}
 
 BotEcho('finished loading engineer_main')
