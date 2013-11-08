@@ -1086,7 +1086,7 @@ function core.OrderFollow(botBrain, unit, target, bInterruptAttacks, bQueueComma
 	end
 	
 	local unitParam = (unit ~= nil and unit.object) or unit
-	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
+	local targetParam = (target ~= nil and target.object) or target
 	
 	if (core.bBetterErrors) then
 		local bErrored = false
@@ -1133,7 +1133,7 @@ function core.OrderTouch(botBrain, unit, target, bInterruptAttacks, bQueueComman
 	end
 	
 	local unitParam = (unit ~= nil and unit.object) or unit
-	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
+	local targetParam = (target ~= nil and target.object) or target
 	
 	if (core.bBetterErrors) then
 		local bErrored = false
@@ -1273,7 +1273,7 @@ function core.OrderGiveItem(botBrain, unit, target, item, bInterruptAttacks, bQu
 	end
 	
 	local unitParam = (unit ~= nil and unit.object) or unit
-	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
+	local targetParam = (target ~= nil and target.object) or target
 	local itemParam = (item ~= nil and item.object) or item
 	
 	if (core.bBetterErrors) then
