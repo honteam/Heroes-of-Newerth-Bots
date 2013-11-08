@@ -604,7 +604,7 @@ function jungleExecute(botBrain)
 	
 	-- if we don't have a camp to go to, wait at the hard camp closest to well
 	if nCamp==nil then-- we have no next position! Likely the beginning of the game, go to default camp and wait.
-		jungleLib.nLastCamp = -1
+		object.nLastCamp = -1
 		if core.myTeam == HoN.GetHellbourneTeam() then
 			nCamp=8
 		else
@@ -618,10 +618,10 @@ function jungleExecute(botBrain)
 	if debugMode then core.DrawDebugArrow(vecMyPos, vecTargetPos, 'green') end
 	
 	-- reset bBeenToOutside if we are changing camps and haven't yet been to the outside
-	if (nCamp ~= jungleLib.nLastCamp) then
+	if (nCamp ~= object.nLastCamp) then
 		bBeenToOutside = false
 	end
-	jungleLib.nLastCamp=nCamp
+	object.nLastCamp=nCamp
 	-- we are too far, reset the camp.
 	if bBeenToOutside and nDistanceSq > 1000 * 1000 and not bShouldStack then
 		bBeenToOutside = false
