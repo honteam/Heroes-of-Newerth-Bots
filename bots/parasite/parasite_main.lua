@@ -523,7 +523,7 @@ function jungleExecute(botBrain)
 						--perhaps we are stuck? This sometimes happens upon leaving retreating and trying to leave base again. We shall check for it here.
 						if Vector3.Distance2DSq(vecMyPos, jungleLib.tJungleSpots[nCamp].vecOutsidePos) > 1000 * 1000 then -- we are too far, reset it.
 							bBeenToOutside = false
-							BotEcho("reset because far away! ".. math.sqrt(Vector3.Distance2DSq(vecMyPos, jungleLib.tJungleSpots[nCamp].vecOutsidePos)))
+							--BotEcho("reset because far away! ".. math.sqrt(Vector3.Distance2DSq(vecMyPos, jungleLib.tJungleSpots[nCamp].vecOutsidePos)))
 						end
 						return core.OrderAttackPosition(botBrain, unitSelf, vecTargetPos)
 					end
