@@ -1687,9 +1687,10 @@ function core.OrderBlinkItemToEscape(botBrain, unit, item, bInterruptAttacks, bQ
 	if not item or not item:CanActivate() or not item:GetRange() and core.allyWell and core.allyWell:GetPosition() then -- passed a bad item/well doesn't exist..
 		return false
 	end
-	local abilityParam = (ability ~= nil and ability.object) or ability
+	local itemParam = (item ~= nil and item.object) or item
 	local vecTarget = core.GetBestBlinkLocation(core.unitSelf:GetPosition(), core.allyWell:GetPosition(), item:GetRange())
-	return core.OrderItemPosition(botBrain, unit, item, vecTarget, bInterruptAttacks, bQueueCommand)
+	if (itemParam and vecTarget)
+		return core.OrderItemPosition(botBrain, unit, item, vecTarget, bInterruptAttacks, bQueueCommand)
 end
 
 function core.ToggleAutoCastItem(botBrain, item, bInterruptAttacks, bQueueCommand)
@@ -1816,7 +1817,8 @@ function core.OrderBlinkAbilityToEscape(botBrain, ability, bInterruptAttacks, bQ
 	end
 	local abilityParam = (ability ~= nil and ability.object) or ability
 	local vecTarget = core.GetBestBlinkLocation(core.unitSelf:GetPosition(), core.allyWell:GetPosition(), ability:GetRange())
-	return core.OrderAbilityPosition(botBrain, ability, vecTarget, bInterruptAttacks, bQueueCommand)
+	if (ability and vecTarget)
+		return core.OrderAbilityPosition(botBrain, ability, vecTarget, bInterruptAttacks, bQueueCommand)
 end
 
 function core.OrderAbilityEntity(botBrain, ability, unitTarget, bInterruptAttacks, bQueueCommand)
