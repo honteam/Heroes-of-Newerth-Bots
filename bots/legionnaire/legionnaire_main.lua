@@ -583,7 +583,7 @@ object.lastJungleExecute = 0
 -------- Behavior Functions --------
 function jungleUtility(botBrain)
 	if (HoN.GetRemainingPreMatchTime() and HoN.GetRemainingPreMatchTime()>14000) or core.tMyLane.sLaneName~='jungle' then -- don't try if we have a lane!
-		--return 0
+		return 0
 	end
 	-- Wait until level 9 to start grouping/pushing/defending
 	behaviorLib.nTeamGroupUtilityMul = 0.13 + core.unitSelf:GetLevel() * 0.01
