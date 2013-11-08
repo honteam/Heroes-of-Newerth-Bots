@@ -36,13 +36,13 @@ jungleLib.tJungleSpots = {
 {pos = Vector3.Create(4000, 11500), description = "H far hard camp" 	   , nDifficulty = 100, nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(4400, 11700), bCorpseBlocking = false, nSide = Hellbourne },
 {pos = Vector3.Create(12300, 5600), description = "H ancients"  		   , nDifficulty = 250, nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(12300, 6400), bCorpseBlocking = false, nSide = Hellbourne }
 }
-jungleLib.minutesPassed = -1
-jungleLib.stacking = 0
+jungleLib.nMinutesPassed = -1
+jungleLib.nStacking = 0
 
 local tCreepPreferences = {} -- This will hold the creep preferences for certain strings. e.g. "Alchemist's bones" or "Legionnaire"
 
-local checkFrequency = 500 --check 2 times a second
-jungleLib.lastCheck = 0
+local nCheckFrequency = 500 --check 2 times a second
+jungleLib.nLastCheck = 0
 function jungleLib.assess(botBrain)
 	if (core.NumberElements(tCreepPreferences) == 0) then
 		return
@@ -50,28 +50,28 @@ function jungleLib.assess(botBrain)
 
 	--NEUTRAL SPAWNING
 	local time = HoN.GetMatchTime()
-	if (time <= jungleLib.lastCheck + checkFrequency) then --framskip
+	if (time <= jungleLib.nLastCheck + nCheckFrequency) then --framskip
 		return
 	end
-	jungleLib.lastCheck = time
+	jungleLib.nLastCheck = time
 	
 	local mins = -1
 	if time then
 		mins, secs = jungleLib.getTime()
-		if (mins == 0 and secs == 30) or (mins ~= jungleLib.minutesPassed and mins ~= 0) then --SPAWNING
+		if (mins == 0 and secs == 30) or (mins ~= jungleLib.nMinutesPassed and mins ~= 0) then --SPAWNING
 			for _, jungleSpot in pairs(jungleLib.tJungleSpots) do
 				if (not jungleSpot.bCorpseBlocking) then --it won't spawn with corpse in way.
 					jungleSpot.nStacks = 1 --assume something spawned. If not, it will be removed later if not.
 				end
 				jungleSpot.bCorpseBlocking = false
 			end
-			if (jungleLib.stacking ~= 0) then --add stack if stacking.
-				jungleLib.tJungleSpots[jungleLib.stacking].nStacks = jungleLib.tJungleSpots[jungleLib.stacking].nStacks + 1
+			if (jungleLib.nStacking ~= 0) then --add stack if stacking.
+				jungleLib.tJungleSpots[jungleLib.nStacking].nStacks = jungleLib.tJungleSpots[jungleLib.nStacking].nStacks + 1
 			end
-			jungleLib.stacking = 0
+			jungleLib.nStacking = 0
 		end
 	end
-	jungleLib.minutesPassed = mins
+	jungleLib.nMinutesPassed = mins
 
 	--CHECK NEUTRAL SPAWN CAMPS
 	local debug = false
@@ -158,13 +158,13 @@ function jungleLib.getNearestCampPos(pos, sPreference, minimumnDifficulty, maxim
 	for i = 1, #jungleLib.tJungleSpots do
 		local jungleSpot = jungleLib.tJungleSpots[i]
 		if nSide == nil or jungleSpot.nSide == nSide then
-			local dist = Vector3.Distance2DSq(pos, jungleSpot.pos)
+			local nDist = Vector3.Distance2DSq(pos, jungleSpot.pos)
 			local nDifficulty = jungleSpot.nDifficulty
 			if (jungleSpot.tCreepDifficulty[sPreference] ~= nil) then -- added creep difficulty
 				nDifficulty = nDifficulty + jungleSpot.tCreepDifficulty[sPreference]
 			end
-			if dist < nClosestSq and jungleSpot.nStacks ~= 0 and nDifficulty > minimumnDifficulty and nDifficulty < maximumnDifficulty then
-				nClosestSq = dist
+			if nDist < nClosestSq and jungleSpot.nStacks ~= 0 and nDifficulty > minimumnDifficulty and nDifficulty < maximumnDifficulty then
+				nClosestSq = nDist
 				nClosestCamp = i
 			end
 		end

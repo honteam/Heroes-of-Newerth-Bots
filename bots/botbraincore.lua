@@ -374,7 +374,7 @@ function core.AddJunglePreferences(sPrefName, tCreepPreferences)
 		for sString, tCreepPrefs in pairs(object.tJunglePreferencesToAdd) do
 			core.teamBotBrain.jungleLib.AddPreference(sString, tCreepPrefs)
 		end
-		tJunglePreferencesToAdd = nil
+		object.tJunglePreferencesToAdd = {}
 	end
 end
 
