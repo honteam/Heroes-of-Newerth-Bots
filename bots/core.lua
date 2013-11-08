@@ -26,8 +26,8 @@ end
 
 local print, ipairs, pairs, string, table, next, type, tinsert, tremove, tsort, format, tostring, tonumber, strfind, strsub
 	= _G.print, _G.ipairs, _G.pairs, _G.string, _G.table, _G.next, _G.type, _G.table.insert, _G.table.remove, _G.table.sort, _G.string.format, _G.tostring, _G.tonumber, _G.string.find, _G.string.sub
-local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, min, max, random
-	= _G.math.ceil, _G.math.floor, _G.math.pi, _G.math.tan, _G.math.atan, _G.math.atan2, _G.math.abs, _G.math.cos, _G.math.sin, _G.math.acos, _G.math.min, _G.math.max, _G.math.random
+local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, asin, min, max, random
+	= _G.math.ceil, _G.math.floor, _G.math.pi, _G.math.tan, _G.math.atan, _G.math.atan2, _G.math.abs, _G.math.cos, _G.math.sin, _G.math.acos, _G.math.asin, _G.math.min, _G.math.max, _G.math.random
 
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 	
@@ -1756,6 +1756,57 @@ function core.GetFurthestPointOnLine(vecPosition, vecStart, vecEnd)
 	--BotEcho(format('A: %s  B: %s  C: %s  D: %s', tostring(vecA), tostring(vecB), tostring(vecC), tostring(vecPointD)))
 	
 	return vecPointD
+end
+
+
+-- Find the point D such that the length of CD is equal to nRange
+--  A-----D---------B
+--   \   /
+--    \ /   mad props to DarkFire ^_^
+--     C
+-- Where A is the previous node, B is the current node, and C is the Bots position
+function core.GetBestBlinkLocation(position, position2, nBlinkRange)
+	local vecCurrentPosition = position
+	local vecEndPosition = position2
+	-- Get a path from current position back to well
+	local tPath = BotMetaData.FindPath(vecCurrentPosition, vecEndPosition)
+	if tPath and #tPath > 0 then
+		local nIndex = 1
+		local vecPreviousNodePosition = vecCurrentPosition
+		local vecNodePosition = nil
+		local blinkRangeSq = nBlinkRange * nBlinkRange
+		while nIndex < #tPath do
+			vecNodePosition = tPath[nIndex]:GetPosition()
+			-- Find the first node on the path that is outside of blink range
+			if Vector3.Distance2DSq(vecCurrentPosition, vecNodePosition) > (blinkRangeSq) then
+				if nIndex == 1 then
+					return vecNodePosition
+				else
+					local vecA = vecPreviousNodePosition
+					local vecB = vecNodePosition
+					local vecC = vecCurrentPosition
+					vecA.z = 0 --we don't care about z co-ords
+					vecB.z = 0
+					vecC.z = 0
+					local vecAC = vecC - vecA
+					local nLengthAC = Vector3.Length(vecAC)
+					local nAngleA = core.AngleBetween(vecB - vecA, vecAC)
+					local vecACDirection = Vector3.Normalize(vecA - vecC) * nBlinkRange
+
+					if nLengthAC and vecACDirection then
+						local nAngleD = asin((nLengthAC * sin(nAngleA)) / nBlinkRange) -- Law of Sines
+						local nAngleC = (pi - nAngleD - nAngleA)
+						local nAngleB = core.AngleBetween(vecB, vecC) - core.AngleBetween(vecB, vecA) -- This is the angle ABC in the drawing
+						return vecC + core.RotateVec2DRad(vecACDirection, nAngleB > 0 and -nAngleC or nAngleC)
+					end
+				end
+				break
+			end
+			vecPreviousNodePosition = vecNodePosition
+			nIndex = nIndex + 1
+		end
+	end
+	return nil -- We have no path.. how can we do anything?
 end
 
 function core.GetTowersThreateningPosition(vecPosition, nTargetExtraRange, nTeamToIgnore)
