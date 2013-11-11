@@ -97,9 +97,9 @@ function jungleLib.assess(botBrain)
 					
 					-- For each unit, for each preference table, add the appropriate value.
 					for sString, tCreepPrefs in pairs(tCreepPreferences) do
-						tCreepDifficulty = tCreepPrefs[unit:GetTypeName()]
-						if addednDifficulty then
-							jungleSpot.tCreepDifficulty[sString] = jungleSpot.tCreepDifficulty[sString] + tCreepDifficulty
+						local nAddedDifficulty = tCreepPrefs[unit:GetTypeName()]
+						if nAddedDifficulty and nAddedDifficulty ~= 0 then
+							jungleSpot.tCreepDifficulty[sString] = (jungleSpot.tCreepDifficulty[sString] ~= nil and jungleSpot.tCreepDifficulty[sString] or 0) + nAddedDifficulty
 						end
 					end
 					
@@ -148,24 +148,27 @@ function jungleLib.RemovePreference(sPreferenceName)
 	tCreepPreferences[sPreferenceName] = nil
 end
 
-function jungleLib.getNearestCampPos(pos, sPreference, minimumnDifficulty, maximumnDifficulty, nSide)
+function jungleLib.getNearestCampPos(pos, sPreference, minimumnDifficulty, maximumnDifficulty, nSide, bIgnoreAncients)
 	sPreference = sPreference or "default"
 	minimumnDifficulty = minimumnDifficulty or 0
 	maximumnDifficulty = maximumnDifficulty or 999
+	bIgnoreAncients = bIgnoreAncients or false
 	
 	local nClosestCamp = -1
 	local nClosestSq = 9999 * 9999
 	for i = 1, #jungleLib.tJungleSpots do
-		local jungleSpot = jungleLib.tJungleSpots[i]
-		if nSide == nil or jungleSpot.nSide == nSide then
-			local nDist = Vector3.Distance2DSq(pos, jungleSpot.pos)
-			local nDifficulty = jungleSpot.nDifficulty
-			if (jungleSpot.tCreepDifficulty[sPreference] ~= nil) then -- added creep difficulty
-				nDifficulty = nDifficulty + jungleSpot.tCreepDifficulty[sPreference]
-			end
-			if nDist < nClosestSq and jungleSpot.nStacks ~= 0 and nDifficulty > minimumnDifficulty and nDifficulty < maximumnDifficulty then
-				nClosestSq = nDist
-				nClosestCamp = i
+		if not (bIgnoreAncients and (i == 6 or i == 12)) then
+			local jungleSpot = jungleLib.tJungleSpots[i]
+			if nSide == nil or jungleSpot.nSide == nSide then
+				local nDist = Vector3.Distance2DSq(pos, jungleSpot.pos)
+				local nDifficulty = jungleSpot.nDifficulty
+				if (jungleSpot.tCreepDifficulty[sPreference] ~= nil) then -- added creep difficulty
+					nDifficulty = nDifficulty + jungleSpot.tCreepDifficulty[sPreference]
+				end
+				if nDist < nClosestSq and jungleSpot.nStacks ~= 0 and nDifficulty > minimumnDifficulty and nDifficulty < maximumnDifficulty then
+					nClosestSq = nDist
+					nClosestCamp = i
+				end
 			end
 		end
 	end
