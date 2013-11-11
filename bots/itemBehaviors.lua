@@ -65,6 +65,8 @@ function behaviorLib.addItemBehavior(itemName, remove)
 		behaviorLib.behaviorToModify = behaviorLib.TabletBehavior
 	elseif itemName == "Item_PlatedGreaves" then
 		behaviorLib.behaviorToModify = behaviorLib.PlatedGreavesBehavior
+	elseif itemName == "Item_Gloves3" then
+		behaviorLib.behaviorToModify = behaviorLib.AlchemistBonesBehavior
 	end
 	
 	
@@ -78,6 +80,26 @@ function behaviorLib.addItemBehavior(itemName, remove)
 		elseif core.tableContains(behaviorLib.tBehaviors, behaviorLib.behaviorToModify) == 0 then
 			tinsert(behaviorLib.tBehaviors, behaviorLib.behaviorToModify)
 			if bDebugEchos then BotEcho("^gadded "..itemName) end
+			
+			-- item-specific add code
+			
+			--AlchemistBones
+			core.AddJunglePreferences("AlchemistBones", {
+				-- These units, we will go to a camp if there are there.
+				Neutral_Catman_leader = 1000,
+				Neutral_VagabondLeader = 1000,
+				Neutral_Minotaur = 1000,
+				Neutral_Vulture = 1000,
+				-- Try to ignore camps with these units in them (note that +1000 is more powerful than -100)
+				Neutral_Goat = -100,
+				Neutral_HunterWarrior = -100,
+				Neutral_SkeletonBoss = -100,
+				Neutral_WolfCommander = -100,
+				Neutral_Catman = -100,
+				Neutral_VagabondAssassin = -100,
+				Neutral_Screacher = -100,
+				Neutral_Skeleton = -100,
+			})
 		else
 			--BotEcho("^rBehavior exists.. ")
 		end
@@ -914,3 +936,74 @@ behaviorLib.PlatedGreavesBehavior = {}
 behaviorLib.PlatedGreavesBehavior["Utility"] = behaviorLib.PlatedGreavesUtility
 behaviorLib.PlatedGreavesBehavior["Execute"] = behaviorLib.PlatedGreavesExecute
 behaviorLib.PlatedGreavesBehavior["Name"] = "UsePlatedGreaves"
+
+------------------------------------
+--   	  Alchemist Bones 		  --
+------------------------------------
+local nAlchBonesCamp
+local vecAlchBonesCampPos
+local nAlchBonesTimeUsed=0
+function behaviorLib.AlchemistBonesUtility(botBrain)
+	behaviorLib.itemAlchemistBones = core.GetItem("Item_Gloves3")
+	if (not behaviorLib.itemAlchemistBones or behaviorLib.itemAlchemistBones:GetCharges()==0 or not behaviorLib.itemAlchemistBones:CanActivate() )then 
+		return 0
+	end
+	if nAlchBonesTimeUsed+550 > HoN:GetGameTime() then --continue if we are
+		return 25
+	end
+	
+	local unitSelf = core.unitSelf
+	local jungleLib = core.teamBotBrain.jungleLib
+	-- position, preference table string, minimum camp difficulty, maximum camp difficulty, team, ignore ancients
+	vecAlchBonesCampPos, nAlchBonesCamp = jungleLib.getNearestCampPos(unitSelf:GetPosition(), "AlchemistBones", 90, 9999, unitSelf:GetTeam(), true)
+	if (not vecAlchBonesCampPos) then --bruteforce mode. We killed all the good camps, settle for anything...
+		vecAlchBonesCampPos,nAlchBonesCamp=jungleLib.getNearestCampPos(unitSelf:GetPosition(), "AlchemistBones", -120, 9999, unitSelf:GetTeam(), true)
+	end
+	
+	if (vecAlchBonesCampPos) then
+		core.DrawDebugArrow(unitSelf:GetPosition(), vecAlchBonesCampPos, 'yellow')
+		return 25
+	else
+		return 0
+	end
+end
+
+function behaviorLib.AlchemistBonesExecute(botBrain)
+	local unitSelf = core.unitSelf
+	local vecMyPos=core.unitSelf:GetPosition()
+	core.DrawDebugArrow(unitSelf:GetPosition(), vecAlchBonesCampPos, 'lime')
+	
+	if nAlchBonesTimeUsed+550 > HoN:GetGameTime() then --continue if we are
+		return true
+	end
+	
+	--walk to target camp
+	if ( Vector3.Distance2DSq(vecMyPos, vecAlchBonesCampPos)>400*400 ) then
+		return core.OrderMoveToPosAndHoldClamp(botBrain, unitSelf, vecAlchBonesCampPos, false)
+	else--we are finally at a good camp!
+		local tUnits = HoN.GetUnitsInRadius(vecMyPos, 500, core.UNIT_MASK_ALIVE + core.UNIT_MASK_UNIT)
+		if tUnits then
+			-- Find the strongest unit in the camp
+			local nHighestHealth = 0
+			local unitStrongest = nil
+			for _, unitTarget in pairs(tUnits) do
+				if unitTarget:GetHealth() > nHighestHealth and unitTarget:IsAlive() then
+					unitStrongest = unitTarget
+					nHighestHealth = unitTarget:GetMaxHealth()
+				end
+			end
+			if unitStrongest and unitStrongest:GetPosition() then
+				nAlchBonesTimeUsed = HoN:GetGameTime()
+				return core.OrderItemEntityClamp(botBrain, unitSelf, behaviorLib.itemAlchemistBones, unitStrongest, false)
+				
+			else
+				return core.OrderMoveToPosAndHoldClamp(botBrain, unitSelf, vecAlchBonesCampPos)
+			end
+		end
+	end
+	return false
+end
+behaviorLib.AlchemistBonesBehavior = {}
+behaviorLib.AlchemistBonesBehavior["Utility"] = behaviorLib.AlchemistBonesUtility
+behaviorLib.AlchemistBonesBehavior["Execute"] = behaviorLib.AlchemistBonesExecute
+behaviorLib.AlchemistBonesBehavior["Name"] = "UseAlchemistBones"
