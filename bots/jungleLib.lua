@@ -97,9 +97,9 @@ function jungleLib.assess(botBrain)
 					
 					-- For each unit, for each preference table, add the appropriate value.
 					for sString, tCreepPrefs in pairs(tCreepPreferences) do
-						local addednDifficulty = tCreepPrefs[unit:GetTypeName()]
-						if addednDifficulty and addednDifficulty ~= 0 then
-							jungleSpot.tCreepDifficulty[sString] = (jungleSpot.tCreepDifficulty[sString] ~= nil and jungleSpot.tCreepDifficulty[sString] or 0) + addednDifficulty
+						local nAddedDifficulty = tCreepPrefs[unit:GetTypeName()]
+						if nAddedDifficulty and nAddedDifficulty ~= 0 then
+							jungleSpot.tCreepDifficulty[sString] = (jungleSpot.tCreepDifficulty[sString] ~= nil and jungleSpot.tCreepDifficulty[sString] or 0) + nAddedDifficulty
 						end
 					end
 					
