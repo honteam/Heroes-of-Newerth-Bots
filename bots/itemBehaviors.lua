@@ -738,14 +738,12 @@ function behaviorLib.ChargedHammerUtility(botBrain)
 		behaviorLib.unitChargedHammerTarget = unitSelf
 		local nRange = behaviorLib.itemChargedHammer:GetRange()
 		for i, hero in pairs(tAllyHeroes) do
-			--core.DrawDebugArrow(unitSelf:GetPosition(), hero:GetPosition(), 'white')
 			local nDistanceSq = Vector3.Distance2DSq(unitSelf:GetPosition(), hero:GetPosition())
 			if hero:IsValid() and hero:IsAlive() and not hero:HasState("State_Item5C") and behaviorLib.unitChargedHammerTarget:GetHealthPercent() > hero:GetHealthPercent() and nDistanceSq < nRange * nRange then
 				behaviorLib.unitChargedHammerTarget = hero
 			end
 		end
 		if behaviorLib.unitChargedHammerTarget ~= nil then
-			--core.DrawDebugArrow(unitSelf:GetPosition(), behaviorLib.unitChargedHammerTarget:GetPosition(), 'green')
 			return Clamp(80 - behaviorLib.unitChargedHammerTarget:GetHealthPercent() * 100, 0, 100)
 		end
 	end
@@ -961,7 +959,6 @@ function behaviorLib.AlchemistBonesUtility(botBrain)
 	end
 	
 	if (vecAlchBonesCampPos) then
-		core.DrawDebugArrow(unitSelf:GetPosition(), vecAlchBonesCampPos, 'yellow')
 		return 25
 	else
 		return 0
@@ -971,7 +968,6 @@ end
 function behaviorLib.AlchemistBonesExecute(botBrain)
 	local unitSelf = core.unitSelf
 	local vecMyPos=core.unitSelf:GetPosition()
-	core.DrawDebugArrow(unitSelf:GetPosition(), vecAlchBonesCampPos, 'lime')
 	
 	if nAlchBonesTimeUsed+550 > HoN:GetGameTime() then --continue if we are
 		return true
