@@ -150,22 +150,11 @@ end
 local function funcFindItemsOverride(botBrain)
         local bUpdated = object.FindItemsOld(botBrain)
  
-        if core.itemSteamboots ~= nil and not core.itemSteamboots:IsValid() then
-                core.itemSteamboots = nil
-        end
- 
-        if core.itemHellflower ~= nil and not core.itemHellflower:IsValid() then
-                core.itemHellflower = nil
-        end
- 
-        if core.itemSheepstick ~= nil and not core.itemSheepstick:IsValid() then
-                core.itemSheepstick = nil
-        end
-         
-        if core.itemSotM ~= nil and not core.itemSotM:IsValid() then
-                core.itemSotM = nil
-        end
-       
+        core.ValidateItem(core.itemSteamboots)
+        core.ValidateItem(core.itemHellflower)
+        core.ValidateItem(core.itemSheepstick)
+        core.ValidateItem(core.itemSotM)
+
         if bUpdated then
                 --only update if we need to
                 if core.itemSteamboots and core.itemHellflower and core.itemSheepstick and core.itemSotM then
@@ -173,7 +162,7 @@ local function funcFindItemsOverride(botBrain)
                 end
          
                 local inventory = core.unitSelf:GetInventory(true)
-                for slot = 1, 12, 1 do
+                for slot = 1, 6, 1 do
                         local curItem = inventory[slot]
                         if curItem then
                                 if core.itemSteamboots == nil and curItem:GetName() == "Item_Steamboots" then
@@ -365,14 +354,7 @@ local function getAngToTarget(vecSelf, vecTarget)
         local nDeltaY = vecTarget.y - vecSelf.y
         local nDeltaX = vecTarget.x - vecSelf.x
  
-        local nAng = floor(atan2(nDeltaY, nDeltaX) * 57.2957795131) -- That number is 180 / pi
- 
-        -- Force the output to be from 0 to 360
-        if nAng < 0 then
-                nAng = nAng + 360
-        end
- 
-        return nAng
+        return floor(atan2(nDeltaY, nDeltaX) * 57.2957795131) -- That number is 180 / pi
 end
  
 -- Returns the best direction to use a cone based spell
@@ -404,9 +386,9 @@ local function getConeTarget(tLocalTargets, nRange, nDegrees, nMinCount)
                         local tCurrentGroup = {}
                         for _, tStartAngles in pairs(tAngleOfHeroesInRange) do
                                 local nStartAngle = tStartAngles[1]
-                                if nStartAngle >= 270 then
+                                if nStartAngle <= -90 then
                                         -- Avoid doing calculations near the break in numbers
-                                        nStartAngle = nStartAngle - 360
+                                        nStartAngle = nStartAngle + 360
                                 end
                                
                                 local nEndAngle = nStartAngle + nDegrees
@@ -414,18 +396,18 @@ local function getConeTarget(tLocalTargets, nRange, nDegrees, nMinCount)
                                         local nHighAngle = tAngles[1]
                                         local nMidAngle = tAngles[2]
                                         local nLowAngle = tAngles[3]
-                                        if nStartAngle < 90 or nStartAngle >= 270 then
+                                        if nStartAngle > 90 and nStartAngle <= 270 then
                                                 -- Avoid doing calculations near the break in numbers
-                                                if nHighAngle > 180 then
-                                                        nHighAngle = nHighAngle - 360
+                                                if nHighAngle < 0 then
+                                                        nHighAngle = nHighAngle + 360
                                                 end
                                                
-                                                if nMidAngle > 180 then
-                                                        nMidAngle = nMidAngle - 360
+                                                if nMidAngle < 0 then
+                                                        nMidAngle = nMidAngle + 360
                                                 end
                                                
-                                                if nLowAngle > 180 then
-                                                        nLowAngle = nLowAngle - 360
+                                                if nLowAngle < 0 then
+                                                        nLowAngle = nLowAngle + 360
                                                 end
                                         end
                                
@@ -458,9 +440,8 @@ end
  
 -- Returns the magic damage that Hag Ult will do
 local function blastDamage()
-        local itemSotM = core.itemSotM
         local nBlastLevel = skills.abilBlast:GetLevel()
-        if itemSotM then
+        if core.itemSotM then
                 if nBlastLevel == 1 then
                         return 340
                 elseif nBlastLevel == 2 then
