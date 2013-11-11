@@ -67,6 +67,8 @@ function behaviorLib.addItemBehavior(itemName, remove)
 		behaviorLib.behaviorToModify = behaviorLib.PlatedGreavesBehavior
 	elseif itemName == "Item_Gloves3" then
 		behaviorLib.behaviorToModify = behaviorLib.AlchemistBonesBehavior
+	elseif itemName == "Item_Insanitarius" then
+		behaviorLib.behaviorToModify = behaviorLib.InsanitariusBehavior
 	end
 	
 	
@@ -681,7 +683,7 @@ function behaviorLib.SacrificialStoneUtility(botBrain)
 	local unitSelf = core.unitSelf
 	behaviorLib.itemSacrificialStone = core.GetItem("Item_SacrificialStone")
 	if (behaviorLib.itemSacrificialStone and behaviorLib.itemSacrificialStone:CanActivate()) then
-		return 100
+		return 9999
 	else
 		return 0
 	end
@@ -706,12 +708,12 @@ function behaviorLib.BloodChaliceUtility(botBrain)
 	if (behaviorLib.itemBloodChalice and behaviorLib.itemBloodChalice:CanActivate()) then
 		
 		local unitTarget = behaviorLib.heroTarget
-		if unitTarget and unitTarget:GetHealthPercent() <= .2 and Vector3.Distance2DSq(unitSelf:GetPosition(), unitTarget:GetPosition()) < (700 * 700) then
+		if unitTarget and unitTarget:GetHealthPercent() <= .1 and Vector3.Distance2DSq(unitSelf:GetPosition(), unitTarget:GetPosition()) < (700 * 700) then
 			--about to get a kill! Yay! Congrats! Use chalice and reap the benefits of being an AI who has 1200 APM.
-			return 100
+			return 9999
 		end
 		if unitSelf:GetManaPercent() < 0.3 and unitSelf:GetHealthPercent() > 0.7 then
-			return 100
+			return 9999
 		end
 	end
 	return 0
@@ -770,11 +772,11 @@ function behaviorLib.ElderParasiteUtility(botBrain)
 	if behaviorLib.itemElderParasite and behaviorLib.itemElderParasite:CanActivate() and not unitSelf:IsImmobilized() and not unitSelf:IsStunned() then
 		--offensive
 		if (behaviorLib.lastHarassUtil > behaviorLib.nElderParasiteThreshhold) and behaviorLib.heroTarget then	--only when we have a target
-			return 100
+			return 9999
 		end
 		--defensive
 		if behaviorLib.lastRetreatUtil >= behaviorLib.nElderParasiteRetreatThreshold and (core.GetLastBehaviorName(botBrain) == "RetreatFromThreat" or core.GetLastBehaviorName(botBrain) == "HealAtWell") then --we are RUNNING FOR OUR LIVES!
-			return 100
+			return 9999
 		end
 	end
 	return 0
@@ -800,11 +802,11 @@ function behaviorLib.AssassinsShroudUtility(botBrain)
 	if behaviorLib.itemAssassinsShroud and behaviorLib.itemAssassinsShroud:CanActivate() then
 		--offensive
 		if (behaviorLib.lastHarassUtil > behaviorLib.nAssassinsShroudThreshhold) and behaviorLib.heroTarget then	--only when we have a target
-			return 100
+			return 9999
 		end
 		--defensive
 		if behaviorLib.lastRetreatUtil >= behaviorLib.nAssassinsShroudRetreatThreshhold and (core.GetLastBehaviorName(botBrain) == "RetreatFromThreat" or core.GetLastBehaviorName(botBrain) == "HealAtWell") then --we are RUNNING FOR OUR LIVES!
-			return 100
+			return 9999
 		end
 	end
 	return 0
@@ -829,7 +831,7 @@ function behaviorLib.ShrunkenHeadUtility(botBrain)
 	if behaviorLib.itemShrunkenHead and behaviorLib.itemShrunkenHead:CanActivate() then
 		--offensive
 		if (behaviorLib.lastHarassUtil > behaviorLib.nShrunkenHeadThreshhold) and behaviorLib.heroTarget then	--only when we have a target
-			return 100
+			return 9999
 		end
 		--defensive
 		--possibility to have it cast on retreat, however due to game mechanics, I would consider this a bad move.
@@ -857,11 +859,11 @@ function behaviorLib.GeometersUtility(botBrain)
 	if behaviorLib.itemGeometers and behaviorLib.itemGeometers:CanActivate() then
 		--offensive
 		if (behaviorLib.lastHarassUtil > behaviorLib.nGeometersThreshhold) and behaviorLib.heroTarget then	--only when we have a target
-			return 100
+			return 9999
 		end
 		--defensive
 		if behaviorLib.lastRetreatUtil >= behaviorLib.nGeometersRetreatThreshhold and (core.GetLastBehaviorName(botBrain) == "RetreatFromThreat" or core.GetLastBehaviorName(botBrain) == "HealAtWell") then --we are RUNNING FOR OUR LIVES!
-			return 100
+			return 9999
 		end
 	end
 	return 0
@@ -890,12 +892,12 @@ function behaviorLib.TabletUtility(botBrain)
 		--offensive
 		if (behaviorLib.lastHarassUtil > behaviorLib.nTabletThreshhold) and behaviorLib.heroTarget and core.HeadingDifference(unitSelf, behaviorLib.heroTarget:GetPosition()) < 0.5
 		  and Vector3.Distance2DSq(unitSelf:GetPosition(), behaviorLib.heroTarget:GetPosition()) > 500 * 500 then	--only when we have a target
-			return 100
+			return 9999
 		end
 		--defensive (TODO HEAL AT WELL/BLINK FIXES when healAtWell fixes are implemented)
 		if behaviorLib.lastRetreatUtil >= behaviorLib.nTabletRetreatThreshhold and (core.GetLastBehaviorName(botBrain) == "RetreatFromThreat" or core.GetLastBehaviorName(botBrain) == "HealAtWell")
 		  and core.allyWell and core.HeadingDifference(unitSelf, --[[core.GetBestBlinkRetreatLocation(500)]]core.allyWell:GetPosition() ) < 0.5 then --we are RUNNING FOR OUR LIVES!
-			return 100
+			return 9999
 		end
 	end
 	return 0
@@ -920,7 +922,7 @@ function behaviorLib.PlatedGreavesUtility(botBrain)
 	behaviorLib.itemPlatedGreaves = core.GetItem("Item_PlatedGreaves")
 	
 	if (behaviorLib.itemPlatedGreaves and behaviorLib.itemPlatedGreaves:CanActivate() and not unitSelf:HasState("State_PlatedGreaves_Armor") and core.GetLastBehaviorName(botBrain) == "Push") then
-		return 100
+		return 9999
 	else
 		return 0
 	end
@@ -1003,3 +1005,40 @@ behaviorLib.AlchemistBonesBehavior = {}
 behaviorLib.AlchemistBonesBehavior["Utility"] = behaviorLib.AlchemistBonesUtility
 behaviorLib.AlchemistBonesBehavior["Execute"] = behaviorLib.AlchemistBonesExecute
 behaviorLib.AlchemistBonesBehavior["Name"] = "UseAlchemistBones"
+
+------------------------------------
+--  		Insanitarius		  --
+------------------------------------
+behaviorLib.nInsanitariusThreshhold = 45
+behaviorLib.nInsanitariusHealthThreshold = 0.1
+function behaviorLib.InsanitariusUtility(botBrain)
+	local unitSelf = core.unitSelf
+	behaviorLib.itemInsanitarius = core.GetItem("Item_Insanitarius")
+		
+	if behaviorLib.itemInsanitarius and behaviorLib.itemInsanitarius:CanActivate() then
+		-- on when we are low hp or killing something
+		if (not unitSelf:HasState("State_Insanitarius") and behaviorLib.heroTarget) then
+			if behaviorLib.lastHarassUtil > behaviorLib.nInsanitariusThreshhold or unitSelf:GetHealthPercent() < behaviorLib.nInsanitariusHealthThreshold then	-- when we have a target
+				return 9999
+			end
+		-- off when we no longer have a target and it is active
+		elseif (unitSelf:HasState("State_Insanitarius") and not behaviorLib.heroTarget) then
+			return 9999
+		end
+	end
+	return 0
+end
+
+function behaviorLib.InsanitariusExecute(botBrain)
+	local unitSelf = core.unitSelf
+	if core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemInsanitarius) then
+		core.nHarassBonus = core.nHarassBonus + 30
+		return true
+	else
+		return false
+	end
+end
+behaviorLib.InsanitariusBehavior = {}
+behaviorLib.InsanitariusBehavior["Utility"] = behaviorLib.InsanitariusUtility
+behaviorLib.InsanitariusBehavior["Execute"] = behaviorLib.InsanitariusExecute
+behaviorLib.InsanitariusBehavior["Name"] = "UseInsanitarius"
