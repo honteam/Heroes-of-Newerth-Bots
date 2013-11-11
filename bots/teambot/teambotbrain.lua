@@ -746,8 +746,8 @@ end
 function object.CalculateThreat(unitHero)
 	local nDPSThreat = object.DPSThreat(unitHero)
 	
-	local nMoveSpeedThreat = unitHero:GetMoveSpeed() * 0.50
-	local nRangeThreat = unitHero:GetAttackRange() * 0.50
+	local nMoveSpeedThreat = unitHero:GetMoveSpeed() * 0.5
+	local nRangeThreat = unitHero:GetAttackRange() * 0.5
 	
 	local nThreat = nDPSThreat + nMoveSpeedThreat + nRangeThreat -- + nCustomThreat
 		
@@ -813,7 +813,7 @@ end
 
 
 function object:GetThreat(unitHero)
-	return self.tStoredThreats[unitHero:GetUniqueID()] or 0
+	return self.tStoredThreats[unitHero:GetUniqueID()] or (core.myTeam == unitHero:GetTeam() and 0 or 999) -- if we haven't done a check on them, assume the worst
 end
 
 function object:GetTotalThreat(tUnits)
@@ -827,7 +827,7 @@ function object:GetTotalThreat(tUnits)
 end
 
 function object:GetDefense(unitHero)
-	return self.tStoredDefenses[unitHero:GetUniqueID()] or 0
+	return self.tStoredDefenses[unitHero:GetUniqueID()] or (core.myTeam == unitHero:GetTeam() and 0 or 999) -- if we haven't done a check on them, assume the worst
 end
 
 function object:GetTotalDefense(tUnits)
@@ -1492,7 +1492,7 @@ function object:DefenseLogic()
 		return
 	end
 	self.nDefenseLogicTime = nCurrentTime + self.nDefenseLogicInterval
-	
+		
 	self.tHeroDefenseTargets = {}
 	
 	local tDefenseInfos = self.tDefenseInfos		
@@ -1551,7 +1551,7 @@ function object:DefenseLogic()
 	StopProfile()
 	
 	--Prioritize targets, and cull old but invalid targets (and count the valid ones)
-	--  Priority is currently type only (5 for base, 4 for rax, 3, 2, 1 for towers (by tier))
+	--  Priority is currently type only (10 for base, 4 for rax, 3, 2, 1 for towers (by tier))
 	local tPriorityPairs = {}
 	
 	local nDefenseTargets = 0
@@ -1563,7 +1563,7 @@ function object:DefenseLogic()
 				
 				local nValue = 0
 				if unitTarget:IsBase() then
-					nValue = 5
+					nValue = 20
 				elseif unitTarget:IsRax() then
 					nValue = 4
 				elseif unitTarget:IsTower() then
@@ -1631,7 +1631,7 @@ function object:DefenseLogic()
 end
 
 function object:BuildDefenseTeams(tDefenseInfos, tPriorityPairs)
-	local bDebugEchos = false
+	local bDebugEchos = true
 	local bRebuildEchos = false
 	
 	--[[Algorithm:
@@ -1722,7 +1722,7 @@ function object:BuildDefenseTeams(tDefenseInfos, tPriorityPairs)
 		if bDebugEchos then BotEcho(format("[%d]%s - allyThreat: %d  allyDefense: %d  enemyThreat: %d  enemyDefense: %d",
 			nTargetID, tCurrentStruct[1]:GetTypeName(), nAllyThreat, nAllyDefense, nEnemyThreat, nEnemyDefense)) end
 				
-		if nAllyLethatlity < nEnemyLethality or nAlliesDefending <= 0 then
+		if nAllyLethatlity < nEnemyLethality or nAlliesDefending <= 0 or (tCurrentStruct[1]:IsBase() and tCurrentStruct[1]:GetGealthPercent() < 1) then
 			
 			--determine our distances from this target and sort
 			for nID, unit in pairs(tHeroesLeft) do
@@ -1754,7 +1754,7 @@ function object:BuildDefenseTeams(tDefenseInfos, tPriorityPairs)
 				local nAllyLethatlity = nAllyThreat - nEnemyDefense
 				local nEnemyLethality = nEnemyThreat - nAllyDefense
 	
-				if nAllyLethatlity >= nEnemyLethality then
+				if nAllyLethatlity >= nEnemyLethality + 250 then
 					--the team is strong enough to defend
 					if bDebugEchos then BotEcho("We can win the fight! "..nAllyLethatlity.." >= "..nEnemyLethality) end
 					bDefended = true
@@ -1815,13 +1815,13 @@ function object:BuildDefenseTeams(tDefenseInfos, tPriorityPairs)
 			if bDebugEchos then BotEcho(unit:GetTypeName().." added to defend at "..tPair[1].." unitsSq away, which is close") end
 							
 			--Check Lethality
-			nAllyThreat = nAllyThreat + funcGetThreat(self, unit)
-			nAllyDefense = nAllyDefense + funcGetDefense(self, unit)
+			nAllyThreat = nAllyThreat + (funcGetThreat(self, unit))/2
+			nAllyDefense = nAllyDefense + (funcGetDefense(self, unit))/2
 
 			local nAllyLethatlity = nAllyThreat - nEnemyDefense
 			local nEnemyLethality = nEnemyThreat - nAllyDefense
 
-			if nAllyLethatlity >= nEnemyLethality then
+			if nAllyLethatlity >= nEnemyLethality + 250 then
 				--the team is strong enough to defend
 				if bDebugEchos then BotEcho("We can win the fight! "..nAllyLethatlity.." >= "..nEnemyLethality) end
 				bDefended = true
@@ -1885,7 +1885,7 @@ function object:BuildDefenseTeams(tDefenseInfos, tPriorityPairs)
 				local nAllyLethatlity = nAllyThreat - nEnemyDefense
 				local nEnemyLethality = nEnemyThreat - nAllyDefense
 
-				if nAllyLethatlity >= nEnemyLethality then
+				if nAllyLethatlity >= nEnemyLethality + 250 then
 					--the team is strong enough to defend
 					if bDebugEchos then BotEcho("We can win the fight! "..nAllyLethatlity.." >= "..nEnemyLethality) end
 					bDefended = true
@@ -1938,13 +1938,13 @@ function object:BuildDefenseTeams(tDefenseInfos, tPriorityPairs)
 			if bDebugEchos then BotEcho(unit:GetTypeName().." added to defend at "..tPair[1].." unitsSq away") end
 							
 			--Check Lethality
-			nAllyThreat = nAllyThreat + funcGetThreat(self, unit)
-			nAllyDefense = nAllyDefense + funcGetDefense(self, unit)
+			--nAllyThreat = nAllyThreat + funcGetThreat(self, unit) -- don't add threat from a unit that is not close.
+			--nAllyDefense = nAllyDefense + funcGetDefense(self, unit) -- don't add defense from a unit that is not close.
 
 			local nAllyLethatlity = nAllyThreat - nEnemyDefense
 			local nEnemyLethality = nEnemyThreat - nAllyDefense
 
-			if nAllyLethatlity >= nEnemyLethality then
+			if nAllyLethatlity >= nEnemyLethality + 250 then
 				--the team is strong enough to defend
 				if bDebugEchos then BotEcho("We can win the fight! "..nAllyLethatlity.." >= "..nEnemyLethality) end
 				bDefended = true
