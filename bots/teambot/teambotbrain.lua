@@ -92,6 +92,17 @@ local STATE_GROUPING	= 1
 local STATE_PUSHING		= 2
 object.nPushState = STATE_IDLE
 
+-- To track runes
+object.nRuneNextSpawnCheck = 120000 --2min mark
+object.nRuneNextCheck = 120000
+object.nRuneCheckInterval = 1000
+
+object.runes = {
+	{vecLocation = Vector3.Create(5824, 9728), unit=nil, bPicked = true, bBetter=true},
+	{vecLocation = Vector3.Create(11136, 5376), unit=nil, bPicked = true, bBetter=true}
+}
+local tRuneNames = {"Powerup_Damage", "Powerup_Illusion", "Powerup_Stealth", "Powerup_Refresh", "Powerup_Regen", "Powerup_MoveSpeed", "Powerup_Super"}
+
 --Called every frame the engine gives us during the actual match
 function object:onthink(tGameVariables)
 	StartProfile('onthink')
@@ -194,6 +205,70 @@ function object:onthink(tGameVariables)
 		self:DefenseLogic()
 	end
 	StopProfile()
+
+	time = HoN.GetMatchTime()
+	if time and time > object.nRuneNextSpawnCheck then
+		object.nRuneNextSpawnCheck = object.nRuneNextSpawnCheck + 120000
+
+		for _,rune in pairs(object.runes) do
+			--something spawned
+			rune.bPicked = false
+			rune.unit = nil
+			rune.bBetter = true
+		end
+	end
+
+	if time and time > object.nRuneNextCheck then
+		object.nRuneNextCheck = object.nRuneNextCheck + object.nRuneCheckInterval
+		object.CheckRunes()
+	end
+end
+
+function object.CheckRunes()
+	for _,rune in pairs(object.runes) do
+		if HoN.CanSeePosition(rune.vecLocation) then
+			units = HoN.GetUnitsInRadius(rune.vecLocation, 50, core.UNIT_MASK_POWERUP + core.UNIT_MASK_ALIVE)
+			local bRuneFound = false
+			for _,unit in pairs(units) do
+				local typeName = unit:GetTypeName()
+				if core.tableContains(tRuneNames, typeName) then
+					bRuneFound = true
+					rune.unit = unit
+					if typeName == "Powerup_Refresh" then
+						rune.bBetter = false
+					end
+					break
+				end
+			end
+			if not bRuneFound then
+				rune.unit = nil
+				rune.bPicked = true
+			end
+		end
+	end
+end
+
+function object.GetNearestRune(pos, bCertain, bPrioritizeBetter)
+	--Certain: we can see it
+	bCertain = bCertain or false
+	--prioritizeBetter: we go for better if its not too faar
+	bPrioritizeBetter = bPrioritizeBetter or false
+
+	local nearestRune = nil
+	local shortestDistanceSQ = 99999999
+	for _,rune in pairs(object.runes) do
+		if not bCertain or (HoN.CanSeePosition(rune.vecLocation) and rune.unit ~= nil)  then
+			local distanceSQ = Vector3.Distance2DSq(rune.vecLocation, pos)
+			if bPrioritizeBetter and rune.unit and rune.unit ~= "Powerup_Refresh" and HoN.CanSeePosition(rune.location) then
+				distanceSQ = distanceSQ / 2
+			end
+			if not rune.picked and distanceSQ < shortestDistanceSQ then
+				nearestRune = rune
+				shortestDistanceSQ = distanceSQ
+			end
+		end
+	end
+	return nearestRune
 end
 
 function object:PrintLanes(tTop, tMid, tBot)
