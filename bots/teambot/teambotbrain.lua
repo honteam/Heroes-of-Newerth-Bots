@@ -23,6 +23,7 @@ object.metadata 	= {}
 
 runfile "bots/core.lua"
 runfile "bots/metadata.lua"
+runfile "bots/jungleLib.lua"
 
 local core, metadata = object.core, object.metadata
 
@@ -33,6 +34,9 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
 
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
+
+local jungleLib = object.jungleLib
+if jungleLib == nil then BotEcho("jungle lib is nil!") end
 
 BotEcho('Loading teambotbrain...')
 
@@ -199,11 +203,15 @@ function object:onthink(tGameVariables)
 		self:GroupAndPushLogic()
 	end
 	StopProfile()
-	
+
 	StartProfile('Defense Logic')
 	if self.bDefense ~= false then
 		self:DefenseLogic()
 	end
+	StopProfile()
+	
+	StartProfile('Assess Jungle')
+		jungleLib.assess(self)
 	StopProfile()
 
 	time = HoN.GetMatchTime()
