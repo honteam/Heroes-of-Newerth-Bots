@@ -179,7 +179,7 @@ function jungleLib.getNearestCampPos(pos, sPreference, minimumnDifficulty, maxim
 end
 
 function jungleLib.getTime()
-local time = HoN.GetMatchTime()
+	local time = HoN.GetMatchTime()
 	if time then
 		mins = floor(time / 60000)
 		secs = floor((time - 60000 * mins) / 1000)
