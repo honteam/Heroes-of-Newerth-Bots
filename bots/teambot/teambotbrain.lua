@@ -23,6 +23,7 @@ object.metadata 	= {}
 
 runfile "bots/core.lua"
 runfile "bots/metadata.lua"
+runfile "bots/jungleLib.lua"
 
 local core, metadata = object.core, object.metadata
 
@@ -33,6 +34,9 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
 
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
+
+local jungleLib = object.jungleLib
+if jungleLib == nil then BotEcho("nil!") end
 
 BotEcho('Loading teambotbrain...')
 
@@ -205,6 +209,10 @@ function object:onthink(tGameVariables)
 		self:DefenseLogic()
 	end
 	StopProfile()
+	
+	StartProfile('Assess Jungle')
+		jungleLib.assess(self)
+	StopProfile()
 
 	time = HoN.GetMatchTime()
 	if time and time > object.nRuneNextSpawnCheck then
@@ -220,11 +228,11 @@ function object:onthink(tGameVariables)
 
 	if time and time > object.nRuneNextCheck then
 		object.nRuneNextCheck = object.nRuneNextCheck + object.nRuneCheckInterval
-		object.checkRunes()
+		object.CheckRunes()
 	end
 end
 
-function object.checkRunes()
+function object.CheckRunes()
 	for _,rune in pairs(object.runes) do
 		if HoN.CanSeePosition(rune.vecLocation) then
 			units = HoN.GetUnitsInRadius(rune.vecLocation, 50, core.UNIT_MASK_POWERUP + core.UNIT_MASK_ALIVE)
@@ -248,18 +256,18 @@ function object.checkRunes()
 	end
 end
 
-function object.GetNearestRune(pos, certain, prioritizeBetter)
+function object.GetNearestRune(pos, bCertain, bPrioritizeBetter)
 	--Certain: we can see it
-	certain = certain or false
+	bCertain = bCertain or false
 	--prioritizeBetter: we go for better if its not too faar
-	prioritizeBetter = prioritizeBetter or false
+	bPrioritizeBetter = bPrioritizeBetter or false
 
 	local nearestRune = nil
 	local shortestDistanceSQ = 99999999
 	for _,rune in pairs(object.runes) do
-		if not certain or HoN.CanSeePosition(rune.vecLocation) and rune.unit ~= nil  then
+		if not bCertain or (HoN.CanSeePosition(rune.vecLocation) and rune.unit ~= nil)  then
 			local distanceSQ = Vector3.Distance2DSq(rune.vecLocation, pos)
-			if prioritizeBetter and rune.unit and rune.unit ~= "Powerup_Refresh" and HoN.CanSeePosition(rune.location) then
+			if bPrioritizeBetter and rune.unit and rune.unit ~= "Powerup_Refresh" and HoN.CanSeePosition(rune.location) then
 				distanceSQ = distanceSQ / 2
 			end
 			if not rune.picked and distanceSQ < shortestDistanceSQ then

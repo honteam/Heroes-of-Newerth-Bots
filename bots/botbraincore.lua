@@ -364,6 +364,20 @@ function object:onthink(tGameVariables)
 end
 object.bAbilityCommandsDefault = object.bAbilityCommands
 
+-- The following function is because teamBotBrain isn't loaded at the time the bots file is.
+object.tJunglePreferencesToAdd = {}
+function core.AddJunglePreferences(sPrefName, tCreepPreferences)
+	if (sPrefName ~= nil and tCreepPreferences ~= nil) then
+		object.tJunglePreferencesToAdd[sPrefName] = tCreepPreferences
+	end
+	if (core.teamBotBrain ~= nil) then -- We are free to add out preferences - teamBot is loaded!
+		for sString, tCreepPrefs in pairs(object.tJunglePreferencesToAdd) do
+			core.teamBotBrain.jungleLib.AddPreference(sString, tCreepPrefs)
+		end
+		object.tJunglePreferencesToAdd = {}
+	end
+end
+
 function core.BotBrainCoreInitialize(tGameVariables)
 	BotEcho('BotBrainCoreInitializing')
 	
@@ -417,6 +431,9 @@ function core.BotBrainCoreInitialize(tGameVariables)
 		
 		core.bTutorialBehaviorReset = false
 	end
+	
+	-- Add creep preferences to the jungleLib if any are loaded
+	core.AddJunglePreferences()
 	
 	core.botBrainInitialized = true
 end
@@ -1086,7 +1103,7 @@ function core.OrderFollow(botBrain, unit, target, bInterruptAttacks, bQueueComma
 	end
 	
 	local unitParam = (unit ~= nil and unit.object) or unit
-	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
+	local targetParam = (target ~= nil and target.object) or target
 	
 	if (core.bBetterErrors) then
 		local bErrored = false
@@ -1133,7 +1150,7 @@ function core.OrderTouch(botBrain, unit, target, bInterruptAttacks, bQueueComman
 	end
 	
 	local unitParam = (unit ~= nil and unit.object) or unit
-	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
+	local targetParam = (target ~= nil and target.object) or target
 	
 	if (core.bBetterErrors) then
 		local bErrored = false
@@ -1273,7 +1290,7 @@ function core.OrderGiveItem(botBrain, unit, target, item, bInterruptAttacks, bQu
 	end
 	
 	local unitParam = (unit ~= nil and unit.object) or unit
-	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
+	local targetParam = (target ~= nil and target.object) or target
 	local itemParam = (item ~= nil and item.object) or item
 	
 	if (core.bBetterErrors) then
