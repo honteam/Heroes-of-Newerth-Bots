@@ -36,7 +36,7 @@ local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
 
 local jungleLib = object.jungleLib
-if jungleLib == nil then BotEcho("nil!") end
+if jungleLib == nil then BotEcho("jungle lib is nil!") end
 
 BotEcho('Loading teambotbrain...')
 

@@ -1077,7 +1077,7 @@ function core.OrderMoveToUnit(botBrain, unit, unitTarget, bInterruptAttacks, bQu
 	return true
 end
 
-function core.OrderFollow(botBrain, unit, target, bInterruptAttacks, bQueueCommand)
+function core.OrderFollow(botBrain, unit, unitTarget, bInterruptAttacks, bQueueCommand)
 	if object.bRunCommands == false or object.bMoveCommands == false then
 		return false
 	end
@@ -1103,7 +1103,7 @@ function core.OrderFollow(botBrain, unit, target, bInterruptAttacks, bQueueComma
 	end
 	
 	local unitParam = (unit ~= nil and unit.object) or unit
-	local targetParam = (target ~= nil and target.object) or target
+	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
 	
 	if (core.bBetterErrors) then
 		local bErrored = false
@@ -1124,7 +1124,7 @@ function core.OrderFollow(botBrain, unit, target, bInterruptAttacks, bQueueComma
 	return true
 end
 
-function core.OrderTouch(botBrain, unit, target, bInterruptAttacks, bQueueCommand)
+function core.OrderTouch(botBrain, unit, unitTarget, bInterruptAttacks, bQueueCommand)
 	if object.bRunCommands == false or object.bMoveCommands == false then
 		return false
 	end
@@ -1150,7 +1150,7 @@ function core.OrderTouch(botBrain, unit, target, bInterruptAttacks, bQueueComman
 	end
 	
 	local unitParam = (unit ~= nil and unit.object) or unit
-	local targetParam = (target ~= nil and target.object) or target
+	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
 	
 	if (core.bBetterErrors) then
 		local bErrored = false
@@ -1264,7 +1264,7 @@ function core.OrderHold(botBrain, unit, bInterruptAttacks, bQueueCommand)
 	return true
 end
 
-function core.OrderGiveItem(botBrain, unit, target, item, bInterruptAttacks, bQueueCommand)
+function core.OrderGiveItem(botBrain, unit, unitTarget, item, bInterruptAttacks, bQueueCommand)
 	if object.bRunCommands == false or object.bOtherCommands == false then
 		return false
 	end
@@ -1290,7 +1290,7 @@ function core.OrderGiveItem(botBrain, unit, target, item, bInterruptAttacks, bQu
 	end
 	
 	local unitParam = (unit ~= nil and unit.object) or unit
-	local targetParam = (target ~= nil and target.object) or target
+	local targetParam = (unitTarget ~= nil and unitTarget.object) or unitTarget
 	local itemParam = (item ~= nil and item.object) or item
 	
 	if (core.bBetterErrors) then
