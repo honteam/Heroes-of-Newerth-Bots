@@ -86,12 +86,19 @@ function behaviorLib.PositionSelfCreepWave(botBrain, unitCurrentTarget)
 		if unitSelf:GetHealthPercent() < 0.95 then
 			nExtraThreat = 10.0
 		end
+	else
+		if unitSelf:GetHealthPercent() > 0.95 and unitSelf:GetHealth() > 1000 and unitSelf:GetHealthRegen() > 3 then --if we aren't in danger, WHY get back from creeps?
+			nCreepPushbackMul = 0.2
+			behaviorLib.nTargetPositioningMul = 0.8
+		end
 	end
 	
-	--Stand appart from enemies
+	--Stand apart from enemies
 	local vecTotalEnemyInfluence = Vector3.Create()
 	local tEnemyUnits = core.CopyTable(tLocalUnits.EnemyUnits)
 	core.teamBotBrain:AddMemoryUnitsToTable(tEnemyUnits, core.enemyTeam, vecMyPos)
+	
+	local nCreeps = 0
 	
 	StartProfile('Loop')
 	for nUID, unitEnemy in pairs(tEnemyUnits) do
@@ -104,6 +111,7 @@ function behaviorLib.PositionSelfCreepWave(botBrain, unitCurrentTarget)
 		local nDistanceMul = funcDistanceThreatUtility(nEnemyDist, vecTheirRange, unitEnemy:GetMoveSpeed(), false) / 100
 		
 		local vecEnemyInfluence = Vector3.Create()
+		
 		StopProfile()
 
 		if not bIsHero then
@@ -112,6 +120,7 @@ function behaviorLib.PositionSelfCreepWave(botBrain, unitCurrentTarget)
 			--stand away from creeps
 			if bDebugEchos then BotEcho('  creep unit: ' .. unitEnemy:GetTypeName()) end
 			vecEnemyInfluence = vecTowardsMe * (nDistanceMul + nExtraThreat)
+			nCreeps = nCreeps + 1
 
 			StopProfile()
 		else
@@ -165,8 +174,10 @@ function behaviorLib.PositionSelfCreepWave(botBrain, unitCurrentTarget)
 		
 		StopProfile()
 	end
+	
+	behaviorLib.nCounterPushUtility = Clamp((nCreeps-6)*5, 0, 25)
 
-	--stand appart from allies a bit
+	--stand apart from allies a bit
 	local vecTotalAllyInfluence = Vector3.Create()
 	local bEnemyTeamHasHuman = core.EnemyTeamHasHuman()
 	if core.nDifficulty ~= core.nEASY_DIFFICULTY or not bEnemyTeamHasHuman then
@@ -388,6 +399,11 @@ function behaviorLib.PositionSelfBuilding(building)
 	return vecDesiredPos
 end
 
+local function positionOffset(pos, angle, distance) --this is used by minions to form a ring around people.
+		tmp = Vector3.Create(cos(angle) * distance, sin(angle) * distance)
+		return tmp + pos
+end
+
 function behaviorLib.PositionSelfLogic(botBrain)
 	StartProfile("PositionSelfLogic")
 
@@ -564,6 +580,11 @@ function behaviorLib.ShouldPort(botBrain, vecDesiredPosition)
 				itemPort = tHomecomingStones[1]
 				unitTarget = core.GetClosestTeleportBuilding(vecDesiredPosition)
 	
+				if core.teamBotBrain:GetTowerThreat(unitTarget) <= -200 then -- The tower is being contested!
+					--BotEcho("^yNot teleporting to "..unitTarget:GetTypeName())
+					return false, unitTarget, itemPort
+				end
+
 				if bDebugEchos then
 					BotEcho("  unitTarget: "..(unitTarget and unitTarget:GetTypeName() or "nil")) 
 				end
@@ -1266,6 +1287,15 @@ function behaviorLib.attackEnemyMinionsUtility(botBrain)
 			if nTempHP < nMinionHP then
 				unitWeakestMinion = unit
 				nMinionHP = nTempHP
+				-- Kill the spider. There are not many entities we see like this, but Arachna's ult deserves a special mention.
+				-- You will die if you have it on you, and there is no point running.
+				if unit:GetTypeName() == "Gadget_Arachna_Ability4_Spiderling" then 
+					if unit:GetAttackTarget() == core.unitSelf or core.nDifficulty == core.nHARD_DIFFICULTY then
+						BotEcho("KILL IT WITH FIRE!")
+						return 9999
+					end
+					return 100
+				end
 			end
 		end
 	end
@@ -1607,7 +1637,7 @@ function behaviorLib.HarassHeroUtility(botBrain)
 		BotEcho(format("  HarassHeroNewUtility: %g", nUtility))
 	end
 
-	return nUtility
+	return Clamp(nUtility, 0, 95) --this could go > 600. Meaning bots would often disregard their own safety e.g. being in tower range for a kill.
 end
 
 function behaviorLib.HarassHeroExecute(botBrain)
@@ -1755,7 +1785,7 @@ function behaviorLib.HitBuildingUtility(botBrain)
 					end
 				end
 			end
-			
+
 			if targetRax ~= nil then
 				--BotEcho(targetRax:GetTypeName())
 				target = targetRax
@@ -1781,6 +1811,17 @@ function behaviorLib.HitBuildingUtility(botBrain)
 				end
 			end
 		end
+
+		--deny tower
+		if target == nil then
+			for id, tower in pairs(core.localUnits["AllyTowers"]) do
+				if tower:GetHealthPercent() < 0.1 then --tower:HasDeniablePotential() doesn't work here
+					target = tower
+					utility = towerUtil
+				end
+			end
+		end
+		
 				
 		--attack buildings
 		if target == nil and core.NumberElements(sortedBuildings.enemyOtherBuildings) > 0 then
@@ -1919,13 +1960,13 @@ function behaviorLib.TeamPushUtility()
 	return nUtility
 end
 
-
+behaviorLib.nCounterPushUtility = 0
 -------- Behavior Fns --------
 function behaviorLib.PushUtility(botBrain)
 --TODO: factor in:
 	--how strong are we here? (allies close, pushing ability, hp/mana)
-	--what defenses can they mount (potential enemies close, threat, anti-push, time until response)
-	--how effective/how much can we hope to acomplish (time cost, weakness of target)
+	--what defences can they mount (potential enemies close, threat, anti-push, time until response)
+	--how effective/how much can we hope to accomplish (time cost, weakness of target)
 
 	--For now: push when they have dudes down and as I grow stronger
 
@@ -1938,7 +1979,7 @@ function behaviorLib.PushUtility(botBrain)
 	pushingStrUtil = pushingStrUtil * behaviorLib.pushingStrUtilMul
 	nTeamPushUtility = nTeamPushUtility * behaviorLib.nTeamPushUtilityMul
 
-	utility = enemiesDeadUtil + pushingStrUtil + nTeamPushUtility
+	utility = enemiesDeadUtil + pushingStrUtil + nTeamPushUtility + behaviorLib.nCounterPushUtility
 	utility = Clamp(utility, 0, behaviorLib.pushingCap)
 
 	--BotEcho(format("PushUtil: %g  enemyDeadUtil: %g  pushingStrUtil: %g", utility, enemiesDeadUtil, pushingStrUtil))
@@ -2778,6 +2819,9 @@ function behaviorLib.RetreatFromThreatUtility(botBrain)
 			break
 		end
 	end
+	if (unitSelf:GetHealth() > 1000 and unitSelf:GetHealthRegen() > 3) then
+		nCreepAggroUtility = nCreepAggroUtility / (unitSelf:GetHealthRegen() * 2)
+	end
 
 	--RecentDamage	
 	local nRecentDamage = (eventsLib.recentDamageTwoSec + eventsLib.recentDamageSec) / 2.0
@@ -2811,7 +2855,10 @@ function behaviorLib.RetreatFromThreatUtility(botBrain)
 			nUtility, nRecentDamageUtility, nTowerUtility, nCreepAggroUtility))		
 	end
 
-	
+	--we are slowed, we may well have a better shot at fighting..
+	if nTowerAggroUtility == 0 and unitSelf:GetMoveSpeed() < 285 and core.nDifficulty ~= core.nEASY_DIFFICULTY and behaviorLib.heroTarget then --285 is the slowest of the heroes base speeds.
+		nUtility = nUtility - (behaviorLib.heroTarget:GetMoveSpeed() - unitSelf:GetMoveSpeed()) --if they can out run us because we are slowed, take that into account
+	end
 	
 	nUtility = Clamp(nUtility, 0, 100)
 	behaviorLib.lastRetreatUtil = nUtility
