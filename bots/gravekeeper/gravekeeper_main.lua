@@ -733,7 +733,6 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 	local unitTarget = behaviorLib.heroTarget
 	local vecRetreatPos = behaviorLib.PositionSelfBackUp()
 	local nlastRetreatUtil = behaviorLib.lastRetreatUtil
-	local bCanSeeAggressor = unitTarget and core.CanSeeUnit(botBrain, unitTarget)
 	
 	--Counting the enemies
 	local tEnemies = core.localUnits["EnemyHeroes"]
@@ -802,9 +801,7 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 	--Activate ghost marchers if we can
 	local itemGhostMarchers = core.itemGhostMarchers
 	if itemGhostMarchers and itemGhostMarchers:CanActivate() and behaviorLib.lastRetreatUtil >= behaviorLib.retreatGhostMarchersThreshold then
-		if behaviorLib.lastRetreatUtil >= behaviorLib.retreatGhostMarchersThreshold then
-			return core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
-		end
+		return core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
 	end
 
 	--Just use Tablet if you are in great danger

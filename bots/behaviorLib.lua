@@ -2893,10 +2893,15 @@ function behaviorLib.RetreatFromThreatUtility(botBrain)
 end
 
 function behaviorLib.RetreatFromThreatExecute(botBrain)
-	local bActionTaken = false
-	
 	--people can/will override this code, similar to CustomHarassUtility.
-	bActionTaken = behaviorLib.CustomRetreatExecute(botBrain)
+	local bActionTaken = behaviorLib.CustomRetreatExecute(botBrain)
+	
+	--Activate ghost marchers if we can
+	local itemGhostMarchers = core.itemGhostMarchers
+	if not bActionTaken and behaviorLib.lastRetreatUtil >= behaviorLib.retreatGhostMarchersThreshold and itemGhostMarchers and itemGhostMarchers:CanActivate() then
+		core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
+		bActionTaken = true
+	end
 	
 	if not bActionTaken then
 		local unitSelf = core.unitSelf
