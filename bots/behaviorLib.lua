@@ -2735,14 +2735,14 @@ behaviorLib.nEnemyBaseThreat = 6--Base threat. Level differences and distance al
 --as long as it is not older than 10s
 function behaviorLib.funcGetEnemyPosition(unitEnemy)
 	if unitEnemy == nil  then return Vector3.Create(20000, 20000) end 
-	local tEnemyPosition = core.unitSelf.tEnemyPosition
-	local tEnemyPositionTimestamp = core.unitSelf.tEnemyPositionTimestamp
+	local tEnemyPosition = core.tEnemyPosition
+	local tEnemyPositionTimestamp = core.tEnemyPositionTimestamp
 	if tEnemyPosition == nil then
 		-- initialize new table
-		core.unitSelf.tEnemyPosition = {}
-		core.unitSelf.tEnemyPositionTimestamp = {}
-		tEnemyPosition = core.unitSelf.tEnemyPosition
-		tEnemyPositionTimestamp = core.unitSelf.tEnemyPositionTimestamp
+		core.tEnemyPosition = {}
+		core.tEnemyPositionTimestamp = {}
+		tEnemyPosition = core.tEnemyPosition
+		tEnemyPositionTimestamp = core.tEnemyPositionTimestamp
 		local tEnemyTeam = HoN.GetHeroes(core.enemyTeam)
 		--vector beyond map
 		for x, hero in pairs(tEnemyTeam) do
@@ -2854,14 +2854,14 @@ function behaviorLib.RetreatFromThreatUtility(botBrain)
 end
 
 function behaviorLib.RetreatFromThreatExecute(botBrain)
-	local unitSelf = core.unitSelf
-	local vecPos = behaviorLib.PositionSelfBackUp()
 	local bActionTaken = false
 	
 	--people can/will override this code, similar to CustomHarassUtility.
 	bActionTaken = behaviorLib.CustomRetreatExecute(botBrain)
 	
 	if not bActionTaken then
+		local unitSelf = core.unitSelf
+		local vecPos = behaviorLib.PositionSelfBackUp()
 		bActionTaken = core.OrderMoveToPosClamp(botBrain, unitSelf, vecPos, false)
 	end
 	return bActionTaken
