@@ -422,12 +422,6 @@ function behaviorLib.PositionSelfLogic(botBrain)
 	local vecLanePosition = behaviorLib.PositionSelfTraverseLane(botBrain)
 	local nLaneDistanceSq =  Vector3.Distance2DSq(vecLanePosition, vecMyPos)
 	
-	if core.allyMainBaseStructure:GetHealthPercent() < 1 then -- counter-intuitively - this doesn't mean < 1%. It is < 100%
-		behaviorLib.nCounterPushUtility = 30 --static, we are clearing creeps, not last hitting them.
-		behaviorLib.pushingCap = 30
-		return positionOffset(core.allyMainBaseStructure:GetPosition(), unitSelf:GetUniqueID()%core.NumberElements(HoN.GetHeroes(core.myTeam)), 400), core.allyMainBaseStructure
-	end
-	
 	--if we are massivly out of position, ignore the other positioning logic and just go
 	if nLaneDistanceSq < core.nOutOfPositionRangeSq then
 		if not vecDesiredPos and core.NumberElements(tLocalUnits["EnemyUnits"]) > 0 then
@@ -586,6 +580,11 @@ function behaviorLib.ShouldPort(botBrain, vecDesiredPosition)
 				itemPort = tHomecomingStones[1]
 				unitTarget = core.GetClosestTeleportBuilding(vecDesiredPosition)
 	
+				if core.teamBotBrain:GetTowerThreat(unitTarget) <= -200 then -- The tower is being contested!
+					--BotEcho("^yNot teleporting to "..unitTarget:GetTypeName())
+					return false, unitTarget, itemPort
+				end
+
 				if bDebugEchos then
 					BotEcho("  unitTarget: "..(unitTarget and unitTarget:GetTypeName() or "nil")) 
 				end
@@ -1290,7 +1289,13 @@ function behaviorLib.attackEnemyMinionsUtility(botBrain)
 				nMinionHP = nTempHP
 				-- Kill the spider. There are not many entities we see like this, but Arachna's ult deserves a special mention.
 				-- You will die if you have it on you, and there is no point running.
-				if unit:GetTypeName() == "Gadget_Arachna_Ability4_Spiderling" then return 100 end
+				if unit:GetTypeName() == "Gadget_Arachna_Ability4_Spiderling" then 
+					if unit:GetAttackTarget() == core.unitSelf or core.nDifficulty == core.nHARD_DIFFICULTY then
+						BotEcho("KILL IT WITH FIRE!")
+						return 9999
+					end
+					return 100
+				end
 			end
 		end
 	end
@@ -1780,7 +1785,7 @@ function behaviorLib.HitBuildingUtility(botBrain)
 					end
 				end
 			end
-			
+
 			if targetRax ~= nil then
 				--BotEcho(targetRax:GetTypeName())
 				target = targetRax
@@ -1806,6 +1811,17 @@ function behaviorLib.HitBuildingUtility(botBrain)
 				end
 			end
 		end
+
+		--deny tower
+		if target == nil then
+			for id, tower in pairs(core.localUnits["AllyTowers"]) do
+				if tower:GetHealthPercent() < 0.1 then --tower:HasDeniablePotential() doesn't work here
+					target = tower
+					utility = towerUtil
+				end
+			end
+		end
+		
 				
 		--attack buildings
 		if target == nil and core.NumberElements(sortedBuildings.enemyOtherBuildings) > 0 then
@@ -2840,7 +2856,7 @@ function behaviorLib.RetreatFromThreatUtility(botBrain)
 	end
 
 	--we are slowed, we may well have a better shot at fighting..
-	if nTowerAggroUtility == 0 and unitSelf:GetMoveSpeed() < 285 and behaviorLib.heroTarget and behaviorLib.heroTarget:GetAttackTarget() == unitSelf then --285 is the slowest of the heroes base speeds.
+	if nTowerAggroUtility == 0 and unitSelf:GetMoveSpeed() < 285 and core.nDifficulty ~= core.nEASY_DIFFICULTY and behaviorLib.heroTarget then --285 is the slowest of the heroes base speeds.
 		nUtility = nUtility - (behaviorLib.heroTarget:GetMoveSpeed() - unitSelf:GetMoveSpeed()) --if they can out run us because we are slowed, take that into account
 	end
 	

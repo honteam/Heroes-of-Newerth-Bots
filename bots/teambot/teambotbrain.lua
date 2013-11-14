@@ -715,7 +715,7 @@ object.tStoredThreats = {}
 object.tStoredDefenses = {}
 
 function object:LethalityCalculations()
-	bDebugEchos = false
+	local bDebugEchos = false
 	
 	if bDebugEchos then BotEcho("LethalityCalculations()") end
 	
@@ -748,8 +748,9 @@ function object.CalculateThreat(unitHero)
 	
 	local nMoveSpeedThreat = unitHero:GetMoveSpeed() * 0.5
 	local nRangeThreat = unitHero:GetAttackRange() * 0.5
+	local nSpellThreat = unitHero:GetManaPercent() * 100
 	
-	local nThreat = nDPSThreat + nMoveSpeedThreat + nRangeThreat -- + nCustomThreat
+	local nThreat = nDPSThreat + nMoveSpeedThreat + nRangeThreat + nSpellThreat -- + nCustomThreat
 		
 	return nThreat
 end
@@ -813,7 +814,12 @@ end
 
 
 function object:GetThreat(unitHero)
-	return self.tStoredThreats[unitHero:GetUniqueID()] or (core.myTeam == unitHero:GetTeam() and 0 or 999) -- if we haven't done a check on them, assume the worst
+	if self.tStoredThreats[unitHero:GetUniqueID()] then
+		return self.tStoredThreats[unitHero:GetUniqueID()]
+	end
+	-- we don't have a threat?
+	--BotEcho("no threat value for "..unitHero:GetTypeName())
+	return (core.myTeam == unitHero:GetTeam() and 0 or 999) -- if we haven't done a check on them, assume the worst
 end
 
 function object:GetTotalThreat(tUnits)
@@ -827,7 +833,12 @@ function object:GetTotalThreat(tUnits)
 end
 
 function object:GetDefense(unitHero)
-	return self.tStoredDefenses[unitHero:GetUniqueID()] or (core.myTeam == unitHero:GetTeam() and 0 or 999) -- if we haven't done a check on them, assume the worst
+	if self.tStoredDefenses[unitHero:GetUniqueID()] then
+		return self.tStoredDefenses[unitHero:GetUniqueID()]
+	end
+	-- we don't have a defense?
+	--BotEcho("no defense value for "..unitHero:GetTypeName())
+	return (core.myTeam == unitHero:GetTeam() and 0 or 999) -- if we haven't done a check on them, assume the worst
 end
 
 function object:GetTotalDefense(tUnits)
@@ -838,6 +849,10 @@ function object:GetTotalDefense(tUnits)
 		end
 	end
 	return nDefense
+end
+
+function object:GetTowerThreat(unitTower)
+	return object.tTowerThreats[unitTower:GetUniqueID()] or 0
 end
 
 ---- Group-and-push logic ----
@@ -1630,8 +1645,9 @@ function object:DefenseLogic()
 	if bDebugEchos and core.NumberElements(tDefenseInfos) > 0 then BotEcho("Lanes After:") self:PrintLanes() end
 end
 
+object.tTowerThreats = {}
 function object:BuildDefenseTeams(tDefenseInfos, tPriorityPairs)
-	local bDebugEchos = true
+	local bDebugEchos = false
 	local bRebuildEchos = false
 	
 	--[[Algorithm:
@@ -1754,9 +1770,9 @@ function object:BuildDefenseTeams(tDefenseInfos, tPriorityPairs)
 				local nAllyLethatlity = nAllyThreat - nEnemyDefense
 				local nEnemyLethality = nEnemyThreat - nAllyDefense
 	
-				if nAllyLethatlity >= nEnemyLethality + 250 then
+				if nAllyLethatlity >= nEnemyLethality + 1000 then
 					--the team is strong enough to defend
-					if bDebugEchos then BotEcho("We can win the fight! "..nAllyLethatlity.." >= "..nEnemyLethality) end
+					if bDebugEchos then BotEcho("^gWe can win the fight! "..nAllyLethatlity.." >= "..nEnemyLethality) end
 					bDefended = true
 					break
 				end
@@ -1821,9 +1837,9 @@ function object:BuildDefenseTeams(tDefenseInfos, tPriorityPairs)
 			local nAllyLethatlity = nAllyThreat - nEnemyDefense
 			local nEnemyLethality = nEnemyThreat - nAllyDefense
 
-			if nAllyLethatlity >= nEnemyLethality + 250 then
+			if nAllyLethatlity >= nEnemyLethality + 1000 then
 				--the team is strong enough to defend
-				if bDebugEchos then BotEcho("We can win the fight! "..nAllyLethatlity.." >= "..nEnemyLethality) end
+				if bDebugEchos then BotEcho("^gWe can win the fight! "..nAllyLethatlity.." >= "..nEnemyLethality) end
 				bDefended = true
 				break
 			end
@@ -1885,9 +1901,9 @@ function object:BuildDefenseTeams(tDefenseInfos, tPriorityPairs)
 				local nAllyLethatlity = nAllyThreat - nEnemyDefense
 				local nEnemyLethality = nEnemyThreat - nAllyDefense
 
-				if nAllyLethatlity >= nEnemyLethality + 250 then
+				if nAllyLethatlity >= nEnemyLethality + 1000 then
 					--the team is strong enough to defend
-					if bDebugEchos then BotEcho("We can win the fight! "..nAllyLethatlity.." >= "..nEnemyLethality) end
+					if bDebugEchos then BotEcho("^gWe can win the fight! "..nAllyLethatlity.." >= "..nEnemyLethality) end
 					bDefended = true
 					break
 				end
@@ -1944,14 +1960,14 @@ function object:BuildDefenseTeams(tDefenseInfos, tPriorityPairs)
 			local nAllyLethatlity = nAllyThreat - nEnemyDefense
 			local nEnemyLethality = nEnemyThreat - nAllyDefense
 
-			if nAllyLethatlity >= nEnemyLethality + 250 then
+			if nAllyLethatlity >= nEnemyLethality + 1000 then
 				--the team is strong enough to defend
-				if bDebugEchos then BotEcho("We can win the fight! "..nAllyLethatlity.." >= "..nEnemyLethality) end
+				if bDebugEchos then BotEcho("^gWe can win the fight! "..nAllyLethatlity.." >= "..nEnemyLethality) end
 				bDefended = true
 				break
 			end
 		end
-		
+		object.tTowerThreats[nTargetID] = nAllyThreat + nAllyDefense - (nEnemyThreat + nEnemyDefense)
 		if bDefended then
 			tremove(tRemainingPriorityPairs, i)
 		else 
