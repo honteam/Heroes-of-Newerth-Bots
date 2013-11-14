@@ -26,8 +26,8 @@ end
 
 local print, ipairs, pairs, string, table, next, type, tinsert, tremove, tsort, format, tostring, tonumber, strfind, strsub
 	= _G.print, _G.ipairs, _G.pairs, _G.string, _G.table, _G.next, _G.type, _G.table.insert, _G.table.remove, _G.table.sort, _G.string.format, _G.tostring, _G.tonumber, _G.string.find, _G.string.sub
-local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
-	= _G.math.ceil, _G.math.floor, _G.math.pi, _G.math.tan, _G.math.atan, _G.math.atan2, _G.math.abs, _G.math.cos, _G.math.sin, _G.math.acos, _G.math.max, _G.math.random
+local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, min, max, random
+	= _G.math.ceil, _G.math.floor, _G.math.pi, _G.math.tan, _G.math.atan, _G.math.atan2, _G.math.abs, _G.math.cos, _G.math.sin, _G.math.acos, _G.math.min, _G.math.max, _G.math.random
 
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 	
@@ -67,6 +67,9 @@ core.idefHomecomingStone = nil
 core.nEASY_DIFFICULTY 	= 1
 core.nMEDIUM_DIFFICULTY = 2
 core.nHARD_DIFFICULTY 	= 3
+
+core.bMyTeamHasHuman = nil
+core.bEnemyTeamHasHuman = nil
 
 core.nDifficulty = core.nEASY_DIFFICULTY
 
@@ -1159,7 +1162,7 @@ function core.InventoryContains(inventory, val, bIgnoreRecipes, bIncludeStash)
 	
 	for slot = 1, nLast, 1 do
 		local curItem = inventory[slot]
-		if curItem then
+		if curItem and not curItem:IsRecipe() then
 			--Echo(format("%d - Type:%s  Name:%s", slot, type(curItem), (curItem.GetName and curItem:GetName()) or "ERROR"))
 			--if type(curItem) == "table" then
 			--	printTable(curItem)
@@ -1180,6 +1183,34 @@ end
 
 function core.IsCourier(unit)
 	return unit:IsUnitType("Courier")
+end
+
+function core.EnemyTeamHasHuman()
+	if core.bEnemyTeamHasHuman == nil then
+		local tEnemyHeroes = HoN.GetHeroes(core.enemyTeam)
+		for _, unitHero in pairs(tEnemyHeroes) do
+			if not unitHero:IsBotControlled() then
+				core.bEnemyTeamHasHuman = true
+				break
+			end
+		end
+	end
+
+	return core.bEnemyTeamHasHuman
+end
+
+function core.MyTeamHasHuman()
+	if core.bMyTeamHasHuman == nil then
+		local tAllyHeroes = HoN.GetHeroes(core.myTeam)
+		for _, unitHero in pairs(tAllyHeroes) do
+			if not unitHero:IsBotControlled() then
+				core.bMyTeamHasHuman = true
+				break
+			end
+		end
+	end
+
+	return core.bMyTeamHasHuman
 end
 
 function core.IsTowerSafe(unitEnemyTower, unitSelf)
@@ -1552,23 +1583,27 @@ function core.GetLaneBreakdown(unit)
 	local inMid = -1
 	local inBot = -1		
 
-	local vTopPoint = core.GetFurthestPointOnPath(position, metadata.GetTopLane(), core.bTraverseForward)		
-	if vTopPoint then
-		topDist = Vector3.Distance2D(position, vTopPoint)
+	local vecTopPoint = core.GetFurthestPointOnPath(position, metadata.GetTopLane(), core.bTraverseForward)		
+	if vecTopPoint then
+		topDist = Vector3.Distance2D(position, vecTopPoint)
 	end
 	
-	local vMidPoint = core.GetFurthestPointOnPath(position, metadata.GetMiddleLane(), core.bTraverseForward)
-	if vMidPoint then
-		midDist = Vector3.Distance2D(position, vMidPoint)
+	local vecMidPoint = core.GetFurthestPointOnPath(position, metadata.GetMiddleLane(), core.bTraverseForward)
+	if vecMidPoint then
+		midDist = Vector3.Distance2D(position, vecMidPoint)
 	end
 	
-	local vBotPoint = core.GetFurthestPointOnPath(position, metadata.GetBottomLane(), core.bTraverseForward)
-	if vBotPoint then
-		botDist = Vector3.Distance2D(position, vBotPoint)
+	local vecBotPoint = core.GetFurthestPointOnPath(position, metadata.GetBottomLane(), core.bTraverseForward)
+	if vecBotPoint then
+		botDist = Vector3.Distance2D(position, vecBotPoint)
 	end
 	
 	--pick two lowest ones
-	local nBiggestDist = max(topDist, max(midDist, botDist))
+	local nBiggestDist = max(topDist, midDist, botDist)
+	local nLowestDist = min(topDist, midDist, botDist)
+	if (nLowestDist > 1200) then --clearly not in a lane.
+		return {top=0, mid=0, bot=0}, {top=vecTopPoint, mid=vecMidPoint, bot=vecBotPoint}
+	end
 	
 	if topDist == nBiggestDist then
 		topDist = 0
@@ -1597,14 +1632,14 @@ function core.GetLaneBreakdown(unit)
 	--BotEcho(format('%s Dists - top: %g  mid: %g  bot:%g  total:%g', unit:GetTypeName(), topDist, midDist, botDist, totalDist))
 	if bDebugLines then
 		core.DrawXPosition(position, 'red')
-		if vTopPoint then
-			core.DrawDebugArrow(position, position + Vector3.Normalize(vTopPoint - position) * inTop * lineLen, 'yellow')
+		if vecTopPoint then
+			core.DrawDebugArrow(position, position + Vector3.Normalize(vecTopPoint - position) * inTop * lineLen, 'yellow')
 		end
-		if vMidPoint then
-			core.DrawDebugArrow(position, position + Vector3.Normalize(vMidPoint - position) * inMid * lineLen, 'yellow')
+		if vecMidPoint then
+			core.DrawDebugArrow(position, position + Vector3.Normalize(vecMidPoint - position) * inMid * lineLen, 'yellow')
 		end
-		if vBotPoint then
-			core.DrawDebugArrow(position, position + Vector3.Normalize(vBotPoint - position) * inBot * lineLen, 'yellow')
+		if vecBotPoint then
+			core.DrawDebugArrow(position, position + Vector3.Normalize(vecBotPoint - position) * inBot * lineLen, 'yellow')
 		end
 	end
 	
@@ -1949,6 +1984,18 @@ function core.GetAttackSequenceProgress(unit)
 	end
 	
 	return retVal
+end
+
+--unitCreepTarget is an optional parameter that will be passed in
+function core.GetAttackDamageMinOnCreep(unitCreepTarget)
+	local unitSelf = core.unitSelf
+	local nDamageMin = unitSelf:GetFinalAttackDamageMin()
+				
+	if core.itemHatchet then
+		nDamageMin = nDamageMin * core.itemHatchet.creepDamageMul
+	end	
+
+	return nDamageMin
 end
 
 

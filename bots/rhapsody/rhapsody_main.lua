@@ -82,6 +82,11 @@ local Clamp = core.Clamp
 
 BotEcho(' loading rhapsody_main...')
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 3, ShortSolo = 2, LongSolo = 1, ShortSupport = 5, LongSupport = 4, ShortCarry = 3, LongCarry = 2}
+
 
 --[[for testing
 function object:onthinkOverride(tGameVariables)
@@ -320,7 +325,7 @@ local function funcFindItemsOverride(botBrain)
 	local inventory = core.unitSelf:GetInventory(false)
 	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
-		if curItem then
+		if curItem and not curItem:IsRecipe() then
 			if core.itemAstrolabe == nil and curItem:GetName() == "Item_Astrolabe" then
 				core.itemAstrolabe = core.WrapInTable(curItem)
 				core.itemAstrolabe.nHealValue = 200
@@ -571,7 +576,7 @@ function behaviorLib.HealUtility(botBrain)
 	local nTargetTimeToLive = nil
 	local sAbilName = ""
 	
-	if (itemAstrolabe and itemAstrolabe:CanActivate()) or abilMelody:CanActivate() then
+	if (itemAstrolabe and itemAstrolabe:CanActivate() and itemAstrolabe:IsValid()) or abilMelody:CanActivate() then
 		local tTargets = core.CopyTable(core.localUnits["AllyHeroes"])
 		tTargets[unitSelf:GetUniqueID()] = unitSelf --I am also a target
 		local nMyID = unitSelf:GetUniqueID()
@@ -604,7 +609,7 @@ function behaviorLib.HealUtility(botBrain)
 				sAbilName = "Protective Melody"
 			end
 			
-			if nUtility == 0 and (itemAstrolabe and itemAstrolabe:CanActivate()) then
+			if nUtility == 0 and (itemAstrolabe and itemAstrolabe:CanActivate() and itemAstrolabe:IsValid()) then
 				nUtility = nHighestUtility				
 				sAbilName = "Astrolabe"
 			end
@@ -646,7 +651,7 @@ function behaviorLib.HealExecute(botBrain) -- this is used for Astrolabe ASWELL 
 	if unitHealTarget then 
 		if nHealTimeToLive <= nUltimateTTL and abilMelody:CanActivate() and unitHealTarget ~= unitSelf  then  --only attempt ult for other players (not for self, lol)
 			ProtectiveMelodyExecute(botBrain)
-		elseif itemAstrolabe and itemAstrolabe:CanActivate() then
+		elseif itemAstrolabe and itemAstrolabe:CanActivate() and itemAstrolabe:IsValid() then
 			local vecTargetPosition = unitHealTarget:GetPosition()
 			local nDistance = Vector3.Distance2D(unitSelf:GetPosition(), vecTargetPosition)
 			if nDistance < itemAstrolabe.nRadius then

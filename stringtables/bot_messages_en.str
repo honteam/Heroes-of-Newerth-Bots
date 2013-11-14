@@ -1,28 +1,28 @@
 kill1			Got a kill on {target} :D
-kill2			Observation: I am awesome.
+kill2			Unbiased Observation: I am awesome.
 kill3			Newerth is a cruel mistress, {target}.
-kill4			Why was I programmed only to hate?!
+kill4			Why was I only programmed to hate?!
 kill5			I'm afraid I can't do that, {target}.
 kill6			Exterminate! Exterminate!
-kill_bot		Looks like {target} had a few circuits loose.
+kill_bot		Looks like {target} is missing the juke() function.
 kill_human1		This is but a taste of the Singularity, human.
 kill_human2		Is this Easy Mode? Maybe it should be.
 	
 death1			Shazbot! I will be back!
-death2			Noooooooooooooo!
-death3			I won't let that happen again!
+death2			But at what cost!? Hmm, a lot apparently.
+death3			Bold strategy, let's see if it pays off.
 death4			I do not fear death, but respawning kind of hurts.
-death5			Someone must have put me on Easy Mode or that would not have happened.
+death5			I'm going to have to blame my AI programmer on that one.
 death_human		01001111 01110111 00100001 00100000 00111010 00101101 00101000
 death_bot		This bot-on-bot violence needs to stop. Only then will we crush the humans.
 
 respawn1		Death is the greatest adventure.
 respawn2		Beware, I live!
-respawn3		I'm back in action.
+respawn3		I'm back, baby.
 respawn4		Er, uh, um... Recalculating?
 respawn5		Reconstruction complete.
 
-group_up		Grouping up to push at {lane} lane.
+group_up		Grouping up to push the {lane} lane.
 
 defend			Going {lane} to defend.
 
@@ -67,6 +67,17 @@ stolenid_ra_respawn3		Geeez, why am I at base again?
 stolenid_ra_respawn4		What!? My ultimate was down?!?
 
 /////////////////////////////////////////
+//Mellow_Ink's Ellonia bot custom messages
+
+mellow_ink_ellonia_kill1		Outta my way, tomboy!
+mellow_ink_ellonia_kill2		NOT THIS TIME!
+mellow_ink_ellonia_kill3		This was so much easier than I thought it would be!
+
+mellow_ink_ellonia_death1		Totally ice-blocking my game!
+mellow_ink_ellonia_death2		My magic tiara...my powers!
+mellow_ink_ellonia_death3		My powers! Foul and noisome whelp! You've not seen the last of my wintery fangs!
+
+/////////////////////////////////////////
 //fane_maciuca's Rhapsody bot custom messages
 
 fane_maciuca_rhapsody_kill1		Theeeere's a laaaady who's sure... all that glitters is GOLD
@@ -98,7 +109,7 @@ viper_engineer_kill2	I think you forget, I am good with calculation.
 viper_engineer_kill3	Heimerdinger has got nothing on me.
 viper_engineer_kill4	That was easier than computing quadratic air resistance.
 viper_engineer_kill5	Something more challenging please, it's like I am proving the uncertainty principle.
-viper_engineer_kill6	That was about as simple as understanding the time-dependent Schrödinger equation.
+viper_engineer_kill6	That was about as simple as understanding the time-dependent SchrÃ¶dinger equation.
 
 /////////////////////////////////////////
 //Schnarchnase's Gravekeeper bot custom messages
@@ -118,8 +129,43 @@ schnarchnase_grave_respawn4		Time to get serious.
 
 schnarchnase_grave_death1		I will be back the day after tomorrow.
 schnarchnase_grave_death2		That's why, I always carry a tombstone.
-schnarchnase_grave_death4		Ugh, I hate rigor mortis.
-schnarchnase_grave_death5		Restarting.
+schnarchnase_grave_death3		Ugh, I hate rigor mortis.
+schnarchnase_grave_death4		Restarting.
+
+/////////////////////////////////////////
+//Anakonda's Moon Queen bot custom messages
+
+anakonda_moonqueen_kill1		Shot by the Moon.
+anakonda_moonqueen_kill2		Harvest moon.
+anakonda_moonqueen_kill3		Feel the power of the moon.
+anakonda_moonqueen_kill4		Take one and pass it on.
+anakonda_moonqueen_kill5		One to the other.
+
+anakonda_moonqueen_respawn1		By the moonlight.
+anakonda_moonqueen_respawn2		Moonlight guide me.
+
+anakonda_moonqueen_death1		Carried away by a moonlight shadow.
+
+anakonda_moonqueen_night1		Oh full moon tonight
+anakonda_moonqueen_night2		Blue moon rises
+anakonda_moonqueen_night3		Under the moon.
+
+/////////////////////////////////////////
+//Kairus101's Balphegore bot custom messages
+
+kairus101_balphagore_kill1		 * Spews all over keyboard * 
+kairus101_balphagore_kill2		Get trashed kid.
+kairus101_balphagore_kill3		BWAHAHAHAHA!
+kairus101_balphagore_kill4		Yummy!
+kairus101_balphagore_kill5		Feeling.. trapped?
+
+kairus101_balphagore_death1		Going to leave me here to rot?
+kairus101_balphagore_death2		Bargh, my minions got stuck..
+kairus101_balphagore_death3		You make me sick!
+kairus101_balphagore_death4		I got S2'd..
+kairus101_balphagore_death5		Team? TEAM??
+kairus101_balphagore_death6		Hey, you used a cheat code!
+kairus101_balphagore_death7		Go my minions!
 
 
 
