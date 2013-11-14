@@ -325,7 +325,7 @@ local function funcFindItemsOverride(botBrain)
 	local inventory = core.unitSelf:GetInventory(false)
 	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
-		if curItem then
+		if curItem and not curItem:IsRecipe() then
 			if core.itemAstrolabe == nil and curItem:GetName() == "Item_Astrolabe" then
 				core.itemAstrolabe = core.WrapInTable(curItem)
 				core.itemAstrolabe.nHealValue = 200

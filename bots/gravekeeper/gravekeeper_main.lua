@@ -990,7 +990,7 @@ local function funcFindItemsOverride(botBrain)
 	local inventory = core.unitSelf:GetInventory(true)
 	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
-		if curItem then
+		if curItem and not curItem:IsRecipe() then
 			if core.itemPostHaste == nil and curItem:GetName() == "Item_PostHaste" then
 				core.itemPostHaste = core.WrapInTable(curItem)
 			elseif core.itemTablet == nil and curItem:GetName() == "Item_PushStaff" then

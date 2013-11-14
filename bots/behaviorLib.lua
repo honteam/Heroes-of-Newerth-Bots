@@ -3157,7 +3157,7 @@ function behaviorLib.SortInventoryAndStash(botBrain)
 
 		if behaviorLib.printShopDebug then
 			local name = "EMPTY_SLOT"
-			if curItem then
+			if curItem and not curItem:IsRecipe() then
 				name = curItem:GetName()
 			end
 			BotEcho("  Checking if "..tostring(slot)..", "..name.." is a boot")
@@ -3206,7 +3206,7 @@ function behaviorLib.SortInventoryAndStash(botBrain)
 
 		if behaviorLib.printShopDebug then
 			local name = "EMPTY_SLOT"
-			if curItem then
+			if curItem and not curItem:IsRecipe() then
 				name = curItem:GetName()
 			end
 			BotEcho("  Checking if "..tostring(slot)..", "..name.." has magic defense")
@@ -3249,7 +3249,7 @@ function behaviorLib.SortInventoryAndStash(botBrain)
 
 		if behaviorLib.printShopDebug then
 			local name = "EMPTY_SLOT"
-			if curItem then
+			if curItem and not curItem:IsRecipe() then
 				name = curItem:GetName()
 			end
 			BotEcho("  Checking if "..tostring(slot)..", "..name.." is a homecoming stone")
@@ -3286,7 +3286,7 @@ function behaviorLib.SortInventoryAndStash(botBrain)
 
 		if behaviorLib.printShopDebug then
 			local name = "EMPTY_SLOT"
-			if curItem then
+			if curItem and not curItem:IsRecipe() then
 				name = curItem:GetName()
 			end
 			BotEcho("  Checking if "..tostring(slot)..", "..name.." is a homecoming stone")
@@ -3387,7 +3387,7 @@ function behaviorLib.SellLowestItems(botBrain, numToSell)
 		lowestValue = 99999
 		for slot = 1, 12, 1 do
 			local curItem = inventory[slot]
-			if curItem then
+			if curItem and not curItem:IsRecipe() then
 				local cost = curItem:GetTotalCost()
 
 				if cost < lowestValue then

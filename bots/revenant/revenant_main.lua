@@ -193,7 +193,7 @@ local function funcFindItemsOverride(botBrain)
                 local inventory = core.unitSelf:GetInventory(true)
                 for slot = 1, 12, 1 do
                         local curItem = inventory[slot]
-                        if curItem then
+                        if curItem and not curItem:IsRecipe() then
                                 if core.itemHellflower == nil and curItem:GetName() == "Item_Silence" then
                                         core.itemHellflower = core.WrapInTable(curItem)
                                 end
