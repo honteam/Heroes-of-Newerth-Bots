@@ -2892,19 +2892,61 @@ function behaviorLib.RetreatFromThreatUtility(botBrain)
 	return Clamp(nUtility, 0, 100)
 end
 
+behaviorLib.nTimeTeleported = 0
+function behaviorLib.CustomGetToJukeSpotExecute(botBrain, vecJukespot)
+	return false
+end
+
 function behaviorLib.RetreatFromThreatExecute(botBrain)
 	--people can/will override this code, similar to CustomHarassUtility.
+	local bDebugLines = false
 	local bActionTaken = behaviorLib.CustomRetreatExecute(botBrain)
+	local unitSelf = core.unitSelf
+	
+	if behaviorLib.nTimeTeleported+1000 > HoN:GetGameTime() then -- we are escaping!
+		return
+	end
 	
 	--Activate ghost marchers if we can
 	local itemGhostMarchers = core.itemGhostMarchers
 	if not bActionTaken and behaviorLib.lastRetreatUtil >= behaviorLib.retreatGhostMarchersThreshold and itemGhostMarchers and itemGhostMarchers:CanActivate() then
-		core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
+		core.OrderItemClamp(botBrain, unitSelf, itemGhostMarchers)
 		bActionTaken = true
 	end
 	
+	--Juke time!
+	local vecMyPos = unitSelf:GetPosition()
+	local tHomecomingStones = core.InventoryContains(unitSelf:GetInventory(false), core.idefHomecomingStone:GetName(), true)
+	--BotEcho(behaviorLib.lastHealAtWellUtil)
+	if #tHomecomingStones > 0 and tHomecomingStones[1]:CanActivate() and vecMyPos and core.allyWell and core.allyWell:GetPosition() and behaviorLib.lastHealAtWellUtil > 20 then
+		local vecWell = core.allyWell:GetPosition()
+		
+		-- closest node from a position which is 500 units closer to well than yourself
+		BotMetaData.SetActiveLayer('/bots/getAwayPoints.botmetadata')
+		local vecNodePos = BotMetaData.GetClosestNode(vecMyPos + Vector3.Normalize(vecWell - vecMyPos) * 300):GetPosition()
+		BotMetaData.SetActiveLayer('/bots/test.botmetadata')
+		
+		if bDebugLines then
+			core.DrawDebugArrow(vecMyPos, vecMyPos + Vector3.Normalize(vecWell - vecMyPos) * 300, 'green')
+			core.DrawDebugArrow(vecMyPos, vecNodePos, 'blue')
+		end
+			
+		nJukeDistSq = Vector3.Distance2DSq(vecMyPos, vecNodePos)
+		--is the juke a decent idea? We don't want to run back towards the enemy! (unless it is part of the juke spot)
+		if (nJukeDistSq < 600 *  600 or abs(core.AngleBetween(vecWell - vecMyPos, vecNodePos - vecMyPos)) < 1) then
+			if nJukeDistSq < 50 * 50 then
+				bActionTaken = core.OrderItemPosition(botBrain, unitSelf, tHomecomingStones[1], vecWell)
+				behaviorLib.nTimeTeleported = HoN:GetGameTime()
+			else
+				bActionTaken = behaviorLib.CustomGetToJukeSpotExecute(botBrain, vecNodePos)
+				if not bActionTaken then
+					bActionTaken = core.OrderMoveToPosClamp(botBrain, unitSelf, vecNodePos, false)
+				end
+			end
+		end
+	end
+	
 	if not bActionTaken then
-		local unitSelf = core.unitSelf
 		local vecPos = behaviorLib.PositionSelfBackUp()
 		bActionTaken = core.OrderMoveToPosClamp(botBrain, unitSelf, vecPos, false)
 	end
@@ -2955,6 +2997,7 @@ function behaviorLib.WellHealthUtility(healthPercent)
 	return util
 end
 
+behaviorLib.lastHealAtWellUtil = 0
 -------- Behavior Fns --------
 function behaviorLib.HealAtWellUtility(botBrain)
 	local utility = 0
@@ -2971,6 +3014,7 @@ function behaviorLib.HealAtWellUtility(botBrain)
 		BotEcho(format("  HealAtWellUtility: %g", utility))
 	end
 
+	behaviorLib.lastHealAtWellUtil = utility
 	return utility
 end
 

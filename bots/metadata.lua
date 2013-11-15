@@ -13,6 +13,7 @@ local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 --------------------------------
 
 BotMetaData.RegisterLayer('/bots/test.botmetadata')
+BotMetaData.RegisterLayer('/bots/getAwayPoints.botmetadata')
 BotMetaData.SetActiveLayer('/bots/test.botmetadata')
 
 --------------------------------
