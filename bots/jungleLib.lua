@@ -17,24 +17,24 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random = _G.m
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 
 
-local Hellbourne = HoN.GetHellbourneTeam() -- 2
-local legion = HoN.GetLegionTeam() -- 1
+local nHellbourne = HoN.GetHellbourneTeam() -- 2
+local nLegion = HoN.GetLegionTeam() -- 1
 
 jungleLib.tJungleSpots = {
 --Legion
-{pos = Vector3.Create(7200, 3600),  description = "L closest to well"      , nDifficulty = 100, nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(6700, 4000)	, bCorpseBlocking = false, nSide = legion },
-{pos = Vector3.Create(7800, 4500),  description = "L easy camp" 		   , nDifficulty = 30 , nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(7800, 5200)	, bCorpseBlocking = false, nSide = legion },
-{pos = Vector3.Create(9800, 4200),  description = "L mid-jungle hard camp" , nDifficulty = 100, nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(9800, 3500)	, bCorpseBlocking = false, nSide = legion },
-{pos = Vector3.Create(11100, 3250), description = "L pullable camp" 	   , nDifficulty = 55 , nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(11100, 2700), bCorpseBlocking = false, nSide = legion },
-{pos = Vector3.Create(11300, 4400), description = "L camp above pull camp" , nDifficulty = 55 , nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(11300, 3800), bCorpseBlocking = false, nSide = legion },
-{pos = Vector3.Create(4900, 8100),  description = "L ancients"  		   , nDifficulty = 250, nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(5500, 7800)	, bCorpseBlocking = false, nSide = legion },
+{pos = Vector3.Create(7200, 3600),  description = "L closest to well"      , nDifficulty = 100, nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(6700, 4000) , bCorpseBlocking = false, nSide = nLegion, bAncients=false },
+{pos = Vector3.Create(7800, 4500),  description = "L easy camp" 		   , nDifficulty = 30 , nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(7800, 5200) , bCorpseBlocking = false, nSide = nLegion, bAncients=false },
+{pos = Vector3.Create(9800, 4200),  description = "L mid-jungle hard camp" , nDifficulty = 100, nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(9800, 3500) , bCorpseBlocking = false, nSide = nLegion, bAncients=false },
+{pos = Vector3.Create(11100, 3250), description = "L pullable camp" 	   , nDifficulty = 55 , nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(11100, 2700), bCorpseBlocking = false, nSide = nLegion, bAncients=false },
+{pos = Vector3.Create(11300, 4400), description = "L camp above pull camp" , nDifficulty = 55 , nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(11300, 3800), bCorpseBlocking = false, nSide = nLegion, bAncients=false },
+{pos = Vector3.Create(4900, 8100),  description = "L ancients"  		   , nDifficulty = 250, nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(5500, 7800) , bCorpseBlocking = false, nSide = nLegion, bAncients=true  },
 --Hellbourne
-{pos = Vector3.Create(9400, 11200), description = "H closest to well"      , nDifficulty = 100, nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(8800, 11300), bCorpseBlocking = false, nSide = Hellbourne },
-{pos = Vector3.Create(7800, 11600), description = "H easy camp" 		   , nDifficulty = 30 , nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(7400, 12200), bCorpseBlocking = false, nSide = Hellbourne },
-{pos = Vector3.Create(6500, 10400), description = "H below easy camp"      , nDifficulty = 55 , nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(6700, 11000), bCorpseBlocking = false, nSide = Hellbourne },
-{pos = Vector3.Create(5100, 12450), description = "H pullable camp" 	   , nDifficulty = 55 , nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(5100, 13100), bCorpseBlocking = false, nSide = Hellbourne },
-{pos = Vector3.Create(4000, 11500), description = "H far hard camp" 	   , nDifficulty = 100, nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(4400, 11700), bCorpseBlocking = false, nSide = Hellbourne },
-{pos = Vector3.Create(12300, 5600), description = "H ancients"  		   , nDifficulty = 250, nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(12300, 6400), bCorpseBlocking = false, nSide = Hellbourne }
+{pos = Vector3.Create(9400, 11200), description = "H closest to well"      , nDifficulty = 100, nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(8800, 11300), bCorpseBlocking = false, nSide = nHellbourne, bAncients=false },
+{pos = Vector3.Create(7800, 11600), description = "H easy camp" 		   , nDifficulty = 30 , nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(7400, 12200), bCorpseBlocking = false, nSide = nHellbourne, bAncients=false },
+{pos = Vector3.Create(6500, 10400), description = "H below easy camp"      , nDifficulty = 55 , nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(6700, 11000), bCorpseBlocking = false, nSide = nHellbourne, bAncients=false },
+{pos = Vector3.Create(5100, 12450), description = "H pullable camp" 	   , nDifficulty = 55 , nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(5100, 13100), bCorpseBlocking = false, nSide = nHellbourne, bAncients=false },
+{pos = Vector3.Create(4000, 11500), description = "H far hard camp" 	   , nDifficulty = 100, nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(4400, 11700), bCorpseBlocking = false, nSide = nHellbourne, bAncients=false },
+{pos = Vector3.Create(12300, 5600), description = "H ancients"  		   , nDifficulty = 250, nStacks = 0, tCreepDifficulty = {}, vecOutsidePos = Vector3.Create(12300, 6400), bCorpseBlocking = false, nSide = nHellbourne, bAncients=true }
 }
 jungleLib.nMinutesPassed = -1
 jungleLib.nStacking = 0
@@ -49,21 +49,21 @@ function jungleLib.assess(botBrain)
 	end
 
 	--NEUTRAL SPAWNING
-	local time = HoN.GetMatchTime()
-	if (time <= jungleLib.nLastCheck + nCheckFrequency) then --framskip
+	local nTime = HoN.GetMatchTime()
+	if (nTime <= jungleLib.nLastCheck + nCheckFrequency) then --framskip
 		return
 	end
-	jungleLib.nLastCheck = time
+	jungleLib.nLastCheck = nTime
 	
-	local mins = -1
-	if time then
-		mins, secs = jungleLib.getTime()
-		if (mins == 0 and secs == 30) or (mins ~= jungleLib.nMinutesPassed and mins ~= 0) then --SPAWNING
-			for _, jungleSpot in pairs(jungleLib.tJungleSpots) do
-				if (not jungleSpot.bCorpseBlocking) then --it won't spawn with corpse in way.
-					jungleSpot.nStacks = 1 --assume something spawned. If not, it will be removed later if not.
+	local nMins = -1
+	if nTime then
+		nMins, nSecs = jungleLib.getTime()
+		if (nMins == 0 and nSecs == 30) or (nMins ~= jungleLib.nMinutesPassed and nMins ~= 0) then --SPAWNING
+			for _, tJungleSpot in pairs(jungleLib.tJungleSpots) do
+				if (not tJungleSpot.bCorpseBlocking) then --it won't spawn with corpse in way.
+					tJungleSpot.nStacks = 1 --assume something spawned. If not, it will be removed later if not.
 				end
-				jungleSpot.bCorpseBlocking = false
+				tJungleSpot.bCorpseBlocking = false
 			end
 			if (jungleLib.nStacking ~= 0) then --add stack if stacking.
 				jungleLib.tJungleSpots[jungleLib.nStacking].nStacks = jungleLib.tJungleSpots[jungleLib.nStacking].nStacks + 1
@@ -71,25 +71,25 @@ function jungleLib.assess(botBrain)
 			jungleLib.nStacking = 0
 		end
 	end
-	jungleLib.nMinutesPassed = mins
+	jungleLib.nMinutesPassed = nMins
 
 	--CHECK NEUTRAL SPAWN CAMPS
 	local debug = false
 	
-	for i, jungleSpot in pairs(jungleLib.tJungleSpots) do
+	for i, tJungleSpot in pairs(jungleLib.tJungleSpots) do
 		if (debug) then
-			if (jungleSpot.nStacks == 0) then
-				core.DrawXPosition(jungleSpot.pos, 'green')
+			if (tJungleSpot.nStacks == 0) then
+				core.DrawXPosition(tJungleSpot.pos, 'green')
 			else
-				core.DrawXPosition(jungleSpot.pos, 'red')
+				core.DrawXPosition(tJungleSpot.pos, 'red')
 			end
 		end
 	
-		if (HoN.CanSeePosition(jungleSpot.pos))then
+		if (HoN.CanSeePosition(tJungleSpot.pos))then
 			--reset creep difficulties
-			jungleSpot.tCreepDifficulty = {}
+			tJungleSpot.tCreepDifficulty = {}
 			local nUnitsNearCamp = 0
-			local uUnits = HoN.GetUnitsInRadius(jungleSpot.pos, 800, core.UNIT_MASK_ALIVE + core.UNIT_MASK_UNIT)
+			local uUnits = HoN.GetUnitsInRadius(tJungleSpot.pos, 800, core.UNIT_MASK_ALIVE + core.UNIT_MASK_UNIT)
 			for key, unit in pairs(uUnits) do
 				if unit:GetTeam() ~= core.myTeam and unit:GetTeam() ~= core.enemyTeam then
 					nUnitsNearCamp = nUnitsNearCamp + 1
@@ -99,23 +99,23 @@ function jungleLib.assess(botBrain)
 					for sString, tCreepPrefs in pairs(tCreepPreferences) do
 						local nAddedDifficulty = tCreepPrefs[unit:GetTypeName()]
 						if nAddedDifficulty and nAddedDifficulty ~= 0 then
-							jungleSpot.tCreepDifficulty[sString] = (jungleSpot.tCreepDifficulty[sString] ~= nil and jungleSpot.tCreepDifficulty[sString] or 0) + nAddedDifficulty
+							tJungleSpot.tCreepDifficulty[sString] = (tJungleSpot.tCreepDifficulty[sString] ~= nil and tJungleSpot.tCreepDifficulty[sString] or 0) + nAddedDifficulty
 						end
 					end
 					
 				end
 			end
 			
-			if jungleSpot.nStacks ~= 0 and nUnitsNearCamp == 0 then --we can see the camp, nothing is there.
-				if (debug) then BotEcho("Camp " .. jungleSpot.description .. " is empty. Are they all dead. "..jungleLib.tJungleSpots[i].nStacks) end
-				if secs > 37 then --This is a corpse check. Units killed > 37 seconds block the camp.
-					jungleSpot.bCorpseBlocking = true
+			if tJungleSpot.nStacks ~= 0 and nUnitsNearCamp == 0 then --we can see the camp, nothing is there.
+				if (debug) then BotEcho("Camp " .. tJungleSpot.description .. " is empty. Are they all dead. "..jungleLib.tJungleSpots[i].nStacks) end
+				if nSecs > 37 then --This is a corpse check. Units killed > 37 seconds block the camp.
+					tJungleSpot.bCorpseBlocking = true
 				end
-				jungleSpot.nStacks = 0
+				tJungleSpot.nStacks = 0
 			end
-			if (nUnitsNearCamp ~= 0 and jungleSpot.nStacks == 0 ) then --this shouldn't be true. New units should be made on the minute.
-				if (debug) then BotEcho("Camp "..jungleSpot.description.." isn't empty, but I thought it was... Maybe I pulled it too far O.o") end
-				jungleSpot.nStacks = 1
+			if (nUnitsNearCamp ~= 0 and tJungleSpot.nStacks == 0 ) then --this shouldn't be true. New units should be made on the minute.
+				if (debug) then BotEcho("Camp "..tJungleSpot.description.." isn't empty, but I thought it was... Maybe I pulled it too far O.o") end
+				tJungleSpot.nStacks = 1
 			end
 		end
 	end
@@ -148,25 +148,25 @@ function jungleLib.RemovePreference(sPreferenceName)
 	tCreepPreferences[sPreferenceName] = nil
 end
 
-function jungleLib.getNearestCampPos(pos, sPreference, minimumnDifficulty, maximumnDifficulty, nSide, bIgnoreAncients)
+function jungleLib.getNearestCampPos(pos, sPreference, nMinimumnDifficulty, nMaximumnDifficulty, nSide, bIgnoreAncients)
 	sPreference = sPreference or "default"
-	minimumnDifficulty = minimumnDifficulty or 0
-	maximumnDifficulty = maximumnDifficulty or 999
+	nMinimumnDifficulty = nMinimumnDifficulty or 0
+	nMaximumnDifficulty = nMaximumnDifficulty or 999
 	bIgnoreAncients = bIgnoreAncients or false
 	
 	local nClosestCamp = -1
 	local nClosestSq = 9999 * 9999
 	for i = 1, #jungleLib.tJungleSpots do
-		if not (bIgnoreAncients and (i == 6 or i == 12)) then
-			local jungleSpot = jungleLib.tJungleSpots[i]
-			if nSide == nil or jungleSpot.nSide == nSide then
-				local nDist = Vector3.Distance2DSq(pos, jungleSpot.pos)
-				local nDifficulty = jungleSpot.nDifficulty
-				if (jungleSpot.tCreepDifficulty[sPreference] ~= nil) then -- added creep difficulty
-					nDifficulty = nDifficulty + jungleSpot.tCreepDifficulty[sPreference]
+		local tJungleSpot = jungleLib.tJungleSpots[i]
+		if not (bIgnoreAncients and tJungleSpot.bAncients) then
+			if nSide == nil or tJungleSpot.nSide == nSide then
+				local nDistanceSq = Vector3.Distance2DSq(pos, tJungleSpot.pos)
+				local nDifficulty = tJungleSpot.nDifficulty
+				if (tJungleSpot.tCreepDifficulty[sPreference] ~= nil) then -- added creep difficulty
+					nDifficulty = nDifficulty + tJungleSpot.tCreepDifficulty[sPreference]
 				end
-				if nDist < nClosestSq and jungleSpot.nStacks ~= 0 and nDifficulty > minimumnDifficulty and nDifficulty < maximumnDifficulty then
-					nClosestSq = nDist
+				if nDistanceSq < nClosestSq and tJungleSpot.nStacks ~= 0 and nDifficulty > nMinimumnDifficulty and nDifficulty < nMaximumnDifficulty then
+					nClosestSq = nDistanceSq
 					nClosestCamp = i
 				end
 			end
@@ -179,10 +179,10 @@ function jungleLib.getNearestCampPos(pos, sPreference, minimumnDifficulty, maxim
 end
 
 function jungleLib.getTime()
-local time = HoN.GetMatchTime()
-	if time then
-		mins = floor(time / 60000)
-		secs = floor((time - 60000 * mins) / 1000)
+	local nTime = HoN.GetMatchTime()
+	if nTime then
+		nMins = floor(nTime / 60000)
+		nSecs = floor((nTime - 60000 * nMins) / 1000)
 	end
-	return mins or -1, secs or -1
+	return nMins or -1, nSecs or -1
 end

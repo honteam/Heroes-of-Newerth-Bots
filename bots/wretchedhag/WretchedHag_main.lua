@@ -164,7 +164,7 @@ local function funcFindItemsOverride(botBrain)
                 local inventory = core.unitSelf:GetInventory(true)
                 for slot = 1, 6, 1 do
                         local curItem = inventory[slot]
-                        if curItem then
+                        if curItem and not curItem:IsRecipe() then
                                 if core.itemSteamboots == nil and curItem:GetName() == "Item_Steamboots" then
                                         core.itemSteamboots = core.WrapInTable(curItem)
                                 elseif core.itemHellflower == nil and curItem:GetName() == "Item_Silence" then

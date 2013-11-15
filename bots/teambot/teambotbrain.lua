@@ -36,7 +36,7 @@ local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
 
 local jungleLib = object.jungleLib
-if jungleLib == nil then BotEcho("nil!") end
+if jungleLib == nil then BotEcho("jungle lib is nil!") end
 
 BotEcho('Loading teambotbrain...')
 
@@ -1074,7 +1074,7 @@ Preference for the above lanes/roles can be ranked by a bot using the following 
 3 = decent
 4 = good
 5 = awesome
-5 + = guess overflow'd awesome (mid can do this, for example. [1 + [2 + 2 + 1] = 6])
+5+ = guess overflow'd awesome (mid can do this, for example. [1 + [2 + 2 + 1] = 6])
 
 Rough psuedo code ideas for calculating initial lane assignment:
 

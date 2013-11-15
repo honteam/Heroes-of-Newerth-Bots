@@ -274,7 +274,7 @@ local function HarassHeroExecuteOverride(botBrain)
 		if abilTundraBlast:CanActivate() then
 			local abilTundraBlast = skills.abilTundraBlast
 			local nRadius = botBrain.GetTundraBlastRadius()
-			local nRange = skills.abilTundraBlast and skills.abilTundraBlast:GetRange() or nil
+			local nRange = (skills.abilTundraBlast ~= nil and skills.abilTundraBlast:GetRange()) or nil
 			local vecTarget = core.AoETargeting(unitSelf, nRange, nRadius, true, unitTarget, core.enemyTeam, nil)
 				
 			if vecTarget then
@@ -323,10 +323,10 @@ local function funcFindItemsOverride(botBrain)
 		return
 	end
 
-	local inventory = core.unitSelf:GetInventory(true)
-	for slot = 1, 12, 1 do
+	local inventory = core.unitSelf:GetInventory(false)
+	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
-		if curItem then
+		if curItem and not curItem:IsRecipe() then
 			if core.itemSheepstick == nil and curItem:GetName() == "Item_Morph" then
 				core.itemSheepstick = core.WrapInTable(curItem)
 			end

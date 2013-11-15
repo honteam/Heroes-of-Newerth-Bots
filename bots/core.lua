@@ -1166,7 +1166,7 @@ function core.InventoryContains(inventory, val, bIgnoreRecipes, bIncludeStash)
 	
 	for slot = 1, nLast, 1 do
 		local curItem = inventory[slot]
-		if curItem then
+		if curItem and not curItem:IsRecipe() then
 			--Echo(format("%d - Type:%s  Name:%s", slot, type(curItem), (curItem.GetName and curItem:GetName()) or "ERROR"))
 			--if type(curItem) == "table" then
 			--	printTable(curItem)

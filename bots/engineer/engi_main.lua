@@ -383,7 +383,7 @@ local function funcFindItemsOverride(botBrain)
 	local inventory = core.unitSelf:GetInventory(false)
 	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
-		if curItem then
+		if curItem and not curItem:IsRecipe() then
 			if core.itemSheepstick == nil and curItem:GetName() == "Item_Morph" then
 				core.itemSheepstick = core.WrapInTable(curItem)
 			end

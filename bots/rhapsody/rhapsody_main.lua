@@ -319,7 +319,7 @@ local function funcFindItemsOverride(botBrain)
 	local inventory = core.unitSelf:GetInventory(false)
 	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
-		if curItem then
+		if curItem and not curItem:IsRecipe() then
 			if core.itemShrunkenHead == nil and curItem:GetName() == "Item_Immunity" then
 				core.itemShrunkenHead = core.WrapInTable(curItem)
 			end
