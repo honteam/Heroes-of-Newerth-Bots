@@ -292,8 +292,8 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 	"# Item" is "get # of these"
 	"Item #" is "get this level of the item" --]]
 behaviorLib.StartingItems = {"Item_LoggersHatchet", "Item_IronBuckler", "Item_RunesOfTheBlight"}
-behaviorLib.LaneItems = {"Item_Marchers", "Item_Strength5", "Item_Steamboots", "Item_Strength6"} --Item_Strength6 is Frostbrand
-behaviorLib.MidItems = {"Item_Immunity", "Item_StrengthAgility", "Item_Insanitarius"} --Immunity is Shrunken Head, Item_StrengthAgility is Frostburn
+behaviorLib.LaneItems = {"Item_Marchers", "Item_Strength5", "Item_Steamboots", "Item_ElderParasite", "Item_Insanitarius"} --Item_Strength6 is Frostbrand
+behaviorLib.MidItems = {"Item_Strength6", "Item_Immunity", "Item_StrengthAgility" } --Immunity is Shrunken Head, Item_StrengthAgility is Frostburn
 behaviorLib.LateItems = {"Item_SolsBulwark", "Item_DaemonicBreastplate", "Item_BehemothsHeart", "Item_Damage9"} --Item_Damage9 is doombringer
 
 
