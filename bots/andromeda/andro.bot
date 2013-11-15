@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+    name="Andro"
+    description=""
+    heroname="Hero_Andromeda"
+    rootlua="andro_main.lua"
+    defaultplayername="AndromedaBot"
+    precachepath="/heroes/andromeda/"
+/>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="WardenBot"
+	description="Emerald warden AI"
+	heroname="Hero_EmeraldWarden"
+	rootlua="warden_main.lua"
+	defaultplayername="WardenBot"
+	precachepath="/heroes/emerald_warden/"
+/>

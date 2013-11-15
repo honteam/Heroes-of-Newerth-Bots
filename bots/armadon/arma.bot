@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="Armadon"
+	description="I AM Armadon !"
+	heroname="Hero_Armadon"
+	rootlua="arma_main.lua"
+	defaultplayername="ArmadonBot"
+	precachepath="/heroes/armadon"
+/>

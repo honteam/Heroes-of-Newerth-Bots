@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="GokuMonkeyKing"
+	description=":D My Second Bot"
+	heroname="Hero_MonkeyKing"
+	rootlua="goku_monkey_king_main.lua"
+	defaultplayername="Gokuu"
+	precachepath="/heroes/monkey_king/"
+/>

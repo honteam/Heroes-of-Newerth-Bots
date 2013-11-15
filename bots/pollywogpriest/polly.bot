@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+    name="Polly"
+    description="The bot that caused all future problems"
+    heroname="Hero_PollywogPriest"
+    rootlua="polly_main.lua"
+    defaultplayername="Pollywog"
+    precachepath="/heroes/pollywogpriest"
+/>

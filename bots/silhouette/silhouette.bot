@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="SilhouetteBot"
+	description="tchackie's Silhouette Bot"
+	heroname="Hero_Silhouette"
+	rootlua="silhouette_main.lua"
+	defaultplayername="SilhouetteBot"
+	precachepath="/heroes/silhouette/"
+/>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="nomadbot"
+	description="nomad mid gg"
+	heroname="Hero_Nomad"
+	rootlua="nomad_main.lua"
+	defaultplayername="NomadBot"
+	precachepath="/heroes/nomad"
+/>
