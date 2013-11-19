@@ -725,14 +725,15 @@ behaviorLib.RetreatFromThreatBehavior["Utility"] = CustomRetreatFromThreatUtilit
 ------------------------------------------------------------------
 --Retreat execute
 ------------------------------------------------------------------
-local function funcRetreatFromThreatExecuteOverride(botBrain)
+--  this is a great function to override with using retreating skills, such as blinks, travels, stuns or slows.
+function behaviorLib.CustomRetreatExecute(botBrain)
+	bActionTaken = false
 
 	local unitSelf = core.unitSelf
 	local unitTarget = behaviorLib.heroTarget
-
 	local vecRetreatPos = behaviorLib.PositionSelfBackUp()
 	local nlastRetreatUtil = behaviorLib.lastRetreatUtil
-
+	
 	--Counting the enemies
 	local tEnemies = core.localUnits["EnemyHeroes"]
 	local nCount = 0
@@ -751,12 +752,11 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 		local itemPortalKey = core.itemPortalKey
 		if itemPortalKey and nlastRetreatUtil >= object.nPKTRetreathreshold then
 			if itemPortalKey:CanActivate()  then
-				core.OrderItemPosition(botBrain, unitSelf, itemPortalKey, vecRetreatPos)
-				return
+				bActionTaken = core.OrderItemPosition(botBrain, unitSelf, itemPortalKey, vecRetreatPos)
 			end
 		end
 
-		if bCanSeeUnit then
+		if not bActionTaken and bCanSeeUnit then
 			local vecMyPosition = unitSelf:GetPosition()
 			local vecTargetPosition = unitTarget:GetPosition()
 			local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
@@ -764,12 +764,11 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 
 			--Sheepstick
 			local itemSheepstick = core.itemSheepstick
-			if itemSheepstick and not bTargetVuln then
+			if not bActionTaken and itemSheepstick and not bTargetVuln then
 				local nRange = itemSheepstick:GetRange()
 				if itemSheepstick:CanActivate() then
 					if nTargetDistanceSq < (nRange * nRange) then
-						core.OrderItemEntityClamp(botBrain, unitSelf, itemSheepstick, unitTarget)
-						return
+						bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, itemSheepstick, unitTarget)
 					end
 				end
 			end
@@ -777,23 +776,21 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 			--Stun
 			local abilCorpseToss = skills.abilCorpseToss
 			local nNow = HoN.GetGameTime()
-			if abilCorpseToss:CanActivate() and (nNow > object.nOneCorpseTossUseTime + 900) then
+			if not bActionTaken and abilCorpseToss:CanActivate() and (nNow > object.nOneCorpseTossUseTime + 900) then
 				if not bTargetVuln or (nNow < object.nOneCorpseTossUseTime + 1050) then
 					local nRange = abilCorpseToss:GetRange()
 					if nTargetDistanceSq < (nRange * nRange) then
-						core.OrderAbilityEntity(botBrain, abilCorpseToss, unitTarget)
-						return
+						bActionTaken = core.OrderAbilityEntity(botBrain, abilCorpseToss, unitTarget)
 					end
 				end
 			end
 
 			--Frostfield Plate
 			local itemFrostfieldPlate = core.itemFrostfieldPlate
-			if itemFrostfieldPlate then
+			if not bActionTaken and itemFrostfieldPlate then
 				local nRange = itemFrostfieldPlate:GetTargetRadius()
 				if itemFrostfieldPlate:CanActivate() and nTargetDistanceSq < (nRange * nRange) then
-					core.OrderItemClamp(botBrain, unitSelf, itemFrostfieldPlate)
-					return
+					bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemFrostfieldPlate)
 				end
 			end
 		end
@@ -802,35 +799,29 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 
 	--Activate ghost marchers if we can
 	local itemGhostMarchers = core.itemGhostMarchers
-	if itemGhostMarchers and itemGhostMarchers:CanActivate() and behaviorLib.lastRetreatUtil >= behaviorLib.retreatGhostMarchersThreshold then
-		core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
-		return
+	if not bActionTaken and itemGhostMarchers and itemGhostMarchers:CanActivate() and behaviorLib.lastRetreatUtil >= behaviorLib.retreatGhostMarchersThreshold then
+		bActionTaken = core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
 	end
 
 	--Just use Tablet if you are in great danger
 	local itemTablet = core.itemTablet
-	if itemTablet then
+	if not bActionTaken and itemTablet then
 		if itemTablet:CanActivate() and nlastRetreatUtil >= object.nTabletRetreatTreshold then
 			--TODO: GetHeading math to ensure we're actually going backwards
-			core.OrderItemEntityClamp(botBrain, unitSelf, itemTablet, unitSelf)
-			return
+			bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, itemTablet, unitSelf)
 		end
 	end
 
 	--Use Sacreficial Stone
 	--TODO: remove all sac stone usage into its own behavior
 	local itemSacStone = core.itemSacStone
-	if itemSacStone and itemSacStone:CanActivate() then
-		core.OrderItemClamp(botBrain, unitSelf, itemSacStone)
-		return
+	if not bActionTaken and itemSacStone and itemSacStone:CanActivate() then
+		bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemSacStone)
 	end
-
-	core.OrderMoveToPosClamp(botBrain, core.unitSelf, vecRetreatPos, false)
+	bActionTaken = core.OrderMoveToPosClamp(botBrain, core.unitSelf, vecRetreatPos, false)
+	
+	return bActionTaken
 end
-
-object.RetreatFromThreatExecuteOld = behaviorLib.RetreatFromThreatExecute
-behaviorLib.RetreatFromThreatBehavior["Execute"] = funcRetreatFromThreatExecuteOverride
-
 
 
 ----------------------------------
@@ -990,7 +981,7 @@ local function funcFindItemsOverride(botBrain)
 	local inventory = core.unitSelf:GetInventory(true)
 	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
-		if curItem then
+		if curItem and not curItem:IsRecipe() then
 			if core.itemPostHaste == nil and curItem:GetName() == "Item_PostHaste" then
 				core.itemPostHaste = core.WrapInTable(curItem)
 			elseif core.itemTablet == nil and curItem:GetName() == "Item_PushStaff" then

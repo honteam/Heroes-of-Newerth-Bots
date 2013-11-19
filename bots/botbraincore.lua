@@ -886,7 +886,7 @@ function core.FindItems(botBrain)
 	local inventory = unitSelf:GetInventory(false)
 	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
-		if curItem then
+		if curItem and not curItem:IsRecipe() then
 			if core.itemGhostMarchers == nil and curItem:GetName() == "Item_EnhancedMarchers" then
 				core.itemGhostMarchers = core.WrapInTable(curItem)
 				core.itemGhostMarchers.expireTime = 0
