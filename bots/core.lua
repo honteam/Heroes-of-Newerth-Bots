@@ -1181,19 +1181,29 @@ function core.InventoryContains(inventory, val, bIgnoreRecipes, bIncludeStash)
     return tableOfThings
 end
 
+core.tFoundItems = {}
 --Finds an item on your hero.
 function core.GetItem(val, bIncludeStash)
-	inventory = core.unitSelf:GetInventory()
-	if bIncludeStash == nil then
-		bIncludeStash = false
+	if core.tFoundItems[val] then -- We have checked the item before. Validate it.
+		core.ValidateItem(core.tFoundItems[val])
+		if core.tFoundItems[val] then -- still valid, return it
+			return core.tFoundItems[val]
+		end
 	end
-	local nLast = (bIncludeStash and 12) or 6
-	for slot = 1, nLast, 1 do
-		local curItem = inventory[slot]
-		if curItem then
-			if curItem:GetTypeName() == val and not curItem:IsRecipe() then --ignore recipies!
-				--BotEcho("Found " .. val)
-				return core.WrapInTable(curItem)
+
+	--First time seeing the item, or it was invalidated.
+	if not core.tFoundItems[val] then
+		inventory = core.unitSelf:GetInventory()
+		if bIncludeStash == nil then
+			bIncludeStash = false
+		end
+		local nLast = (bIncludeStash and 12) or 6
+		for slot = 1, nLast, 1 do
+			local curItem = inventory[slot]
+			if curItem then
+				if curItem:GetTypeName() == val and not curItem:IsRecipe() then --ignore recipes!
+					return core.WrapInTable(curItem)
+				end
 			end
 		end
 	end
