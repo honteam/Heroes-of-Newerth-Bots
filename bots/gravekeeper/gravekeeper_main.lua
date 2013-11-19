@@ -752,12 +752,11 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 		local itemPortalKey = core.itemPortalKey
 		if itemPortalKey and nlastRetreatUtil >= object.nPKTRetreathreshold then
 			if itemPortalKey:CanActivate()  then
-				core.OrderItemPosition(botBrain, unitSelf, itemPortalKey, vecRetreatPos)
-				return core.OrderItemPosition(botBrain, unitSelf, itemPortalKey, vecRetreatPos)
+				bActionTaken = core.OrderItemPosition(botBrain, unitSelf, itemPortalKey, vecRetreatPos)
 			end
 		end
 
-		if bCanSeeUnit then
+		if not bActionTaken and bCanSeeUnit then
 			local vecMyPosition = unitSelf:GetPosition()
 			local vecTargetPosition = unitTarget:GetPosition()
 			local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
@@ -765,11 +764,11 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 
 			--Sheepstick
 			local itemSheepstick = core.itemSheepstick
-			if itemSheepstick and not bTargetVuln then
+			if not bActionTaken and itemSheepstick and not bTargetVuln then
 				local nRange = itemSheepstick:GetRange()
 				if itemSheepstick:CanActivate() then
 					if nTargetDistanceSq < (nRange * nRange) then
-						return core.OrderItemEntityClamp(botBrain, unitSelf, itemSheepstick, unitTarget)
+						bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, itemSheepstick, unitTarget)
 					end
 				end
 			end
@@ -777,21 +776,21 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 			--Stun
 			local abilCorpseToss = skills.abilCorpseToss
 			local nNow = HoN.GetGameTime()
-			if abilCorpseToss:CanActivate() and (nNow > object.nOneCorpseTossUseTime + 900) then
+			if not bActionTaken and abilCorpseToss:CanActivate() and (nNow > object.nOneCorpseTossUseTime + 900) then
 				if not bTargetVuln or (nNow < object.nOneCorpseTossUseTime + 1050) then
 					local nRange = abilCorpseToss:GetRange()
 					if nTargetDistanceSq < (nRange * nRange) then
-						return core.OrderAbilityEntity(botBrain, abilCorpseToss, unitTarget)
+						bActionTaken = core.OrderAbilityEntity(botBrain, abilCorpseToss, unitTarget)
 					end
 				end
 			end
 
 			--Frostfield Plate
 			local itemFrostfieldPlate = core.itemFrostfieldPlate
-			if itemFrostfieldPlate then
+			if not bActionTaken and itemFrostfieldPlate then
 				local nRange = itemFrostfieldPlate:GetTargetRadius()
 				if itemFrostfieldPlate:CanActivate() and nTargetDistanceSq < (nRange * nRange) then
-					return core.OrderItemClamp(botBrain, unitSelf, itemFrostfieldPlate)
+					bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemFrostfieldPlate)
 				end
 			end
 		end
@@ -800,28 +799,28 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 
 	--Activate ghost marchers if we can
 	local itemGhostMarchers = core.itemGhostMarchers
-	if itemGhostMarchers and itemGhostMarchers:CanActivate() and behaviorLib.lastRetreatUtil >= behaviorLib.retreatGhostMarchersThreshold then
-		return core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
+	if not bActionTaken and itemGhostMarchers and itemGhostMarchers:CanActivate() and behaviorLib.lastRetreatUtil >= behaviorLib.retreatGhostMarchersThreshold then
+		bActionTaken = core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
 	end
 
 	--Just use Tablet if you are in great danger
 	local itemTablet = core.itemTablet
-	if itemTablet then
+	if not bActionTaken and itemTablet then
 		if itemTablet:CanActivate() and nlastRetreatUtil >= object.nTabletRetreatTreshold then
 			--TODO: GetHeading math to ensure we're actually going backwards
-			return core.OrderItemEntityClamp(botBrain, unitSelf, itemTablet, unitSelf)
+			bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, itemTablet, unitSelf)
 		end
 	end
 
 	--Use Sacreficial Stone
 	--TODO: remove all sac stone usage into its own behavior
 	local itemSacStone = core.itemSacStone
-	if itemSacStone and itemSacStone:CanActivate() then
-		return core.OrderItemClamp(botBrain, unitSelf, itemSacStone)
+	if not bActionTaken and itemSacStone and itemSacStone:CanActivate() then
+		bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemSacStone)
 	end
-	core.OrderMoveToPosClamp(botBrain, core.unitSelf, vecRetreatPos, false)
+	bActionTaken = core.OrderMoveToPosClamp(botBrain, core.unitSelf, vecRetreatPos, false)
 	
-	return false
+	return bActionTaken
 end
 
 
