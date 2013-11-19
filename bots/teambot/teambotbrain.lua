@@ -748,7 +748,7 @@ function object.CalculateThreat(unitHero)
 	
 	local nMoveSpeedThreat = unitHero:GetMoveSpeed() * 0.5
 	local nRangeThreat = unitHero:GetAttackRange() * 0.5
-	local nSpellThreat = unitHero:GetManaPercent() * 100
+	local nSpellThreat = unitHero:GetManaPercent() * 50
 	
 	local nThreat = nDPSThreat + nMoveSpeedThreat + nRangeThreat + nSpellThreat -- + nCustomThreat
 		
@@ -764,7 +764,7 @@ function object.CalculateDefense(unitHero)
 	local nPhysicalReduction = unitHero:GetPhysicalResistance()
 	
 	--This is obviously not strictly accurate, but this will be effective for our utility calculations
-	local nHealthDefense = nHealth + (nHealth * nMagicReduction) + (nHealth * nPhysicalReduction)
+	local nHealthDefense = nHealth * (1 + (nPhysicalReduction + nMagicReduction) / 2)
 	nHealthDefense = nHealthDefense * 1.20
 	
 	if bDebugEchos then 

@@ -134,13 +134,10 @@ function behaviorLib.PositionSelfCreepWave(botBrain, unitCurrentTarget)
 			vecHeroDir = vecHeroDir * nHeroInfluencePercent + vecBackwards * (1 - nHeroInfluencePercent)
 
 			--Calculate their lethality utility
-			local nThreat = funcGetThreat(unitEnemy)
-			local nDefense = funcGetDefense(unitEnemy)
-			local nLethalityDifference = (nThreat - nMyDefense) - (nMyThreat - nDefense) 
-			local nBaseMul = 1 + (Clamp(funcLethalityUtility(nLethalityDifference), 0, 100) / 50)
-			local nLength = nBaseMul * nDistanceMul
+			local nLength = 4 * -behaviorLib.nConfidence * nDistanceMul
 			
-			vecEnemyInfluence = vecHeroDir * nLength * nPositionHeroInfluenceMul			
+			vecEnemyInfluence = vecHeroDir * nLength * nPositionHeroInfluenceMul
+			core.DrawDebugArrow(unitSelf:GetPosition(), unitSelf:GetPosition()+vecEnemyInfluence, 'blue')
 			StopProfile()
 		end
 		
@@ -291,6 +288,8 @@ function behaviorLib.PositionSelfTraverseLane(botBrain)
 	else
 		BotEcho('PositionSelfTraverseLane - unable to get my lane!')
 	end
+	
+	
 
 	if bDebugLines then
 		core.DrawDebugArrow(myPos, desiredPos, 'white')
@@ -422,7 +421,7 @@ function behaviorLib.PositionSelfLogic(botBrain)
 	local vecLanePosition = behaviorLib.PositionSelfTraverseLane(botBrain)
 	local nLaneDistanceSq =  Vector3.Distance2DSq(vecLanePosition, vecMyPos)
 	
-	--if we are massivly out of position, ignore the other positioning logic and just go
+	--if we are massively out of position, ignore the other positioning logic and just go
 	if nLaneDistanceSq < core.nOutOfPositionRangeSq then
 		if not vecDesiredPos and core.NumberElements(tLocalUnits["EnemyUnits"]) > 0 then
 			if bDebugEchos then BotEcho("PositionSelfCreepWave") end
@@ -1372,20 +1371,25 @@ function behaviorLib.ProxToEnemyTowerUtility(unit, unitClosestEnemyTower)
 	local nUtility = 0
 
 	if unitClosestEnemyTower then
-		local nDist = Vector3.Distance2D(unitClosestEnemyTower:GetPosition(), unit:GetPosition())
+		--local nDist = Vector3.Distance2D(unitClosestEnemyTower:GetPosition(), unit:GetPosition())
+		local nDistSq = Vector3.Distance2D(unitClosestEnemyTower:GetPosition(), unit:GetPosition())
 		local nTowerRange = core.GetAbsoluteAttackRangeToUnit(unitClosestEnemyTower, unit)
 		local nBuffers = unit:GetBoundsRadius() + unitClosestEnemyTower:GetBoundsRadius()
 
-		nUtility = -1 * core.ExpDecay((nDist - nBuffers), 100, nTowerRange, 2)
+		if (nDistSq < (nTowerRange + nBuffers) * (nTowerRange + nBuffers)) then
+			return -200
+		end
+		--nUtility = -1 * core.ExpDecay((nDist - nBuffers), 100, nTowerRange, 2)
 		
-		nUtility = nUtility * 0.32
+		--nUtility = nUtility * 0.32
 		
-		if bDebugEchos then BotEcho(format("util: %d  nDistance: %d  nTowerRange: %d", nUtility, (nDist - nBuffers), nTowerRange)) end
+		--if bDebugEchos then BotEcho(format("util: %d  nDistance: %d  nTowerRange: %d", nUtility, (nDist - nBuffers), nTowerRange)) end
 	end
 	
-	nUtility = Clamp(nUtility, -100, 0)
+	--nUtility = Clamp(nUtility, -200, 0)
 
-	return nUtility
+	--return nUtility
+	return 0
 end
 
 function behaviorLib.AttackAdvantageUtility(unitSelf, unitTarget)
@@ -1479,9 +1483,11 @@ behaviorLib.rangedHarassBuffer = 300
 
 behaviorLib.harassUtilityWeight = 1.0
 
+behaviorLib.nConfidence = 0
+
 function behaviorLib.HarassHeroUtility(botBrain)
 	local bDebugEchos = false
-	
+	behaviorLib.nConfidence = 0
 	--if core.unitSelf:GetTypeName() == "Hero_Predator" then bDebugEchos = true end
 		
 	local nUtility = 0
@@ -1508,13 +1514,15 @@ function behaviorLib.HarassHeroUtility(botBrain)
 		local tLocalAllies = core.CopyTable(core.localUnits["AllyHeroes"])
 		tLocalAllies[unitSelf:GetUniqueID()] = unitSelf --include myself in the threat calculations
 		local nTotalAllyThreat = 0
+		local nTotalAllyDefense = 0
 		local nMyThreat = 0
 		local nMyDefense = 0
 				
 		local nTotalEnemyThreat = 0
+		local nTotalEnemyDefense = 0
 		local nLowestEnemyDefense = 999999
 		local unitWeakestEnemy = nil
-		local nHighestEnemyThreat = 0
+		--local nHighestEnemyThreat = 0
 
 		--local references to loop functions, to increase performance
 		local nHarassBonus = core.nHarassBonus
@@ -1529,17 +1537,27 @@ function behaviorLib.HarassHeroUtility(botBrain)
 		
 		local nMyProxToEnemyTowerUtility = funcProxToEnemyTowerUtility(unitSelf, unitClosestEnemyTower)
 		
+		-- Towers add DPS
+		local unitClosestAllyTower = core.GetClosestAllyTower(vecMyPosition)
+		if core.IsUnitInRange(unitSelf, unitClosestAllyTower, 900) then
+			nTotalAllyThreat = nTotalAllyThreat + funcGetThreat()
+		end
+		if core.IsUnitInRange(unitSelf, unitClosestEnemyTower, 900) then
+			nTotalEnemyThreat = nTotalEnemyThreat + funcGetThreat(unitClosestEnemyTower)
+		end
+		
 		if bDebugEchos then BotEcho("HarassHeroNew") end
 		
 		--Enemies
 		for nID, unitEnemy in pairs(tLocalEnemies) do
 			local nThreat = funcGetThreat(unitEnemy)
 			nTotalEnemyThreat = nTotalEnemyThreat + nThreat
-			if nThreat > nHighestEnemyThreat then
-				nHighestEnemyThreat = nThreat
-			end
+			--if nThreat > nHighestEnemyThreat then -- not used yet
+			--	nHighestEnemyThreat = nThreat
+			--end
 			
 			local nDefense = funcGetDefense(unitEnemy)
+			nTotalEnemyDefense = nTotalEnemyDefense + nDefense
 			if nDefense < nLowestEnemyDefense then
 				nLowestEnemyDefense = nDefense
 				unitWeakestEnemy = unitEnemy
@@ -1558,7 +1576,7 @@ function behaviorLib.HarassHeroUtility(botBrain)
 		for nID, unitAlly in pairs(tLocalAllies) do
 			local vecTowardsAlly, nDistance = Vector3.Normalize(unitAlly:GetPosition() - vecMyPosition)
 			
-			if nDistance <= nAllyThreatRange then
+			if nDistance <= nAllyThreatRange and unitAlly ~= unitSelf then
 				local nThreat = funcGetThreat(unitAlly)
 				
 				if unitAlly:GetUniqueID() ~= nMyID then
@@ -1577,26 +1595,36 @@ function behaviorLib.HarassHeroUtility(botBrain)
 					nMyThreat = nThreat
 				end
 				
+				nTotalAllyDefense = nTotalAllyDefense + funcGetDefense(unitAlly)
 				nTotalAllyThreat = nTotalAllyThreat + nThreat
 				if bDebugEchos then BotEcho(nID..": "..unitAlly:GetTypeName().."  threat: "..Round(nThreat)) end
-			end			
+			end
 		end
 		--if bDebugEchos then BotEcho("totalAllyThreat: "..Round(nTotalAllyThreat)) end
 
 		nMyDefense = funcGetDefense(unitSelf)
+		nMyThreat = funcGetThreat(unitSelf)
 		if bDebugEchos then BotEcho("myDefense: "..Round(nMyDefense)) end
+		
+		-- give yourself 2x the priority of other bots, but scale the total accordingly.
+		nNumAllies = core.NumberElements(tLocalAllies) -- normally 5
+		nScale = (nNumAllies - 1) / nNumAllies -- normally 4/5
+		nTotalAllyDefense = nTotalAllyDefense * nScale + nMyDefense * (1 + (1 - nScale)) -- normally 3 parts team, 2 parts you
+		nTotalAllyThreat = nTotalAllyThreat * nScale + nMyThreat * (1 + (1 - nScale)) -- normally 3 parts team, 2 parts you
 		
 		local nAllyLethality = 0
 		local nEnemyLethality = 0
 		local nLethalityDifference = 0
 		if unitTarget ~= nil then
-			nAllyLethality = nTotalAllyThreat - nLowestEnemyDefense
-			nEnemyLethality = nTotalEnemyThreat - nMyDefense
+			nAllyLethality = nTotalAllyThreat + nTotalAllyDefense
+			nEnemyLethality = nTotalEnemyThreat + nTotalEnemyDefense
 			
 			--nAllyLethality = nMyThreat - nLowestEnemyDefense
 			--nEnemyLethality = nHighestEnemyThreat - nMyDefense
 			
 			nLethalityDifference = nAllyLethality - nEnemyLethality
+			behaviorLib.nConfidence = Clamp(funcLethalityDifferenceUtility(nLethalityDifference / 2) + 10, -100, 100) --always be slightly aggressive.
+			--BotEcho(behaviorLib.nConfidence)
 		end
 		
 		if bDebugEchos then BotEcho("AllyLethality: "..nAllyLethality.."  EnemyLethality "..nEnemyLethality) end
@@ -2819,7 +2847,7 @@ function behaviorLib.RetreatFromThreatUtility(botBrain)
 			break
 		end
 	end
-	if (unitSelf:GetHealth() > 1000 and unitSelf:GetHealthRegen() > 3) then
+	if (unitSelf:GetHealth() > 1000 and unitSelf:GetHealthPercent() > 0.95 and unitSelf:GetHealthRegen() > 2) then
 		nCreepAggroUtility = nCreepAggroUtility / (unitSelf:GetHealthRegen() * 2)
 	end
 
@@ -2860,6 +2888,7 @@ function behaviorLib.RetreatFromThreatUtility(botBrain)
 		nUtility = nUtility - (behaviorLib.heroTarget:GetMoveSpeed() - unitSelf:GetMoveSpeed()) --if they can out run us because we are slowed, take that into account
 	end
 	
+	nUtility = nUtility - behaviorLib.nConfidence / 4
 	nUtility = Clamp(nUtility, 0, 100)
 	behaviorLib.lastRetreatUtil = nUtility
 
