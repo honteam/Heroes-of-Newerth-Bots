@@ -2765,15 +2765,18 @@ end
 --------------------------------------------------
 --          RetreatFromThreat Override          --
 --------------------------------------------------
-behaviorLib.nOldRetreatFactor = 0.9--Decrease the value of the normal retreat behavior
-behaviorLib.nMaxLevelDifference = 4--Ensure hero will not be too carefull
-behaviorLib.nEnemyBaseThreat = 6--Base threat. Level differences and distance alter the actual threat level.
+behaviorLib.nOldRetreatFactor = 0.9 --Decrease the value of the normal retreat behavior
+behaviorLib.nMaxLevelDifference = 4 --Ensure hero will not be too carefull
+behaviorLib.nEnemyBaseThreat = 6 --Base threat. Level differences and distance alter the actual threat level.
 
 --This function returns the position of the enemy hero.
 --If he is not shown on map it returns the last visible spot
 --as long as it is not older than 10s
 function behaviorLib.funcGetEnemyPosition(unitEnemy)
-	if unitEnemy == nil  then return Vector3.Create(20000, 20000) end 
+	if unitEnemy == nil then 
+		return Vector3.Create(20000, 20000)
+	end
+	
 	local tEnemyPosition = core.tEnemyPosition
 	local tEnemyPositionTimestamp = core.tEnemyPositionTimestamp
 	if tEnemyPosition == nil then
@@ -2790,32 +2793,47 @@ function behaviorLib.funcGetEnemyPosition(unitEnemy)
 		end
 		
 	end
+	
 	local vecPosition = unitEnemy:GetPosition()
+	
 	--enemy visible?
 	if vecPosition then
 		--update table
 		tEnemyPosition[unitEnemy:GetUniqueID()] = unitEnemy:GetPosition()
 		tEnemyPositionTimestamp[unitEnemy:GetUniqueID()] = HoN.GetGameTime()
 	end
+	
 	--return position, 10s memory
 	if tEnemyPositionTimestamp[unitEnemy:GetUniqueID()] <= HoN.GetGameTime() + 10000 then
 		return tEnemyPosition[unitEnemy:GetUniqueID()]
-	else
-		return Vector3.Create(20000, 20000)
 	end
+		
+	return Vector3.Create(20000, 20000)
 end
 
 function behaviorLib.funcGetThreatOfEnemy(unitEnemy)
-	if unitEnemy == nil or not unitEnemy:IsAlive() then return 0 end
+	if unitEnemy == nil or not unitEnemy:IsAlive() then 
+		return 0 
+	end
+	
 	local unitSelf = core.unitSelf
 	local nDistanceSq = Vector3.Distance2DSq(unitSelf:GetPosition(), behaviorLib.funcGetEnemyPosition (unitEnemy))
-	if nDistanceSq > 4000000 then return 0 end			
+	if nDistanceSq > 2000 * 2000 then 
+		return 0 
+	end
+	
 	local nMyLevel = unitSelf:GetLevel()
 	local nEnemyLevel = unitEnemy:GetLevel()
+
 	--Level differences increase / decrease actual nThreat
 	local nThreat = behaviorLib.nEnemyBaseThreat + Clamp(nEnemyLevel - nMyLevel, 0, behaviorLib.nMaxLevelDifference)
-	--Magic-Formel: Threat to Range, T(700Â²) = 2, T(1100Â²) = 1.5, T(2000Â²)= 0.75
-	nThreat = Clamp(3*(112810000-nDistanceSq) / (4*(19*nDistanceSq+32810000)),0.75,2) * nThreat
+	
+	--Magic-Formel: Threat to Range, T(700²) = 2, T(1100²) = 1.5, T(2000²)= 0.75
+	-- Magic numbers are awful. You can totally represent the 0.75 <= y <= 2 portion with a linear function
+	-- To see the graph, punch "graph y = (3 * ((-1) * x^2+ 112810000)) / (4 * (  19 * x^2 +  32810000))" into Google.
+	-- This is something that perhaps should be looked into simplifying.
+
+	nThreat = Clamp(3 * (112810000 - nDistanceSq) / (4 * (19 * nDistanceSq + 32810000)), 0.75, 2) * nThreat
 	return nThreat
 end
 
@@ -2871,23 +2889,25 @@ function behaviorLib.RetreatFromThreatUtility(botBrain)
 	if botBrain.bDebugUtility == true and nUtility ~= 0 then
 		BotEcho(format("  RetreatFromThreatUtility: %g", nUtility))
 	end
-	--New code starts here.
-	nUtility=nUtility * behaviorLib.nOldRetreatFactor
+	
+	nUtility = nUtility * behaviorLib.nOldRetreatFactor
 	
 	local nUtilityOld = behaviorLib.lastRetreatUtil
 	--decay with a maximum of 4 utility points per frame to ensure a longer retreat time
-	if nUtilityOld > nUtility +4 then
-		nUtility = nUtilityOld -4
+	if nUtilityOld > nUtility + 4 then
+		nUtility = nUtilityOld - 4
 	end
 	
 	--bonus of allies decrease fear
 	local allies = core.localUnits["AllyHeroes"]
 	local nAllies = core.NumberElements(allies) + 1
+	
 	--get enemy heroes
 	local tEnemyTeam = HoN.GetHeroes(core.enemyTeam)
+	
 	--calculate the threat-value and increase utility value
 	for id, enemy in pairs(tEnemyTeam) do
-		nUtility = nUtility + behaviorLib.funcGetThreatOfEnemy(enemy) / nAllies
+		nUtility = nUtility + (behaviorLib.funcGetThreatOfEnemy(enemy) / nAllies)
 	end
 	return Clamp(nUtility, 0, 100)
 end
