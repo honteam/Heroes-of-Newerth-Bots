@@ -217,6 +217,17 @@ behaviorLib.CustomHarassUtility = CustomHarassUtilityFnOverride
 ----------------------------------
 --	Maliken harass actions
 ----------------------------------
+
+function object.isMagicImmune(unit)
+	local states = { "State_Item3E", "State_Predator_Ability2", "State_Jereziah_Ability2", "State_Rampage_Ability1_Self", "State_Rhapsody_Ability4_Buff", "State_Hiro_Ability1" }
+	for _, state in ipairs(states) do
+		if unit:HasState(state) then
+			return true
+		end
+	end
+	return false
+end
+
 object.nSwordThrownTime = 0
 object.nSwordProjectileSpeed = 850
 object.vecSwordSource = nil
@@ -228,6 +239,9 @@ local function HarassHeroExecuteOverride(botBrain)
 	
 	local vecMyPosition = unitSelf:GetPosition()
 	local vecTargetPosition = unitTarget:GetPosition()
+	if not unitTarget or not vecTargetPosition then
+		return false
+	end
 	local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
 	
 	local nLastHarassUtility = behaviorLib.lastHarassUtil
@@ -238,7 +252,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	--Sword Throw
 	if nLastHarassUtility > botBrain.nSwordThrowThreshold then
 		local abilSwordThrow = skills.abilSwordThrow
-		if abilSwordThrow:CanActivate() and object.nSwordThrownTime + 5000 < HoN:GetGameTime() and vecTargetPosition then
+		if abilSwordThrow:CanActivate() and object.nSwordThrownTime + 5000 < HoN:GetGameTime() and vecTargetPosition and not object.isMagicImmune(unitTarget) then
 			local nEstimatedPosition = vecTargetPosition + unitTarget:GetHeading() * 100 -- this could be precise, however that would require a sqrt. Perhaps I'll make a Lib.
 			bActionTaken = core.OrderAbilityPosition(botBrain, abilSwordThrow, nEstimatedPosition)
 			if (bActionTaken) then
@@ -293,6 +307,7 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 	local abilSwordThrow = skills.abilSwordThrow
 	local unitSelf = core.unitSelf
 	if abilSwordThrow:CanActivate() and behaviorLib.lastRetreatUtil > object.nSwordThrowRetreatThreshold and not vecSwordPosition and object.nSwordThrownTime + 5000 < HoN:GetGameTime() then
+		--TODO: Use blinkLib in this when available.
 		local nEstimatedPosition = exterpolate(unitSelf:GetPosition(),core.allyWell:GetPosition(), 600 + 150 * skills.abilSwordThrow:GetLevel()) -- this could be precise, however that would require a sqrt. Perhaps I'll make a Lib.
 		bActionTaken = core.OrderAbilityPosition(botBrain, abilSwordThrow, nEstimatedPosition)
 		if (bActionTaken) then
