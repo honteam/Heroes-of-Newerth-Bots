@@ -65,7 +65,8 @@ function object:SkillBuild()
 -- takes care at load/reload, <name_#> to be replaced by some convinient name.
     local unitSelf = self.core.unitSelf
     if  skills.abilStickyBomb == nil then
-        skills.abilStickyBomb = unitSelf:GetAbility(0)
+        skills.abilStickyBomb = core.WrapInTable(unitSelf:GetAbility(0))
+        skills.abilStickyBomb.nLastCastTime = 0
         skills.abilBombardment = unitSelf:GetAbility(1)
         skills.abilDust = core.WrapInTable(unitSelf:GetAbility(2))
         skills.abilDust.nLastCastTime = 0
@@ -110,11 +111,16 @@ object.nDustUp = 5
 object.nAirStrikeUp = 35
 object.nSheepstickUp = 20
 
-object.abilQUse = 20
-object.abilWUse = 20
-object.abilEUse = 0
-object.abilRUse = 45
-object.nSheepstickUse = 0
+object.nStickyBombUse = 20
+object.nBombardmentUse = 20
+object.nAirStrikeUse = 45
+object.nSheepstickUse = 15
+
+object.nStickyBombThreshold = 35
+object.nBombardmentThreshold = 35
+object.nDustThreshold = 5
+object.nAirStrikeThreshold = 60
+object.nSheepstickThreshold = 40
 
 local function AbilitiesUpUtility(hero)
 	local nUtility = 0
@@ -141,13 +147,6 @@ local function AbilitiesUpUtility(hero)
 	return nUtility
 end
 
---Hero ability use gives bonus to harass util for a while
-object.abilEUseTime = 0
-object.abilWUseTime = 0
-
---for ability que
-object.UseQ = false
-object.UseR = false
 function object:oncombateventOverride(EventData)
 	self:oncombateventOld(EventData)
 	
@@ -157,15 +156,11 @@ function object:oncombateventOverride(EventData)
 	if EventData.Type == "Ability" then
 		if bDebugEchos then BotEcho("  ABILILTY EVENT!  InflictorName: "..EventData.InflictorName) end
 		if EventData.InflictorName == "Ability_Bombardier1" then
-			nAddBonus = nAddBonus + object.abilQUse
+			nAddBonus = nAddBonus + object.nStickyBombUse
 		elseif EventData.InflictorName == "Ability_Bombardier2" then
-			nAddBonus = nAddBonus + object.abilWUse
-			object.abilWUseTime = EventData.TimeStamp
-		elseif EventData.InflictorName == "Ability_Bombardier3" then
-			nAddBonus = nAddBonus + object.abilEUse
-			object.abilEUseTime = EventData.TimeStamp
+			nAddBonus = nAddBonus + object.nBombardmentUse
 		elseif EventData.InflictorName == "Ability_Bombardier4" then
-			nAddBonus = nAddBonus + object.abilRUse
+			nAddBonus = nAddBonus + object.nAirStrikeUse
 		end
 	elseif EventData.Type == "Item" then
 		if core.itemSheepstick ~= nil and EventData.SourceUnit == core.unitSelf:GetUniqueID() and EventData.InflictorName == core.itemSheepstick:GetName() then
@@ -214,75 +209,52 @@ local function HarassHeroExecuteOverride(botBrain)
 	local nAggroValue = behaviorLib.lastHarassUtil
 	local bActionTaken = false
 
-	local Qup = skills.abilStickyBomb:CanActivate()
-	local Wup = skills.abilBombardment:CanActivate()
-	local Eup = skills.abilDust:CanActivate()
-	local Rup = skills.abilAirStrike:CanActivate()
+	local nTime = HoN.GetGameTime()
 
-	local targetHealt = target:GetHealth()
-	
-	if object.useQ then
-		if canSee then
-			bActionTaken = core.OrderAbilityPosition(botBrain, skills.abilStickyBomb, targetPosition)
+	local bBombUp = skills.abilStickyBomb:CanActivate() and skills.abilStickyBomb.nLastCastTime + 10000 < nTime
+	local bBombardmentUp = skills.abilBombardment:CanActivate()
+	local bDustUp = skills.abilDust:CanActivate()
+	local bAirStrikeUp = skills.abilAirStrike:CanActivate()
+
+	if bCantDodge or nAggroValue > object.nStickyBombThreshold then
+		if bBombUp then
+			if nDistanceSQ < skills.abilStickyBomb:GetRange() ^ 2 then
+				bActionTaken = core.OrderAbilityPosition(botBrain, skills.abilStickyBomb, targetPosition)
+				skills.abilStickyBomb.nLastCastTime = nTime
+			end
 		end
-		object.useQ = false
 	end
-	
+
 	if not bActionTaken then
-		if object.useR then
+		if bBombardmentUp and nAggroValue > object.nBombardmentThreshold then
+			actionTaken = core.OrderAbilityPosition(botBrain, skills.abilBombardment, targetPosition)
+		end
+	end
+
+	if not bActionTaken then
+		if nAggroValue > object.nAirStrikeThreshold then
 			if bCanSee then
 				--Todo some math based targets runing direction
 				botBrain:OrderAbilityVector(skills.abilAirStrike, Vector3.Create(targetPosition.x - 100, targetPosition.y - 100), targetPosition)
 				actionTaken = true
 			end
-			object.useR = false
 		end
 	end
 
-	if not bActionTaken and bCantDodge then
-		if Qup then --No questions just do it
-			if distance < skills.abilStickyBomb:GetRange() then
-				bActionTaken = core.OrderAbilityPosition(botBrain, skills.abilStickyBomb, targetPosition)
-			end
-		end
-	end
-
-	if not actionTaken then
-		if (nAggroValue < 35 and nAggroValue > 20) or (nAggroValue > 20 and self:GetLevel() < 6) then
-			if Qup and Wup then
-				if distance < skills.abilStickyBomb:GetRange() and distance < skills.abilBombardment:GetRange() then
-					actionTaken = core.OrderAbilityPosition(botBrain, skills.abilBombardment, targetPosition, true)
-					object.useQ = false
-				end
-			end
-		end
-	end
-	
-	--Todo: MANA
-	if not actionTaken then
-		if Qup and Wup and Rup then
-			if nDistanceSQ < skills.abilStickyBomb:GetRange() ^ 2 and nDistanceSQ < skills.abilBombardment:GetRange() ^ 2 then
-				actionTaken = core.OrderAbilityPosition(botBrain, skills.abilBombardment, targetPosition, true)
-				object.useQ = true
-				object.useR = true
-			end
-		end
-	end
-
-	if not bActionTaken and Eup then
-		local nTime = HoN.GetGameTime()
-		if skills.abilDust.nLastCastTime + 1000 < nTime then --Dont spam all charges at once
+	if not bActionTaken and bDustUp then
+		if skills.abilDust.nLastCastTime + 2000 < nTime then --Dont spam all charges at once
 			if nDistanceSQ < skills.abilDust:GetRange() ^ 2 then
 				bActionTaken = core.OrderAbilityEntity(botBrain, skills.abilDust, target)
 				if bActionTaken then
 					skills.abilDust.nLastCastTime = nTime
+					core.OrderAttack(botBrain, self, target, true)
 				end
-				core.OrderAttack(botBrain, self, target, true)
 			end
 		end
 	end
+
 	
-	if not actionTaken then
+	if not bActionTaken then
 		return object.harassExecuteOld(botBrain)
 	end
 end
@@ -294,16 +266,16 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 local function RetreatFromThreatExecuteOverride(botBrain)
 	local bActionTaken = false
 	local heroes = HoN.GetUnitsInRadius(core.unitSelf:GetPosition(), 800, core.UNIT_MASK_ALIVE + core.UNIT_MASK_HERO)
-	enemyHeroes = {}
+	tEnemyHeroes = {}
 	for i, hero in ipairs(heroes) do
 		if hero:GetTeam() ~= core.unitSelf:GetTeam() then
-			table.insert(enemyHeroes, hero)
+			table.insert(tEnemyHeroes, hero)
 		end
 	end
 
-	if #enemyHeroes > 0 then
+	if #tEnemyHeroes > 0 then
 		--Todo if multiple do some math
-		bActionTaken = core.OrderAbilityPosition(botBrain, skills.abilBombardment, enemyHeroes[1].GetPosition())
+		bActionTaken = core.OrderAbilityPosition(botBrain, skills.abilBombardment, tEnemyHeroes[1].GetPosition())
 	end
 
 	if not bActionTaken then
