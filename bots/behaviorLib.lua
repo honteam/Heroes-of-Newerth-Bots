@@ -20,6 +20,8 @@ behaviorLib.nBehaviorAssessInterval = 250
 
 local BotEcho, VerboseLog, Clamp = core.BotEcho, core.VerboseLog, core.Clamp
 
+--add the item behaviors into the game, so they can be overloaded.
+runfile "bots/itemBehaviors.lua"
 
 
 ---------------------------------------------------
@@ -3298,9 +3300,6 @@ behaviorLib.ShopBehavior["Utility"] = behaviorLib.ShopUtility
 behaviorLib.ShopBehavior["Execute"] = behaviorLib.ShopExecute
 behaviorLib.ShopBehavior["Name"] = "Shop"
 tinsert(behaviorLib.tBehaviors, behaviorLib.ShopBehavior)
-
---add the item behaviors into the game, so they can be overloaded.
-runfile "bots/itemBehaviors.lua"
 
 ---------------
 -- Pick Rune --
