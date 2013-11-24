@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="PharaohBot"
+	description="bot_description_pharaoh"
+	heroname="Hero_Mumra"
+	rootlua="pharaoh_main.lua"
+	defaultplayername="PharaohBot"
+	precachepath="/heroes/mumra"
+/>
