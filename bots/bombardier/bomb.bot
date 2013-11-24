@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bot
 	name="BombardierBot"
-	description="Bombardier Bot"
+	description="bot_description_bombardier"
 	heroname="Hero_Bombardier"
 	rootlua="bombardier_main.lua"
 	defaultplayername="BombBot"
