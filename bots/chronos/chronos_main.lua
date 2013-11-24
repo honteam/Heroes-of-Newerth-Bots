@@ -49,6 +49,11 @@ local Clamp = core.Clamp
 
 BotEcho('loading chronos_main...')
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 1, ShortSolo = 5, LongSolo = 5, ShortSupport = 1, LongSupport = 1, ShortCarry = 5, LongCarry = 5}
+
 object.heroName = 'Hero_Chronos'
 
 --------------------------------
@@ -320,3 +325,11 @@ behaviorLib.LateItems =
 --]]
 
 BotEcho('finished loading chronos_main')
+
+--[[
+-- example of how to override default item behaviors. To disable the default, use tinsert(behaviorLib.tDontUseDefaultItemBehavior, "Item_ElderParasite")
+function behaviorLib.ElderParasiteExecute(botBrain)
+	BotEcho("overriden!")
+end
+behaviorLib.ElderParasiteBehavior["Execute"] = behaviorLib.ElderParasiteExecute
+]]

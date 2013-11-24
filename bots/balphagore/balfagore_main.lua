@@ -37,6 +37,11 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random, sqrt 
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
 BotEcho('loading balfagore_main...')
+
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 4, ShortSolo = 4, LongSolo = 3, ShortSupport = 1, LongSupport = 1, ShortCarry = 5, LongCarry = 5}
  
 ---------------------------------
 --  		Constants   	   --
@@ -153,7 +158,7 @@ local function FindItemsOverride(botBrain)
 				local inventory = core.unitSelf:GetInventory(false)
 				for slot = 1, 6 do
 						local curItem = inventory[slot]
-						if curItem then
+						if curItem and not curItem:IsRecipe() then
 								if core.itemEnergizer == nil and curItem:GetName() == "Item_Energizer" then
 										core.itemEnergizer = core.WrapInTable(curItem)
 								elseif core.itemGhostMarchers == nil and curItem:GetName() == "Item_EnhancedMarchers" then
@@ -620,20 +625,20 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.getCorpses)
  
  --@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ PERSONALITY
 core.tKillChatKeys = {
-		" * Spews all over keyboard * ", 
-		"Get trashed kid.", 
-		"BWAHAHAHAHA!", 
-		"Yummy!", 
-		"Feeling.. trapped?"
+		"kairus101_balphagore_kill1",
+		"kairus101_balphagore_kill2",
+		"kairus101_balphagore_kill3",
+		"kairus101_balphagore_kill4",
+		"kairus101_balphagore_kill5"
 }
 core.tDeathChatKeys = {
-		"Going to leave me here to rot?", 
-		"Bargh, my minions got stuck..", 
-		"You make me sick!", 
-		"I got S2'd..", 
-		"Team? TEAM??", 
-		"Hey, you used a cheat code!", 
-		"Go my minions!"
+		"kairus101_balphagore_death1",
+		"kairus101_balphagore_death2",
+		"kairus101_balphagore_death3",
+		"kairus101_balphagore_death4",
+		"kairus101_balphagore_death5",
+		"kairus101_balphagore_death6",
+		"kairus101_balphagore_death7"
 }
  
  --@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ SIGN OFF

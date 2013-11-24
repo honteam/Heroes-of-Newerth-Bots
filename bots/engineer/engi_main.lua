@@ -84,6 +84,11 @@ local Clamp = core.Clamp
 
 BotEcho('loading engineer_main...')
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 2, ShortSolo = 1, LongSolo = 1, ShortSupport = 5, LongSupport = 5, ShortCarry = 1, LongCarry = 1}
+
 object.heroName = 'Hero_Engineer'
 
 --[[for testing
@@ -370,22 +375,17 @@ local function funcFindItemsOverride(botBrain)
 	object.FindItemsOld(botBrain)
 
 	core.ValidateItem(core.itemSheepstick)
-	core.ValidateItem(core.itemRoS)
 		
-	if core.itemSheepstick and core.itemRoS then
+	if core.itemSheepstick then
 		return
 	end
 
 	local inventory = core.unitSelf:GetInventory(false)
 	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
-		if curItem then
+		if curItem and not curItem:IsRecipe() then
 			if core.itemSheepstick == nil and curItem:GetName() == "Item_Morph" then
 				core.itemSheepstick = core.WrapInTable(curItem)
-			elseif core.itemRoS == nil and curItem:GetName() == "Item_Replenish" then
-				core.itemRoS = core.WrapInTable(curItem)
-				core.itemRoS.nReplenishValue = 135
-				core.itemRoS.nRadius = 500
 			end
 		end
 	end
@@ -465,129 +465,6 @@ end
 object.RetreatFromThreatExecuteOld = behaviorLib.RetreatFromThreatExecute
 behaviorLib.RetreatFromThreatBehavior["Execute"] = funcRetreatFromThreatExecuteOverride
 
-
-----------------------------------
---    EngiBot's Ring of Sorcery Behavior
---
---    Execute: Use Ring of Sorcery
---
---    Taken from Djulio's BeheBot
---    Developed by Paradox870
-----------------------------------
-
-
-function behaviorLib.ReplenishManaUtilityFn(unitHero)
-	local nUtility = 0
-	local nReplenishMana = 135
-
-	if unitHero == core.unitSelf then
-		nReplenishMana = nReplenishMana - 40
-	end
-
-	local nUnitCurrentMana = unitHero:GetMana()
-	local nUnitMaxMana = unitHero:GetMaxMana()
-	local nUnitMissingMana = nUnitMaxMana - nUnitCurrentMana
-	local nUnitPercentMana = nUnitCurrentMana / nUnitMaxMana
-	local nPercentManaIncrease = nReplenishMana / nUnitMaxMana
-
-	if nUnitMissingMana < nReplenishMana then
-		return nUtility
-	else
-		nUtility = nUtility + 20
-	end
-
-	--The lower our mana pool is, the more a mana ring activation matters
-	--nLowManaPercentMul = 1 per 10% mana pool missing, with a minimum
-	--  value of 1
-	local nLowManaPercentMul = max(10 * (1 - nUnitPercentMana), 1)
-
-	--Utility is increased based on the percent of mana increase that
-	--  an activation represents multiplied by the low mana percent multiplier
-	--There is 1.5 point of utility (times the multiplier) for every 10% of 
-	--  mana that an activation increases
-	nUtility = nUtility + (15 * nPercentManaIncrease) * nLowManaPercentMul
-
-	--Example case:
-	-- A strength hero with a low max mana pool
-	-- A mana ring activation represents 20% mana pool (675 max mana),
-	-- and the hero is currently sitting at 25% mana.
-	-- nLowManaPercentMul = 11.25, and 10 * nPercentManaIncrease = 3
-	-- Overall utility is the base of 20 + 33.75 = 53.75
- 
-	return nUtility
-end
-
-behaviorLib.unitReplenishTarget = nil
-function behaviorLib.ReplenishUtility(botBrain)
-	local bDebugEchos = false
-	 
-	if bDebugEchos then BotEcho("ReplenishUtility") end
-	 
-	local nUtility = 0
-
-	local unitSelf = core.unitSelf
-	behaviorLib.unitReplenishTarget = nil
-	
-	local itemRoS = core.itemRoS
-	 
-	local nHighestUtility = 0
-	local unitTarget = nil
-
-	if itemRoS and itemRoS:CanActivate() then
-		local tTargets = core.CopyTable(core.localUnits["AllyHeroes"])
-		local nOwnID = unitSelf:GetUniqueID()
-		
-		tTargets[nOwnID] = unitSelf --I am also a target
-		for key, hero in pairs(tTargets) do
-			local nCurrentUtility = behaviorLib.ReplenishManaUtilityFn(hero)
-			
-			if nCurrentUtility > nHighestUtility then
-				nHighestUtility = nCurrentUtility
-				unitTarget = hero
-			end
-		end
-
-		if unitTarget then
-			nUtility = nHighestUtility 		 
-			behaviorLib.unitReplenishTarget = unitTarget
-		end       
-	end
-	 
-	return nUtility
-end
-
--- Executing the behavior to use the Ring of Sorcery
-function behaviorLib.ReplenishExecute(botBrain)
-	local itemRoS = core.itemRoS
-	 
-	local unitReplenishTarget = behaviorLib.unitReplenishTarget
-	 
-	if unitReplenishTarget and itemRoS and itemRoS:CanActivate() then
-		local unitSelf = core.unitSelf
-		local vecTargetPosition = unitReplenishTarget:GetPosition()
-		local nDistanceSq = Vector3.Distance2DSq(unitSelf:GetPosition(), vecTargetPosition)
-		local nRadiusSq = itemRoS:GetTargetRadius()
-		nRadiusSq = nRadiusSq * nRadiusSq
-		
-		if nDistanceSq < nRadiusSq then
-			core.OrderItemClamp(botBrain, unitSelf, itemRoS) -- Use Ring of Sorcery, if in range
-		else
-			core.OrderMoveToUnitClamp(botBrain, unitSelf, unitReplenishTarget) -- Move closer to target
-		end
-	else
-		return false
-	end
-	 
-	return true
-end
-
-behaviorLib.ReplenishBehavior = {}
-behaviorLib.ReplenishBehavior["Utility"] = behaviorLib.ReplenishUtility
-behaviorLib.ReplenishBehavior["Execute"] = behaviorLib.ReplenishExecute
-behaviorLib.ReplenishBehavior["Name"] = "Replenish"
-tinsert(behaviorLib.tBehaviors, behaviorLib.ReplenishBehavior)
-
-
 --------------------
 -- Chat Functions
 --------------------
@@ -621,6 +498,6 @@ behaviorLib.LaneItems =
 behaviorLib.MidItems =
 	{"Item_Morph", "Item_MagicArmor2"}
 behaviorLib.LateItems =
-	{"Item_BehemothsHeart", "Item_LightBrand"}
+	{"Item_BehemothsHeart", "Item_Lightbrand"}
 
 BotEcho('finished loading engineer_main')

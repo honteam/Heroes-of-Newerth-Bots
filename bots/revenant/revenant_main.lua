@@ -52,6 +52,11 @@ local Clamp = core.Clamp
 local sqrtTwo = math.sqrt(2)
  
 BotEcho('loading revenant_main...')
+
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 2, ShortSolo = 2, LongSolo = 1, ShortSupport = 4, LongSupport = 5, ShortCarry = 3, LongCarry = 3}
  
 --------------------------------
 -----Constant Definitions-------
@@ -188,7 +193,7 @@ local function funcFindItemsOverride(botBrain)
                 local inventory = core.unitSelf:GetInventory(true)
                 for slot = 1, 12, 1 do
                         local curItem = inventory[slot]
-                        if curItem then
+                        if curItem and not curItem:IsRecipe() then
                                 if core.itemHellflower == nil and curItem:GetName() == "Item_Silence" then
                                         core.itemHellflower = core.WrapInTable(curItem)
                                 end

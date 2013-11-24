@@ -52,6 +52,11 @@ local sqrtTwo = math.sqrt(2)
 
 BotEcho('loading flint_main...')
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 4, ShortSolo = 4, LongSolo = 2, ShortSupport = 2, LongSupport = 1, ShortCarry = 5, LongCarry = 5}
+
 object.heroName = 'Hero_FlintBeastwood'
 
 --------------------------------
@@ -342,66 +347,6 @@ local function HarassHeroExecuteOverride(botBrain)
 end
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
-
-
-----------------------------------
---  FindItems Override
-----------------------------------
-local function funcFindItemsOverride(botBrain)
-	object.FindItemsOld(botBrain)
-
-	core.ValidateItem(core.itemStealth)
-
-	--only update if we need to
-	if core.itemStealth then
-		return
-	end
-
-	local inventory = core.unitSelf:GetInventory(false)
-	for slot = 1, 6, 1 do
-		local curItem = inventory[slot]
-		if curItem then
-			if core.itemStealth == nil and curItem:GetName() == "Item_Stealth" then
-				core.itemStealth = core.WrapInTable(curItem)
-				break
-			end
-		end
-	end
-end
-object.FindItemsOld = core.FindItems
-core.FindItems = funcFindItemsOverride
-
-
-----------------------------------
---  RetreatFromThreat Override
-----------------------------------
-object.nRetreatStealthThreshold = 50
-
---Unfortunately this utility is kind of volatile, so we basically have to deal with util spikes
-function funcRetreatFromThreatExecuteOverride(botBrain)
-	local bDebugEchos = false
-	
-	local bActionTaken = false
-	
-	if bDebugEchos then BotEcho("Checkin Shroud") end
-	if not bActionTaken then
-		--Shroud use
-		local itemStealth = core.itemStealth
-		if itemStealth and itemStealth:CanActivate() then
-			if bDebugEchos then BotEcho("CanActivate!  nRetreatUtil: "..behaviorLib.lastRetreatUtil.."  thresh: "..object.nRetreatStealthThreshold) end
-			if behaviorLib.lastRetreatUtil >= object.nRetreatStealthThreshold then
-				if bDebugEchos then BotEcho("UsinShroud") end
-				bActionTaken = core.OrderItemClamp(botBrain, core.unitSelf, itemStealth)
-			end
-		end
-	end
-
-	if not bActionTaken then
-		return object.RetreatFromThreatExecuteOld(botBrain)
-	end
-end
-object.RetreatFromThreatExecuteOld = behaviorLib.RetreatFromThreatExecute
-behaviorLib.RetreatFromThreatBehavior["Execute"] = funcRetreatFromThreatExecuteOverride
 
 
 ----------------------------------

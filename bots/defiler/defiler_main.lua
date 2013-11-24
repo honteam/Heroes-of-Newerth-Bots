@@ -49,6 +49,11 @@ local Clamp = core.Clamp
 
 BotEcho('loading defiler_main...')
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 5, ShortSolo = 5, LongSolo = 4, ShortSupport = 2, LongSupport = 2, ShortCarry = 3, LongCarry = 2}
+
 object.heroName = 'Hero_Defiler'
 
 --------------------------------
@@ -345,7 +350,7 @@ local function funcFindItemsOverride(botBrain)
 	local inventory = core.unitSelf:GetInventory(false)
 	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
-		if curItem then
+		if curItem and not curItem:IsRecipe() then
 			if core.itemSheepstick == nil and curItem:GetName() == "Item_Morph" then
 				core.itemSheepstick = core.WrapInTable(curItem)
 			elseif core.itemFrostfieldPlate == nil and curItem:GetName() == "Item_FrostfieldPlate" then

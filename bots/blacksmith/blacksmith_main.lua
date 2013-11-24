@@ -196,7 +196,7 @@ local function HarassHeroExecuteOverride(botBrain)
 		
 		--sheepstick
 		core.FindItems()
-		local itemSheepstick = core.getItem("Item_Morph")
+		local itemSheepstick = core.GetItem("Item_Morph")
 		if itemSheepstick then
 			local nRange = itemSheepstick:GetRange()
 			if itemSheepstick:CanActivate() and nLastHarassUtility > botBrain.nSheepThreshold then
@@ -231,7 +231,7 @@ local function HarassHeroExecuteOverride(botBrain)
 		
 		--codex
 		if not bActionTaken then
-			local itemNuke = core.getItem("Item_Nuke")
+			local itemNuke = core.GetItem("Item_Nuke")
 			if itemNuke then
 				local nNukeRange = itemNuke:GetRange()
 				if itemNuke:CanActivate() and nLastHarassUtility > botBrain.nNukeThreshold then

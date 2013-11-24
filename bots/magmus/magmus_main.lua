@@ -49,6 +49,11 @@ local Clamp = core.Clamp
 
 BotEcho('loading magmus_main...')
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 1, ShortSolo = 3, LongSolo = 2, ShortSupport = 4, LongSupport = 4, ShortCarry = 4, LongCarry = 4}
+
 object.heroName = 'Hero_Magmar'
 
 
@@ -108,7 +113,7 @@ local function funcFindItemsOverride(botBrain)
 	local inventory = core.unitSelf:GetInventory(false)
 	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
-		if curItem then
+		if curItem and not curItem:IsRecipe() then
 			if core.itemPortalKey == nil and curItem:GetName() == "Item_PortalKey" then
 				core.itemPortalKey = core.WrapInTable(curItem)
 			elseif core.itemFrostfieldPlate == nil and curItem:GetName() == "Item_FrostfieldPlate" then

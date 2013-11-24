@@ -49,6 +49,11 @@ local Clamp = core.Clamp
 
 BotEcho('loading hammerstorm_main...')
 
+--------------------------------
+-- Lanes
+--------------------------------
+core.tLanePreferences = {Jungle = 0, Mid = 3, ShortSolo = 3, LongSolo = 3, ShortSupport = 2, LongSupport = 2, ShortCarry = 5, LongCarry = 5}
+
 object.heroName = 'Hero_Hammerstorm'
 
 
@@ -105,7 +110,7 @@ local function funcFindItemsOverride(botBrain)
 	local inventory = core.unitSelf:GetInventory(false)
 	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
-		if curItem then
+		if curItem and not curItem:IsRecipe() then
 			if core.itemPortalKey == nil and curItem:GetName() == "Item_PortalKey" then
 				core.itemPortalKey = core.WrapInTable(curItem)
 			end

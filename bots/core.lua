@@ -26,8 +26,8 @@ end
 
 local print, ipairs, pairs, string, table, next, type, tinsert, tremove, tsort, format, tostring, tonumber, strfind, strsub
 	= _G.print, _G.ipairs, _G.pairs, _G.string, _G.table, _G.next, _G.type, _G.table.insert, _G.table.remove, _G.table.sort, _G.string.format, _G.tostring, _G.tonumber, _G.string.find, _G.string.sub
-local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
-	= _G.math.ceil, _G.math.floor, _G.math.pi, _G.math.tan, _G.math.atan, _G.math.atan2, _G.math.abs, _G.math.cos, _G.math.sin, _G.math.acos, _G.math.max, _G.math.random
+local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, min, max, random
+	= _G.math.ceil, _G.math.floor, _G.math.pi, _G.math.tan, _G.math.atan, _G.math.atan2, _G.math.abs, _G.math.cos, _G.math.sin, _G.math.acos, _G.math.min, _G.math.max, _G.math.random
 
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 	
@@ -144,7 +144,7 @@ function core.CoreInitialize(controller)
 			core.printTableTable(tSorted)
 		end
 	end
-
+	
 	core.coreInitialized = true
 end
 
@@ -337,6 +337,10 @@ end
 function core.AngleBetween(vec1, vec2)
 	local radians = acos(Vector3.Dot(Vector3.Normalize(vec1), Vector3.Normalize(vec2)))
 	return radians
+end
+
+function core.HeadingDifference(unit, vecTargetPos)
+	return core.AngleBetween(unit:GetHeading(), vecTargetPos-unit:GetPosition())
 end
 
 function core.Clamp(val, low, high)
@@ -1162,7 +1166,7 @@ function core.InventoryContains(inventory, val, bIgnoreRecipes, bIncludeStash)
 	
 	for slot = 1, nLast, 1 do
 		local curItem = inventory[slot]
-		if curItem then
+		if curItem and not curItem:IsRecipe() then
 			--Echo(format("%d - Type:%s  Name:%s", slot, type(curItem), (curItem.GetName and curItem:GetName()) or "ERROR"))
 			--if type(curItem) == "table" then
 			--	printTable(curItem)
@@ -1175,6 +1179,42 @@ function core.InventoryContains(inventory, val, bIgnoreRecipes, bIncludeStash)
 	end
 	
     return tableOfThings
+end
+
+core.tFoundItems = {}
+core.tsearchTimes = {}
+--Finds an item on your hero.
+function core.GetItem(val, bIncludeStash)
+	if core.tFoundItems[val] then -- We have checked the item before. Validate it.
+		core.ValidateItem(core.tFoundItems[val])
+		if core.tFoundItems[val] and core.tFoundItems[val]:IsValid() then -- still valid, return it
+			return core.tFoundItems[val]
+		else
+			core.tFoundItems[val] = nil
+		end
+	end
+	--First time seeing the item, or it was invalidated.
+	if not core.tFoundItems[val] then
+		local nLastSearchTime = core.tsearchTimes[val] or 0
+		if nLastSearchTime + 500 <= HoN:GetGameTime() then --only look at max 2 times a second
+			core.tsearchTimes[val] = HoN:GetGameTime()
+			inventory = core.unitSelf:GetInventory()
+			if bIncludeStash == nil then
+				bIncludeStash = false
+			end
+			local nLast = (bIncludeStash and 12) or 6
+			for slot = 1, nLast, 1 do
+				local curItem = inventory[slot]
+				if curItem then
+					if curItem:GetTypeName() == val and not curItem:IsRecipe() then --ignore recipes!
+						core.tFoundItems[val] = core.WrapInTable(curItem)
+						return core.tFoundItems[val]
+					end
+				end
+			end
+		end
+	end
+    return nil
 end
 
 function core.IsLaneCreep(unit)
@@ -1583,23 +1623,27 @@ function core.GetLaneBreakdown(unit)
 	local inMid = -1
 	local inBot = -1		
 
-	local vTopPoint = core.GetFurthestPointOnPath(position, metadata.GetTopLane(), core.bTraverseForward)		
-	if vTopPoint then
-		topDist = Vector3.Distance2D(position, vTopPoint)
+	local vecTopPoint = core.GetFurthestPointOnPath(position, metadata.GetTopLane(), core.bTraverseForward)		
+	if vecTopPoint then
+		topDist = Vector3.Distance2D(position, vecTopPoint)
 	end
 	
-	local vMidPoint = core.GetFurthestPointOnPath(position, metadata.GetMiddleLane(), core.bTraverseForward)
-	if vMidPoint then
-		midDist = Vector3.Distance2D(position, vMidPoint)
+	local vecMidPoint = core.GetFurthestPointOnPath(position, metadata.GetMiddleLane(), core.bTraverseForward)
+	if vecMidPoint then
+		midDist = Vector3.Distance2D(position, vecMidPoint)
 	end
 	
-	local vBotPoint = core.GetFurthestPointOnPath(position, metadata.GetBottomLane(), core.bTraverseForward)
-	if vBotPoint then
-		botDist = Vector3.Distance2D(position, vBotPoint)
+	local vecBotPoint = core.GetFurthestPointOnPath(position, metadata.GetBottomLane(), core.bTraverseForward)
+	if vecBotPoint then
+		botDist = Vector3.Distance2D(position, vecBotPoint)
 	end
 	
 	--pick two lowest ones
-	local nBiggestDist = max(topDist, max(midDist, botDist))
+	local nBiggestDist = max(topDist, midDist, botDist)
+	local nLowestDist = min(topDist, midDist, botDist)
+	if (nLowestDist > 1200) then --clearly not in a lane.
+		return {top=0, mid=0, bot=0}, {top=vecTopPoint, mid=vecMidPoint, bot=vecBotPoint}
+	end
 	
 	if topDist == nBiggestDist then
 		topDist = 0
@@ -1628,14 +1672,14 @@ function core.GetLaneBreakdown(unit)
 	--BotEcho(format('%s Dists - top: %g  mid: %g  bot:%g  total:%g', unit:GetTypeName(), topDist, midDist, botDist, totalDist))
 	if bDebugLines then
 		core.DrawXPosition(position, 'red')
-		if vTopPoint then
-			core.DrawDebugArrow(position, position + Vector3.Normalize(vTopPoint - position) * inTop * lineLen, 'yellow')
+		if vecTopPoint then
+			core.DrawDebugArrow(position, position + Vector3.Normalize(vecTopPoint - position) * inTop * lineLen, 'yellow')
 		end
-		if vMidPoint then
-			core.DrawDebugArrow(position, position + Vector3.Normalize(vMidPoint - position) * inMid * lineLen, 'yellow')
+		if vecMidPoint then
+			core.DrawDebugArrow(position, position + Vector3.Normalize(vecMidPoint - position) * inMid * lineLen, 'yellow')
 		end
-		if vBotPoint then
-			core.DrawDebugArrow(position, position + Vector3.Normalize(vBotPoint - position) * inBot * lineLen, 'yellow')
+		if vecBotPoint then
+			core.DrawDebugArrow(position, position + Vector3.Normalize(vecBotPoint - position) * inBot * lineLen, 'yellow')
 		end
 	end
 	
