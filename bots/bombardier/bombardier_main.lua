@@ -282,7 +282,7 @@ object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 
 --Run away. Run away
-function behaviorLib.CustomRetreatExecute(botBrain)(botBrain)
+function behaviorLib.CustomRetreatExecute(botBrain)
 	local bActionTaken = false
 	local heroes = HoN.GetUnitsInRadius(core.unitSelf:GetPosition(), 800, core.UNIT_MASK_ALIVE + core.UNIT_MASK_HERO)
 	tEnemyHeroes = {}
