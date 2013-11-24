@@ -62,7 +62,7 @@ function object:SkillBuild()
 
 	local unitSelf = self.core.unitSelf
 
-	if skills.abilLeap == nil then
+	if skills.abilHellFire == nil then
 		skills.abilHellFire = unitSelf:GetAbility(0)
 		skills.abilWallOfMummies = unitSelf:GetAbility(1)
 		skills.abilTormentedSoul = unitSelf:GetAbility(2)
