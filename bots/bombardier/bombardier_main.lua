@@ -185,22 +185,20 @@ behaviorLib.CustomHarassUtility = CustomHarassUtilityFnOverride
 --           Fights             --
 ----------------------------------
 local function HarassHeroExecuteOverride(botBrain)
-	local target = behaviorLib.heroTarget
-	if target == nil then
+	local unitTarget = behaviorLib.herounitTarget
+	if unitTarget == nil then
 		return false --Eh nothing here
 	end
 	
 	--fetch some variables 
-	local self = core.unitSelf
-	local selfPosition = self:GetPosition()
+	local unitSelf = core.unitSelf
+	local vecMyPosition = unitSelf:GetPosition()
 	
-	local attackRange = core.GetAbsoluteAttackRangeToUnit(self, target)
+	local bCantDodge = unitTarget:IsStunned() or unitTarget:IsImmobilized() or unitTarget:GetMoveSpeed() < 160
+	local bCanSee = core.CanSeeUnit(botBrain, unitTarget)
 	
-	local bCantDodge = target:IsStunned() or target:IsImmobilized() or target:GetMoveSpeed() < 160
-	local bCanSee = core.CanSeeUnit(botBrain, target)
-	
-	local targetPosition = target:GetPosition()
-	local nDistanceSQ = Vector3.Distance2DSq(selfPosition, targetPosition)
+	local vecTargetPosition = unitTarget:GetPosition()
+	local nDistanceSQ = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
 	
 	local nAggroValue = behaviorLib.lastHarassUtil
 	local bActionTaken = false
@@ -212,15 +210,16 @@ local function HarassHeroExecuteOverride(botBrain)
 	local bDustUp = skills.abilDust:CanActivate() and skills.abilDust:GetCharges() > 0
 	local bAirStrikeUp = skills.abilAirStrike:CanActivate()
 
+	--Sticky Bomb
 	if bCantDodge or nAggroValue > object.nStickyBombThreshold then
 		if bBombUp and bCanSee then
 			vecBombPos = nil
 			if bCantDodge then
-				vecBombPos = targetPosition
+				vecBombPos = vecTargetPosition
 			else
-				vecBombPos = targetPosition + target:GetHeading() * 0.5 * target:GetMoveSpeed()
+				vecBombPos = vecTargetPosition + unitTarget:GetHeading() * 0.5 * unitTarget:GetMoveSpeed()
 			end
-			if Vector3.Distance2DSq(selfPosition, vecBombPos) < skills.abilStickyBomb:GetRange() ^ 2 then
+			if Vector3.Distance2DSq(vecMyPosition, vecBombPos) < skills.abilStickyBomb:GetRange() ^ 2 then
 				bActionTaken = core.OrderAbilityPosition(botBrain, skills.abilStickyBomb, vecBombPos)
 				if bActionTaken then
 					skills.abilStickyBomb.nLastCastTime = nTime
@@ -229,40 +228,44 @@ local function HarassHeroExecuteOverride(botBrain)
 		end
 	end
 
+	--Sheep stick
 	if not bActionTaken and not bCantDodge then
 		local itemSheepstick = core.GetItem("Item_Morph")
 		if itemSheepstick ~= nil and itemSheepstick:CanActivate() then
 			if nAggroValue > object.nSheepstickThreshold then
-				bActionTaken = core.OrderItemEntity(botBrain, unitSelf, itemSheepstick, target)
+				bActionTaken = core.OrderItemEntity(botBrain, unitSelf, itemSheepstick, unitTarget)
 			end
 		end
 	end
 
+	--Bombardment
 	if not bActionTaken then
 		if bBombardmentUp and nAggroValue > object.nBombardmentThreshold then
 			if nDistanceSQ < skills.abilBombardment:GetRange() ^ 2 then
-				actionTaken = core.OrderAbilityPosition(botBrain, skills.abilBombardment, targetPosition)
+				actionTaken = core.OrderAbilityPosition(botBrain, skills.abilBombardment, vecTargetPosition)
 			end
 		end
 	end
 
+	--Air strike
 	if not bActionTaken then
 		if bAirStrikeUp and nAggroValue > object.nAirStrikeThreshold then
 			if bCanSee then
-				--Todo some math based targets runing direction
-				botBrain:OrderAbilityVector(skills.abilAirStrike, targetPosition + target:GetHeading() * target:GetMoveSpeed() * 2, targetPosition)
+				--Todo some math based unitTargets runing direction
+				botBrain:OrderAbilityVector(skills.abilAirStrike, vecTargetPosition + unitTarget:GetHeading() * unitTarget:GetMoveSpeed() * 2, vecTargetPosition)
 				actionTaken = true
 			end
 		end
 	end
 
+	--Boom dust
 	if not bActionTaken and bDustUp then
 		if skills.abilDust.nLastCastTime + 2000 < nTime then --Dont spam all charges at once
 			if nDistanceSQ < skills.abilDust:GetRange() ^ 2 then
-				bActionTaken = core.OrderAbilityEntity(botBrain, skills.abilDust, target)
+				bActionTaken = core.OrderAbilityEntity(botBrain, skills.abilDust, unitTarget)
 				if bActionTaken then
 					skills.abilDust.nLastCastTime = nTime
-					--core.OrderAttackClamp(botBrain, self, target, true)
+					--core.OrderAttackClamp(botBrain, self, unitTarget, true)
 				end
 			end
 		end
