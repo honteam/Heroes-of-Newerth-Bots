@@ -45,7 +45,7 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
 
-BotEcho('loading bomb_main.lua...')
+BotEcho('loading bombardier_main.lua...')
 
 object.heroName = 'Hero_Bombardier'
 
@@ -85,7 +85,6 @@ function object:SkillBuild()
     end
 end
 
-
 ---------------------------------------------------
 --                    Items                      --
 ---------------------------------------------------
@@ -97,30 +96,6 @@ behaviorLib.LateItems = {"Item_Morph", "Item_BehemothsHeart", "Item_GrimoireOfPo
 ---------------------------------------------------
 --                   Overrides                   --
 ---------------------------------------------------
-
-
-local function funcFindItemsOverride(botBrain)
-	object.FindItemsOld(botBrain)
-
-	core.ValidateItem(core.itemSheepstick)
-
-	--only update if we need to
-	if core.itemSheepstick then
-		return
-	end
-
-	local inventory = core.unitSelf:GetInventory(false)
-	for slot = 1, 6, 1 do
-		local curItem = inventory[slot]
-		if curItem and not curItem:IsRecipe() then
-			if core.itemSheepstick == nil and curItem:GetName() == "Item_Morph" then
-				core.itemSheepstick = core.WrapInTable(curItem)
-			end
-		end
-	end
-end
-object.FindItemsOld = core.FindItems
-core.FindItems = funcFindItemsOverride
 
 ----------------------------------
 --	Hero specific harass bonuses
@@ -139,7 +114,6 @@ object.nSheepstickUse = 15
 
 object.nStickyBombThreshold = 35
 object.nBombardmentThreshold = 35
-object.nDustThreshold = 5
 object.nAirStrikeThreshold = 70
 object.nSheepstickThreshold = 40
 
@@ -184,7 +158,8 @@ function object:oncombateventOverride(EventData)
 			nAddBonus = nAddBonus + object.nAirStrikeUse
 		end
 	elseif EventData.Type == "Item" then
-		if core.itemSheepstick ~= nil and EventData.SourceUnit == core.unitSelf:GetUniqueID() and EventData.InflictorName == core.itemSheepstick:GetName() then
+		local itemSheepstick = core.GetItem("Item_Morph")
+		if itemSheepstick ~= nil and EventData.SourceUnit == core.unitSelf:GetUniqueID() and EventData.InflictorName == itemSheepstick:GetName() then
 			nAddBonus = nAddBonus + self.nSheepstickUse
 		end
 	end
@@ -255,9 +230,10 @@ local function HarassHeroExecuteOverride(botBrain)
 	end
 
 	if not bActionTaken and not bCantDodge then
-		if core.itemSheepstick ~= nil and core.itemSheepstick:CanActivate() then
+		local itemSheepstick = core.GetItem("Item_Morph")
+		if itemSheepstick ~= nil and itemSheepstick:CanActivate() then
 			if nAggroValue > object.nSheepstickThreshold then
-				bActionTaken = core.OrderItemEntity(botBrain, unitSelf, core.itemSheepstick, target)
+				bActionTaken = core.OrderItemEntity(botBrain, unitSelf, itemSheepstick, target)
 			end
 		end
 	end
@@ -303,7 +279,7 @@ object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 
 --Run away. Run away
-local function RetreatFromThreatExecuteOverride(botBrain)
+function behaviorLib.CustomRetreatExecute(botBrain)(botBrain)
 	local bActionTaken = false
 	local heroes = HoN.GetUnitsInRadius(core.unitSelf:GetPosition(), 800, core.UNIT_MASK_ALIVE + core.UNIT_MASK_HERO)
 	tEnemyHeroes = {}
@@ -323,9 +299,6 @@ local function RetreatFromThreatExecuteOverride(botBrain)
 	end
 end
 
-object.RetreatFromThreatExecuteOld = behaviorLib.RetreatFromThreatBehavior["Execute"]
-behaviorLib.RetreatFromThreatBehavior["Execute"] = RetreatFromThreatExecuteOverride
-
 function object.PushExecuteOverride(botBrain)
 	local bActionTaken = false
 	if core.unitSelf:GetManaPercent() > 0.5 and core.NumberElements(core.localUnits["EnemyCreeps"]) > 0 then
@@ -340,4 +313,4 @@ object.PushExecuteOld = behaviorLib.PushBehavior["Execute"]
 behaviorLib.PushBehavior["Execute"] = object.PushExecuteOverride
 
 
-BotEcho('finished loading bomb_main.lua')
+BotEcho('finished loading bombardier_main.lua')
