@@ -173,30 +173,6 @@ function behaviorLib.CustomHarassUtility(hero)
 	return Clamp(nUtility, 0, 100)
 end
 
-local function funcFindItemsOverride(botBrain)
-	local bUpdated = object.FindItemsOld(botBrain)	
-	core.ValidateItem(core.itemReplenish)
-	core.ValidateItem(core.itemNuke)
-	core.ValidateItem(core.itemSheepstick)
-	if bUpdated then
-		local inventory = core.unitSelf:GetInventory(true)
-		for slot = 1, 6, 1 do
-			local curItem = inventory[slot]
-			if curItem then
-				if core.itemNuke == nil and curItem:GetName() == "Item_Nuke" then
-					core.itemNuke = core.WrapInTable(curItem)
-				elseif core.itemSheepstick == nil and curItem:GetName() == "Item_Morph" then
-					core.itemSheepstick = core.WrapInTable(curItem)
-				elseif core.itemReplenish == nil and curItem:GetName() == "Item_Replenish" then
-					core.itemReplenish = core.WrapInTable(curItem)
-				end
-			end
-		end
-	end
-end
-object.FindItemsOld = core.FindItems
-core.FindItems = funcFindItemsOverride
-
 --------------------------------------------------------------
 --  				  Harass Behavior   					--
 -- All code how to use abilities against enemies goes here  --
@@ -217,20 +193,20 @@ local function HarassHeroExecuteOverride(botBrain)
 	
 	if core.CanSeeUnit(botBrain, unitTarget) then
 		local bTargetVuln = unitTarget:IsStunned() or unitTarget:IsImmobilized() or unitTarget:IsPerplexed()
+		
 		--sheepstick
-		if not bActionTaken then 
-			core.FindItems()
-			local itemSheepstick = core.itemSheepstick
-			if itemSheepstick then
-				local nRange = itemSheepstick:GetRange()
-				if itemSheepstick:CanActivate() and nLastHarassUtility > botBrain.nSheepThreshold then
-					if nTargetDistanceSq < (nRange * nRange) then
-						if bDebugEchos then BotEcho("Using sheepstick") end
-						bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, itemSheepstick, unitTarget)
-					end
+		core.FindItems()
+		local itemSheepstick = core.getItem("Item_Morph")
+		if itemSheepstick then
+			local nRange = itemSheepstick:GetRange()
+			if itemSheepstick:CanActivate() and nLastHarassUtility > botBrain.nSheepThreshold then
+				if nTargetDistanceSq < (nRange * nRange) then
+					if bDebugEchos then BotEcho("Using sheepstick") end
+					bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, itemSheepstick, unitTarget)
 				end
 			end
 		end
+		
 		--dot/slow
 		if not bActionTaken then
 			local abilSlow = skills.abilSlow
@@ -240,7 +216,8 @@ local function HarassHeroExecuteOverride(botBrain)
 					bActionTaken = core.OrderAbilityEntity(botBrain, abilSlow, unitTarget)
 				end
 			end
-		end 
+		end
+		
 		--stun/nuke
 		if not bActionTaken then
 			local abilStun = skills.abilStun
@@ -250,16 +227,16 @@ local function HarassHeroExecuteOverride(botBrain)
 					bActionTaken = core.OrderAbilityEntity(botBrain, abilStun, unitTarget)
 				end
 			end
-		end 
+		end
+		
 		--codex
 		if not bActionTaken then
-			local itemNuke = core.itemNuke
+			local itemNuke = core.getItem("Item_Nuke")
 			if itemNuke then
 				local nNukeRange = itemNuke:GetRange()
 				if itemNuke:CanActivate() and nLastHarassUtility > botBrain.nNukeThreshold then
 					if nTargetDistanceSq <= (nNukeRange * nNukeRange) then
 						bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, itemNuke, unitTarget)
-						bActionTaken = core.OrderAttackClamp(botBrain, unitSelf, unitTarget, false, true)
 					elseif nTargetDistanceSq > (nNukeRange * nNukeRange) then
 						bActionTaken = core.OrderMoveToUnitClamp(botBrain, unitSelf, unitTarget)
 					end
@@ -277,42 +254,3 @@ local function HarassHeroExecuteOverride(botBrain)
 end
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
-
-----------------------------------
---  Ring of Sorcery behavior by Kairus101
---  
---  Utility: 
---  Execute: Use Ring of Sorcery
-----------------------------------
---each drained mana pool is worth 25 utility
-function behaviorLib.RingOfSorceryUtility(botBrain)
-	local unitSelf = core.unitSelf
-	local vecMyPosition = unitSelf:GetPosition()
-	local itemRoS = core.itemReplenish
-	local nUtility = 0
-	
-	if itemRoS and itemRoS:CanActivate() then
-		nUtility = (1-unitSelf:GetManaPercent())*25 --this bots mana pool
-		local tTargets = core.localUnits["AllyHeroes"]  -- Get allies close to the bot
-		for key, hero in pairs(tTargets) do
-			nRoSRange = 700
-			if (Vector3.Distance2DSq(vecMyPosition, hero:GetPosition()) < nRoSRange*nRoSRange) then
-				nUtility = nUtility + (1-hero:GetManaPercent())*25 --another bots mana pool
-			end
-		end		
-		return nUtility
-	end
-	return 0
-end
-
-function behaviorLib.RingOfSorceryExecute(botBrain)
-	local unitSelf = core.unitSelf 
-	local itemRoS = core.itemReplenish
-	return core.OrderItemClamp(botBrain, unitSelf, itemRoS) -- Use Ring of Sorcery
-end
-
-behaviorLib.RingOfSorceryBehavior = {}
-behaviorLib.RingOfSorceryBehavior["Utility"] = behaviorLib.RingOfSorceryUtility
-behaviorLib.RingOfSorceryBehavior["Execute"] = behaviorLib.RingOfSorceryExecute
-behaviorLib.RingOfSorceryBehavior["Name"] = "RingOfSorcery"
-tinsert(behaviorLib.tBehaviors, behaviorLib.RingOfSorceryBehavior)
