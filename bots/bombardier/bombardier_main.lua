@@ -98,28 +98,49 @@ behaviorLib.LateItems = {"Item_Morph", "Item_BehemothsHeart", "Item_GrimoireOfPo
 --                   Overrides                   --
 ---------------------------------------------------
 
+
+local function funcFindItemsOverride(botBrain)
+	object.FindItemsOld(botBrain)
+
+	core.ValidateItem(core.itemSheepstick)
+
+	--only update if we need to
+	if core.itemSheepstick then
+		return
+	end
+
+	local inventory = core.unitSelf:GetInventory(false)
+	for slot = 1, 6, 1 do
+		local curItem = inventory[slot]
+		if curItem and not curItem:IsRecipe() then
+			if core.itemSheepstick == nil and curItem:GetName() == "Item_Morph" then
+				core.itemSheepstick = core.WrapInTable(curItem)
+			end
+		end
+	end
+end
+object.FindItemsOld = core.FindItems
+core.FindItems = funcFindItemsOverride
+
 ----------------------------------
 --	Hero specific harass bonuses
---
---  Abilities off cd increase harass util
---  Ability use increases harass util for a time
 ----------------------------------
 
 object.nStickyBombUp = 10
-object.nBombardmentUp = 15
+object.nBombardmentUp = 10
 object.nDustUp = 5
 object.nAirStrikeUp = 35
 object.nSheepstickUp = 20
 
 object.nStickyBombUse = 20
 object.nBombardmentUse = 20
-object.nAirStrikeUse = 45
+object.nAirStrikeUse = 40
 object.nSheepstickUse = 15
 
 object.nStickyBombThreshold = 35
 object.nBombardmentThreshold = 35
 object.nDustThreshold = 5
-object.nAirStrikeThreshold = 60
+object.nAirStrikeThreshold = 70
 object.nSheepstickThreshold = 40
 
 local function AbilitiesUpUtility(hero)
@@ -213,29 +234,47 @@ local function HarassHeroExecuteOverride(botBrain)
 
 	local bBombUp = skills.abilStickyBomb:CanActivate() and skills.abilStickyBomb.nLastCastTime + 10000 < nTime
 	local bBombardmentUp = skills.abilBombardment:CanActivate()
-	local bDustUp = skills.abilDust:CanActivate()
+	local bDustUp = skills.abilDust:CanActivate() and skills.abilDust:GetCharges() > 0
 	local bAirStrikeUp = skills.abilAirStrike:CanActivate()
 
 	if bCantDodge or nAggroValue > object.nStickyBombThreshold then
-		if bBombUp then
-			if nDistanceSQ < skills.abilStickyBomb:GetRange() ^ 2 then
-				bActionTaken = core.OrderAbilityPosition(botBrain, skills.abilStickyBomb, targetPosition)
-				skills.abilStickyBomb.nLastCastTime = nTime
+		if bBombUp and bCanSee then
+			vecBombPos = nil
+			if bCantDodge then
+				vecBombPos = targetPosition
+			else
+				vecBombPos = targetPosition + target:GetHeading() * 0.5 * target:GetMoveSpeed()
+			end
+			if Vector3.Distance2DSq(selfPosition, vecBombPos) < skills.abilStickyBomb:GetRange() ^ 2 then
+				bActionTaken = core.OrderAbilityPosition(botBrain, skills.abilStickyBomb, vecBombPos)
+				if bActionTaken then
+					skills.abilStickyBomb.nLastCastTime = nTime
+				end
+			end
+		end
+	end
+
+	if not bActionTaken and not bCantDodge then
+		if core.itemSheepstick ~= nil and core.itemSheepstick:CanActivate() then
+			if nAggroValue > object.nSheepstickThreshold then
+				bActionTaken = core.OrderItemEntity(botBrain, unitSelf, core.itemSheepstick, target)
 			end
 		end
 	end
 
 	if not bActionTaken then
 		if bBombardmentUp and nAggroValue > object.nBombardmentThreshold then
-			actionTaken = core.OrderAbilityPosition(botBrain, skills.abilBombardment, targetPosition)
+			if nDistanceSQ < skills.abilBombardment:GetRange() ^ 2 then
+				actionTaken = core.OrderAbilityPosition(botBrain, skills.abilBombardment, targetPosition)
+			end
 		end
 	end
 
 	if not bActionTaken then
-		if nAggroValue > object.nAirStrikeThreshold then
+		if bAirStrikeUp and nAggroValue > object.nAirStrikeThreshold then
 			if bCanSee then
 				--Todo some math based targets runing direction
-				botBrain:OrderAbilityVector(skills.abilAirStrike, Vector3.Create(targetPosition.x - 100, targetPosition.y - 100), targetPosition)
+				botBrain:OrderAbilityVector(skills.abilAirStrike, targetPosition + target:GetHeading() * target:GetMoveSpeed() * 2, targetPosition)
 				actionTaken = true
 			end
 		end
@@ -247,7 +286,7 @@ local function HarassHeroExecuteOverride(botBrain)
 				bActionTaken = core.OrderAbilityEntity(botBrain, skills.abilDust, target)
 				if bActionTaken then
 					skills.abilDust.nLastCastTime = nTime
-					core.OrderAttack(botBrain, self, target, true)
+					--core.OrderAttackClamp(botBrain, self, target, true)
 				end
 			end
 		end
@@ -255,8 +294,9 @@ local function HarassHeroExecuteOverride(botBrain)
 
 	
 	if not bActionTaken then
-		return object.harassExecuteOld(botBrain)
+		bActionTaken = object.harassExecuteOld(botBrain)
 	end
+	return bActionTaken
 end
 
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
@@ -285,6 +325,19 @@ end
 
 object.RetreatFromThreatExecuteOld = behaviorLib.RetreatFromThreatBehavior["Execute"]
 behaviorLib.RetreatFromThreatBehavior["Execute"] = RetreatFromThreatExecuteOverride
+
+function object.PushExecuteOverride(botBrain)
+	local bActionTaken = false
+	if core.unitSelf:GetManaPercent() > 0.5 and core.NumberElements(core.localUnits["EnemyCreeps"]) > 0 then
+		bActionTaken = core.OrderAbilityPosition(botBrain, skills.abilBombardment, HoN.GetGroupCenter(core.localUnits["EnemyCreeps"]))
+	end
+
+	if not bActionTaken then
+		object.PushExecuteOld(botBrain)
+	end
+end
+object.PushExecuteOld = behaviorLib.PushBehavior["Execute"]
+behaviorLib.PushBehavior["Execute"] = object.PushExecuteOverride
 
 
 BotEcho('finished loading bomb_main.lua')
