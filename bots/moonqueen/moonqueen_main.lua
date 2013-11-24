@@ -135,6 +135,8 @@ end
 ----------------------------------------------
 -- Find geo, shrunken, rage, helm and boots --
 ----------------------------------------------
+tinsert(behaviorLib.tDontUseDefaultItemBehavior, "Item_ManaBurn2") --don't automatically add default behavior for Geometer's.
+tinsert(behaviorLib.tDontUseDefaultItemBehavior, "Item_LifeSteal4")
 
 local function FindItemsOverride(botBrain)
 	object.FindItemsOld(botBrain)

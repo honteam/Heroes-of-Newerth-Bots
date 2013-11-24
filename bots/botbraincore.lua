@@ -432,6 +432,8 @@ function core.BotBrainCoreInitialize(tGameVariables)
 		core.bTutorialBehaviorReset = false
 	end
 	
+	behaviorLib.addCurrentItemBehaviors()
+	
 	-- Add creep preferences to the jungleLib if any are loaded
 	core.AddJunglePreferences()
 	
