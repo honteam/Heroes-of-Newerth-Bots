@@ -298,8 +298,9 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 	end
 
 	if not bActionTaken then
-		object.RetreatFromThreatExecuteOld(botBrain)
+		bActionTaken = object.RetreatFromThreatExecuteOld(botBrain)
 	end
+	return bActionTaken
 end
 
 function object.PushExecuteOverride(botBrain)
@@ -309,8 +310,9 @@ function object.PushExecuteOverride(botBrain)
 	end
 
 	if not bActionTaken then
-		object.PushExecuteOld(botBrain)
+		bActionTaken = object.PushExecuteOld(botBrain)
 	end
+	return bActionTaken
 end
 object.PushExecuteOld = behaviorLib.PushBehavior["Execute"]
 behaviorLib.PushBehavior["Execute"] = object.PushExecuteOverride
