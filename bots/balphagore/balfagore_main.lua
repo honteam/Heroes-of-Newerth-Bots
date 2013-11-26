@@ -158,7 +158,7 @@ local function FindItemsOverride(botBrain)
 				local inventory = core.unitSelf:GetInventory(false)
 				for slot = 1, 6 do
 						local curItem = inventory[slot]
-						if curItem then
+						if curItem and not curItem:IsRecipe() then
 								if core.itemEnergizer == nil and curItem:GetName() == "Item_Energizer" then
 										core.itemEnergizer = core.WrapInTable(curItem)
 								elseif core.itemGhostMarchers == nil and curItem:GetName() == "Item_EnhancedMarchers" then

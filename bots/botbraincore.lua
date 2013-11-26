@@ -374,7 +374,7 @@ function core.AddJunglePreferences(sPrefName, tCreepPreferences)
 		for sString, tCreepPrefs in pairs(object.tJunglePreferencesToAdd) do
 			core.teamBotBrain.jungleLib.AddPreference(sString, tCreepPrefs)
 		end
-		tJunglePreferencesToAdd = nil
+		object.tJunglePreferencesToAdd = {}
 	end
 end
 
@@ -431,6 +431,8 @@ function core.BotBrainCoreInitialize(tGameVariables)
 		
 		core.bTutorialBehaviorReset = false
 	end
+	
+	behaviorLib.addCurrentItemBehaviors()
 	
 	-- Add creep preferences to the jungleLib if any are loaded
 	core.AddJunglePreferences()
@@ -883,7 +885,7 @@ function core.FindItems(botBrain)
 	local inventory = unitSelf:GetInventory(false)
 	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
-		if curItem then
+		if curItem and not curItem:IsRecipe() then
 			if core.itemGhostMarchers == nil and curItem:GetName() == "Item_EnhancedMarchers" then
 				core.itemGhostMarchers = core.WrapInTable(curItem)
 				core.itemGhostMarchers.expireTime = 0
@@ -1077,7 +1079,7 @@ function core.OrderMoveToUnit(botBrain, unit, unitTarget, bInterruptAttacks, bQu
 	return true
 end
 
-function core.OrderFollow(botBrain, unit, target, bInterruptAttacks, bQueueCommand)
+function core.OrderFollow(botBrain, unit, unitTarget, bInterruptAttacks, bQueueCommand)
 	if object.bRunCommands == false or object.bMoveCommands == false then
 		return false
 	end
@@ -1124,7 +1126,7 @@ function core.OrderFollow(botBrain, unit, target, bInterruptAttacks, bQueueComma
 	return true
 end
 
-function core.OrderTouch(botBrain, unit, target, bInterruptAttacks, bQueueCommand)
+function core.OrderTouch(botBrain, unit, unitTarget, bInterruptAttacks, bQueueCommand)
 	if object.bRunCommands == false or object.bMoveCommands == false then
 		return false
 	end
@@ -1264,7 +1266,7 @@ function core.OrderHold(botBrain, unit, bInterruptAttacks, bQueueCommand)
 	return true
 end
 
-function core.OrderGiveItem(botBrain, unit, target, item, bInterruptAttacks, bQueueCommand)
+function core.OrderGiveItem(botBrain, unit, unitTarget, item, bInterruptAttacks, bQueueCommand)
 	if object.bRunCommands == false or object.bOtherCommands == false then
 		return false
 	end

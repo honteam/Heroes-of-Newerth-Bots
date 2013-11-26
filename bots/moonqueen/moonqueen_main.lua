@@ -68,9 +68,6 @@ BotEcho(' loading Moon Queen')
 -- bot "global" vars --
 -----------------------
 
---bounce "resets" when you die to keep track when you respawn
-object.bHeroAlive = true
-
 --To keep track day/night cycle
 object.isDay = true
 
@@ -138,6 +135,8 @@ end
 ----------------------------------------------
 -- Find geo, shrunken, rage, helm and boots --
 ----------------------------------------------
+tinsert(behaviorLib.tDontUseDefaultItemBehavior, "Item_ManaBurn2") --don't automatically add default behavior for Geometer's.
+tinsert(behaviorLib.tDontUseDefaultItemBehavior, "Item_LifeSteal4")
 
 local function FindItemsOverride(botBrain)
 	object.FindItemsOld(botBrain)
@@ -174,33 +173,32 @@ core.FindItems = FindItemsOverride
 --    onthink override   --
 -- Called every bot tick --
 ---------------------------
-object.nSteambootsToggleDelay = 0
+object.nCustomThinkInterval = 5
 function object:onthinkOverride(tGameVariables)
 	self:onthinkOld(tGameVariables)
 	local unitSelf = core.unitSelf
-	local vecHeroPos = unitSelf:GetPosition()
 	if unitSelf:IsAlive() and core.localUnits~=nil then
-		if not object.bHeroAlive then
-			--To keep track status of 2nd skill
-			object.bHeroAlive = true
-			skills.abilBounce.bTargetAll = true
-			object.toggleBounce(self, false)
-		end
-
-		-- Keep illus near
-		for _, illu in pairs(IllusionLib.myIllusions()) do
-			if Vector3.Distance2DSq(illu:GetPosition(), vecHeroPos) > 160000 then
-				core.OrderMoveToPos(self, illu, vecHeroPos, false)
+		if object.nCustomThinkInterval ~=0 then
+			object.nCustomThinkInterval = object.nCustomThinkInterval - 1
+		else
+			object.nCustomThinkInterval = 5
+			-- Keep illus near
+			local vecHeroPos = unitSelf:GetPosition()
+			for _, illu in pairs(IllusionLib.myIllusions()) do
+				if Vector3.Distance2DSq(illu:GetPosition(), vecHeroPos) > 160000 then
+					core.OrderMoveToPos(self, illu, vecHeroPos, false)
+				end
+			end
+			if core.itemSteamBoots then
+				currentAttribute = SteamBootsLib.getAttributeBonus()
+				if currentAttribute ~= "" and currentAttribute ~= SteamBootsLib.sDesiredAttribute then
+					self:OrderItem(core.itemSteamBoots.object, "None")
+					object.nSteambootsToggleDelay = 5
+				end
 			end
 		end
-
 	end
-
-	if not unitSelf:IsAlive() then
-		--To keep track status of 2nd skill
-		object.bHeroAlive = false
-	end
-
+--[[
 	--keep track of day/night only to say something stupid in all chat
 	local time = HoN.GetMatchTime() --This is time since the 0:00 mark
 
@@ -221,19 +219,7 @@ function object:onthinkOverride(tGameVariables)
 				core.AllChatLocalizedMessage(sMessage, nil, nDelay)
 			end
 		end
-	end
-
-	if core.itemSteamBoots then
-		if object.nSteambootsToggleDelay ~= 0 then
-			object.nSteambootsToggleDelay = object.nSteambootsToggleDelay - 1 --not to spam faster than it can handle
-		else
-			currentAttribute = SteamBootsLib.getAttributeBonus()
-			if currentAttribute ~= "" and currentAttribute ~= SteamBootsLib.sDesiredAttribute then
-				self:OrderItem(core.itemSteamBoots.object, "None")
-				object.nSteambootsToggleDelay = 5
-			end
-		end
-	end
+	end]]
 end
 object.onthinkOld = object.onthink
 object.onthink 	= object.onthinkOverride
@@ -282,6 +268,10 @@ function object:oncombateventOverride(EventData)
 		elseif core.itemSymbolofRage and EventData.InflictorName == core.itemSymbolofRage:GetName() then
 			addBonus = addBonus + object.nSymbolofRageUseBonus
 		end
+	elseif EventData.Type == "Respawn" then
+		--To keep track status of 2nd skill
+		skills.abilBounce.bTargetAll = true
+		object.toggleBounce(self, false)
 	end
 	
 	if addBonus > 0 then
