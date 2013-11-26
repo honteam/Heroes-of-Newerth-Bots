@@ -576,11 +576,8 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.jungleBehavior)
 ----------------------------------------
 --          Behaviour Changes         --
 ----------------------------------------
+tinsert(behaviorLib.tDontUseDefaultItemBehavior, "Item_ManaPotion") -- we will manage mana pots ourselves.
 
--- TODO this will change with the itemBehaviors
-if not core.RemoveByValue(behaviorLib.tBehaviors, behaviorLib.UseManaPotBehavior) then-- we are going to use mana pots ourselves.
-	BotEcho("^rItemBehaviors have made it in! Need to change core.RemoveByValue(behaviorLib.tBehaviors, behaviorLib.UseManaPotBehavior)")
-end
 -----------------------------------
 --          Custom Chat          --
 -----------------------------------
