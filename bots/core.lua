@@ -1183,6 +1183,7 @@ end
 
 core.tFoundItems = {}
 core.tsearchTimes = {}
+core.nSearchFrequency = 2000
 --Finds an item on your hero.
 function core.GetItem(val, bIncludeStash)
 	if core.tFoundItems[val] then -- We have checked the item before. Validate it.
@@ -1196,7 +1197,7 @@ function core.GetItem(val, bIncludeStash)
 	--First time seeing the item, or it was invalidated.
 	if not core.tFoundItems[val] then
 		local nLastSearchTime = core.tsearchTimes[val] or 0
-		if nLastSearchTime + 500 <= HoN:GetGameTime() then --only look at max 2 times a second
+		if nLastSearchTime + core.nSearchFrequency <= HoN:GetGameTime() then -- Only look at every x seconds
 			core.tsearchTimes[val] = HoN:GetGameTime()
 			inventory = core.unitSelf:GetInventory()
 			if bIncludeStash == nil then
