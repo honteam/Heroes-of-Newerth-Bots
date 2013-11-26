@@ -2774,7 +2774,7 @@ behaviorLib.nEnemyBaseThreat = 6 --Base threat. Level differences and distance a
 --as long as it is not older than 10s
 function behaviorLib.funcGetEnemyPosition(unitEnemy)
 	if unitEnemy == nil then 
-		return Vector3.Create(20000, 20000)
+		return nil
 	end
 	
 	local tEnemyPosition = core.tEnemyPosition
@@ -2786,10 +2786,9 @@ function behaviorLib.funcGetEnemyPosition(unitEnemy)
 		tEnemyPosition = core.tEnemyPosition
 		tEnemyPositionTimestamp = core.tEnemyPositionTimestamp
 		local tEnemyTeam = HoN.GetHeroes(core.enemyTeam)
-		--vector beyond map
 		for x, hero in pairs(tEnemyTeam) do
-			tEnemyPosition[hero:GetUniqueID()] = Vector3.Create(20000, 20000)
-			tEnemyPositionTimestamp[hero:GetUniqueID()] = HoN.GetGameTime()
+			tEnemyPosition[hero:GetUniqueID()] = nil
+			tEnemyPositionTimestamp[hero:GetUniqueID()] = 0
 		end
 		
 	end
@@ -2799,16 +2798,19 @@ function behaviorLib.funcGetEnemyPosition(unitEnemy)
 	--enemy visible?
 	if vecPosition then
 		--update table
-		tEnemyPosition[unitEnemy:GetUniqueID()] = unitEnemy:GetPosition()
+		tEnemyPosition[unitEnemy:GetUniqueID()] = vecPosition
 		tEnemyPositionTimestamp[unitEnemy:GetUniqueID()] = HoN.GetGameTime()
 	end
 	
 	--return position, 10s memory
-	if tEnemyPositionTimestamp[unitEnemy:GetUniqueID()] <= HoN.GetGameTime() + 10000 then
+	if tEnemyPositionTimestamp[unitEnemy:GetUniqueID()] + 10000 >= HoN.GetGameTime()  then
+		--BotEcho("Can see "..unitEnemy:GetTypeName().." time left: "..((tEnemyPositionTimestamp[unitEnemy:GetUniqueID()] + 10000)-HoN.GetGameTime()))
 		return tEnemyPosition[unitEnemy:GetUniqueID()]
+	else
+		tEnemyPosition[unitEnemy:GetUniqueID()] = nil
 	end
 		
-	return Vector3.Create(20000, 20000)
+	return nil
 end
 
 function behaviorLib.funcGetThreatOfEnemy(unitEnemy)
@@ -2817,9 +2819,15 @@ function behaviorLib.funcGetThreatOfEnemy(unitEnemy)
 	end
 	
 	local unitSelf = core.unitSelf
-	local nDistanceSq = Vector3.Distance2DSq(unitSelf:GetPosition(), behaviorLib.funcGetEnemyPosition (unitEnemy))
-	if nDistanceSq > 2000 * 2000 then 
-		return 0 
+	local vecEnemyPos = behaviorLib.funcGetEnemyPosition(unitEnemy)
+	local nDistanceSq = nil
+	if vecEnemyPos then
+		nDistanceSq = Vector3.Distance2DSq(unitSelf:GetPosition(), vecEnemyPos)
+		if nDistanceSq > 2000 * 2000 then 
+			return 0 
+		end
+	else
+		return 0
 	end
 	
 	local nMyLevel = unitSelf:GetLevel()
