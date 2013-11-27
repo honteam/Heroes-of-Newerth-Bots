@@ -2290,47 +2290,44 @@ behaviorLib.lastRetreatUtil = 0
 
 function behaviorLib.PositionSelfBackUp()
 	StartProfile('PositionSelfBackUp')
-	
+
+	local function funcLaneCost(nodeParent, nodeCurrent, link, nOriginalCost)
+		local nCost = nOriginalCost
+		if nodeCurrent:GetProperty("lane") ~= nil then
+			nCost = nCost / 4
+		end
+
+		local bTowerProperty = nodeCurrent:GetProperty("tower")
+		if bTowerProperty == nil or bTowerProperty == false then
+			--There is no tower here
+			return nCost
+		end
+
+		--Metadata have teams as following strings
+		local sEnemyZone = "hellbourne"
+		if core.myTeam == HoN.GetHellbourneTeam() then
+			sEnemyZone = "legion"
+		end
+
+		if sEnemyZone == nodeCurrent:GetProperty("zone") then
+			return nCost * 10
+		end
+	end
+
 	local vecMyPos = core.unitSelf:GetPosition()
-	local tLaneSet = core.tMyLane
-	local nLaneSetSize = nil
-	local vecDesiredPos = nil
-	local nodePrev = nil
-	local nPrevNode = nil
 
-	if tLaneSet then
-		nLaneSetSize = #tLaneSet
-		nodePrev,nPrevNode = core.GetPrevWaypoint(tLaneSet, vecMyPos, core.bTraverseForward)
-		if nodePrev then
-			vecDesiredPos = nodePrev:GetPosition()
-		end
-	else
-		BotEcho('PositionSelfBackUp - invalid lane set')
+	local tPath = BotMetaData.FindPath(vecMyPos, core.allyWell:GetPosition(), funcLaneCost, 1)
+
+	local vecDesiredPos = tPath[1]:GetPosition()
+
+	local ClosestNode = BotMetaData.GetClosestNode(vecMyPos)
+
+	if tPath[1]:GetIndex() == ClosestNode:GetIndex() then
+		vecDesiredPos = tPath[2]:GetPosition()
 	end
 
-	if nodePrev then
-		local nodePrevPrev = nil
-		if core.bTraverseForward and nPrevNode > 1 then
-			nodePrevPrev = tLaneSet[nPrevNode - 1]
-		elseif not core.bTraverseForward and nPrevNode < nLaneSetSize then
-			nodePrevPrev = tLaneSet[nPrevNode + 1]
-		end
-
-		if nodePrevPrev ~= nil then
-			local vecNodePrevPos = nodePrev:GetPosition()
-			local vecNodePrevPrevPos = nodePrevPrev:GetPosition()
-			local vecForward = Vector3.Normalize(vecNodePrevPos - vecNodePrevPrevPos)
-			if core.RadToDeg(core.AngleBetween(vecNodePrevPos - vecMyPos, vecForward)) < 135 then
-				vecDesiredPos = vecNodePrevPrevPos
-			end
-		end
-	else
-		--BotEcho('PositionSelfBackUp - unable to find previous node!')
-	end
-	
-	if not vecDesiredPos then
-		vecDesiredPos = core.allyWell:GetPosition()
-	end
+	core.DrawDebugArrow(vecMyPos, vecDesiredPos, 'blue')
+	core.DrawDebugArrow(tPath[2]:GetPosition(), tPath[3]:GetPosition(), "blue")
 
 	StopProfile()
 	return vecDesiredPos
