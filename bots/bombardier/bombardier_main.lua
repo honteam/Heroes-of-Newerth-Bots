@@ -297,9 +297,6 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 		bActionTaken = core.OrderAbilityPosition(botBrain, skills.abilBombardment, tEnemyHeroes[1].GetPosition())
 	end
 
-	if not bActionTaken then
-		bActionTaken = object.RetreatFromThreatExecuteOld(botBrain)
-	end
 	return bActionTaken
 end
 
