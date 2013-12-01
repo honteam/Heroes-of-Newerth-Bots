@@ -2572,7 +2572,7 @@ end
 
 function behaviorLib.HealAtWellExecute(botBrain)
 	--BotEcho("Returning to well!")
-	local wellPos = (core.allyWell and core.allyWell:GetPosition()) or behaviorLib.PositionSelfBackUp()
+	local wellPos = behaviorLib.PositionSelfBackUp()
 	core.OrderMoveToPosAndHoldClamp(botBrain, core.unitSelf, wellPos, false)
 end
 
