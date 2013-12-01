@@ -80,8 +80,7 @@ function behaviorLib.PositionSelfCreepWave(botBrain, unitCurrentTarget)
 	
 	local nMyThreat =  funcGetThreat(unitSelf)
 	local nMyDefense = funcGetDefense(unitSelf)
-	local vecBackUp = behaviorLib.PositionSelfBackUp()
-	
+	local vecBackUp = core.GetPrevWaypoint(core.tMyLane, vecMyPos, core.bTraverseForward):GetPosition()
 	
 	local nExtraThreat = 0.0
 	if unitSelf:HasState("State_HealthPotion") then
@@ -2331,7 +2330,7 @@ function behaviorLib.PositionSelfBackUp()
 	end
 
 	core.DrawDebugArrow(vecMyPos, vecDesiredPos, 'blue')
-	core.DrawDebugArrow(tPath[2]:GetPosition(), tPath[3]:GetPosition(), "blue")
+--	core.DrawDebugArrow(tPath[2]:GetPosition(), tPath[3]:GetPosition(), "blue")
 
 	StopProfile()
 	return vecDesiredPos
