@@ -2292,16 +2292,9 @@ function behaviorLib.PositionSelfBackUp()
 	StartProfile('PositionSelfBackUp')
 
 	local function funcLaneCost(nodeParent, nodeCurrent, link, nOriginalCost)
-		local nCost = nOriginalCost
-		if nodeCurrent:GetProperty("lane") ~= nil then
-			nCost = nCost / 4
-		end
-
-		local bTowerProperty = nodeCurrent:GetProperty("tower")
-		if bTowerProperty == nil or bTowerProperty == false then
-			--There is no tower here
-			return nCost
-		end
+		local nEnemyTowerMultiplier = 20
+		local nAllyTowerMultiplier = 0.1
+		local nLaneMultiplier = 0.4
 
 		--Metadata have teams as following strings
 		local sEnemyZone = "hellbourne"
@@ -2309,9 +2302,20 @@ function behaviorLib.PositionSelfBackUp()
 			sEnemyZone = "legion"
 		end
 
-		if sEnemyZone == nodeCurrent:GetProperty("zone") then
-			return nCost * 10
+		local bIsTower = nodeCurrent:GetProperty("tower") ~= nil and nodeCurrent:GetProperty("tower")
+		local bIsEnemyArea = (sEnemyZone == nodeCurrent:GetProperty("zone"))
+		local bIsLane = (nodeCurrent:GetProperty("lane") ~= nil)
+
+		if bIsTower then
+			if bIsEnemyArea then
+				nOriginalCost = nOriginalCost * nEnemyTowerMultiplier
+			else
+				nOriginalCost = nOriginalCost * nAllyTowerMultiplier
+			end
+		elseif bIsLane and not bIsEnemyArea then
+			nOriginalCost = nOriginalCost * nLaneMultiplier
 		end
+		return nOriginalCost
 	end
 
 	local vecMyPos = core.unitSelf:GetPosition()
