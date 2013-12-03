@@ -306,34 +306,6 @@ end
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 
-
---------------------------------------------------------------
---                    FindItems Override                    --
---------------------------------------------------------------
-local function funcFindItemsOverride(botBrain)
-	object.FindItemsOld(botBrain)
-
-	core.ValidateItem(core.itemShrunkenHead)
-	--core.ValidateItem(core.itemWardOfSight)
-	
-	if --[[core.itemWardOfSight and --]] core.itemShrunkenHead then
-		return
-	end
-
-	local inventory = core.unitSelf:GetInventory(false)
-	for slot = 1, 6, 1 do
-		local curItem = inventory[slot]
-		if curItem and not curItem:IsRecipe() then
-			if core.itemShrunkenHead == nil and curItem:GetName() == "Item_Immunity" then
-				core.itemShrunkenHead = core.WrapInTable(curItem)
-			end
-		end
-	end
-end
-object.FindItemsOld = core.FindItems
-core.FindItems = funcFindItemsOverride
-
-
 --------------------------------------------------------------
 --                RetreatFromThreat Override                --
 --               --Use staccato defensively--               --
@@ -468,7 +440,7 @@ function ProtectiveMelodyExecute(botBrain)
 		local nRadius = abilUlt:GetTargetRadius()
 		local nHalfRadiusSq = nRadius * nRadius * 0.25
 		if nTargetDistanceSq <= nHalfRadiusSq then
-			local itemShrunkenHead = core.itemShrunkenHead
+			local itemShrunkenHead = core.GetItem("Item_Immunity")
 			if itemShrunkenHead and itemShrunkenHead:CanActivate() then		--see if Shrunken can pop, then pop it
 				core.OrderItemClamp(botBrain, unitSelf, itemShrunkenHead)
 				return
@@ -481,6 +453,7 @@ function ProtectiveMelodyExecute(botBrain)
 		return false
 	end
 end
+tinsert(behaviorLib.tDontUseDefaultItemBehavior, "Item_Immunity")
 
 
 function object.GetUltimateTimeToLiveThreshold () 

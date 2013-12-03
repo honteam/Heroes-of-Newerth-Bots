@@ -44,7 +44,7 @@ behaviorLib.tItemBehaviors = {}
 		Symbol Of Rage
 ]]
 
-function behaviorLib.addItemBehavior(itemName, remove)
+function behaviorLib.addItemBehavior(itemName)
 	local bDebugEchos = false
 	
 	-- Ignore items on our ignore list
@@ -53,17 +53,10 @@ function behaviorLib.addItemBehavior(itemName, remove)
 		return
 	end
 	
-	remove = (remove == nil and false) or remove
 	behaviorLib.behaviorToModify = behaviorLib.tItemBehaviors[itemName]
 	
 	if behaviorLib.behaviorToModify ~= nil then
-		if remove then
-			if core.RemoveByValue(behaviorLib.tBehaviors, behaviorLib.behaviorToModify) then
-				if bDebugEchos then BotEcho("^rRemoved "..itemName) end
-			else
-				BotEcho("^rFailed to remove "..itemName.." from behaviours!?") --this is an error we should know about.
-			end
-		elseif core.tableContains(behaviorLib.tBehaviors, behaviorLib.behaviorToModify) == 0 then
+		if core.tableContains(behaviorLib.tBehaviors, behaviorLib.behaviorToModify) == 0 then
 			tinsert(behaviorLib.tBehaviors, behaviorLib.behaviorToModify)
 			if bDebugEchos then BotEcho("^gadded "..itemName) end
 			
@@ -92,6 +85,22 @@ function behaviorLib.addItemBehavior(itemName, remove)
 	end
 end
 
+function behaviorLib.removeItemBehavior(itemName)
+	-- Ignore items on our ignore list
+	if core.tableContains(behaviorLib.tDontUseDefaultItemBehavior, itemName) > 0 then
+		if bDebugEchos then BotEcho("^rDisabled "..itemName) end
+		return
+	end
+	
+	behaviorLib.behaviorToModify = behaviorLib.tItemBehaviors[itemName]
+	if behaviorLib.behaviorToModify ~= nil then
+		if core.RemoveByValue(behaviorLib.tBehaviors, behaviorLib.behaviorToModify) then
+			if bDebugEchos then BotEcho("^rRemoved "..itemName) end
+		else
+			--BotEcho("^rFailed to remove "..itemName.." from behaviours!?") --this is an error we should know about.
+		end
+	end
+end
 
 ----------------------------------
 --  Behaviors start below!
