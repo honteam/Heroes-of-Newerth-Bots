@@ -394,11 +394,10 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 local function funcFindItemsOverride(botBrain)
 	object.FindItemsOld(botBrain)
 
-	core.ValidateItem(core.itemAstrolabe)
 	core.ValidateItem(core.itemSheepstick)
 
 	--only update if we need to
-	if core.itemSheepstick and core.itemAstrolabe then
+	if core.itemSheepstick then
 		return
 	end
 
@@ -406,12 +405,7 @@ local function funcFindItemsOverride(botBrain)
 	for slot = 1, 6, 1 do
 		local curItem = inventory[slot]
 		if curItem and not curItem:IsRecipe() then
-			if core.itemAstrolabe == nil and curItem:GetName() == "Item_Astrolabe" then
-				core.itemAstrolabe = core.WrapInTable(curItem)
-				core.itemAstrolabe.nHealValue = 200
-				core.itemAstrolabe.nRadius = 600
-				--Echo("Saving astrolabe")
-			elseif core.itemSheepstick == nil and curItem:GetName() == "Item_Morph" then
+			if core.itemSheepstick == nil and curItem:GetName() == "Item_Morph" then
 				core.itemSheepstick = core.WrapInTable(curItem)
 			end
 		end
@@ -426,7 +420,7 @@ core.FindItems = funcFindItemsOverride
 --	DS's Help behavior
 --
 --	Utility:
---	Execute: Use HealingWave/Cape/Astrolabe
+--	Execute: Use HealingWave/Cape
 ----------------------------------
 behaviorLib.nHealUtilityMul = 0.8
 behaviorLib.nHealHealthUtilityMul = 1.0
@@ -510,13 +504,11 @@ function behaviorLib.HealUtility(botBrain)
 
 	behaviorLib.unitHealTarget = nil
 
-	local itemAstrolabe = core.itemAstrolabe
-
 	local nHighestUtility = 0
 	local unitTarget = nil
 	local nTargetTimeToLive = nil
 	local sAbilName = ""
-	if abilUnbreakable:CanActivate() or abilHealingWave:CanActivate() or (itemAstrolabe and itemAstrolabe:IsValid() and itemAstrolabe:CanActivate()) then
+	if abilUnbreakable:CanActivate() or abilHealingWave:CanActivate() then
 		local tTargets = core.CopyTable(core.localUnits["AllyHeroes"])
 		tTargets[unitSelf:GetUniqueID()] = unitSelf --I am also a target
 		for key, hero in pairs(tTargets) do
@@ -564,12 +556,6 @@ function behaviorLib.HealUtility(botBrain)
 				sAbilName = "HealingWave"
 			end
 
-			if nUtility == 0 and (itemAstrolabe and itemAstrolabe:IsValid() and itemAstrolabe:CanActivate()) then
-				nUtility = nHighestUtility
-
-				sAbilName = "Astrolabe"
-			end
-
 			if nUtility ~= 0 then
 				behaviorLib.unitHealTarget = unitTarget
 				behaviorLib.nHealTimeToLive = nTargetTimeToLive
@@ -592,8 +578,6 @@ function behaviorLib.HealExecute(botBrain)
 	local abilUnbreakable = skills.abilUnbreakable
 	local abilHealingWave = skills.abilHealingWave
 
-	local itemAstrolabe = core.itemAstrolabe
-
 	local unitHealTarget = behaviorLib.unitHealTarget
 	local nHealTimeToLive = behaviorLib.nHealTimeToLive
 
@@ -602,15 +586,6 @@ function behaviorLib.HealExecute(botBrain)
 			core.OrderAbilityEntity(botBrain, abilUnbreakable, unitHealTarget)
 		elseif abilHealingWave:CanActivate() then
 			core.OrderAbilityEntity(botBrain, abilHealingWave, unitHealTarget)
-		elseif itemAstrolabe and itemAstrolabe:IsValid() and itemAstrolabe:CanActivate() then
-			local unitSelf = core.unitSelf
-			local vecTargetPosition = unitHealTarget:GetPosition()
-			local nDistance = Vector3.Distance2D(unitSelf:GetPosition(), vecTargetPosition)
-			if nDistance < itemAstrolabe.nRadius then
-				core.OrderItemClamp(botBrain, unitSelf, itemAstrolabe)
-			else
-				core.OrderMoveToUnitClamp(botBrain, unitSelf, unitHealTarget)
-			end
 		else
 			return false
 		end
@@ -626,7 +601,6 @@ behaviorLib.HealBehavior["Utility"] = behaviorLib.HealUtility
 behaviorLib.HealBehavior["Execute"] = behaviorLib.HealExecute
 behaviorLib.HealBehavior["Name"] = "Heal"
 tinsert(behaviorLib.tBehaviors, behaviorLib.HealBehavior)
-
 ----------------------------------
 --	DS items
 ----------------------------------
