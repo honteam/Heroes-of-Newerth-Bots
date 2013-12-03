@@ -394,7 +394,6 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 local function funcFindItemsOverride(botBrain)
 	object.FindItemsOld(botBrain)
 
-
 	core.ValidateItem(core.itemAstrolabe)
 	core.ValidateItem(core.itemSheepstick)
 
@@ -517,7 +516,7 @@ function behaviorLib.HealUtility(botBrain)
 	local unitTarget = nil
 	local nTargetTimeToLive = nil
 	local sAbilName = ""
-	if abilUnbreakable:CanActivate() or abilHealingWave:CanActivate() or (itemAstrolabe and itemAstrolabe:CanActivate()) then
+	if abilUnbreakable:CanActivate() or abilHealingWave:CanActivate() or (itemAstrolabe and itemAstrolabe:IsValid() and itemAstrolabe:CanActivate()) then
 		local tTargets = core.CopyTable(core.localUnits["AllyHeroes"])
 		tTargets[unitSelf:GetUniqueID()] = unitSelf --I am also a target
 		for key, hero in pairs(tTargets) do
@@ -565,7 +564,7 @@ function behaviorLib.HealUtility(botBrain)
 				sAbilName = "HealingWave"
 			end
 
-			if nUtility == 0 and (itemAstrolabe and itemAstrolabe:CanActivate() and itemAstrolabe:IsValid()) then
+			if nUtility == 0 and (itemAstrolabe and itemAstrolabe:IsValid() and itemAstrolabe:CanActivate()) then
 				nUtility = nHighestUtility
 
 				sAbilName = "Astrolabe"
@@ -603,7 +602,7 @@ function behaviorLib.HealExecute(botBrain)
 			core.OrderAbilityEntity(botBrain, abilUnbreakable, unitHealTarget)
 		elseif abilHealingWave:CanActivate() then
 			core.OrderAbilityEntity(botBrain, abilHealingWave, unitHealTarget)
-		elseif itemAstrolabe and itemAstrolabe:CanActivate() and itemAstrolabe:IsValid() then
+		elseif itemAstrolabe and itemAstrolabe:IsValid() and itemAstrolabe:CanActivate() then
 			local unitSelf = core.unitSelf
 			local vecTargetPosition = unitHealTarget:GetPosition()
 			local nDistance = Vector3.Distance2D(unitSelf:GetPosition(), vecTargetPosition)
