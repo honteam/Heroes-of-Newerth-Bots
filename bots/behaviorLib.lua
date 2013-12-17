@@ -3350,10 +3350,12 @@ function behaviorLib.pickRune(botBrain, rune)
 	if rune == nil or rune.vecLocation == nil or rune.bPicked then
 		return false
 	end
-	if not HoN.CanSeePosition(rune.vecLocation) or rune.unit == nil then
+	if not HoN.CanSeePosition(rune.vecLocation) then
 		return behaviorLib.MoveExecute(botBrain, rune.vecLocation)
-	else
+	elseif rune.unit:IsValid() then
 		return core.OrderTouch(botBrain, core.unitSelf, rune.unit)
+	else --It have been picked just now
+		return false
 	end
 end
 
