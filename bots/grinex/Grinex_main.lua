@@ -298,10 +298,9 @@ end
 
 -- Cycles through the table to find the closest target to the position, then returns the direction to that target
 -- Used for casting entity vector skills towards a moving target
-local function getBestPushDirectionFromTable(unitPushTarget, tUnitTable)
-	local vecPushTargetPosition = unitPushTarget:GetPosition()
+local function getBestPushDirectionFromTable(unitPushTarget, vecPushTargetPosition, tUnitTable)
 	local nDistanceSq = nil
-	local nBestDistanceSq = (350 * 350)
+	local nBestDistanceSq = (400 * 400)
 	local vecTargetPosition = nil
 	local vecBestTargetPosition = nil
 	local unitBestTarget = nil
@@ -310,7 +309,7 @@ local function getBestPushDirectionFromTable(unitPushTarget, tUnitTable)
 	for _, unitHitTarget in pairs(tUnitTable) do
 		vecTargetPosition = unitHitTarget:GetPosition()
 		nDistanceSq = Vector3.Distance2DSq(vecPushTargetPosition, vecTargetPosition)
-		if nDistanceSq <= nBestDistanceSq and nDistanceSq ~= 0 then
+		if nDistanceSq <= nBestDistanceSq and unitHitTarget ~= unitPushTarget then
 			vecBestTargetPosition = vecTargetPosition
 			nBestDistanceSq = nDistanceSq
 			unitBestTarget = unitHitTarget
@@ -318,18 +317,12 @@ local function getBestPushDirectionFromTable(unitPushTarget, tUnitTable)
 	end
 
 	if unitBestTarget and vecBestTargetPosition then
-		-- No prediction for easy mode bots
-		if core.nDifficulty == core.nEASY_DIFFCULTY or not unitPushTarget.bIsMemoryUnit then
+		-- Reserve full prediction for hard mode bots
+		if core.nDifficulty ~= core.nHARD_DIFFICULTY or not unitBestTarget.bIsMemoryUnit then
 			return Vector3.Normalize(vecBestTargetPosition - vecPushTargetPosition)
 		else
-			local vecPushTargetHeading = Vector3.Normalize(unitPushTarget.storedPosition - unitPushTarget.lastStoredPosition)
-			-- Half prediction for medium mode bots
-			if core.nDifficulty == core.nMEDIUM_DIFFICULTY or not unitBestTarget.bIsMemoryUnit then
-				return Vector3.Normalize(vecBestTargetPosition - vecPushTargetPosition - vecPushTargetHeading * 125)
-			else
-				local vecBestTargetHeading = Vector3.Normalize(unitBestTarget.storedPosition - unitBestTarget.lastStoredPosition)
-				return Vector3.Normalize(vecBestTargetPosition + vecBestTargetHeading * 110 - vecPushTargetPosition - vecPushTargetHeading * 110)
-			end
+			local vecBestTargetHeading = Vector3.Normalize(unitBestTarget.storedPosition - unitBestTarget.lastStoredPosition)
+			return Vector3.Normalize(vecBestTargetPosition + vecBestTargetHeading * 110 - vecPushTargetPosition)
 		end
 	end
 	
@@ -341,47 +334,53 @@ local function getStepDirection(botBrain, unitTarget)
 	local vecDirection = nil
 	local vecTargetPosition = unitTarget:GetPosition()
 	
+	-- No prediction for easy mode bots
+	if core.nDifficulty ~= core.nEASY_DIFFCULTY and unitTarget.bIsMemoryUnit then
+		local vecTargetHeading = Vector3.Normalize(unitTarget.storedPosition - unitTarget.lastStoredPosition)
+		vecTargetPosition = vecTargetPosition + vecTargetHeading * 85
+	end
+
 	local tLocalUnits = core.localUnits
 	if tLocalUnits then
 		-- Check Enemy Heroes
 		if not vecDirection then
-			local tLocalEnemyHeroes = filterGroupRange(tLocalUnits["EnemyHeroes"], vecTargetPosition, 350)
+			local tLocalEnemyHeroes = filterGroupRange(tLocalUnits["EnemyHeroes"], vecTargetPosition, 375)
 			if core.NumberElements(tLocalEnemyHeroes) > 1 then
-				vecDirection = getBestPushDirectionFromTable(unitTarget, tLocalEnemyHeroes)
+				vecDirection = getBestPushDirectionFromTable(unitTarget, vecTargetPosition, tLocalEnemyHeroes)
 			end
 		end
 		
 		-- Check Allied Heroes
 		if not vecDirection then
-			local tLocalAllyHeroes = filterGroupRange(tLocalUnits["AllyHeroes"], vecTargetPosition, 350)
+			local tLocalAllyHeroes = filterGroupRange(tLocalUnits["AllyHeroes"], vecTargetPosition, 375)
 			if core.NumberElements(tLocalAllyHeroes) > 0 then
-				vecDirection = getBestPushDirectionFromTable(unitTarget, tLocalAllyHeroes)
+				vecDirection = getBestPushDirectionFromTable(unitTarget, vecTargetPosition, tLocalAllyHeroes)
 			end
 		end
 		
 		-- Check Enemy Buildings
 		if not vecDirection then
-			local tLocalEnemyBuildings = filterGroupRange(tLocalUnits["EnemyBuildings"], vecTargetPosition, 350)
+			local tLocalEnemyBuildings = filterGroupRange(tLocalUnits["EnemyBuildings"], vecTargetPosition, 375)
 			if core.NumberElements(tLocalEnemyBuildings) > 0 then
-				vecDirection = getBestPushDirectionFromTable(unitTarget, tLocalEnemyBuildings)
+				vecDirection = getBestPushDirectionFromTable(unitTarget, vecTargetPosition, tLocalEnemyBuildings)
 			end
 		end
 		
 		-- Check Allied Buildings
 		if not vecDirection then
-			local tLocalAllyBuildings = filterGroupRange(tLocalUnits["AllyBuildings"], vecTargetPosition, 350)
+			local tLocalAllyBuildings = filterGroupRange(tLocalUnits["AllyBuildings"], vecTargetPosition, 375)
 			if core.NumberElements(tLocalAllyBuildings) > 0 then
-				vecDirection = getBestPushDirectionFromTable(unitTarget, tLocalAllyBuildings)
+				vecDirection = getBestPushDirectionFromTable(unitTarget, vecTargetPosition, tLocalAllyBuildings)
 			end
 		end
 	end
 	
 	-- Check Trees
 	if not vecDirection then
-		local tLocalTrees = HoN.GetTreesInRadius(vecTargetPosition, 350)
+		local tLocalTrees = HoN.GetTreesInRadius(vecTargetPosition, 375)
 		if tLocalTrees then
 			if core.NumberElements(tLocalTrees) > 0 then
-				vecDirection = getBestPushDirectionFromTable(unitTarget, tLocalTrees)
+				vecDirection = getBestPushDirectionFromTable(unitTarget, vecTargetPosition, tLocalTrees)
 			end
 		end
 	end 
@@ -396,6 +395,8 @@ local function getStepDirection(botBrain, unitTarget)
 		end
 	end
 	
+
+
 	return vecDirection
 end
 
@@ -422,20 +423,15 @@ end
 -----------------------------------
 
 local function getComboManaCost()
-	local nCost = 0
-
-	local abilStalk = skills.abilStalk
-	if abilStalk:CanActivate() then
-		nCost = nCost + abilStalk:GetManaCost() * abilStalk:GetCharges()
-	end
+	local nCost = skills.abilStalk:GetManaCost()
 	
 	local abilStep = skills.abilStep
-	if abilStep:CanActivate() then
+	if abilStep:GetLevel() > 0 then
 		nCost = nCost + abilStep:GetManaCost()
 	end
 	
 	local abilAssault = skills.abilAssault
-	if abilAssault:CanActivate() then
+	if abilAssault:GetLevel() > 0 and abilAssault:CanActivate() then
 		nCost = nCost + abilAssault:GetManaCost()
 	end
 	
