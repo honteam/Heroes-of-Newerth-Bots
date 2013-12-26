@@ -106,8 +106,8 @@ object.nStrike4Up = 18
 
 -- Bonus agression points that are applied to the bot upon successfully using a skill/item
 
-object.nStepUse = 26
-object.nStalkUse = 14
+object.nStepUse = 30
+object.nStalkUse = 20
 object.nAssaultUse = 44
 
 -- Thresholds of aggression the bot must reach to use these abilities
@@ -300,7 +300,7 @@ end
 -- Used for casting entity vector skills towards a moving target
 local function getBestPushDirectionFromTable(unitPushTarget, vecPushTargetPosition, tUnitTable)
 	local nDistanceSq = nil
-	local nBestDistanceSq = (400 * 400)
+	local nBestDistanceSq = (375 * 375)
 	local vecTargetPosition = nil
 	local vecBestTargetPosition = nil
 	local unitBestTarget = nil
@@ -394,8 +394,6 @@ local function getStepDirection(botBrain, unitTarget)
 			vecDirection = Vector3.Normalize(unitAllyWell:GetPosition() - vecTargetPosition)
 		end
 	end
-	
-
 
 	return vecDirection
 end
@@ -528,11 +526,17 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 
 local function funcRetreatFromThreatExecuteOverride(botBrain)
 	local bActionTaken = false
+	local nHealthPercent = core.unitSelf:GetHealthPercent()
 	
 	-- Use Rift Stalk to retreat if possible
 	local abilStalk = skills.abilStalk
-	if abilStalk:CanActivate() and core.unitSelf:GetHealthPercent() < .625 then
+	if abilStalk:CanActivate() and nHealthPercent < .625 then
 		bActionTaken = core.OrderAbility(botBrain, abilStalk)
+	end
+
+	local abilAssault = skills.abilAssault
+	if abilAssault.CanActivate() and nHealthPercent < .25 then
+			bActionTaken = core.OrderAbility(botBrain, abilAssault)
 	end
 	
 	if not bActionTaken then
