@@ -80,7 +80,7 @@ core.tLanePreferences = {
 
 -- Item buy order. internal names  
 behaviorLib.StartingItems = {"Item_IronBuckler", "Item_RunesOfTheBlight", "Item_LoggersHatchet"}
-behaviorLib.LaneItems = {"Item_Marchers", "Item_Steamboots", "Item_Lightbrand", "Item_Sicarius"}
+behaviorLib.LaneItems = {"Item_Marchers", "Item_Steamboots", "Item_Lightbrand", "Item_Searinglight"}
 behaviorLib.MidItems = {"Item_Pierce 3", "Item_Critical1 4"}
 behaviorLib.LateItems = {"Item_Weapon3", "Item_DaemonicBreastplate"}
 
