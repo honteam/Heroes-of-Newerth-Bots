@@ -32,9 +32,11 @@ illusionLib.tIllusions = {}
 
 -- Table containing all behaviors used by illusions
 illusionLib.tIllusionBehaviors = {}
+illusionLib.nNextBehaviorTime = HoN.GetGameTime()
+illusionLib.nBehaviorAssessInterval = 250
 
 -- Illusions will only attempt to move if they are farther than this away from the targeted position
-illusionLib.nDistanceSqTolerance = 200 * 200
+illusionLib.nDistanceSqTolerance = 300 * 300
 
 -- Force the illusion to use the idle behavior
 -- This value will reset to false on every frame that the illusions are called
@@ -47,11 +49,10 @@ illusionLib.bForceIllusionsToIdle = false
 
 -- Populates tIllusions with all illusions owned by the bot
 function illusionLib.updateIllusions(botBrain)
-        local playerSelf = core.unitSelf:GetOwnerPlayer()
-        local tAllyHeroes = HoN.GetHeroes(core.myTeam)
+        local sHeroName = core.unitSelf:GetTypeName()
         illusionLib.tIllusions = {}
-        for nUID, unitHero in pairs(tAllyHeroes) do
-                if core.teamBotBrain.tAllyHeroes[nUID] == nil and unitHero:GetOwnerPlayer() == playerSelf then
+        for nUID, unitHero in pairs(core.localUnits["AllyUnits"]) do
+                if core.teamBotBrain.tAllyHeroes[nUID] == nil and unitHero:GetTypeName() == sHeroName then
                         tinsert(illusionLib.tIllusions, unitHero)
                 end
         end
@@ -65,19 +66,21 @@ end
 -- For example, if the bot is running the "HarassHero" behavior the illusions will attempt
 -- to run "HarassHero" from tIllusionsBehaviors
 function illusionLib.executeIllusionsBehavior(botBrain)
-        illusionLib.updateIllusions(botBrain)
-
-        -- Dont run behaviors if there are no illusions
-        if #illusionLib.tIllusions == 0 then
-                return
+        if illusionLib.nNextBehaviorTime > HoN.GetGameTime() then
+                return true
         end
 
+        illusionLib.updateIllusions(botBrain)
+        -- Dont run behaviors if there are no illusions
+        if #illusionLib.tIllusions == 0 then
+                return true
+        end
         local funcBehavior = nil
 
         if illusionLib.bForceIllusionsToIdle == true then
                 funcBehavior = illusionLib.tIllusionBehaviors["Idle"]
         else
-                local sCurrentBehaviorName = GetCurrentBehaviorName(botBrain)
+                local sCurrentBehaviorName = core.GetCurrentBehaviorName(botBrain)
                 funcBehavior = illusionLib.tIllusionBehaviors[sCurrentBehaviorName]
 
                 -- If this behavior does not exist revert to default behavior
@@ -91,6 +94,8 @@ function illusionLib.executeIllusionsBehavior(botBrain)
         if not bActionTaken then
                 bActionTaken = illusionLib.tIllusionBehaviors["NoBehavior"](botBrain)
         end
+
+        illusionLib.nNextBehaviorTime = HoN.GetGameTime() + illusionLib.nBehaviorAssessInterval
 
         return bActionTaken
 end
@@ -163,7 +168,7 @@ function illusionLib.HarassHero(botBrain)
         return bActionTaken
 end
 
-illusionLib.tIllusionBehaviors["HarassHero"] = tIllusionLib.HarassHero
+illusionLib.tIllusionBehaviors["HarassHero"] = illusionLib.HarassHero
 
 -----------------------------------
 --          HitBuilding          --
@@ -191,7 +196,7 @@ illusionLib.tIllusionBehaviors["HitBuilding"] = illusionLib.HitBuilding
 -- Will only attack if the creep has less than 10% health
 function illusionLib.AttackCreeps(botBrain)
         local bActionTaken = false
-        local unitTarget = behaviorLib
+        local unitTarget = core.unitCreepTarget
 
         if unitTarget ~= nil and core.CanSeeUnit(botBrain, unitTarget) and unitTarget:GetHealthPercent() < .1 then
                 bActionTaken = illusionLib.OrderIllusionsAttack(botBrain, unitTarget)
@@ -230,7 +235,7 @@ illusionLib.tIllusionBehaviors["AttackEnemyMinions"] = illusionLib.AttackEnemyMi
 function illusionLib.Push(botBrain)
         local bActionTaken = false
 
-        bActionTaken = illusionLib.OrderIllusionsAttackPosition(core.unitSelf:GetPosition())
+        bActionTaken = illusionLib.OrderIllusionsAttackPosition(botBrain, core.unitSelf:GetPosition())
 
         return bActionTaken
 end
@@ -268,7 +273,7 @@ function illusionLib.OrderIllusionsFollow(botBrain, unitTarget, bInterruptAttack
         local bActionTaken = false
 
         for _, unitIllusion in pairs(illusionLib.tIllusions) do
-                core.OrderFollow(botBrain, unitIllusion, unitTarget, bInterruptAttacks, bQueueCommand) or bActionTaken
+                bActionTaken = core.OrderFollow(botBrain, unitIllusion, unitTarget, bInterruptAttacks, bQueueCommand) or bActionTaken
         end
 
         return bActionTaken
@@ -278,7 +283,7 @@ function illusionLib.OrderIllusionsTouch(botBrain, unitTarget, bInterruptAttacks
         local bActionTaken = false
 
         for _, unitIllusion in pairs(illusionLib.tIllusions) do
-                core.OrderAttack(botBrain, unitIllusion, unitTarget, bInterruptAttacks, bQueueCommand) or bActionTaken
+                bActionTaken = core.OrderAttack(botBrain, unitIllusion, unitTarget, bInterruptAttacks, bQueueCommand) or bActionTaken
         end
 
         return
@@ -288,7 +293,7 @@ function illusionLib.OrderIllusionsStop(botBrain, bInterruptAttacks, bQueueComma
         local bActionTaken = false
 
         for _, unitIllusion in pairs(illusionLib.tIllusions) do
-                core.OrderStop(botBrain, unitIllusion, bInterruptAttacks, bQueueCommand) or bActionTaken
+                bActionTaken = core.OrderStop(botBrain, unitIllusion, bInterruptAttacks, bQueueCommand) or bActionTaken
         end
 
         return bActionTaken
@@ -298,7 +303,7 @@ function illusionLib.OrderIllusionsHold(botBrain, bInterruptAttacks, bQueueComma
         local bActionTaken = false
 
         for _, unitIllusion in pairs(illusionLib.tIllusions) do
-                core.OrderHold(botBrain, unitIllusion, bInterruptAttacks, bQueueCommand) or bActionTaken
+                bActionTaken = core.OrderHold(botBrain, unitIllusion, bInterruptAttacks, bQueueCommand) or bActionTaken
         end
 
         return bActionTaken
@@ -308,8 +313,8 @@ function illusionLib.OrderIllusionsMoveToPosAndHold(botBrain, vecPosition, bInte
         local bActionTaken = false
 
         for _, unitIllusion in pairs(illusionLib.tIllusions) do
-                if Vector3.Distacne2DSq(vecPosition, unitIllusion:GetPosition()) >= illusionLib.nDistanceSqTolerance then
-                        core.OrderMoveToPosAndHold(botBrain, unitIllusion, vecPosition, bInterruptAttacks, bQueueCommand) or bActionTaken
+                if Vector3.Distance2DSq(vecPosition, unitIllusion:GetPosition()) >= illusionLib.nDistanceSqTolerance then
+                        bActionTaken = core.OrderMoveToPosAndHold(botBrain, unitIllusion, vecPosition, bInterruptAttacks, bQueueCommand) or bActionTaken
                 end
         end
 
@@ -320,8 +325,8 @@ function illusionLib.OrderIllusionsMoveToPos(botBrain, vecPosition, bInterruptAt
         local bActionTaken = false
 
         for _, unitIllusion in pairs(illusionLib.tIllusions) do
-                if Vector3.Distacne2DSq(vecPosition, unitIllusion:GetPosition()) >= illusionLib.nDistanceSqTolerance then
-                        core.OrderMoveToPos(botBrain, unitIllusion, vecPosition, bInterruptAttacks, bQueueCommand) or bActionTaken
+                if Vector3.Distance2DSq(vecPosition, unitIllusion:GetPosition()) >= illusionLib.nDistanceSqTolerance then
+                        bActionTaken = core.OrderMoveToPos(botBrain, unitIllusion, vecPosition, bInterruptAttacks, bQueueCommand) or bActionTaken
                 end
         end
 
@@ -332,8 +337,8 @@ function illusionLib.OrderIllusionsAttackPosition(botBrain, vecPosition, bInterr
         local bActionTaken = false
 
         for _, unitIllusion in pairs(illusionLib.tIllusions) do
-                if Vector3.Distacne2DSq(vecPosition, unitIllusion:GetPosition()) >= illusionLib.nDistanceSqTolerance then
-                        core.OrderMoveToPos(botBrain, unitIllusion, vecPosition, bInterruptAttacks, bQueueCommand) or bActionTaken
+                if Vector3.Distance2DSq(vecPosition, unitIllusion:GetPosition()) >= illusionLib.nDistanceSqTolerance then
+                        bActionTaken = core.OrderMoveToPos(botBrain, unitIllusion, vecPosition, bInterruptAttacks, bQueueCommand) or bActionTaken
                 end
         end
 
