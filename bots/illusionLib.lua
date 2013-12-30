@@ -42,6 +42,9 @@ illusionLib.tIllusionBehaviors = {}
 illusionLib.nNextBehaviorTime = HoN.GetGameTime()
 illusionLib.nBehaviorAssessInterval = 100
 
+-- Set to false to disable the behaviors system
+illusionLib.bRunBehaviors = true
+
 -- Illusions will only attempt to move if they are farther than this away from the targeted position
 illusionLib.nDistanceSqTolerance = 100 * 100
 
@@ -73,7 +76,7 @@ end
 function object:illusionLibOnthinkOverride(tGameVariables)
         self:illusionLibOnthinkOld(tGameVariables)
 
-        if illusionLib.nNextBehaviorTime <= HoN.GetGameTime() then
+        if illusionLib.bRunBehaviors == true and illusionLib.nNextBehaviorTime <= HoN.GetGameTime() then
                 illusionLib.updateIllusions(self)
                 -- Dont run behaviors if there are no illusions
                 if #illusionLib.tIllusions > 0 then
@@ -96,9 +99,9 @@ function object:illusionLibOnthinkOverride(tGameVariables)
                         if not funcBehavior(self) then
                                 illusionLib.tIllusionBehaviors["NoBehavior"](self)
                         end
-
-                        illusionLib.nNextBehaviorTime = HoN.GetGameTime() + illusionLib.nBehaviorAssessInterval
                 end
+
+                illusionLib.nNextBehaviorTime = HoN.GetGameTime() + illusionLib.nBehaviorAssessInterval
         end
 end
 
