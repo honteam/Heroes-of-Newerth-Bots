@@ -81,8 +81,10 @@ function illusionLib.executeIllusionsBehavior(botBrain)
                 funcBehavior = illusionLib.tIllusionBehaviors["Idle"]
         else
                 local sCurrentBehaviorName = core.GetCurrentBehaviorName(botBrain)
-                funcBehavior = illusionLib.tIllusionBehaviors[sCurrentBehaviorName]
-
+                if sCurrentBehaviorName ~= nil then
+                        funcBehavior = illusionLib.tIllusionBehaviors[sCurrentBehaviorName]
+                end
+                
                 -- If this behavior does not exist revert to default behavior
                 if funcBehavior == nil then
                         funcBehavior = illusionLib.tIllusionBehaviors["NoBehavior"]
