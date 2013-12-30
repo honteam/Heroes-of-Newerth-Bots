@@ -7,6 +7,13 @@
 -- |_|_|_|\__,_|___/_|\___/|_| |_\_____/_|_.__/  --
 --                     - By: DarkFire -          --
 ---------------------------------------------------
+--
+-- Selects a behavior for the illusions to use based on what the bot's current behavior is
+-- If there is no corresponding behavior for the illusions they will use "NoBehavior"
+--
+-- For example, if the bot is running the "HarassHero" behavior the illusions will attempt
+-- to run "HarassHero" from tIllusionsBehaviors
+--
 
 --------------------------------------
 --          Initialization          --
@@ -33,10 +40,10 @@ illusionLib.tIllusions = {}
 -- Table containing all behaviors used by illusions
 illusionLib.tIllusionBehaviors = {}
 illusionLib.nNextBehaviorTime = HoN.GetGameTime()
-illusionLib.nBehaviorAssessInterval = 250
+illusionLib.nBehaviorAssessInterval = 100
 
 -- Illusions will only attempt to move if they are farther than this away from the targeted position
-illusionLib.nDistanceSqTolerance = 300 * 300
+illusionLib.nDistanceSqTolerance = 100 * 100
 
 -- Force the illusion to use the idle behavior
 -- This value will reset to false on every frame that the illusions are called
@@ -49,58 +56,54 @@ illusionLib.bForceIllusionsToIdle = false
 
 -- Populates tIllusions with all illusions owned by the bot
 function illusionLib.updateIllusions(botBrain)
-        local sHeroName = core.unitSelf:GetTypeName()
         illusionLib.tIllusions = {}
-        for nUID, unitHero in pairs(core.localUnits["AllyUnits"]) do
-                if core.teamBotBrain.tAllyHeroes[nUID] == nil and unitHero:GetTypeName() == sHeroName then
-                        tinsert(illusionLib.tIllusions, unitHero)
+        local tPossibleIllusions = core.localUnits["AllyHeroes"]
+        if tPossibleIllusions ~= nil then
+                local sHeroName = core.unitSelf:GetTypeName()
+                for nUID, unitHero in pairs(tPossibleIllusions) do
+                        if core.teamBotBrain.tAllyHeroes[nUID] == nil and unitHero:GetTypeName() == sHeroName then
+                                tinsert(illusionLib.tIllusions, unitHero)
+                        end
                 end
         end
 
         return
 end
 
--- Selects a behavior for the illusions to use based on what the bot's current behavior is
--- If there is no corresponding behavior for the illusions they will use "NoBehavior"
---
--- For example, if the bot is running the "HarassHero" behavior the illusions will attempt
--- to run "HarassHero" from tIllusionsBehaviors
-function illusionLib.executeIllusionsBehavior(botBrain)
-        if illusionLib.nNextBehaviorTime > HoN.GetGameTime() then
-                return true
-        end
+function object:illusionLibOnthinkOverride(tGameVariables)
+        self:illusionLibOnthinkOld(tGameVariables)
 
-        illusionLib.updateIllusions(botBrain)
-        -- Dont run behaviors if there are no illusions
-        if #illusionLib.tIllusions == 0 then
-                return true
-        end
-        local funcBehavior = nil
+        if illusionLib.nNextBehaviorTime <= HoN.GetGameTime() then
+                illusionLib.updateIllusions(self)
+                -- Dont run behaviors if there are no illusions
+                if #illusionLib.tIllusions > 0 then
+                        local funcBehavior = nil
 
-        if illusionLib.bForceIllusionsToIdle == true then
-                funcBehavior = illusionLib.tIllusionBehaviors["Idle"]
-        else
-                local sCurrentBehaviorName = core.GetCurrentBehaviorName(botBrain)
-                if sCurrentBehaviorName ~= nil then
-                        funcBehavior = illusionLib.tIllusionBehaviors[sCurrentBehaviorName]
+                        if illusionLib.bForceIllusionsToIdle == true or not core.unitSelf:IsAlive() then
+                                funcBehavior = illusionLib.tIllusionBehaviors["Idle"]
+                        else
+                                local sCurrentBehaviorName = core.GetCurrentBehaviorName(self)
+                                if sCurrentBehaviorName ~= nil then
+                                        funcBehavior = illusionLib.tIllusionBehaviors[sCurrentBehaviorName]
+                                end
+
+                                -- If this behavior does not exist revert to default behavior
+                                if funcBehavior == nil then
+                                        funcBehavior = illusionLib.tIllusionBehaviors["NoBehavior"]
+                                end
+                        end
+
+                        if not funcBehavior(self) then
+                                illusionLib.tIllusionBehaviors["NoBehavior"](self)
+                        end
+
+                        illusionLib.nNextBehaviorTime = HoN.GetGameTime() + illusionLib.nBehaviorAssessInterval
                 end
-                
-                -- If this behavior does not exist revert to default behavior
-                if funcBehavior == nil then
-                        funcBehavior = illusionLib.tIllusionBehaviors["NoBehavior"]
-                end
         end
-
-        local bActionTaken = funcBehavior(botBrain)
-
-        if not bActionTaken then
-                bActionTaken = illusionLib.tIllusionBehaviors["NoBehavior"](botBrain)
-        end
-
-        illusionLib.nNextBehaviorTime = HoN.GetGameTime() + illusionLib.nBehaviorAssessInterval
-
-        return bActionTaken
 end
+
+object.illusionLibOnthinkOld = object.onthink
+object.onthink = object.illusionLibOnthinkOverride
 
 ---------------------------------
 --          Behaviors          --
@@ -129,12 +132,9 @@ end
 
 -- Illusions will stay in position and attack anything around them
 function illusionLib.Idle(botBrain)
-        local bActionTaken = false
         illusionLib.bForceIllusionsToIdle = false
 
-        bActionTaken = illusionLib.OrderIllusionsStop(botBrain, false)
-
-        return bActionTaken
+        return illusionLib.OrderIllusionsStop(botBrain, false)
 end
 
 illusionLib.tIllusionBehaviors["Idle"] = illusionLib.Idle
@@ -145,11 +145,7 @@ illusionLib.tIllusionBehaviors["Idle"] = illusionLib.Idle
 
 -- Illusions will follow the bot
 function illusionLib.NoBehavior(botBrain)
-        local bActionTaken = false
-
-        bActionTaken = illusionLib.OrderIllusionsMoveToPosAndHold(botBrain, core.unitSelf:GetPosition())
-
-        return bActionTaken
+        return illusionLib.OrderIllusionsMoveToPosAndHold(botBrain, core.unitSelf:GetPosition())
 end
 
 illusionLib.tIllusionBehaviors["NoBehavior"] = illusionLib.NoBehavior
@@ -235,11 +231,7 @@ illusionLib.tIllusionBehaviors["AttackEnemyMinions"] = illusionLib.AttackEnemyMi
 
 -- Illusions will attack everything near the bot
 function illusionLib.Push(botBrain)
-        local bActionTaken = false
-
-        bActionTaken = illusionLib.OrderIllusionsAttackPosition(botBrain, core.unitSelf:GetPosition())
-
-        return bActionTaken
+        return illusionLib.OrderIllusionsAttackPosition(botBrain, core.unitSelf:GetPosition())
 end
 
 illusionLib.tIllusionBehaviors["Push"] = illusionLib.Push
