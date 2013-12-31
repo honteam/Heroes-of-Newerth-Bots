@@ -8,7 +8,11 @@ local _G = getfenv(0)
 local object = _G.object
 
 object.core = object.core or {}
-local core, eventsLib, behaviorLib, metadata = object.core, object.eventsLib, object.behaviorLib, object.metadata
+
+runfile "bots/illusionLib.lua"
+
+local core, eventsLib, behaviorLib, metadata, illusionLib = object.core, object.eventsLib, object.behaviorLib, object.metadata, object.illusionLib
+
 
 local print, ipairs, pairs, string, table, next, type, tinsert, tremove, tsort, format, tostring, tonumber, strfind, strsub
 	= _G.print, _G.ipairs, _G.pairs, _G.string, _G.table, _G.next, _G.type, _G.table.insert, _G.table.remove, _G.table.sort, _G.string.format, _G.tostring, _G.tonumber, _G.string.find, _G.string.sub
@@ -356,6 +360,36 @@ function object:onthink(tGameVariables)
 	
 		if object.nCurrentBehavior == nil then
 			BotEcho('No current behavior!!!')
+		end
+		StopProfile()
+		
+		StartProfile("Execute Illusion Behavior")
+		if illusionLib.bRunBehaviors == true and illusionLib.nNextBehaviorTime <= HoN.GetGameTime() then
+			illusionLib.updateIllusions(self)
+			-- Dont run behaviors if there are no illusions
+			if #illusionLib.tIllusions > 0 then
+				local funcBehavior = nil
+				
+				if illusionLib.bForceIllusionsToIdle == true or not core.unitSelf:IsAlive() then
+					funcBehavior = illusionLib.tIllusionBehaviors["Idle"]
+				else
+					local sCurrentBehaviorName = core.GetCurrentBehaviorName(self)
+					if sCurrentBehaviorName ~= nil then
+						funcBehavior = illusionLib.tIllusionBehaviors[sCurrentBehaviorName]
+					end
+					
+					-- If this behavior does not exist revert to default behavior
+					if funcBehavior == nil then
+						funcBehavior = illusionLib.tIllusionBehaviors["NoBehavior"]
+					end
+				end
+				
+				if not funcBehavior(self) then
+					illusionLib.tIllusionBehaviors["NoBehavior"](self)
+				end
+			end
+			
+			illusionLib.nNextBehaviorTime = HoN.GetGameTime() + illusionLib.nBehaviorAssessInterval
 		end
 		StopProfile()
 	end
