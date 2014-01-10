@@ -136,7 +136,8 @@ local function AbilitiesUpUtility(hero)
 		nUtility = nUtility + object.nAirStrikeUp
 	end
 	
-	if object.itemSheepstick and object.itemSheepstick:CanActivate() then
+	local itemSheepstick = core.GetItem("Item_Morph")
+	if itemSheepstick and itemSheepstick:CanActivate() then
 		nUtility = nUtility + object.nSheepstickUp
 	end
 	return nUtility
@@ -185,7 +186,7 @@ behaviorLib.CustomHarassUtility = CustomHarassUtilityFnOverride
 --           Fights             --
 ----------------------------------
 local function HarassHeroExecuteOverride(botBrain)
-	local unitTarget = behaviorLib.herounitTarget
+	local unitTarget = behaviorLib.heroTarget
 	if unitTarget == nil then
 		return false --Eh nothing here
 	end
@@ -242,7 +243,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	if not bActionTaken then
 		if bBombardmentUp and nAggroValue > object.nBombardmentThreshold then
 			if nDistanceSQ < skills.abilBombardment:GetRange() ^ 2 then
-				actionTaken = core.OrderAbilityPosition(botBrain, skills.abilBombardment, vecTargetPosition)
+				actionTaken = core.OrderAbilityPosition(botBrain, skills.abilBombardment, vecTargetPosition + 100 * unitTarget:GetHeading())
 			end
 		end
 	end
@@ -260,7 +261,7 @@ local function HarassHeroExecuteOverride(botBrain)
 
 	--Boom dust
 	if not bActionTaken and bDustUp then
-		if skills.abilDust.nLastCastTime + 2000 < nTime then --Dont spam all charges at once
+		if skills.abilDust.nLastCastTime + 1500 < nTime then --Dont spam all charges at once
 			if nDistanceSQ < skills.abilDust:GetRange() ^ 2 then
 				bActionTaken = core.OrderAbilityEntity(botBrain, skills.abilDust, unitTarget)
 				if bActionTaken then
@@ -284,17 +285,23 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 --Run away. Run away
 function behaviorLib.CustomRetreatExecute(botBrain)
 	local bActionTaken = false
-	local heroes = HoN.GetUnitsInRadius(core.unitSelf:GetPosition(), 800, core.UNIT_MASK_ALIVE + core.UNIT_MASK_HERO)
-	tEnemyHeroes = {}
+	local heroes = HoN.GetUnitsInRadius(core.unitSelf:GetPosition(), 700, core.UNIT_MASK_ALIVE + core.UNIT_MASK_HERO)
+	local unitClosestEnemy = nil
+	local nClosestDistance = 999999
+	local vecMyPosition = core.unitSelf:GetPosition()
 	for i, hero in ipairs(heroes) do
 		if hero:GetTeam() ~= core.unitSelf:GetTeam() then
-			table.insert(tEnemyHeroes, hero)
+			local nDistanceSQ = Vector3.GetDistance2DSq(vecMyPosition, hero:GetPosition())
+			if nDistanceSQ < nClosestDistance then
+				nClosestDistance = nDistanceSQ
+				unitClosestEnemy = hero
+			end
 		end
 	end
 
-	if #tEnemyHeroes > 0 then
+	if unitClosestEnemy ~= nil then
 		--Todo if multiple do some math
-		bActionTaken = core.OrderAbilityPosition(botBrain, skills.abilBombardment, tEnemyHeroes[1].GetPosition())
+		bActionTaken = core.OrderAbilityPosition(botBrain, skills.abilBombardment, unitClosestEnemy.GetPosition())
 	end
 
 	return bActionTaken
