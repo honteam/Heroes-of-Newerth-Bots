@@ -114,8 +114,8 @@ object.nBombardmentUse = 20
 object.nAirStrikeUse = 40
 object.nSheepstickUse = 15
 
-object.nStickyBombThreshold = 35
-object.nBombardmentThreshold = 35
+object.nStickyBombThreshold = 30
+object.nBombardmentThreshold = 27
 object.nAirStrikeThreshold = 70
 object.nSheepstickThreshold = 40
 
