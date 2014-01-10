@@ -2290,6 +2290,8 @@ behaviorLib.lastRetreatUtil = 0
 function behaviorLib.PositionSelfBackUp()
 	StartProfile('PositionSelfBackUp')
 
+	local bDebugLines = false
+
 	local vecReturn = nil
 
 	--Metadata have teams as following strings
@@ -2332,7 +2334,6 @@ function behaviorLib.PositionSelfBackUp()
 			iEndNode = 1
 			iStep = -1
 		end
-		core.BotEcho(tLane[iStartNode]:GetIndex())
 
 		for i = iStartNode,iEndNode,iStep do
 			local nodeCurrent = tLane[i]
@@ -2340,8 +2341,12 @@ function behaviorLib.PositionSelfBackUp()
 				break
 			end
 			if nodeCurrent:GetProperty("zone") == sEnemyZone and nodeCurrent:GetProperty("tower") then
-				bDiving = true --todo check that the tower is actualy there
-				break
+				--Check if there actualy is tower
+				local tBuildings = HoN.GetUnitsInRadius(node:GetPosition(), 800, core.UNIT_MASK_ALIVE + core.UNIT_MASK_BUILDING)
+				if core.NumberElements(tBuildings) > 0 then
+					bDiving = true --todo check that the tower is actualy there
+					break
+				end
 			end
 		end
 
@@ -2361,7 +2366,6 @@ function behaviorLib.PositionSelfBackUp()
 			local nEnemyTowerMultiplier = 20
 			local nAllyTowerMultiplier = 0.1
 			local nLaneMultiplier = 0.4
-
 
 			local bIsTower = nodeCurrent:GetProperty("tower") ~= nil and nodeCurrent:GetProperty("tower")
 			local bIsEnemyArea = (sEnemyZone == nodeCurrent:GetProperty("zone"))
@@ -2390,16 +2394,17 @@ function behaviorLib.PositionSelfBackUp()
 		end
 	end
 
-	local sColor = "blue"
-	if bAtLane then
-		sColor = "green"
-	end
-	if bDiving then
-		sColor = "red"
-	end
+	if bDebugLines then
+		local sColor = "blue"
+		if bAtLane then
+			sColor = "green"
+		end
+		if bDiving then
+			sColor = "red"
+		end
 
-	core.DrawDebugArrow(vecMyPos, vecReturn, sColor)
---	core.DrawDebugArrow(tPath[2]:GetPosition(), tPath[3]:GetPosition(), "blue")
+		core.DrawDebugArrow(vecMyPos, vecReturn, sColor)
+	end
 
 	StopProfile()
 	return vecReturn
