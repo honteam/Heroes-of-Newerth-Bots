@@ -80,7 +80,7 @@ function behaviorLib.PositionSelfCreepWave(botBrain, unitCurrentTarget)
 	
 	local nMyThreat =  funcGetThreat(unitSelf)
 	local nMyDefense = funcGetDefense(unitSelf)
-	local vecBackUp = core.GetPrevWaypoint(core.tMyLane, vecMyPos, core.bTraverseForward):GetPosition()
+	local vecBackUp = behaviorLib.PositionSelfBackUp()
 	
 	local nExtraThreat = 0.0
 	if unitSelf:HasState("State_HealthPotion") then
@@ -2290,50 +2290,107 @@ behaviorLib.lastRetreatUtil = 0
 function behaviorLib.PositionSelfBackUp()
 	StartProfile('PositionSelfBackUp')
 
-	local function funcLaneCost(nodeParent, nodeCurrent, link, nOriginalCost)
-		local nEnemyTowerMultiplier = 20
-		local nAllyTowerMultiplier = 0.1
-		local nLaneMultiplier = 0.4
+	local vecReturn = nil
 
-		--Metadata have teams as following strings
-		local sEnemyZone = "hellbourne"
-		if core.myTeam == HoN.GetHellbourneTeam() then
-			sEnemyZone = "legion"
-		end
-
-		local bIsTower = nodeCurrent:GetProperty("tower") ~= nil and nodeCurrent:GetProperty("tower")
-		local bIsEnemyArea = (sEnemyZone == nodeCurrent:GetProperty("zone"))
-		local bIsLane = (nodeCurrent:GetProperty("lane") ~= nil)
-
-		if bIsTower then
-			if bIsEnemyArea then
-				nOriginalCost = nOriginalCost * nEnemyTowerMultiplier
-			else
-				nOriginalCost = nOriginalCost * nAllyTowerMultiplier
-			end
-		elseif bIsLane and not bIsEnemyArea then
-			nOriginalCost = nOriginalCost * nLaneMultiplier
-		end
-		return nOriginalCost
+	--Metadata have teams as following strings
+	local sEnemyZone = "hellbourne"
+	if core.myTeam == HoN.GetHellbourneTeam() then
+		sEnemyZone = "legion"
 	end
 
 	local vecMyPos = core.unitSelf:GetPosition()
-
-	local tPath = BotMetaData.FindPath(vecMyPos, core.allyWell:GetPosition(), funcLaneCost, 1)
-
-	local vecDesiredPos = tPath[1]:GetPosition()
-
 	local ClosestNode = BotMetaData.GetClosestNode(vecMyPos)
+	local bAtLane = (ClosestNode:GetProperty("lane") ~= nil) --This is off
+	local bDiving = false
 
-	if tPath[1]:GetIndex() == ClosestNode:GetIndex() then
-		vecDesiredPos = tPath[2]:GetPosition()
+	if bAtLane then --bot is at lane
+
+		local vecLastNodePosition = vecMyPos
+		local sLane = ClosestNode:GetProperty("lane")
+		local tLane = metadata.GetLane(sLane) --The lane I am at. not the one im supposed to be
+
+		local iStartNode = 1
+		local iEndNode = #tLane
+		local iStep = 1
+
+		local nodePrev = nil
+
+		if not bTraverseForward then
+			local iStartNode = #tLane
+			local iEndNode = 1
+			local iStep = -1
+		end
+
+		for i = iStartNode,iEndNode,iStep do
+			local nodeCurrent = tLane[i]
+
+			vecLastNodePosition = nodeCurrent:GetPosition()
+			if nodeCurrent:GetIndex() == ClosestNode:GetIndex() then
+				break
+			end
+			if nodeCurrent:GetProperty("zone") == sEnemyZone and nodeCurrent:GetProperty("tower") then
+				bDiving = true --todo check that the tower is actualy there
+				break
+			end
+		end
+
+		if not bDiving then
+			local nodePrev,nPrevNode = core.GetPrevWaypoint(tLane, vecMyPos, core.bTraverseForward)
+			if nodePrev then
+				vecReturn = nodePrev:GetPosition()
+			else
+				vecReturn = core.allyWell:GetPosition() --at the end of the lane
+			end
+		end
 	end
 
-	core.DrawDebugArrow(vecMyPos, vecDesiredPos, 'blue')
+	if vecReturn == nil then
+
+		local function funcLaneCost(nodeParent, nodeCurrent, link, nOriginalCost)
+			local nEnemyTowerMultiplier = 20
+			local nAllyTowerMultiplier = 0.1
+			local nLaneMultiplier = 0.4
+
+
+			local bIsTower = nodeCurrent:GetProperty("tower") ~= nil and nodeCurrent:GetProperty("tower")
+			local bIsEnemyArea = (sEnemyZone == nodeCurrent:GetProperty("zone"))
+			local bIsLane = (nodeCurrent:GetProperty("lane") ~= nil)
+
+			if bIsTower then
+				if bIsEnemyArea then
+					nOriginalCost = nOriginalCost * nEnemyTowerMultiplier
+				else
+					nOriginalCost = nOriginalCost * nAllyTowerMultiplier
+				end
+			elseif bIsLane and not bIsEnemyArea then
+				nOriginalCost = nOriginalCost * nLaneMultiplier
+			end
+			return nOriginalCost
+		end
+
+		local vecMyPos = core.unitSelf:GetPosition()
+
+		local tPath = BotMetaData.FindPath(vecMyPos, core.allyWell:GetPosition(), funcLaneCost, 1)
+
+		local ClosestNode = BotMetaData.GetClosestNode(vecMyPos)
+
+		if tPath[1]:GetIndex() == ClosestNode:GetIndex() then
+			vecReturn = tPath[2]:GetPosition()
+		end
+	end
+
+	local sColor = "blue"
+	if bAtLane then
+		sColor = "green"
+	elseif bDiving then
+		sColor = "red"
+	end
+
+	core.DrawDebugArrow(vecMyPos, vecReturn, sColor)
 --	core.DrawDebugArrow(tPath[2]:GetPosition(), tPath[3]:GetPosition(), "blue")
 
 	StopProfile()
-	return vecDesiredPos
+	return vecReturn
 end
 
 
