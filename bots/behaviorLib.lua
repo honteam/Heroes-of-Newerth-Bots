@@ -2299,33 +2299,44 @@ function behaviorLib.PositionSelfBackUp()
 	end
 
 	local vecMyPos = core.unitSelf:GetPosition()
-	local ClosestNode = BotMetaData.GetClosestNode(vecMyPos)
-	local bAtLane = (ClosestNode:GetProperty("lane") ~= nil) --This is off
+
+	nLaneProximityThreshold = core.teamBotBrain.nLaneProximityThreshold
+
+	local bAtLane = false
+	local sLane = ""
+
+	tLaneBreakdown = core.GetLaneBreakdown(core.unitSelf)
+	if tLaneBreakdown["mid"] >= nLaneProximityThreshold then
+		bAtLane = true
+		sLane = "middle"
+	elseif tLaneBreakdown["top"] >= nLaneProximityThreshold then
+		bAtLane = true
+		sLane = "top"
+	elseif tLaneBreakdown["bot"] >= nLaneProximityThreshold then
+		bAtLane = true
+		sLane = "bottom"
+	end
+
 	local bDiving = false
 
 	if bAtLane then --bot is at lane
-
-		local vecLastNodePosition = vecMyPos
-		local sLane = ClosestNode:GetProperty("lane")
 		local tLane = metadata.GetLane(sLane) --The lane I am at. not the one im supposed to be
+		local nodeClosestLane = BotMetaData.GetClosestNodeOnPath(tLane, vecMyPos)
 
 		local iStartNode = 1
 		local iEndNode = #tLane
 		local iStep = 1
 
-		local nodePrev = nil
-
-		if not bTraverseForward then
-			local iStartNode = #tLane
-			local iEndNode = 1
-			local iStep = -1
+		if not core.bTraverseForward then
+			iStartNode = #tLane
+			iEndNode = 1
+			iStep = -1
 		end
+		core.BotEcho(tLane[iStartNode]:GetIndex())
 
 		for i = iStartNode,iEndNode,iStep do
 			local nodeCurrent = tLane[i]
-
-			vecLastNodePosition = nodeCurrent:GetPosition()
-			if nodeCurrent:GetIndex() == ClosestNode:GetIndex() then
+			if nodeCurrent:GetIndex() == nodeClosestLane:GetIndex() then
 				break
 			end
 			if nodeCurrent:GetProperty("zone") == sEnemyZone and nodeCurrent:GetProperty("tower") then
@@ -2382,7 +2393,8 @@ function behaviorLib.PositionSelfBackUp()
 	local sColor = "blue"
 	if bAtLane then
 		sColor = "green"
-	elseif bDiving then
+	end
+	if bDiving then
 		sColor = "red"
 	end
 
