@@ -7,10 +7,11 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
 
---this is so that developers can tell this code to ignore certain items they have written bot-specific code for.
+--This table is so that developers can tell this code to ignore certain items they have written bot-specific code for.
+--  Add the item's entity name string to the table to not add that item's default behavior.
 behaviorLib.tDontUseDefaultItemBehavior = {}
 
-function behaviorLib.addCurrentItemBehaviors()  --run on initialization, too add current item behaviors.
+function behaviorLib.addCurrentItemBehaviors()  --run on initialization, to add current item behaviors.
 	local inventory = core.unitSelf:GetInventory(false)
 	for slot = 1, 6 do
 		local curItem = inventory[slot]
@@ -22,7 +23,7 @@ end
 
 behaviorLib.tItemBehaviors = {}
 --[[
-	Item list:
+	Items currently supported:
 		Ring Of Sorcery
 		Mana Pot
 		Bottle
@@ -44,7 +45,7 @@ behaviorLib.tItemBehaviors = {}
 		Symbol Of Rage
 ]]
 
-function behaviorLib.addItemBehavior(itemName, remove)
+function behaviorLib.addItemBehavior(itemName)
 	local bDebugEchos = false
 	
 	-- Ignore items on our ignore list
@@ -53,17 +54,10 @@ function behaviorLib.addItemBehavior(itemName, remove)
 		return
 	end
 	
-	remove = (remove == nil and false) or remove
 	behaviorLib.behaviorToModify = behaviorLib.tItemBehaviors[itemName]
 	
 	if behaviorLib.behaviorToModify ~= nil then
-		if remove then
-			if core.RemoveByValue(behaviorLib.tBehaviors, behaviorLib.behaviorToModify) then
-				if bDebugEchos then BotEcho("^rRemoved "..itemName) end
-			else
-				BotEcho("^rFailed to remove "..itemName.." from behaviours!?") --this is an error we should know about.
-			end
-		elseif core.tableContains(behaviorLib.tBehaviors, behaviorLib.behaviorToModify) == 0 then
+		if core.tableContains(behaviorLib.tBehaviors, behaviorLib.behaviorToModify) == 0 then
 			tinsert(behaviorLib.tBehaviors, behaviorLib.behaviorToModify)
 			if bDebugEchos then BotEcho("^gadded "..itemName) end
 			
@@ -92,6 +86,22 @@ function behaviorLib.addItemBehavior(itemName, remove)
 	end
 end
 
+function behaviorLib.removeItemBehavior(itemName)
+	-- Ignore items on our ignore list
+	if core.tableContains(behaviorLib.tDontUseDefaultItemBehavior, itemName) > 0 then
+		if bDebugEchos then BotEcho("^rDisabled "..itemName) end
+		return
+	end
+	
+	behaviorLib.behaviorToModify = behaviorLib.tItemBehaviors[itemName]
+	if behaviorLib.behaviorToModify ~= nil then
+		if core.RemoveByValue(behaviorLib.tBehaviors, behaviorLib.behaviorToModify) then
+			if bDebugEchos then BotEcho("^rRemoved "..itemName) end
+		else
+			--BotEcho("^rFailed to remove "..itemName.." from behaviours!?") --this is an error we should know about.
+		end
+	end
+end
 
 ----------------------------------
 --  Behaviors start below!
@@ -928,10 +938,10 @@ local vecAlchBonesCampPos
 local nAlchBonesTimeUsed=0
 function behaviorLib.AlchemistBonesUtility(botBrain)
 	behaviorLib.itemAlchemistBones = core.GetItem("Item_Gloves3")
-	if (not behaviorLib.itemAlchemistBones or behaviorLib.itemAlchemistBones:GetCharges()==0 or not behaviorLib.itemAlchemistBones:CanActivate() )then 
+	if (not behaviorLib.itemAlchemistBones or behaviorLib.itemAlchemistBones:GetCharges() == 0 or not behaviorLib.itemAlchemistBones:CanActivate()) then 
 		return 0
 	end
-	if nAlchBonesTimeUsed+550 > HoN:GetGameTime() then --continue if we are
+	if nAlchBonesTimeUsed + 550 > HoN:GetGameTime() then --continue if we are
 		return 25
 	end
 	
@@ -954,12 +964,12 @@ function behaviorLib.AlchemistBonesExecute(botBrain)
 	local unitSelf = core.unitSelf
 	local vecMyPos=core.unitSelf:GetPosition()
 	
-	if nAlchBonesTimeUsed+550 > HoN:GetGameTime() then --continue if we are
+	if nAlchBonesTimeUsed + 550 > HoN:GetGameTime() then --continue if we are
 		return true
 	end
 	
 	--walk to target camp
-	if ( Vector3.Distance2DSq(vecMyPos, vecAlchBonesCampPos)>400*400 ) then
+	if ( Vector3.Distance2DSq(vecMyPos, vecAlchBonesCampPos) > 400 * 400 ) then
 		return core.OrderMoveToPosAndHoldClamp(botBrain, unitSelf, vecAlchBonesCampPos, false)
 	else--we are finally at a good camp!
 		local tUnits = HoN.GetUnitsInRadius(vecMyPos, 500, core.UNIT_MASK_ALIVE + core.UNIT_MASK_UNIT)

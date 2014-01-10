@@ -1182,27 +1182,35 @@ function core.InventoryContains(inventory, val, bIgnoreRecipes, bIncludeStash)
 end
 
 core.tFoundItems = {}
+core.tsearchTimes = {}
+core.nSearchFrequency = 2000
 --Finds an item on your hero.
 function core.GetItem(val, bIncludeStash)
 	if core.tFoundItems[val] then -- We have checked the item before. Validate it.
 		core.ValidateItem(core.tFoundItems[val])
-		if core.tFoundItems[val] then -- still valid, return it
+		if core.tFoundItems[val] and core.tFoundItems[val]:IsValid() then -- still valid, return it
 			return core.tFoundItems[val]
+		else
+			core.tFoundItems[val] = nil
 		end
 	end
-
 	--First time seeing the item, or it was invalidated.
 	if not core.tFoundItems[val] then
-		inventory = core.unitSelf:GetInventory()
-		if bIncludeStash == nil then
-			bIncludeStash = false
-		end
-		local nLast = (bIncludeStash and 12) or 6
-		for slot = 1, nLast, 1 do
-			local curItem = inventory[slot]
-			if curItem then
-				if curItem:GetTypeName() == val and not curItem:IsRecipe() then --ignore recipes!
-					return core.WrapInTable(curItem)
+		local nLastSearchTime = core.tsearchTimes[val] or 0
+		if nLastSearchTime + core.nSearchFrequency <= HoN:GetGameTime() then -- Only look at every x seconds
+			core.tsearchTimes[val] = HoN:GetGameTime()
+			inventory = core.unitSelf:GetInventory()
+			if bIncludeStash == nil then
+				bIncludeStash = false
+			end
+			local nLast = (bIncludeStash and 12) or 6
+			for slot = 1, nLast, 1 do
+				local curItem = inventory[slot]
+				if curItem then
+					if curItem:GetTypeName() == val and not curItem:IsRecipe() then --ignore recipes!
+						core.tFoundItems[val] = core.WrapInTable(curItem)
+						return core.tFoundItems[val]
+					end
 				end
 			end
 		end
