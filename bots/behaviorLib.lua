@@ -2302,11 +2302,11 @@ function behaviorLib.PositionSelfBackUp()
 
 	local vecMyPos = core.unitSelf:GetPosition()
 
-	nLaneProximityThreshold = core.teamBotBrain.nLaneProximityThreshold
-
 	local bAtLane = false
 	local sLane = ""
 
+	--Check if we are at/on lane
+	nLaneProximityThreshold = core.teamBotBrain.nLaneProximityThreshold
 	tLaneBreakdown = core.GetLaneBreakdown(core.unitSelf)
 	if tLaneBreakdown["mid"] >= nLaneProximityThreshold then
 		bAtLane = true
@@ -2335,6 +2335,7 @@ function behaviorLib.PositionSelfBackUp()
 			iStep = -1
 		end
 
+		--Iterate nodes from own base to the node bot is
 		for i = iStartNode,iEndNode,iStep do
 			local nodeCurrent = tLane[i]
 			if nodeCurrent:GetIndex() == nodeClosestLane:GetIndex() then
@@ -2342,9 +2343,9 @@ function behaviorLib.PositionSelfBackUp()
 			end
 			if nodeCurrent:GetProperty("zone") == sEnemyZone and nodeCurrent:GetProperty("tower") then
 				--Check if there actualy is tower
-				local tBuildings = HoN.GetUnitsInRadius(node:GetPosition(), 800, core.UNIT_MASK_ALIVE + core.UNIT_MASK_BUILDING)
+				local tBuildings = HoN.GetUnitsInRadius(nodeCurrent:GetPosition(), 800, core.UNIT_MASK_ALIVE + core.UNIT_MASK_BUILDING)
 				if core.NumberElements(tBuildings) > 0 then
-					bDiving = true --todo check that the tower is actualy there
+					bDiving = true
 					break
 				end
 			end
@@ -2363,6 +2364,9 @@ function behaviorLib.PositionSelfBackUp()
 	if vecReturn == nil then
 
 		local function funcLaneCost(nodeParent, nodeCurrent, link, nOriginalCost)
+
+			--Todo? move to behaviorlib. so bot can set custom ones
+			--Higer value means we are less eager to go that path
 			local nEnemyTowerMultiplier = 20
 			local nAllyTowerMultiplier = 0.1
 			local nLaneMultiplier = 0.4
@@ -2389,7 +2393,7 @@ function behaviorLib.PositionSelfBackUp()
 
 		local ClosestNode = BotMetaData.GetClosestNode(vecMyPos)
 
-		if tPath[1]:GetIndex() == ClosestNode:GetIndex() then
+		if tPath[1]:GetIndex() == ClosestNode:GetIndex() and #tPath > 1 then
 			vecReturn = tPath[2]:GetPosition()
 		end
 	end
