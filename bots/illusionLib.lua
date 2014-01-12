@@ -60,17 +60,14 @@ illusionLib.bForceIllusionsToIdle = false
 -- Populates tIllusions with all illusions owned by the bot
 function illusionLib.updateIllusions(botBrain)
         illusionLib.tIllusions = {}
-        local tPossibleIllusions = core.localUnits["AllyHeroes"]
+        local tPossibleIllusions = core.tControllableUnits["InventoryUnits"]
         if tPossibleIllusions ~= nil then
-                local sHeroName = core.unitSelf:GetTypeName()
-                for nUID, unitHero in pairs(tPossibleIllusions) do
-                        if core.teamBotBrain.tAllyHeroes[nUID] == nil and unitHero:GetTypeName() == sHeroName then
-                                tinsert(illusionLib.tIllusions, unitHero)
+                for nUID, unit in pairs(tPossibleIllusions) do
+                        if unit:IsHero() then
+                                tinsert(illusionLib.tIllusions, unit)
                         end
                 end
         end
-
-        return
 end
 
 ---------------------------------
@@ -113,7 +110,7 @@ illusionLib.tIllusionBehaviors["Idle"] = illusionLib.Idle
 
 -- Illusions will follow the bot
 function illusionLib.NoBehavior(botBrain)
-        return illusionLib.OrderIllusionsMoveToPosAndHold(botBrain, core.unitSelf:GetPosition())
+        return illusionLib.OrderIllusionsMoveToPos(botBrain, core.unitSelf:GetPosition())
 end
 
 illusionLib.tIllusionBehaviors["NoBehavior"] = illusionLib.NoBehavior
@@ -225,7 +222,7 @@ function illusionLib.OrderIllusionsMoveToUnit(botBrain, unitTarget, bInterruptAt
         local bActionTaken = false
 
         for _, unitIllusion in pairs(illusionLib.tIllusions) do
-                bActionTaken = core.OrderAttack(botBrain, unitIllusion, unitTarget, bInterruptAttacks, bQueueCommand) or bActionTaken
+                bActionTaken = core.OrderMoveToUnit(botBrain, unitIllusion, unitTarget, bInterruptAttacks, bQueueCommand) or bActionTaken
         end
 
         return bActionTaken
@@ -245,7 +242,7 @@ function illusionLib.OrderIllusionsTouch(botBrain, unitTarget, bInterruptAttacks
         local bActionTaken = false
 
         for _, unitIllusion in pairs(illusionLib.tIllusions) do
-                bActionTaken = core.OrderAttack(botBrain, unitIllusion, unitTarget, bInterruptAttacks, bQueueCommand) or bActionTaken
+                bActionTaken = core.OrderTouch(botBrain, unitIllusion, unitTarget, bInterruptAttacks, bQueueCommand) or bActionTaken
         end
 
         return
@@ -300,7 +297,7 @@ function illusionLib.OrderIllusionsAttackPosition(botBrain, vecPosition, bInterr
 
         for _, unitIllusion in pairs(illusionLib.tIllusions) do
                 if Vector3.Distance2DSq(vecPosition, unitIllusion:GetPosition()) >= illusionLib.nDistanceSqTolerance then
-                        bActionTaken = core.OrderMoveToPos(botBrain, unitIllusion, vecPosition, bInterruptAttacks, bQueueCommand) or bActionTaken
+                        bActionTaken = core.OrderAttackPosition(botBrain, unitIllusion, vecPosition, bInterruptAttacks, bQueueCommand) or bActionTaken
                 end
         end
 

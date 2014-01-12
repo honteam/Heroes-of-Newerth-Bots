@@ -364,13 +364,13 @@ function object:onthink(tGameVariables)
 		StopProfile()
 		
 		StartProfile("Execute Illusion Behavior")
-		if illusionLib.bRunBehaviors == true and illusionLib.nNextBehaviorTime <= HoN.GetGameTime() then
+		if illusionLib.bRunBehaviors ~= false and illusionLib.nNextBehaviorTime <= HoN.GetGameTime() then
 			illusionLib.updateIllusions(self)
 			-- Dont run behaviors if there are no illusions
 			if #illusionLib.tIllusions > 0 then
 				local funcBehavior = nil
 				
-				if illusionLib.bForceIllusionsToIdle == true or not core.unitSelf:IsAlive() then
+				if illusionLib.bForceIllusionsToIdle == true then
 					funcBehavior = illusionLib.tIllusionBehaviors["Idle"]
 				else
 					local sCurrentBehaviorName = core.GetCurrentBehaviorName(self)
