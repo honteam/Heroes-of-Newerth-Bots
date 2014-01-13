@@ -80,7 +80,8 @@ function behaviorLib.PositionSelfCreepWave(botBrain, unitCurrentTarget)
 	
 	local nMyThreat =  funcGetThreat(unitSelf)
 	local nMyDefense = funcGetDefense(unitSelf)
-	local vecBackUp = behaviorLib.PositionSelfBackUp()
+	local nodeBackUp, nNodeBackUp = core.GetPrevWaypoint(core.tMyLane, vecMyPos, core.bTraverseForward)
+	local vecBackUp = nodeBackUp:GetPosition()
 	
 	local nExtraThreat = 0.0
 	if unitSelf:HasState("State_HealthPotion") then
@@ -645,10 +646,62 @@ function behaviorLib.PortLogic(botBrain, vecDesiredPosition)
 	return behaviorLib.bLastPortResult
 end
 
-	
 behaviorLib.nPathEnemyTerritoryMul = 1.5
 behaviorLib.nPathBaseMul = 1.75
 behaviorLib.nPathTowerMul = 3.0
+function behaviorLib.GetSafePath(vecDesiredPosition)
+	local sEnemyZone = "hellbourne"
+	if core.myTeam == HoN.GetHellbourneTeam() then
+		sEnemyZone = "legion"
+	end
+
+	if bDebugEchos then BotEcho("enemy zone: "..sEnemyZone) end
+
+	local nEnemyTerritoryMul = behaviorLib.nPathEnemyTerritoryMul
+	local nTowerMul          = behaviorLib.nPathTowerMul
+	local nBaseMul           = behaviorLib.nPathBaseMul
+
+	local function funcNodeCost(nodeParent, nodeCurrent, link, nOriginalCost)
+		--TODO: local nDistance = link:GetLength()
+		local nDistance = Vector3.Distance(nodeParent:GetPosition(), nodeCurrent:GetPosition())
+		local nCostToParent = nOriginalCost - nDistance
+
+		--BotEcho(format("nOriginalCost: %s  nDistance: %s  nSq: %s", nOriginalCost, nDistance, nDistance*nDistance))
+
+		local sZoneProperty  = nodeCurrent:GetProperty("zone")
+		local bTowerProperty = nodeCurrent:GetProperty("tower")
+		local bBaseProperty  = nodeCurrent:GetProperty("base")
+
+		local nMultiplier = 1.0
+		local bEnemyZone = false
+		if sZoneProperty and sZoneProperty == sEnemyZone then
+			bEnemyZone = true
+		end
+
+		if bEnemyZone then
+			nMultiplier = nMultiplier + nEnemyTerritoryMul
+			if bBaseProperty then
+				nMultiplier = nMultiplier + nBaseMul
+			end
+
+			if bTowerProperty then
+				--check if the tower is there
+				local tBuildings = HoN.GetUnitsInRadius(nodeCurrent:GetPosition(), 800, core.UNIT_MASK_ALIVE + core.UNIT_MASK_BUILDING)
+
+				for _, unitBuilding in pairs(tBuildings) do
+					if unitBuilding:IsTower() then
+						nMultiplier = nMultiplier + nTowerMul
+						break
+					end
+				end
+			end
+		end
+
+		return nCostToParent + nDistance * nMultiplier
+	end
+
+	return BotMetaData.FindPath(core.unitSelf:GetPosition(), vecDesiredPosition, funcNodeCost)
+end
 
 behaviorLib.tPath = nil
 behaviorLib.nPathNode = 1
@@ -659,74 +712,24 @@ function behaviorLib.PathLogic(botBrain, vecDesiredPosition)
 	local bDebugLines = false
 	local bDebugEchos = false
 	local bMarkProperties = false
-	
+
 	--if object.myName == "ShamanBot" then bDebugLines = true bDebugEchos = true end
-	
+
 	local bRepath = false
 	if Vector3.Distance2DSq(vecDesiredPosition, behaviorLib.vecGoal) > behaviorLib.nGoalToleranceSq then
 		bRepath = true
 	end
-	
+
 	local unitSelf = core.unitSelf
 	local vecMyPosition = unitSelf:GetPosition()
-	
+
 	if bRepath then
 		if bDebugEchos then BotEcho("Repathing!") end
-		
-		local sEnemyZone = "hellbourne"
-		if core.myTeam == HoN.GetHellbourneTeam() then
-			sEnemyZone = "legion"
-		end
-		
-		if bDebugEchos then BotEcho("enemy zone: "..sEnemyZone) end
-		
-		local nEnemyTerritoryMul = behaviorLib.nPathEnemyTerritoryMul
-		local nTowerMul          = behaviorLib.nPathTowerMul
-		local nBaseMul           = behaviorLib.nPathBaseMul
-		
-		local function funcNodeCost(nodeParent, nodeCurrent, link, nOriginalCost)
-			--TODO: local nDistance = link:GetLength()
-			local nDistance = Vector3.Distance(nodeParent:GetPosition(), nodeCurrent:GetPosition())
-			local nCostToParent = nOriginalCost - nDistance
-			
-			--BotEcho(format("nOriginalCost: %s  nDistance: %s  nSq: %s", nOriginalCost, nDistance, nDistance*nDistance))
-		
-			local sZoneProperty  = nodeCurrent:GetProperty("zone")
-			local bTowerProperty = nodeCurrent:GetProperty("tower")
-			local bBaseProperty  = nodeCurrent:GetProperty("base")
-			
-			local nMultiplier = 1.0
-			local bEnemyZone = false
-			if sZoneProperty and sZoneProperty == sEnemyZone then
-				bEnemyZone = true
-			end
-			
-			if bEnemyZone then
-				nMultiplier = nMultiplier + nEnemyTerritoryMul
-				if bBaseProperty then
-					nMultiplier = nMultiplier + nBaseMul
-				end
-				
-				if bTowerProperty then
-					--check if the tower is there
-					local tBuildings = HoN.GetUnitsInRadius(nodeCurrent:GetPosition(), 800, core.UNIT_MASK_ALIVE + core.UNIT_MASK_BUILDING)
-					
-					for _, unitBuilding in pairs(tBuildings) do
-						if unitBuilding:IsTower() then
-							nMultiplier = nMultiplier + nTowerMul
-							break
-						end
-					end
-				end				
-			end
-			
-			return nCostToParent + nDistance * nMultiplier
-		end
-	
-		behaviorLib.tPath = BotMetaData.FindPath(vecMyPosition, vecDesiredPosition, funcNodeCost)
+
+		behaviorLib.tPath = behaviorLib.GetSafePath(vecDesiredPosition)
 		behaviorLib.vecGoal = vecDesiredPosition
 		behaviorLib.nPathNode = 1
-		
+
 		--double check the first node since we have a really sparse graph
 		local tPath = behaviorLib.tPath
 		if #tPath > 1 then
@@ -738,10 +741,10 @@ function behaviorLib.PathLogic(botBrain, vecDesiredPosition)
 			end
 		end
 	end
-	
+
 	--Follow path logic
 	local vecReturn = nil
-	
+
 	local tPath = behaviorLib.tPath
 	local nPathNode = behaviorLib.nPathNode
 	if tPath then
@@ -2363,33 +2366,7 @@ function behaviorLib.PositionSelfBackUp()
 
 	if vecReturn == nil then
 
-		local function funcLaneCost(nodeParent, nodeCurrent, link, nOriginalCost)
-
-			--Todo? move to behaviorlib. so bot can set custom ones
-			--Higer value means we are less eager to go that path
-			local nEnemyTowerMultiplier = 20
-			local nAllyTowerMultiplier = 0.1
-			local nLaneMultiplier = 0.4
-
-			local bIsTower = nodeCurrent:GetProperty("tower") ~= nil and nodeCurrent:GetProperty("tower")
-			local bIsEnemyArea = (sEnemyZone == nodeCurrent:GetProperty("zone"))
-			local bIsLane = (nodeCurrent:GetProperty("lane") ~= nil)
-
-			if bIsTower then
-				if bIsEnemyArea then
-					nOriginalCost = nOriginalCost * nEnemyTowerMultiplier
-				else
-					nOriginalCost = nOriginalCost * nAllyTowerMultiplier
-				end
-			elseif bIsLane and not bIsEnemyArea then
-				nOriginalCost = nOriginalCost * nLaneMultiplier
-			end
-			return nOriginalCost
-		end
-
-		local vecMyPos = core.unitSelf:GetPosition()
-
-		local tPath = BotMetaData.FindPath(vecMyPos, core.allyWell:GetPosition(), funcLaneCost, 1)
+		local tPath = behaviorLib.GetSafePath(core.allyWell:GetPosition())
 
 		local ClosestNode = BotMetaData.GetClosestNode(vecMyPos)
 
