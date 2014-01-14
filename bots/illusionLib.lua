@@ -63,7 +63,7 @@ function illusionLib.updateIllusions(botBrain)
         local tPossibleIllusions = core.tControllableUnits["InventoryUnits"]
         if tPossibleIllusions ~= nil then
                 for nUID, unit in pairs(tPossibleIllusions) do
-                        if unit:IsHero() then
+                        if unit:IsHero() and nUID ~= core.unitSelf:GetUniqueID() then
                                 tinsert(illusionLib.tIllusions, unit)
                         end
                 end
