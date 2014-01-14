@@ -160,6 +160,10 @@ function object:onthink(tGameVariables)
 		return
 	end
 	
+	if self.tAllyHeroes == nil or core.NumberElements(self.tAllyHeroes) < 1 then
+		return
+	end
+	
 	self.bPurchasedThisFrame = false
 	
 	StartProfile('Validation')
@@ -1418,6 +1422,10 @@ function object:BuildLanes()
 	
 	
 	--Assign bots to lane.
+	if object.tCombinations[1] == nil then
+		return
+	end
+	
 	for key, value in pairs(object.tCombinations[1]) do
 		local hero = object.tLanePreferences[key].hero
 		--BotEcho(hero:GetTypeName().."("..hero:GetUniqueID()..")'s role is "..value)
