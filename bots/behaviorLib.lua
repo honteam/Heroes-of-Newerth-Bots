@@ -648,7 +648,8 @@ end
 
 behaviorLib.nPathEnemyTerritoryMul = 1.5
 behaviorLib.nPathBaseMul = 1.75
-behaviorLib.nPathTowerMul = 3.0
+behaviorLib.nPathEnemyTowerMul = 3.0
+behaviorLib.nPathAllyTowerMul = -0.3
 function behaviorLib.GetSafePath(vecDesiredPosition)
 	local sEnemyZone = "hellbourne"
 	if core.myTeam == HoN.GetHellbourneTeam() then
@@ -658,7 +659,8 @@ function behaviorLib.GetSafePath(vecDesiredPosition)
 	if bDebugEchos then BotEcho("enemy zone: "..sEnemyZone) end
 
 	local nEnemyTerritoryMul = behaviorLib.nPathEnemyTerritoryMul
-	local nTowerMul          = behaviorLib.nPathTowerMul
+	local nEnemyTowerMul     = behaviorLib.nPathEnemyTowerMul
+	local nAllyTowerMul      = behaviorLib.nPathAllyTowerMul
 	local nBaseMul           = behaviorLib.nPathBaseMul
 
 	local function funcNodeCost(nodeParent, nodeCurrent, link, nOriginalCost)
@@ -683,16 +685,20 @@ function behaviorLib.GetSafePath(vecDesiredPosition)
 			if bBaseProperty then
 				nMultiplier = nMultiplier + nBaseMul
 			end
+		end
 
-			if bTowerProperty then
-				--check if the tower is there
-				local tBuildings = HoN.GetUnitsInRadius(nodeCurrent:GetPosition(), 800, core.UNIT_MASK_ALIVE + core.UNIT_MASK_BUILDING)
+		if bTowerProperty then
+			--check if the tower is there
+			local tBuildings = HoN.GetUnitsInRadius(nodeCurrent:GetPosition(), 800, core.UNIT_MASK_ALIVE + core.UNIT_MASK_BUILDING)
 
-				for _, unitBuilding in pairs(tBuildings) do
-					if unitBuilding:IsTower() then
-						nMultiplier = nMultiplier + nTowerMul
-						break
+			for _, unitBuilding in pairs(tBuildings) do
+				if unitBuilding:IsTower() then
+					if bEnemyZone then
+						nMultiplier = nMultiplier + nEnemyTowerMul
+					else
+						nMultiplier = nMultiplier + nAllyTowerMul
 					end
+					break
 				end
 			end
 		end
