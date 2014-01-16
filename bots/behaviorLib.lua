@@ -9,8 +9,8 @@ local core, eventsLib, behaviorLib, metadata = object.core, object.eventsLib, ob
 
 local print, ipairs, pairs, string, table, next, type, tinsert, tremove, tsort, format, tostring, tonumber, strfind, strsub
 	= _G.print, _G.ipairs, _G.pairs, _G.string, _G.table, _G.next, _G.type, _G.table.insert, _G.table.remove, _G.table.sort, _G.string.format, _G.tostring, _G.tonumber, _G.string.find, _G.string.sub
-local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
-	= _G.math.ceil, _G.math.floor, _G.math.pi, _G.math.tan, _G.math.atan, _G.math.atan2, _G.math.abs, _G.math.cos, _G.math.sin, _G.math.acos, _G.math.max, _G.math.random
+local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, asin, max, random
+	= _G.math.ceil, _G.math.floor, _G.math.pi, _G.math.tan, _G.math.atan, _G.math.atan2, _G.math.abs, _G.math.cos, _G.math.sin, _G.math.acos, _G.math.asin, _G.math.max, _G.math.random
 
 local nSqrtTwo = math.sqrt(2)
 
@@ -701,6 +701,71 @@ function behaviorLib.GetSafePath(vecDesiredPosition)
 	end
 
 	return BotMetaData.FindPath(core.unitSelf:GetPosition(), vecDesiredPosition, funcNodeCost)
+end
+
+function behaviorLib.GetSafeBlinkPosition(vecDesiredPosition, nRange)
+	local nRangeSq = nRange * nRange
+
+	local vecMyPos = core.unitSelf:GetPosition()
+
+	if Vector3.Distance2DSq(vecMyPos, vecDesiredPosition) <= nRangeSq then
+		return vecDesiredPosition
+	end
+
+	--vecDesiredPosition further away position. You are normaly going to well
+	local tPath = behaviorLib.GetSafePath(vecDesiredPosition)
+
+	if #tPath == 1 then
+		return tpath[1]:GetPosition()
+	end
+
+	--Iterate from end to start.
+	--When going around cliffs there may be multiple "good" spots, get the last one
+	local nIndex = 0
+
+	local vecInRange = nil
+	local vecOutRange = nil
+
+	--
+	for i = #tPath, 1, -1 do
+		local nodeCurrent = tPath[i]
+		if Vector3.Distance2DSq(vecMyPos, nodeCurrent:GetPosition()) <= nRangeSq then
+			vecInRange = nodeCurrent:GetPosition()
+			if tPath[i + 1] ~= nil then
+				vecOutRange = tPath[i + 1]:GetPosition()
+			else
+				vecOutRange = nil
+			end
+		end
+	end
+
+	--the first node is not in range
+	if vecInRange == nil then
+		-- just blink towards the first node
+		return vecMyPos + Vector3.Normalize(tpath[1]:GetPosition() - vecMyPos) * nRange
+	end
+
+	-- Find the point D such that the lenght of CD is equal to nRange
+	--     c
+	--  A-----D---------B
+	--   \   /
+	-- d  \ /   a
+	--     C
+
+	--law of sin
+	-- a/sin(A) = d/sin(D)
+	--sin(D) = d*sin(A)/a
+
+	local nAngleAtA = core.AngleBetween(vecOutRange - vecInRange, vecMyPos - vecInRange)
+	local nAngleAtD = asin(Vector3.Distance2D(vecInRange, vecMyPos) * sin(nAngleAtA) / nRange)
+
+	-- C = 180 - A - D
+	local nAngleAtC = pi - nAngleAtA - nAngleAtD
+
+	-- law of sin again
+	local nDistanceAToD = nRange/sin(nAngleAtA)*sin(nAngleAtC)
+
+	return Vector3.Normalize(vecOutRange - vecInRange) * nDistanceAToD + vecInRange
 end
 
 behaviorLib.tPath = nil
