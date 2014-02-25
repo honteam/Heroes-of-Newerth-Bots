@@ -132,7 +132,6 @@ function object:SkillBuild()
 		skills.abilStalk = unitSelf:GetAbility(1)
 		skills.abilStrike = unitSelf:GetAbility(2)
 		skills.abilAssault = unitSelf:GetAbility(3)
-		skills.abilAttributeBoost = unitSelf:GetAbility(4)
 	end
 	
 	local nPoints = unitSelf:GetAbilityPointsAvailable()
@@ -433,7 +432,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	local bActionTaken = false
 	
 	-- Stop the bot from trying to harass heroes while dead
-	if not bActionTaken and not unitSelf:IsAlive() then
+	if not unitSelf:IsAlive() then
 		bActionTaken = true
 	end
 	
@@ -506,8 +505,8 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 	end
 
 	local abilAssault = skills.abilAssault
-	if abilAssault.CanActivate() and nHealthPercent < .25 then
-			bActionTaken = core.OrderAbility(botBrain, abilAssault)
+	if not bActionTaken and abilAssault:CanActivate() and nHealthPercent < .25 then
+		bActionTaken = core.OrderAbility(botBrain, abilAssault)
 	end
 	
 	if not bActionTaken then
