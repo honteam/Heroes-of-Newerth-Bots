@@ -311,16 +311,15 @@ function behaviorLib.UseBottleExecute(botBrain)
 	local bActionTaken = false
 	local unitSelf = core.unitSelf
 
-	if not core.IsTableEmpty(tItemBottle) then
-		local vecRetreatDirection = behaviorLib.GetSafeDrinkDirection()
-		-- Check if it is safe to drink
-		if vecRetreatDirection then
-			bActionTaken = core.OrderMoveToPosClamp(botBrain, unitSelf, vecSelfPos + vecRetreatDirection * core.moveVecMultiplier, false)
-		else
-			bActionTaken = core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemBottle)
-		end
+
+	local vecRetreatDirection = behaviorLib.GetSafeDrinkDirection()
+	-- Check if it is safe to drink
+	if vecRetreatDirection then
+		bActionTaken = core.OrderMoveToPosClamp(botBrain, unitSelf, vecSelfPos + vecRetreatDirection * core.moveVecMultiplier, false)
+	else
+		bActionTaken = core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemBottle)
 	end
-	
+
 	return bActionTaken
 end
 
