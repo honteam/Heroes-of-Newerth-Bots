@@ -215,9 +215,10 @@ local function HarassHeroExecuteOverride(botBrain)
 			local desiredPos = unitTarget:GetPosition()
 			
 			if itemGhostMarchers and itemGhostMarchers:CanActivate() then
-				core.OrderItemClamp(botBrain, unitSelf, itemGhostMarchers)
-				return
-			elseif behaviorLib.lastHarassUtil < behaviorLib.diveThreshold then
+				bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemGhostMarchers)
+			end
+			
+			if not bActionTaken and behaviorLib.lastHarassUtil < behaviorLib.diveThreshold then
 				desiredPos = core.AdjustMovementForTowerLogic(desiredPos)
 			end
 			core.OrderMoveToPosClamp(botBrain, unitSelf, desiredPos, false)

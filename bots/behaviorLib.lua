@@ -1657,31 +1657,33 @@ function behaviorLib.HarassHeroExecute(botBrain)
 			end
 
 			if itemGhostMarchers and itemGhostMarchers:CanActivate() then
-				core.OrderItemClamp(botBrain, unitSelf, itemGhostMarchers)
-				return
-			else
-				local bChanged = false
-				local bWellDiving = false
-				vecDesiredPos, bChanged, bWellDiving = core.AdjustMovementForTowerLogic(vecDesiredPos)
-				
-				if bDebugEchos then BotEcho("Move - bChanged: "..tostring(bChanged).."  bWellDiving: "..tostring(bWellDiving)) end
-				
-				if not bWellDiving then
-					if behaviorLib.lastHarassUtil < behaviorLib.diveThreshold then
-						if bDebugEchos then BotEcho("DON'T DIVE!") end
-										
-						if bUseTargetPosition and not bChanged then
-							core.OrderMoveToUnitClamp(botBrain, unitSelf, unitTarget, false)
-						else
-							core.OrderMoveToPosAndHoldClamp(botBrain, unitSelf, vecDesiredPos, false)
-						end
+				local bSuccess = core.OrderItemClamp(botBrain, unitSelf, itemGhostMarchers)
+				if bSuccess then
+					return
+				end
+			end
+			
+			local bChanged = false
+			local bWellDiving = false
+			vecDesiredPos, bChanged, bWellDiving = core.AdjustMovementForTowerLogic(vecDesiredPos)
+			
+			if bDebugEchos then BotEcho("Move - bChanged: "..tostring(bChanged).."  bWellDiving: "..tostring(bWellDiving)) end
+			
+			if not bWellDiving then
+				if behaviorLib.lastHarassUtil < behaviorLib.diveThreshold then
+					if bDebugEchos then BotEcho("DON'T DIVE!") end
+									
+					if bUseTargetPosition and not bChanged then
+						core.OrderMoveToUnitClamp(botBrain, unitSelf, unitTarget, false)
 					else
-						if bDebugEchos then BotEcho("DIVIN Tower! util: "..behaviorLib.lastHarassUtil.." > "..behaviorLib.diveThreshold) end
-						core.OrderMoveToPosClamp(botBrain, unitSelf, vecDesiredPos, false)
+						core.OrderMoveToPosAndHoldClamp(botBrain, unitSelf, vecDesiredPos, false)
 					end
 				else
-					return false
+					if bDebugEchos then BotEcho("DIVIN Tower! util: "..behaviorLib.lastHarassUtil.." > "..behaviorLib.diveThreshold) end
+					core.OrderMoveToPosClamp(botBrain, unitSelf, vecDesiredPos, false)
 				end
+			else
+				return false
 			end
 
 			--core.DrawXPosition(vecDesiredPos, 'blue')
@@ -2237,9 +2239,11 @@ function behaviorLib.PositionSelfExecute(botBrain)
 	if itemRoT then
 		itemRoT:Update()
 		
-		if not itemRoT.bHeroesOnly then			
-			core.OrderItemClamp(botBrain, unitSelf, core.itemRoT)
-			return
+		if not itemRoT.bHeroesOnly then
+			local bSuccess = core.OrderItemClamp(botBrain, unitSelf, core.itemRoT)
+			if bSuccess then
+				return
+			end
 		end
 	end
 	
@@ -2502,8 +2506,7 @@ function behaviorLib.RetreatFromThreatExecute(botBrain)
 	--Activate ghost marchers if we can
 	local itemGhostMarchers = core.itemGhostMarchers
 	if not bActionTaken and behaviorLib.lastRetreatUtil >= behaviorLib.retreatGhostMarchersThreshold and itemGhostMarchers and itemGhostMarchers:CanActivate() then
-		core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
-		bActionTaken = true
+		bActionTaken = core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
 	end
 	
 	if not bActionTaken then

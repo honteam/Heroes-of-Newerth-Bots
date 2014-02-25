@@ -650,15 +650,13 @@ function behaviorLib.AstrolabeExecute(botBrain)
 		local vecTargetPosition = unitHealTarget:GetPosition()
 		local nDistance = Vector3.Distance2DSq(unitSelf:GetPosition(), vecTargetPosition)
 		if nDistance < 500 * 500 then
-			core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemAstrolabe)
+			return core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemAstrolabe)
 		else
-			core.OrderMoveToUnitClamp(botBrain, unitSelf, unitHealTarget)
+			return core.OrderMoveToUnitClamp(botBrain, unitSelf, unitHealTarget)
 		end
-	else
-		return false
 	end
 	
-	return true
+	return false
 end
 
 behaviorLib.tItemBehaviors["Item_Astrolabe"] = {}
