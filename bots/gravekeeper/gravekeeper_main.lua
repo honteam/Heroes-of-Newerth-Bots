@@ -902,8 +902,10 @@ local function HealAtWellExecuteFnOverride(botBrain)
 	--Activate ghost marchers if we can
 	local itemGhostMarchers = core.itemGhostMarchers
 	if itemGhostMarchers and itemGhostMarchers:CanActivate() and nDistanceWellSq > (500 * 500) then
-		core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
-		return
+		local bSuccess = core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
+		if bSuccess then
+			return
+		end
 	end
 
 	--Just use Tablet

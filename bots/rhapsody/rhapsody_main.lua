@@ -442,8 +442,10 @@ function ProtectiveMelodyExecute(botBrain)
 		if nTargetDistanceSq <= nHalfRadiusSq then
 			local itemShrunkenHead = core.GetItem("Item_Immunity")
 			if itemShrunkenHead and itemShrunkenHead:CanActivate() then		--see if Shrunken can pop, then pop it
-				core.OrderItemClamp(botBrain, unitSelf, itemShrunkenHead)
-				return
+				local bSuccess = core.OrderItemClamp(botBrain, unitSelf, itemShrunkenHead)
+				if bSuccess then
+					return
+				end
 			end
 			core.OrderAbility(botBrain, abilUlt)		
 		else 
