@@ -9991,7 +9991,7 @@ bot_description_gravekeeper			Gravekeeper is a versatile hero with solid Magic a
 bot_description_ellonia				Ellonia is a ranged intelligence hero known for her frost spells, freezing the opposition! Authored by Mellow_Ink!
 bot_description_balphagore			Balphagore is a melee strength hero, with insane pushing potential due to his minions. Authored by Kairus101!
 bot_description_bombardier			Bombardier is a ranged intelligence hero, with strong magic damage spells. Authored by Anakonda!
-bot_description_revenant			Revenant is a ganker who specialises in lowering magic and physical armor while adding magical damage to allies.
+bot_description_revenant			Revenant is a ganker who lowers armor while adding magical damage to allies. Authored by Rinestone!
 
 // Maintenance
 maintenance_general 			Under Maintenance

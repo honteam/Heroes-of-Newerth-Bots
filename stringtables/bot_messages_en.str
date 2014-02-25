@@ -167,6 +167,21 @@ kairus101_balphagore_death5		Team? TEAM??
 kairus101_balphagore_death6		Hey, you used a cheat code!
 kairus101_balphagore_death7		Go my minions!
 
+/////////////////////////////////////////
+// Rinestone's Revnant bot custom messages
 
+rinestone_revenant_kill1		BOO!
+rinestone_revenant_kill2		Scream more for me!
+rinestone_revenant_kill3		You can't kill what is already dead!
+rinestone_revenant_kill4		Death consumes you!
+rinestone_revenant_kill5		Defiled!
+rinestone_revenant_kill6		May the Afterlife consume you.
+
+rinestone_revenant_death1		I thought I was dead already...
+rinestone_revenant_death2		I haven't reached my scare quota yet..
+rinestone_revenant_death3		I'll be back! Don't you worry...
+rinestone_revenant_death4		Back to the grave...
+rinestone_revenant_death5		I dissipate....
+rinestone_revenant_death6		Cast to the winds....
 
 // End - do not delete this line
