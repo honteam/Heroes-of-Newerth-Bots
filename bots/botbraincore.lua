@@ -143,7 +143,7 @@ function object:onthink(tGameVariables)
 	core.ProcessChatMessages(self)
 	StopProfile()
 
-	if core.unitSelf:GetHealth() <= 0 then
+	if not core.unitSelf:IsAlive() then
 		StopProfile()
 		return
 	end
