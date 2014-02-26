@@ -430,12 +430,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	
 	local nLastHarassUtility = behaviorLib.lastHarassUtil
 	local bActionTaken = false
-	
-	-- Stop the bot from trying to harass heroes while dead
-	if not unitSelf:IsAlive() then
-		bActionTaken = true
-	end
-	
+
 	-- Don't cast spells while the bot has the Nether Strike buff
 	if unitSelf:HasState("State_Grinex_Ability3") then
 		return object.harassExecuteOld(botBrain)
