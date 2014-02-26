@@ -488,11 +488,6 @@ local function HarassHeroExecuteOverride(botBrain)
         if bCanSeeTarget then
                 nTargetMagicEHP = unitTarget:GetHealth() / (1 - unitTarget:GetMagicResistance())
         end
- 
-        -- Stop the bot from trying to harass heroes while dead
-        if not bActionTaken and not unitSelf:IsAlive() then
-                bActionTaken = true
-        end
        
         -- Hellflower
         if not bActionTaken then
@@ -748,11 +743,6 @@ local function AbilityPush(botBrain)
         local abilScream = skills.abilScream
         local unitSelf = core.unitSelf
         local nMinimumCreeps = 3
-       
-        -- Stop the bot from trying to farm creeps if the creeps approach the spot where the bot died
-        if not unitSelf:IsAlive() then
-                return bSuccess
-        end
        
         --Don't use Scream if it would put mana too low
         if abilScream:CanActivate() and unitSelf:GetManaPercent() > .32 then
