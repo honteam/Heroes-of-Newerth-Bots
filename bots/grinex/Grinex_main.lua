@@ -476,7 +476,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	end
 
 	if not bActionTaken then
-		return object.harassExecuteOld(botBrain)
+		bActionTaken = object.harassExecuteOld(botBrain)
 	end
 	
 	return bActionTaken
