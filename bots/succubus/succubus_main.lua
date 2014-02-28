@@ -44,7 +44,7 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
 
-local bottle = object.bottle
+local bottle = object.bottle or {}
 local runelib = object.runelib
 
 BotEcho(object:GetName()..' loading succubus_main...')
@@ -62,6 +62,8 @@ behaviorLib.MidItems  = {"Item_PortalKey", "Item_Immunity", "Item_Summon 3"}
 behaviorLib.LateItems  = {"Item_Intelligence7", "Item_GrimoireOfPower"}
 --item_summon is puzzlebox; Item_Intelligence7 is master staff
 
+core.tLanePreferences = {Jungle = 0, Mid = 5, ShortSolo = 4, LongSolo = 4, ShortSupport = 3, LongSupport = 3, ShortCarry = 0, LongCarry = 0}
+
 object.ultTime = 0
 
 ------------------------------
@@ -78,14 +80,12 @@ object.tSkills = {
 function object:SkillBuild()
 	core.VerboseLog("skillbuild()")
 
--- takes care at load/reload, <name_#> to be replaced by some convinient name.
 	local unitSelf = self.core.unitSelf
 	if  skills.smitten == nil then
 		skills.smitten = unitSelf:GetAbility(0)
 		skills.heartache = unitSelf:GetAbility(1)
 		skills.mesme = unitSelf:GetAbility(2)
 		skills.hold = unitSelf:GetAbility(3)
-		skills.abilAttributeBoost = unitSelf:GetAbility(4)
 	end
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then
 		return
@@ -98,48 +98,10 @@ function object:SkillBuild()
 	end
 end
 
-----------------------------------
---  FindItems Override
-----------------------------------
-local function funcFindItemsOverride(botBrain)
-	object.FindItemsOld(botBrain)
-
-	if core.itemPortalKey ~= nil and not core.itemPortalKey:IsValid() then
-		core.itemPortalKey = nil
-	end
-	if core.itemPuzzlebox ~= nil and not core.itemPuzzlebox:IsValid() then
-		core.itemPortalKey = nil
-	end
-	if core.itemShrunkenHead ~= nil and not core.itemShrunkenHead:IsValid() then
-		core.itemShrunkenHead = nil
-	end
-
-	if core.itemPortalKey and core.itemPuzzlebox and core.itemShrunkenHead then
-		return
-	end
-
-	local inventory = core.unitSelf:GetInventory(true)
-	for slot = 1, 6, 1 do
-		local curItem = inventory[slot]
-		if curItem then
-			if core.itemPortalKey == nil and curItem:GetName() == "Item_PortalKey" then
-				core.itemPortalKey = core.WrapInTable(curItem)
-			elseif core.itemShrunkenHead == nil and not curItem:IsRecipe() and curItem:GetName() == "Item_Immunity" then
-				core.itemShrunkenHead = core.WrapInTable(curItem)
-			elseif core.itemPuzzlebox == nil and curItem:GetName() == "Item_Summon" then
-				core.itemPuzzlebox = core.WrapInTable(curItem)
-			end
-		end
-	end
-end
-object.FindItemsOld = core.FindItems
-core.FindItems = funcFindItemsOverride
-
-
 --------------------------------
 --		onthink override	  --
 --------------------------------
-
+--[[
 function object:onthinkOverride(tGameVariables)
 	self:onthinkOld(tGameVariables)
 
@@ -159,7 +121,7 @@ function object:onthinkOverride(tGameVariables)
 end
 
 object.onthinkOld = object.onthink
-object.onthink 	= object.onthinkOverride
+object.onthink 	= object.onthinkOverride]]
 
 object.retreatCastThreshold = 55
 function behaviorLib.RetreatFromThreatExecuteOverride(botBrain)
@@ -299,14 +261,18 @@ local function HarassHeroExecuteOverride(botBrain)
 	local bCanSee = core.CanSeeUnit(botBrain, unitTarget)	
 	local bActionTaken = false
 
+	local portalKey = core.GetItem("Item_PortalKey")
+	local puzzleBox = core.GetItem("Item_Summon")
+	local shrunkenHead = core.GetItem("Item_Immunity")
+
 	--pk suprise
-	if bCanSee and core.itemPortalKey and core.itemPortalKey:CanActivate() and object.pkThreshold < nLastHarassUtility then
-		if Vector3.Distance2DSq(vecMyPosition, vecTargetPosition) > 800 * 800 then
+	if bCanSee and portalKey and portalKey:CanActivate() and object.pkThreshold < nLastHarassUtility then
+		if nTargetDistanceSq > 800 * 800 then
 			if core.NumberElements(core.GetTowersThreateningPosition(vecTargetPosition, nMyExtraRange, core.myTeam)) == 0 or nLastHarassUtility > behaviorLib.diveThreshold then
-				local _,secondtable = HoN.GetUnitsInRadius(vecTargetPosition, 1000, core.UNIT_MASK_HERO + core.UNIT_MASK_ALIVE, true)
-				local EnemyHeroes = secondtable.EnemyHeroes
+				local _, sortedTable = HoN.GetUnitsInRadius(vecTargetPosition, 1000, core.UNIT_MASK_HERO + core.UNIT_MASK_ALIVE, true)
+				local EnemyHeroes = sortedTable.EnemyHeroes
 				if core.NumberElements(EnemyHeroes) == 1 then
-					bActionTaken = core.OrderItemPosition(botBrain, unitSelf, core.itemPortalKey, vecTargetPosition)
+					bActionTaken = core.OrderItemPosition(botBrain, unitSelf, portalKey, vecTargetPosition)
 				end
 			end
 		end
@@ -340,11 +306,12 @@ local function HarassHeroExecuteOverride(botBrain)
 	if not bActionTaken and bCanSee then
 		if not targetMagicImmune then
 			if nLastHarassUtility > object.holdThreshold and skills.hold:CanActivate() then
-				if core.itemPuzzlebox and core.itemPuzzlebox:CanActivate() then
-					botBrain:OrderItem(core.itemPuzzlebox.object)
-				elseif core.itemShrunkenHead and core.itemShrunkenHead:CanActivate() then
+				if puzzleBox and puzzleBox:CanActivate() then
 					bActionTaken = true
-					botBrain:OrderItem(core.itemShrunkenHead.object)
+					botBrain:OrderItem(puzzleBox.object)
+				elseif shrunkenHead and shrunkenHead:CanActivate() then
+					bActionTaken = true
+					botBrain:OrderItem(shrunkenHead.object)
 				else
 					bActionTaken = core.OrderAbilityEntity(botBrain, skills.hold, unitTarget)
 				end
@@ -466,7 +433,6 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.healHeartache)
 
 
 -- Change default behaviors if we have rune
-
 function behaviorLib.newUseBottleBehavior(botBrain)
 	if core.unitSelf:HasState("State_PowerupRegen") or core.unitSelf:HasState("State_PowerupStealth") then
 		return 0
@@ -479,8 +445,8 @@ function behaviorLib.newUseBottleBehavior(botBrain)
 	return utility
 end
 
-behaviorLib.oldUseBottleBehavior = behaviorLib.UseBottleBehavior["Utility"]
-behaviorLib.UseBottleBehavior["Utility"] = behaviorLib.newUseBottleBehavior
+behaviorLib.oldUseBottleBehavior = behaviorLib.tItemBehaviors["Item_Bottle"]["Utility"]
+behaviorLib.tItemBehaviors["Item_Bottle"]["Utility"] = behaviorLib.newUseBottleBehavior
 
 function behaviorLib.newAttackCreepsUtility(botBrain)
 	if  core.unitSelf:HasState("State_PowerupStealth") then
@@ -507,7 +473,7 @@ behaviorLib.attackEnemyMinionsBehavior["Utility"] = behaviorLib.newattackEnemyMi
 ---------------
 behaviorLib.runeToPick = nil
 function behaviorLib.PickRuneUtility(botBrain)
-	local rune = runelib.GetNearestRune()
+	local rune = core.teamBotBrain.GetNearestRune(core.unitSelf:GetPosition())
 	if rune == nil then
 		return 0
 	end
@@ -520,11 +486,11 @@ function behaviorLib.PickRuneUtility(botBrain)
 		utility = utility + 10
 	end
 
-	if bottle.haveBottle() then
-		utility = utility + 10 - bottle.getCharges() * 5
+	if core.GetItem("Item_Bottle") ~= nil then
+		utility = utility + 15 - bottle.getCharges() * 5
 	end
 
-	return utility - Vector3.Distance2DSq(rune.location, core.unitSelf:GetPosition())/(2000*2000)
+	return utility - Vector3.Distance2DSq(rune.vecLocation, core.unitSelf:GetPosition())/(2000*2000)
 end
 
 function behaviorLib.PickRuneExecute(botBrain)
@@ -539,7 +505,7 @@ function behaviorLib.PickRuneExecute(botBrain)
 			end
 		end
 	end
-	return runelib.pickRune(botBrain, behaviorLib.runeToPick)
+	return behaviorLib.pickRune(botBrain, behaviorLib.runeToPick)
 end
 
 behaviorLib.PickRuneBehavior = {}
@@ -560,4 +526,56 @@ function IsMagicImmune(unit)
 		end
 	end
 	return false
+end
+
+------------------------
+-- helpers for bottle --
+------------------------
+
+function bottle.drink(botBrain)
+	local itemBottle = core.GetItem("Item_Bottle")
+	if itemBottle and itemBottle:GetActiveModifierKey() ~= "bottle_empty" and itemBottle:CanActivate() then
+		if not core.unitSelf:HasState("State_Bottle") or bottle.getCharges() == 4 then
+			botBrain:OrderItem(itemBottle.object)
+			return true
+		end
+	end
+	return false
+end
+
+function bottle.getCharges()
+	local itemBottle = core.GetItem("Item_Bottle")
+	if itemBottle == nil then
+		return nil
+	end
+
+	local charges = nil
+	local modifier = itemBottle:GetActiveModifierKey()
+	if modifier == "bottle_empty" then
+		charges = 0
+	elseif modifier == "bottle_1" then
+		charges = 1
+	elseif modifier == "bottle_2" then
+		charges = 2
+	elseif modifier == "bottle_3" then
+		charges = 3
+	else
+		charges = 4 --rune
+	end
+	return charges
+end
+
+--damage stealth illusion movespeed regen
+function bottle.getRune()
+	local itemBottle = core.GetItem("Item_Bottle")
+	if itemBottle == nil then
+		return ""
+	end
+	local modifier = itemBottle:GetActiveModifierKey()
+	local key = string.gmatch(modifier, "bottle_%w")
+	if key == "1" or key == "2" or key == "3" or key =="empty" then
+		return ""
+	else
+		return key
+	end
 end
