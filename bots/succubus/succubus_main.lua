@@ -44,8 +44,7 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
 
-local bottle = object.bottle or {}
-local runelib = object.runelib
+local bottle = {}
 
 BotEcho(object:GetName()..' loading succubus_main...')
 
@@ -64,7 +63,24 @@ behaviorLib.LateItems  = {"Item_Intelligence7", "Item_GrimoireOfPower"}
 
 core.tLanePreferences = {Jungle = 0, Mid = 5, ShortSolo = 4, LongSolo = 4, ShortSupport = 3, LongSupport = 3, ShortCarry = 0, LongCarry = 0}
 
-object.ultTime = 0
+-- We have our own that also runs puzzlebox minions
+local illusionLib = object.illusionLib or {}
+illusionLib.bRunBehaviors = false
+
+-- Constants for skill usage
+
+object.mesmeUseBonus = 5
+object.holdUseBonus = 35
+object.heartacheUseBonus = 15
+
+object.mesmeUpBonus = 5
+object.holdUpBonus = 20
+object.heartacheUpBonus = 10
+
+object.holdThreshold = 60
+object.heartacheThreshold = 40
+object.mesmeThreshold = 50
+object.pkThreshold = 45
 
 ------------------------------
 --	 skills			   --
@@ -101,7 +117,7 @@ end
 --------------------------------
 --		onthink override	  --
 --------------------------------
---[[
+
 function object:onthinkOverride(tGameVariables)
 	self:onthinkOld(tGameVariables)
 
@@ -109,22 +125,28 @@ function object:onthinkOverride(tGameVariables)
 	local mypos = unitSelf:GetPosition()
 
 	if core.tControllableUnits ~=nil then
-		for _,unit in pairs(core.tControllableUnits["AllUnits"]) do
-			local typeName = unit:GetTypeName()
-			if typeName ~= "Pet_GroundFamiliar" and typeName ~= "Pet_FlyngCourier" then
-				if Vector3.Distance2DSq(mypos, unit:GetPosition()) > 400*400 then
-					core.OrderMoveToPos(self, unit, mypos)
+		local currentBehavior = core.GetLastBehaviorName(self)
+		if currentBehavior ~= "HarassHero" and currentBehavior ~= "DontBreakChannel" then
+			if illusionLib.nNextBehaviorTime <= HoN.GetGameTime() then
+				for _, unit in pairs(core.tControllableUnits["AllUnits"]) do
+					local typeName = unit:GetTypeName()
+					if typeName ~= "Pet_GroundFamiliar" and typeName ~= "Pet_FlyngCourier" then
+						if Vector3.Distance2DSq(mypos, unit:GetPosition()) > 400*400 then
+							core.OrderMoveToPos(self, unit, mypos)
+						end
+					end
 				end
+				illusionLib.nNextBehaviorTime = HoN.GetGameTime() + illusionLib.nBehaviorAssessInterval
 			end
 		end
 	end
 end
 
 object.onthinkOld = object.onthink
-object.onthink 	= object.onthinkOverride]]
+object.onthink 	= object.onthinkOverride
 
 object.retreatCastThreshold = 55
-function behaviorLib.RetreatFromThreatExecuteOverride(botBrain)
+function behaviorLib.CustomRetreatExecute(botBrain)
 	local unitSelf = core.unitSelf
 	local mypos = unitSelf:GetPosition()
 
@@ -139,7 +161,7 @@ function behaviorLib.RetreatFromThreatExecuteOverride(botBrain)
 	local bActionTaken = false
 
 	if lastRetreatUtil > object.retreatCastThreshold then
-		for _,hero in pairs(core.localUnits["EnemyHeroes"]) do
+		for _, hero in pairs(core.localUnits["EnemyHeroes"]) do
 			if not IsMagicImmune(hero) then
 				distanceSq = Vector3.Distance2DSq(mypos, hero:GetPosition())
 				if heartacheCanActivate and distanceSq < heartacheRange*heartacheRange and missingHP > 300 and not hero:HasState("State_Succubis_Ability3") then
@@ -152,20 +174,15 @@ function behaviorLib.RetreatFromThreatExecuteOverride(botBrain)
 			end
 		end
 	end
-	if not bActionTaken then
-		behaviorLib.RetreatFromThreatExecuteOld(botBrain)
-	end
-end
-behaviorLib.RetreatFromThreatExecuteOld = behaviorLib.RetreatFromThreatBehavior["Execute"]
-behaviorLib.RetreatFromThreatBehavior["Execute"] = behaviorLib.RetreatFromThreatExecuteOverride
 
+	--Todo: do pk when we have GetBestBlinkRetreatLocation()
+
+	return bActionTaken
+end
 
 ------------------------------------------
 --			oncombatevent override		--
 ------------------------------------------
-object.mesmeUseBonus = 5
-object.holdUseBonus = 35
-object.heartacheUseBonus = 15
 function object:oncombateventOverride(EventData)
 	self:oncombateventOld(EventData)
 
@@ -192,14 +209,10 @@ end
 object.oncombateventOld = object.oncombatevent
 object.oncombatevent	 = object.oncombateventOverride
 
-object.mesmeUpBonus = 5
-object.holdUpBonus = 20
-object.heartacheUpBonus = 10
 local function CustomHarassUtilityFnOverride(hero)
 	if hero:HasState("State_Succubis_Ability3") then
 		return -100
 	end
-
 
 	local val = 0
 	
@@ -215,8 +228,14 @@ local function CustomHarassUtilityFnOverride(hero)
 		val = val + object.heartacheUpBonus
 	end
 
+	local unitSelf = core.unitSelf
+
+	if unitSelf:HasState("State_PowerupStealth") or unitSelf:HasState("State_PowerupMoveSpeed") then
+		val = val + 20
+	end
+
 	-- Less mana less aggerssion
-	val = val + (core.unitSelf:GetManaPercent() - 0.80) * 45
+	val = val + (unitSelf:GetManaPercent() - 0.80) * 45
 	return val
 
 end
@@ -226,15 +245,11 @@ behaviorLib.CustomHarassUtility = CustomHarassUtilityFnOverride
 --					Harass Behavior					   --
 ---------------------------------------------------------
 
-object.holdThreshold = 60
-object.heartacheThreshold = 40
-object.mesmeThreshold = 50
-object.pkThreshold = 45
 local function HarassHeroExecuteOverride(botBrain)
 	local unitSelf = core.unitSelf
 
 	--Cant trust to dontbreakchanneling
-	if object.ultTime + 300 > HoN.GetGameTime() or unitSelf:IsChanneling() then
+	if unitSelf:IsChanneling() then
 		return true
 	end
 
@@ -265,10 +280,16 @@ local function HarassHeroExecuteOverride(botBrain)
 	local puzzleBox = core.GetItem("Item_Summon")
 	local shrunkenHead = core.GetItem("Item_Immunity")
 
+	--damage stealth illusion movespeed regen
+	local runeInBottle = bottle.getRune()
+	if runeInBottle == "damage" or runeInBottle == "illusion" or runeInBottle == "movespeed" then
+		botBrain:OrderItem(core.GetItem("Item_Bottle"))
+	end
+
 	--pk suprise
 	if bCanSee and portalKey and portalKey:CanActivate() and object.pkThreshold < nLastHarassUtility then
 		if nTargetDistanceSq > 800 * 800 then
-			if core.NumberElements(core.GetTowersThreateningPosition(vecTargetPosition, nMyExtraRange, core.myTeam)) == 0 or nLastHarassUtility > behaviorLib.diveThreshold then
+			if nLastHarassUtility > behaviorLib.diveThreshold or core.NumberElements(core.GetTowersThreateningPosition(vecTargetPosition, nMyExtraRange, core.myTeam)) == 0 then
 				local _, sortedTable = HoN.GetUnitsInRadius(vecTargetPosition, 1000, core.UNIT_MASK_HERO + core.UNIT_MASK_ALIVE, true)
 				local EnemyHeroes = sortedTable.EnemyHeroes
 				if core.NumberElements(EnemyHeroes) == 1 then
@@ -433,20 +454,20 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.healHeartache)
 
 
 -- Change default behaviors if we have rune
-function behaviorLib.newUseBottleBehavior(botBrain)
+function behaviorLib.newUseBottleBehaviorUtility(botBrain)
 	if core.unitSelf:HasState("State_PowerupRegen") or core.unitSelf:HasState("State_PowerupStealth") then
 		return 0
 	end
 
-	utility = behaviorLib.oldUseBottleBehavior(botBrain)
+	utility = behaviorLib.oldUseBottleBehaviorUtility(botBrain)
 	if bottle.getRune() == "regen" then
 		utility = utility * 0.8
 	end
 	return utility
 end
 
-behaviorLib.oldUseBottleBehavior = behaviorLib.tItemBehaviors["Item_Bottle"]["Utility"]
-behaviorLib.tItemBehaviors["Item_Bottle"]["Utility"] = behaviorLib.newUseBottleBehavior
+behaviorLib.oldUseBottleBehaviorUtility = behaviorLib.tItemBehaviors["Item_Bottle"]["Utility"]
+behaviorLib.tItemBehaviors["Item_Bottle"]["Utility"] = behaviorLib.newUseBottleBehaviorUtility
 
 function behaviorLib.newAttackCreepsUtility(botBrain)
 	if  core.unitSelf:HasState("State_PowerupStealth") then
@@ -480,14 +501,14 @@ function behaviorLib.PickRuneUtility(botBrain)
 
 	behaviorLib.runeToPick = rune
 
-	local utility = 20
+	local utility = 25
 
 	if rune.unit then
 		utility = utility + 10
 	end
 
 	if core.GetItem("Item_Bottle") ~= nil then
-		utility = utility + 15 - bottle.getCharges() * 5
+		utility = utility + 20 - bottle.getCharges() * 5
 	end
 
 	return utility - Vector3.Distance2DSq(rune.vecLocation, core.unitSelf:GetPosition())/(2000*2000)
@@ -531,17 +552,6 @@ end
 ------------------------
 -- helpers for bottle --
 ------------------------
-
-function bottle.drink(botBrain)
-	local itemBottle = core.GetItem("Item_Bottle")
-	if itemBottle and itemBottle:GetActiveModifierKey() ~= "bottle_empty" and itemBottle:CanActivate() then
-		if not core.unitSelf:HasState("State_Bottle") or bottle.getCharges() == 4 then
-			botBrain:OrderItem(itemBottle.object)
-			return true
-		end
-	end
-	return false
-end
 
 function bottle.getCharges()
 	local itemBottle = core.GetItem("Item_Bottle")
