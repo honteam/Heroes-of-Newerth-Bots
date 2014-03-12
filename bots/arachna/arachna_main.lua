@@ -185,13 +185,17 @@ behaviorLib.PushingStrengthUtilFn = PushingStrengthUtilOverride
 --	Arachna harass actions
 ----------------------------------
 local function HarassHeroExecuteOverride(botBrain)
+	local unitTarget = behaviorLib.heroTarget
+	if unitTarget == nil or not unitTarget:IsValid() then
+		return false --can not execute, move on to the next behavior
+	end
+	
 	local unitSelf = core.unitSelf
-	local unitTarget = behaviorLib.heroTarget 
 	
 	local bActionTaken = false
 	
 	--since we are using an old pointer, ensure we can still see the target for entity targeting
-	if unitTarget ~= nil and core.CanSeeUnit(botBrain, unitTarget) then
+	if core.CanSeeUnit(botBrain, unitTarget) then
 		local dist = Vector3.Distance2D(unitSelf:GetPosition(), unitTarget:GetPosition())
 		local attkRange = core.GetAbsoluteAttackRangeToUnit(unitSelf, unitTarget);
 		

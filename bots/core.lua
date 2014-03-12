@@ -680,7 +680,7 @@ function core.GetAbsoluteAttackRangeToUnit(unit, unitTarget, bSquared)
 		end
 		nRange = nRange + core.GetExtraRange(unit)
 	end
-	if unitTarget then
+	if unitTarget and unitTarget:IsValid() then
 		nRange = nRange + core.GetExtraRange(unitTarget)
 	end
 	
