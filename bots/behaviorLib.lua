@@ -3365,6 +3365,8 @@ function behaviorLib.pickRune(botBrain, rune)
 	end
 	if not HoN.CanSeePosition(rune.vecLocation) then
 		return behaviorLib.MoveExecute(botBrain, rune.vecLocation)
+	elseif rune.unit == nil then --we have just gained vision to the location and teambot didnt (re)run the check yet. Maybe call it now
+		return behaviorLib.MoveExecute(botBrain, rune.vecLocation)
 	elseif rune.unit:IsValid() then
 		return core.OrderTouch(botBrain, core.unitSelf, rune.unit)
 	else --It have been picked just now
