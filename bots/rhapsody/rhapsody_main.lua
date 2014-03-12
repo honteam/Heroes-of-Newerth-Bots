@@ -232,7 +232,7 @@ behaviorLib.CustomHarassUtility = CustomHarassUtilityFnOverride
 local function HarassHeroExecuteOverride(botBrain)
 	
 	local unitTarget = behaviorLib.heroTarget
-	if unitTarget == nil then
+	if unitTarget == nil or not unitTarget:IsValid() then
 		return false --Target is invalid, move on to the next behavior
 	end
 	

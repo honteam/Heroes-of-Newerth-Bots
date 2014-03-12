@@ -375,7 +375,7 @@ behaviorLib.CustomHarassUtility = CustomHarassUtilityFnOverride
 local function HarassHeroExecuteOverride(botBrain)
 
 	local unitTarget = behaviorLib.heroTarget
-	if not unitTarget then
+	if not unitTarget or not unitTarget:IsValid() then
 		return false --can not execute, move on to the next behavior
 	end
 

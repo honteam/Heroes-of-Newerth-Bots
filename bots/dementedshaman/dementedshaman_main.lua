@@ -305,8 +305,12 @@ end
 local function HarassHeroExecuteOverride(botBrain)
 	local bDebugEchos = false
 
-	local unitSelf = core.unitSelf
 	local unitTarget = behaviorLib.heroTarget
+	if unitTarget == nil or not unitTarget:IsValid() then
+		return false --can not execute, move on to the next behavior
+	end
+	
+	local unitSelf = core.unitSelf
 	local nMyExtraRange = core.GetExtraRange(unitSelf)
 	local nTargetExtraRange = core.GetExtraRange(unitTarget)
 	
@@ -317,7 +321,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	local bActionTaken = false
 	
 	--since we are using an old pointer, ensure we can still see the target for entity targeting
-	if unitTarget ~= nil and core.CanSeeUnit(botBrain, unitTarget) then
+	if core.CanSeeUnit(botBrain, unitTarget) then
 		if bDebugEchos then BotEcho("  Can see target!") end
 		--ult
 		if not bActionTaken then

@@ -248,18 +248,22 @@ local function HarassHeroExecuteOverride(botBrain)
 		bDebugEchos = true
 	end--]]
 	
+	local unitTarget = behaviorLib.heroTarget
+	if unitTarget == nil or not unitTarget:IsValid() then
+		return false --can not execute, move on to the next behavior
+	end
+	
 	local unitSelf = core.unitSelf
-	local target = behaviorLib.heroTarget 
 	
 	local bActionTaken = false
 	--since we are using an old pointer, ensure we can still see the target for entity targeting
-	if target ~= nil and core.CanSeeUnit(botBrain, target) then 
-		local dist = Vector3.Distance2D(unitSelf:GetPosition(), target:GetPosition())
-		local attackRange = core.GetAbsoluteAttackRangeToUnit(unitSelf, target);
+	if and core.CanSeeUnit(botBrain, unitTarget) then 
+		local dist = Vector3.Distance2D(unitSelf:GetPosition(), unitTarget:GetPosition())
+		local attackRange = core.GetAbsoluteAttackRangeToUnit(unitSelf, unitTarget);
 		
 		--leap
 		local leap = skills.abilLeap
-		local leapRange = leap:GetRange() + core.GetExtraRange(unitSelf) + core.GetExtraRange(target)
+		local leapRange = leap:GetRange() + core.GetExtraRange(unitSelf) + core.GetExtraRange(unitTarget)
 		if not bActionTaken then
 			if bDebugEchos then BotEcho("No action taken, considering Leap") end			
 			local bLeapUsable = leap:CanActivate() and dist < leapRange
@@ -271,7 +275,7 @@ local function HarassHeroExecuteOverride(botBrain)
 			
 			if bShouldLeap then
 				if bDebugEchos then BotEcho('LEAPIN!') end
-				bActionTaken = core.OrderAbilityEntity(botBrain, leap, target)
+				bActionTaken = core.OrderAbilityEntity(botBrain, leap, unitTarget)
 			end
 		end
 	end
