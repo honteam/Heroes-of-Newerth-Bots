@@ -257,7 +257,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	
 	local bActionTaken = false
 	--since we are using an old pointer, ensure we can still see the target for entity targeting
-	if and core.CanSeeUnit(botBrain, unitTarget) then 
+	if core.CanSeeUnit(botBrain, unitTarget) then 
 		local dist = Vector3.Distance2D(unitSelf:GetPosition(), unitTarget:GetPosition())
 		local attackRange = core.GetAbsoluteAttackRangeToUnit(unitSelf, unitTarget);
 		
