@@ -99,11 +99,13 @@ core.distSqTolerance = 5 * 5
 behaviorLib.nCreepPushbackMul = 0.4 --0.5
 behaviorLib.nTargetPositioningMul = 0.4 --0.6
 behaviorLib.nTargetCriticalPositioningMul = 1 --2
-object.nRealDistance = 0 --average distance minions are from target.
+object.nMinionDistance = 0 --average distance minions are from target.
 object.nMinionsClose = 0 --this is for use with energizer
 object.bUnitStill = false --this adds extra harass utility if hero is trapped
+object.bTrapping = true --controls whether trapagore traps.
 object.nMinionSkip = 5 --control minions every object.nMinionSkip frames.
 object.nCurSkip = 0 --current frame. This is for frame skip.
+object.nLastRunTime = 0 --Last time minions were run.
  
 --difficulty variables
 --[[
@@ -112,7 +114,7 @@ core.nMEDIUM_DIFFICULTY = 2
 core.nHARD_DIFFICULTY   = 3
 ]]
 object.trapEffectiveness = {95 * 95, 75 * 75, 55 * 55}--Lower is better.
-object.trapCycleSkip = {7, 4, 1}--Lower is better.
+object.trapCycleSkip = {7*50, 4*50, 1*50}--Lower is better.
 object.trapCircleRadius = {550, 450, 350}
  
 ------------------------------
@@ -208,7 +210,7 @@ function object:onthinkOverride(tGameVariables) --This is run, even while dead. 
 	---------------------------------
 	--  	Register Minions	   --
 	---------------------------------
-	if (nNumMinions == 0 and unitSelf:IsAlive() and core.localUnits ~= nil)then
+	if (nNumMinions == 0 and unitSelf:IsAlive() and core.localUnits ~= nil) then
 		object.tMinions = {}
 		i = 1--keep track of array index
 		for key, unit in pairs(core.localUnits["AllyUnits"]) do
@@ -236,12 +238,12 @@ function object:onthinkOverride(tGameVariables) --This is run, even while dead. 
 	-----------------------------------------------------------------------------------
 	   
 	--this is a frame-skip. We don't need to run minions code every single frame.
-	object.nCurSkip = object.nCurSkip + 1
+	object.nCurSkip = HoN:GetGameTime() - object.nLastRunTime
 	if (object.nCurSkip >= object.nMinionSkip and table.getn(object.tMinions) > 0) then--don't skip
-		object.nCurSkip = 0
+		object.nLastRunTime = HoN:GetGameTime()
 		local botBrain = self
 		local bDebugLines = false
-		local vecWellPos = (core.enemyWell and core.enemyWell:GetPosition())
+		local vecWellPos = (core.enemyWell and core.enemyWell:GetPosition()) or Vector3.Create()
 		   
 		---------------------------------
 		--    1.Minions Get Target     --
@@ -249,14 +251,14 @@ function object:onthinkOverride(tGameVariables) --This is run, even while dead. 
 		local target = nil --this is what minions will use
 		local heroTarget = behaviorLib.heroTarget
 		local buildingTarget = behaviorLib.hitBuildingTarget
-		if (heroTarget and heroTarget:IsValid() and heroTarget:IsAlive() and heroTarget:GetHealth() > 0 and core.CanSeeUnit(botBrain, heroTarget) and Vector3.Distance2DSq(heroTarget:GetPosition(), vecSelfPos) < 2000 * 2000) then
-			--If we have a hero in mind
-			target = GetHeroByID(botBrain, heroTarget:GetUniqueID())
-		elseif (buildingTarget and buildingTarget:IsValid() and buildingTarget:IsAlive() and core.CanSeeUnit(botBrain, buildingTarget) and Vector3.Distance2DSq(buildingTarget:GetPosition(), vecSelfPos) < 2000 * 2000) then
+		if (buildingTarget and buildingTarget:IsValid() and buildingTarget:IsAlive() and core.CanSeeUnit(botBrain, buildingTarget) and Vector3.Distance2DSq(buildingTarget:GetPosition(), vecSelfPos) < 2000 * 2000) then
 			--If we have a building in mind
 			target = buildingTarget
+		elseif (heroTarget and heroTarget:IsValid() and heroTarget:IsAlive() and heroTarget:GetHealth() > 0 and core.CanSeeUnit(botBrain, heroTarget) and Vector3.Distance2DSq(heroTarget:GetPosition(), vecSelfPos) < 2000 * 2000) then
+			--If we have a hero in mind
+			target = GetHeroByID(botBrain, heroTarget:GetUniqueID())
 		end
-		object.nRealDistance = nil
+		object.nMinionDistance = nil
 		object.nMinionsClose = 0
 		   
 		if (target and bDebugLines) then core.DrawDebugArrow(core.unitSelf:GetPosition(), target:GetPosition(), 'white') end
@@ -270,7 +272,7 @@ function object:onthinkOverride(tGameVariables) --This is run, even while dead. 
 					core.OrderAttack(botBrain, object.tMinions[i], target, false)
 				end
 			end
-			object.nMinionSkip = 10--500ms till next cycle
+			object.nMinionSkip = 500--500ms till next cycle
 			   
 		---------------------------------
 		--    3.Minions Hero Attack    --
@@ -280,7 +282,7 @@ function object:onthinkOverride(tGameVariables) --This is run, even while dead. 
 			local vecTargetPos = target:GetPosition()-- + vTargetVel * 0.5
 			local angleToWell = atan2(vecWellPos.y - vecTargetPos.y, vecWellPos.x - vecTargetPos.x)
 			   
-			if (nNumMinions > 3) then
+			if (nNumMinions > 3 and object.bTrapping) then
 				object.nMinionSkip = object.trapCycleSkip[core.nDifficulty]
 				   
 				local totalDistance = 0
@@ -293,9 +295,11 @@ function object:onthinkOverride(tGameVariables) --This is run, even while dead. 
 				--local nAvgDistance = 1.1 * sqrt(tTotalDisplacement[1] * tTotalDisplacement[1] + tTotalDisplacement[2] * tTotalDisplacement[2]) / nNumMinions
 				local nAvgDistance = totalDistance / nNumMinions
 				   
-				object.nRealDistance = nAvgDistance
+				object.nMinionDistance = nAvgDistance
 				distance = nAvgDistance - 30
-				if (distance > object.trapCircleRadius[core.nDifficulty])then distance = object.trapCircleRadius[core.nDifficulty] end --There is a cap on the distance.
+				if (distance > object.trapCircleRadius[core.nDifficulty]) then
+					distance = object.trapCircleRadius[core.nDifficulty]
+				end --There is a cap on the distance.
 				   
 				--TRAP IF POSSIBLE
 				i = 1
@@ -304,7 +308,11 @@ function object:onthinkOverride(tGameVariables) --This is run, even while dead. 
 						vecTrappingPosition = positionOffset(vecTargetPos, angleToWell + 2 * pi * i / nNumMinions, distance)
 						nDistFromTargetSq = Vector3.Distance2DSq(object.tMinions[i]:GetPosition(), vecTargetPos)
 						-- Don't try to trap if you or they are unitwalking, or trapping already.
-						if (target:GetUnitwalking() or HoN:GetGameTime()-object.nTimeEnergizered < 5200 or (HoN:GetGameTime() - object.nTimeEnergizered > 6000 and object.tMinions[i]:GetUnitwalking()) or target:GetHealthPercent() * 100 < 5 or (Vector3.Distance2DSq(object.tMinions[i]:GetPosition(), vecTrappingPosition) < object.trapEffectiveness[core.nDifficulty]) and nDistFromTargetSq < object.trapEffectiveness[core.nDifficulty]) then--35 was tmp
+						if (target:GetUnitwalking() or HoN:GetGameTime()-object.nTimeEnergizered < 5200 or -- they are unitwalking, or we used energizer
+						  (HoN:GetGameTime() - object.nTimeEnergizered > 6000 and object.tMinions[i]:GetUnitwalking()) or -- we are unit waling
+						  target:GetHealthPercent() * 100 < 5 or  --they are really low health
+						  (Vector3.Distance2DSq(object.tMinions[i]:GetPosition(), vecTrappingPosition) < object.trapEffectiveness[core.nDifficulty]) and -- we are in position
+						  nDistFromTargetSq < object.trapEffectiveness[core.nDifficulty]) then -- we close enough
 							---------------------------------
 							--  	 a.Attack Target	   --
 							---------------------------------
@@ -336,9 +344,11 @@ function object:onthinkOverride(tGameVariables) --This is run, even while dead. 
 				--  	 c.Attack  Target      --
 				---------------------------------
 				--we don't have enough minions to trap, just attack.
-				object.nMinionSkip = 5--250ms till next cycle
+				object.nMinionSkip = 250--250ms till next cycle
 				for i = 1, nNumMinions do
-					if (object.tMinions[i] and object.tMinions[i]:IsValid() and object.tMinions[i]:IsAlive()) then core.OrderAttack(botBrain, object.tMinions[i], target) end --kill em'
+					if (object.tMinions[i] and object.tMinions[i]:IsValid() and object.tMinions[i]:IsAlive()) then
+						core.OrderAttack(botBrain, object.tMinions[i], target)
+					end --kill em'
 				end
 			end
 			   
@@ -346,13 +356,17 @@ function object:onthinkOverride(tGameVariables) --This is run, even while dead. 
 		--  	4.Pushing   	   --
 		---------------------------------
 		else --no target, push forwards.
-			object.nMinionSkip = 5--250ms till next cycle
+			object.nMinionSkip = 250--250ms till next cycle
 			destPos = core.GetFurthestCreepWavePos(core.tMyLane, true)
 			for i = 1, nNumMinions do
 				if (object.tMinions[i])then
 					if (object.tMinions[i] and object.tMinions[i]:IsValid() and object.tMinions[i]:IsAlive()) then
 						core.OrderAttackPosition(botBrain, object.tMinions[i], destPos, false, false)--attackmove
-					else table.remove(object.tMinions, i) i = i-1 nNumMinions = table.getn(object.tMinions) end
+					else
+						table.remove(object.tMinions, i) 
+						i = i-1 
+						nNumMinions = table.getn(object.tMinions)
+					end
 				end
 			end
 		end
@@ -399,18 +413,30 @@ local function CustomHarassUtilityOverride(unit) --this is part of harass hero u
 	local val = 0
 	local heroTarget = unit
 	--can attack enemy
-	if (Vector3.Distance2DSq(unitSelf:GetPosition(), heroTarget:GetPosition()) < 128 * 128 and unitSelf:IsAttackReady()) then val = val + object.nCanAttackUp end
+	if (Vector3.Distance2DSq(unitSelf:GetPosition(), heroTarget:GetPosition()) < 128 * 128 and unitSelf:IsAttackReady()) then
+		val = val + object.nCanAttackUp
+	end
 	--can use ultimate.
-	if skills.abilHellOnNewerth:CanActivate() then val = val + object.nHellUp end
+	if skills.abilHellOnNewerth:CanActivate() then
+		val = val + object.nHellUp
+	end
 	--can use barf
-	if skills.abilRegurgitate:CanActivate() then val = val + object.nRegurgitateUp end
-	local nNumMinions = #object.tMinions --this is the same as table.getn(minions)
+	if skills.abilRegurgitate:CanActivate() then
+		val = val + object.nRegurgitateUp
+	end
+	local nNumMinions = #object.tMinions
 	--Minions are close to enemy
-	if (nNumMinions > 3 and object.nRealDistance and object.nRealDistance < 300) then val = val + object.nMinionsCloseUp end
+	if (nNumMinions > 3 and object.nMinionDistance and object.nMinionDistance < 300) then
+		val = val + object.nMinionsCloseUp
+	end
 	--Minions are trapping enemy
-	if (nNumMinions > 3 and object.bUnitStill and object.nRealDistance and object.nRealDistance < 80)then val = val + object.nTrappingUp end--trapping! 10
+	if (nNumMinions > 3 and object.bUnitStill and object.nMinionDistance and object.nMinionDistance < 80)then
+		val = val + object.nTrappingUp
+	end
 	--can use energizer
-	if (core.itemEnergizer and object.nMinionsClose > 3 and core.itemEnergizer:CanActivate()) then val = val + object.nEnergizerUp end --can activate energizer
+	if (core.itemEnergizer and object.nMinionsClose > 3 and core.itemEnergizer:CanActivate()) then
+		val = val + object.nEnergizerUp
+	end 
 	return val
 end
 behaviorLib.CustomHarassUtility = CustomHarassUtilityOverride
@@ -421,8 +447,14 @@ behaviorLib.CustomHarassUtility = CustomHarassUtilityOverride
 --return to well more often. --2000 gold adds 8 to return utility, 0 % mana also adds 8.
 --When returning to well, use skills and items.
 local function HealAtWellUtilityOverride(botBrain)
-	if (Vector3.Distance2DSq(core.unitSelf:GetPosition(), core.allyWell and core.allyWell:GetPosition() or behaviorLib.PositionSelfBackUp()) < 400 * 400 and core.unitSelf:GetManaPercent() * 100 < 95) then return 80 end
-	return object.HealAtWellUtilityOld(botBrain) * 1.75 + (botBrain:GetGold() * 8 / 2000) + 8-(core.unitSelf:GetManaPercent() * 8) --couragously flee back to base.
+	local vecBackupPos = core.allyWell and core.allyWell:GetPosition() or behaviorLib.PositionSelfBackUp()
+	local nOldHealingMultiplier = 1.75
+	local nGoldSpendingDesire = 8 / 2000
+	local nManaRefillingDesire = 8 --0 if full, this if empty
+	if (Vector3.Distance2DSq(core.unitSelf:GetPosition(), vecBackupPos) < 400 * 400 and core.unitSelf:GetManaPercent() * 100 < 95) then
+		return 80
+	end
+	return object.HealAtWellUtilityOld(botBrain) * nOldHealingMultiplier + (botBrain:GetGold() * nGoldSpendingDesire) + 1-(core.unitSelf:GetManaPercent()) * nManaRefillingDesire --courageously flee back to base.
 end
 local function HealAtWellExecuteOverride(botBrain)
 	local vecWellPos = (core.allyWell and core.allyWell:GetPosition()) or behaviorLib.PositionSelfBackUp()
@@ -567,28 +599,36 @@ local function getCorpsesUtility(botBrain)
 	if (unitSelf:IsAlive() and core.localUnits ~= nil)then
 		local localCreeps = {}
 		--Get all creeps nearby and put them into a single table.
-		for k, v in pairs(core.localUnits['EnemyCreeps']) do localCreeps[k] = v end
-		for k, v in pairs(core.localUnits['AllyCreeps']) do localCreeps[k] = v end
-		for k, v in pairs(localCreeps) do object.tOldLocalCreeps[k] = nil end
+		for k, v in pairs(core.localUnits['EnemyCreeps']) do
+			localCreeps[k] = v
+		end
+		for k, v in pairs(core.localUnits['AllyCreeps']) do
+			localCreeps[k] = v
+		end
+		for k, v in pairs(localCreeps) do
+			object.tOldLocalCreeps[k] = nil
+		end
 		for key, unit in pairs(object.tOldLocalCreeps) do
 			id = key
-			if (unit and unit:IsValid() and unit:GetHealth() and unit:GetHealth() <= 0 and string.find(unit:GetTypeName(), "Creep")) then --these cause awful amounts of 'corpses' constantly.
+			if (unit and unit:IsValid() and unit:GetHealth() and unit:GetHealth() <= 0 and core.IsLaneCreep(unit)) then --these cause awful amounts of 'corpses' constantly.
 				if (unit:GetAttackRange() ~= 690) then--catapults don't have corpses..
-					table.insert(object.tCorpseTable, {position = unit:GetPosition(), time = HoN:GetGameTime()})--create corpse record
+					tinsert(object.tCorpseTable, {position = unit:GetPosition(), time = HoN:GetGameTime()})--create corpse record
 				end
 			end
 		end
 		object.tOldLocalCreeps = localCreeps
 		for key, event in pairs(object.tCorpseTable) do --remove old / obtained corpses
 			if (HoN.GetGameTime() > event['time'] + 14000 or Vector3.Distance2DSq(vecSelfPos, event['position']) <= 105 * 105) then
-				table.remove(object.tCorpseTable, key)
+				tremove(object.tCorpseTable, key)
 			end
 		end
 	end
  
 	--assess corpses
 	local bDebugLines = false
-	if (unitSelf:GetLevel() < 2 or (skills.abilSpawnMinions:GetCharges() == skills.abilSpawnMinions:GetLevel() * 3 and unitSelf:GetHealthPercent() * 1000 == 1000))then return 0 end
+	if (unitSelf:GetLevel() < 2 or (skills.abilSpawnMinions:GetCharges() == skills.abilSpawnMinions:GetLevel() * 3 and unitSelf:GetHealthPercent() * 1000 == 1000))then
+		return 0
+	end
 	local closestCorpse = nil
 	local nClosestCorpseDistSq = 9999 * 9999
 	for key, v in pairs(object.tCorpseTable) do
@@ -601,7 +641,7 @@ local function getCorpsesUtility(botBrain)
 				closestCorpse = v
 				nClosestCorpseDistSq = nDistSq
 			end
-		else if (bDebugLines)then core.DrawXPosition(vecCorpsePosition, 'black') end end
+		elseif (bDebugLines)then core.DrawXPosition(vecCorpsePosition, 'black') end
 	end
 	if (closestCorpse) then
 		corpsePosition = closestCorpse['position']
