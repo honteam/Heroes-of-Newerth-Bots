@@ -383,15 +383,15 @@ object.onthink  = object.onthinkOverride
 ----------------------------------------------
 --  	BotBrainInitialize Override  	--
 ----------------------------------------------
-function core.BotBrainInitializeOverride(tGameVariables)
-	core.BotBrainInitializeOverride(tGameVariables)
+function BotBrainInitializeOverride(tGameVariables)
+	object.BotBrainInitializeOverrideOld(tGameVariables)
 	
 	if (core.nDifficulty == core.nEASY_DIFFICULTY) then
 		object.bTrapping = false
 	end
 end
-object.BotBrainInitializeOverrideOld = core.BotBrainInitializeOverride
-core.BotBrainInitializeOverride = BotBrainInitializeOverride
+object.BotBrainInitializeOverrideOld = core.BotBrainCoreInitialize
+core.BotBrainCoreInitialize = BotBrainInitializeOverride
  
  
  
