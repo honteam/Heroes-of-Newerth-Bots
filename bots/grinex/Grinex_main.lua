@@ -500,14 +500,16 @@ local function funcRetreatFromThreatExecuteOverride(botBrain)
 	local nHealthPercent = core.unitSelf:GetHealthPercent()
 	
 	-- Use Rift Stalk to retreat if possible
-	local abilStalk = skills.abilStalk
-	if abilStalk:CanActivate() and nHealthPercent < .625 then
-		bActionTaken = core.OrderAbility(botBrain, abilStalk)
-	end
+	if not core.unitSelf:HasState("State_Grinex_Ability2") then
+		local abilStalk = skills.abilStalk
+		if abilStalk:CanActivate() and nHealthPercent < .625 then
+			bActionTaken = core.OrderAbility(botBrain, abilStalk)
+		end
 
-	local abilAssault = skills.abilAssault
-	if abilAssault.CanActivate() and nHealthPercent < .25 then
-			bActionTaken = core.OrderAbility(botBrain, abilAssault)
+		local abilAssault = skills.abilAssault
+		if abilAssault:CanActivate() and nHealthPercent < .25 then
+				bActionTaken = core.OrderAbility(botBrain, abilAssault)
+		end
 	end
 	
 	if not bActionTaken then
