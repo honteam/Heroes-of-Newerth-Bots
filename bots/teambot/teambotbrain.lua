@@ -218,7 +218,7 @@ function object:onthink(tGameVariables)
 		jungleLib.assess(self)
 	StopProfile()
 
-	time = HoN.GetMatchTime()
+	local time = HoN.GetMatchTime()
 	if time and time > object.nRuneNextSpawnCheck then
 		object.nRuneNextSpawnCheck = object.nRuneNextSpawnCheck + 120000
 
@@ -239,7 +239,7 @@ end
 function object.CheckRunes()
 	for _,rune in pairs(object.runes) do
 		if HoN.CanSeePosition(rune.vecLocation) then
-			units = HoN.GetUnitsInRadius(rune.vecLocation, 50, core.UNIT_MASK_POWERUP + core.UNIT_MASK_ALIVE)
+			local units = HoN.GetUnitsInRadius(rune.vecLocation, 50, core.UNIT_MASK_POWERUP + core.UNIT_MASK_ALIVE)
 			local bRuneFound = false
 			for _,unit in pairs(units) do
 				local typeName = unit:GetTypeName()
