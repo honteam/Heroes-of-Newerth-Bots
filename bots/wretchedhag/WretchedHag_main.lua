@@ -143,44 +143,6 @@ function object:SkillBuild()
 	end
 end
  
-------------------------------------------
---          FindItems Override          --
-------------------------------------------
- 
-local function funcFindItemsOverride(botBrain)
-	local bUpdated = object.FindItemsOld(botBrain)
- 
-	core.ValidateItem(core.itemSteamboots)
-	core.ValidateItem(core.itemHellflower)
-	core.ValidateItem(core.itemSheepstick)
-	core.ValidateItem(core.itemSotM)
-
-	if bUpdated then
-		--only update if we need to
-		if core.itemSteamboots and core.itemHellflower and core.itemSheepstick and core.itemSotM then
-			return
-		end
-	 
-		local inventory = core.unitSelf:GetInventory(true)
-		for slot = 1, 6, 1 do
-			local curItem = inventory[slot]
-			if curItem and not curItem:IsRecipe() then
-				if core.itemSteamboots == nil and curItem:GetName() == "Item_Steamboots" then
-					core.itemSteamboots = core.WrapInTable(curItem)
-				elseif core.itemHellflower == nil and curItem:GetName() == "Item_Silence" then
-					core.itemHellflower = core.WrapInTable(curItem)
-				elseif core.itemSheepstick == nil and curItem:GetName() == "Item_Morph" then
-					core.itemSheepstick = core.WrapInTable(curItem)
-				elseif core.itemSotM == nil and curItem:GetName() == "Item_Intelligence7" then
-					core.itemSotM = core.WrapInTable(curItem)
-				end
-			end
-		end
-	end
-end
- 
-object.FindItemsOld = core.FindItems
-core.FindItems = funcFindItemsOverride
  
 ----------------------------------------
 --          OnThink Override          --
@@ -190,7 +152,7 @@ function object:onthinkOverride(tGameVariables)
 	self:onthinkOld(tGameVariables)
  
 	-- Toggle Steamboots for more Health/Mana
-	local itemSteamboots = core.itemSteamboots
+	local itemSteamboots = core.GetItem("Item_Steamboots")
 	if itemSteamboots and itemSteamboots:CanActivate() then
 		local unitSelf = core.unitSelf
 		local sKey = itemSteamboots:GetActiveModifierKey()
@@ -237,10 +199,15 @@ function object:oncombateventOverride(EventData)
 			nAddBonus = nAddBonus + self.nBlastUse
 		end
 	elseif EventData.Type == "Item" then
-		if core.itemHellflower ~= nil and EventData.SourceUnit == core.unitSelf:GetUniqueID() and EventData.InflictorName == core.itemHellflower:GetName() then
+		if EventData.SourceUnit == core.unitSelf:GetUniqueID() then
+		local sInflictorName = EventData.InflictorName
+		local itemHellflower = core.GetItem("Item_Silence")
+		local itemSheepstick = core.GetItem("Item_Morph")
+		if itemHellflower and sInflictorName == itemHellflower:GetName() then
 			nAddBonus = nAddBonus + self.nHellflowerUse
-		elseif core.itemSheepstick ~= nil and EventData.SourceUnit == core.unitSelf:GetUniqueID() and EventData.InflictorName == core.itemSheepstick:GetName() then
+		elseif itemSheepstick and sInflictorName == itemSheepstick:GetName() then
 			nAddBonus = nAddBonus + self.nSheepstickUse
+		end
 		end
 	end
  
@@ -271,19 +238,21 @@ local function CustomHarassUtilityFnOverride(hero)
 	if skills.abilBlast:CanActivate() then
 		nUtility = nUtility + object.nBlastUp
 	end
- 
-	if object.itemHellflower and object.itemHellflower:CanActivate() then
+	
+	local itemHellflower = core.GetItem("Item_Silence")
+	if itemHellflower and itemHellflower:CanActivate() then
 		nUtility = nUtility + object.nHellflowerUp
 	end
  
-	if object.itemSheepstick and object.itemSheepstick:CanActivate() then
-		nUtility = nUtility + object.nSheepstickUp
+	local itemSheepstick = core.GetItem("Item_Morph")
+	if itemSheepstick and itemSheepstick:CanActivate() then
+		nUtility = nUtility + object.nSheepstickUp		
 	end
  
 	return nUtility
 end
  
-behaviorLib.CustomHarassUtility = CustomHarassUtilityFnOverride  
+behaviorLib.CustomHarassUtility = CustomHarassUtilityFnOverride 
  
 -----------------------------------
 --          Haunt Logic          --
@@ -335,11 +304,12 @@ end
 local function filterGroupRange(tGroup, vecCenter, nRange)
 	if tGroup and vecCenter and nRange then
 		local tResult = {}
+		local nRangeSq = nRange * nRange
 		for _, unitTarget in pairs(tGroup) do
-			if Vector3.Distance2DSq(unitTarget:GetPosition(), vecCenter) <= (nRange * nRange) then
+			if Vector3.Distance2DSq(unitTarget:GetPosition(), vecCenter) <= nRangeSq then
 				tinsert(tResult, unitTarget)
 			end
-		end    
+		end   
 	   
 		if #tResult > 0 then
 			return tResult
@@ -354,7 +324,7 @@ local function getAngToTarget(vecSelf, vecTarget)
 	local nDeltaY = vecTarget.y - vecSelf.y
 	local nDeltaX = vecTarget.x - vecSelf.x
  
-	return floor(atan2(nDeltaY, nDeltaX) * 57.2957795131) -- That number is 180 / pi
+	return floor(core.RadToDeg(atan2(nDeltaY, nDeltaX)))
 end
  
 -- Returns the best direction to use a cone based spell
@@ -428,7 +398,7 @@ local function getConeTarget(tLocalTargets, nRange, nDegrees, nMinCount)
 			if nBestGroupSize >= nMinCount then
 				tsort(tBestGroup)
 			   
-				local nAvgAngle = (tBestGroup[1] + tBestGroup[nBestGroupSize]) / 2 * 0.01745329251 -- That number is pi / 180
+				local nAvgAngle = core.DegToRad((tBestGroup[1] + tBestGroup[nBestGroupSize]) / 2)
  
 				return Vector3.Create(cos(nAvgAngle), sin(nAvgAngle)) * 500
 			end
@@ -441,25 +411,21 @@ end
 -- Returns the magic damage that Hag Ult will do
 local function blastDamage()
 	local nBlastLevel = skills.abilBlast:GetLevel()
-	if core.itemSotM then
-		if nBlastLevel == 1 then
-			return 340
-		elseif nBlastLevel == 2 then
-			return 530
-		elseif nBlastLevel == 3 then
-			return 725
-		end    
+	if nBlastLevel < 1 then return end
+	
+	local nHauntLevel = skills.abilHaunt:GetLevel()
+	local tHauntDamageValues = {50, 100, 200, 250}
+	local nBlastDamage = tHauntDamageValues[nHauntLevel] or 0
+	
+	if core.GetItem("Item_Intelligence7") then
+		local tBlastDamageValues = {340, 530, 725}
+		nBlastDamage = nBlastDamage + tBlastDamageValues[nBlastLevel]
 	else
-		if nBlastLevel == 1 then
-			return 290
-		elseif nBlastLevel == 2 then
-			return 430
-		elseif nBlastLevel == 3 then
-			return 600
-		end    
+		local tBlastDamageValues = {290, 420, 550}
+		nBlastDamage = nBlastDamage + tBlastDamageValues[nBlastLevel]
 	end
  
-	return nil
+	return nBlastDamage
 end
  
 ---------------------------------------
@@ -490,13 +456,11 @@ local function HarassHeroExecuteOverride(botBrain)
 	end
 	   
 	-- Hellflower
-	if not bActionTaken then
-		local itemHellflower = core.itemHellflower
-		if itemHellflower and itemHellflower:CanActivate() and (nMyMana - itemHellflower:GetManaCost()) >= 60 and not bTargetDisabled and bCanSeeTarget and nLastHarassUtility > object.nHellflowerThreshold then
-			local nRange = itemHellflower:GetRange()
-			if nTargetDistanceSq < (nRange * nRange) then
-				bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, itemHellflower, unitTarget)
-			end
+	local itemHellflower = core.GetItem("Item_Silence")
+	if itemHellflower and itemHellflower:CanActivate() and (nMyMana - itemHellflower:GetManaCost()) >= 60 and not bTargetDisabled and bCanSeeTarget and nLastHarassUtility > object.nHellflowerThreshold then
+		local nRange = itemHellflower:GetRange()
+		if nTargetDistanceSq < (nRange * nRange) then
+			bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, itemHellflower, unitTarget)
 		end
 	end
  
@@ -517,7 +481,7 @@ local function HarassHeroExecuteOverride(botBrain)
 					bActionTaken = core.OrderAbilityEntity(botBrain, abilBlast, unitTarget)
 				end
 			end
-		end    
+		end   
 	end
 	   
 	-- Haunt
@@ -533,7 +497,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	   
 	-- Sheepstick
 	if not bActionTaken then
-		local itemSheepstick = core.itemSheepstick
+		local itemSheepstick = core.GetItem("Item_Morph")
 		if itemSheepstick and itemSheepstick:CanActivate() and (nMyMana - itemSheepstick:GetManaCost()) >= 60  and not bTargetDisabled and bCanSeeTarget and nLastHarassUtility > object.nSheepstickThreshold then
 			local nRange = itemSheepstick:GetRange()
 			if nTargetDistanceSq < (nRange * nRange) then
@@ -677,30 +641,24 @@ end
 --------------------------------------------------
 --          RetreatFromThreat Override          --
 --------------------------------------------------
- 
+
 local function funcRetreatFromThreatExecuteOverride(botBrain)
 	local bActionTaken = false
 	   
 	-- Use blink to retreat if possible
-	if not bActionTaken then
-		local abilBlink = skills.abilBlink
-		if abilBlink:CanActivate() and core.unitSelf:GetHealthPercent() < .425 then
-			local vecRetreatPosition = getBlinkRetreatLocation()
-			if vecRetreatPosition then
-				bActionTaken = core.OrderAbilityPosition(botBrain, abilBlink, vecRetreatPosition)
-			else
-				bActionTaken = core.OrderAbilityPosition(botBrain, abilBlink, core.allyWell:GetPosition())
-			end
+	local abilBlink = skills.abilBlink
+	if abilBlink:CanActivate() and core.unitSelf:GetHealthPercent() < .425 then
+		local vecRetreatPosition = getBlinkRetreatLocation()
+		if vecRetreatPosition then
+			bActionTaken = core.OrderAbilityPosition(botBrain, abilBlink, vecRetreatPosition)
+		else
+			bActionTaken = core.OrderAbilityPosition(botBrain, abilBlink, core.allyWell:GetPosition())
 		end
 	end
 	   
-	if not bActionTaken then
-		return object.RetreatFromThreatExecuteOld(botBrain)
-	end
+	   return bActionTaken
 end
- 
-object.RetreatFromThreatExecuteOld = behaviorLib.RetreatFromThreatExecute
-behaviorLib.RetreatFromThreatBehavior["Execute"] = funcRetreatFromThreatExecuteOverride
+behaviorLib.CustomRetreatExecute = funcRetreatFromThreatExecuteOverride
  
 -------------------------------------------------
 --          HealAtWellExecute Overide          --
