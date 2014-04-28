@@ -214,7 +214,7 @@ function object:onthinkOverride(tGameVariables) --This is run, even while dead. 
 		object.tMinions = {}
 		i = 1 --keep track of array index
 		for key, unit in pairs(core.localUnits["AllyUnits"]) do
-			if (unit:GetTypeName() == "Pet_Bephelgor_Ability2" and unit:GetOwnerPlayer() == unitSelf:GetOwnerPlayer()) then
+			if (unit:GetTypeName() == "Pet_Bephelgor_Ability2" and unit:GetOwnerPlayerID() == unitSelf:GetOwnerPlayerID()) then
 				object.tMinions[i] = unit
 				if (bDebugLines) then core.DrawDebugArrow(object.tMinions[i]:GetPosition(), vecSelfPos, 'white') end
 				i = i + 1
