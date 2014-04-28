@@ -122,6 +122,20 @@ schnarchnase_grave_death3		Ugh, I hate rigor mortis.
 schnarchnase_grave_death4		Restarting.
 
 /////////////////////////////////////////
+//Anakonda's Moon Queen bot custom messages
+
+anakonda_moonqueen_kill1		Shot by the Moon.
+anakonda_moonqueen_kill2		Harvest moon.
+anakonda_moonqueen_kill3		Feel the power of the moon.
+anakonda_moonqueen_kill4		Take one and pass it on.
+anakonda_moonqueen_kill5		One to the other.
+
+anakonda_moonqueen_respawn1		By the moonlight.
+anakonda_moonqueen_respawn2		Moonlight guide me.
+
+anakonda_moonqueen_death1		Carried away by a moonlight shadow.
+
+/////////////////////////////////////////
 //Kairus101's Balphegore bot custom messages
 
 kairus101_balphagore_kill1		 * Spews all over keyboard * 
