@@ -9993,6 +9993,7 @@ bot_description_balphagore			Balphagore is a melee strength hero, with insane pu
 bot_description_bombardier			Bombardier is a ranged intelligence hero, with strong magic damage spells. Authored by Anakonda!
 bot_description_revenant			Revenant is a ganker who lowers armor while adding magical damage to allies. Authored by Rinestone!
 bot_description_wretched_hag		Wretched Hag is a mobile ganker and semicarry who excels in AoE magic damage. Authored by DarkFire!
+bot_description_moon_queen			Moon Queen is a short-ranged carry with strong early ganking and a deadly ult. Authored by Anakonda!
 
 // Maintenance
 maintenance_general 			Under Maintenance

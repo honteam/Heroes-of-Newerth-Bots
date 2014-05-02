@@ -6,7 +6,7 @@
 --  | |  | |   | (_| || |_) || (_| || (_| || (_) || |   |  __/
 --  \_/  |_|    \__,_|| .__/  \__,_| \__, | \___/ |_|    \___|
 --                    | |             __/ |
---                    |_|            |___/     version 0.8.3
+--                    |_|            |___/     version 1.0.0
 --
 ------------------------------------------
 --      Created by: kairus101	--
@@ -24,7 +24,7 @@ object.bReportBehavior, object.bDebugUtility, object.logger.bWriteLog, object.lo
 object.core 		= {}
 object.eventsLib	= {}
 object.metadata 	= {}
-object.behaviorLib  	= {}
+object.behaviorLib  = {}
 object.skills   	= {}
 runfile "bots/core.lua"
 runfile "bots/botbraincore.lua"
@@ -82,30 +82,30 @@ object.tHellOnNewerthThreshold = {70, 60, 50} --depending on charges
 object.nEnergizerThreshold = 30
  
 --time variables
-object.nTimeBarfed = 0 --used to get corpses at well
-object.nTimeEnergizered = 0 --used for minions to remember when to trap again
+object.nTimeBarfed = 0 		--used to get corpses at well
+object.nTimeEnergizered = 0	--used for minions to remember when to trap again
  
 --table variables (need to keep track on minions and corpses)
-object.tMinions = {} --hold minions
-object.tCorpseTable = {}--position, time
-object.tOldLocalCreeps = {}--for checking if units are dead for corpses.
+object.tMinions = {} 		--hold minions
+object.tCorpseTable = {}	--position, time
+object.tOldLocalCreeps = {}	--for checking if units are dead for corpses.
  
 --item variables
-core.itemEnergizer = nil --energizer
-core.itemBols = nil --sol's bolwork
+core.itemEnergizer = nil	--energizer
+core.itemBulwark = nil 		--sol's bulwark
  
 --other variables
 core.distSqTolerance = 5 * 5
-behaviorLib.nCreepPushbackMul = 0.4 --0.5
-behaviorLib.nTargetPositioningMul = 0.4 --0.6
-behaviorLib.nTargetCriticalPositioningMul = 1 --2
-object.nMinionDistance = 0 --average distance minions are from target.
-object.nMinionsClose = 0 --this is for use with energizer
-object.bUnitStill = false --this adds extra harass utility if hero is trapped
-object.bTrapping = true --controls whether trapagore traps.
-object.nMinionSkip = 5 --control minions every object.nMinionSkip frames.
-object.nCurSkip = 0 --current frame. This is for frame skip.
-object.nLastRunTime = 0 --Last time minions were run.
+behaviorLib.nCreepPushbackMul = 0.4
+behaviorLib.nTargetPositioningMul = 0.4
+behaviorLib.nTargetCriticalPositioningMul = 1
+object.nMinionDistance = 0	--average distance minions are from target.
+object.nMinionsClose = 0	--this is for use with energizer
+object.bUnitStill = false	--this adds extra harass utility if hero is trapped
+object.bTrapping = true		--controls whether trapagore traps.
+object.nMinionSkip = 5		--control minions every object.nMinionSkip frames.
+object.nCurSkip = 0			--current frame. This is for frame skip.
+object.nLastRunTime = 0		--Last time minions were run.
  
 --difficulty variables
 --[[
@@ -113,8 +113,8 @@ core.nEASY_DIFFICULTY   = 1
 core.nMEDIUM_DIFFICULTY = 2
 core.nHARD_DIFFICULTY   = 3
 ]]
-object.trapEffectiveness = {95 * 95, 75 * 75, 55 * 55}--Lower is better.
-object.trapCycleSkip = {7*50, 4*50, 1*50}--Lower is better.
+object.trapEffectiveness = {95 * 95, 75 * 75, 55 * 55} --Lower is better.
+object.trapCycleSkip = {7*50, 4*50, 1*50} --Lower is better.
 object.trapCircleRadius = {550, 450, 350}
  
 ------------------------------
@@ -123,11 +123,11 @@ object.trapCircleRadius = {550, 450, 350}
 function object:SkillBuild()
 	local unitSelf = self.core.unitSelf
 	if  skills.abilRegurgitate == nil then
-		skills.abilRegurgitate = unitSelf:GetAbility(0)--Barf
-		skills.abilDemonicPathogen = unitSelf:GetAbility(1)--Useless silence
-		skills.abilSpawnMinions = unitSelf:GetAbility(2)--Corpse pickup / Minions
-		skills.abilHellOnNewerth = unitSelf:GetAbility(3)--Ultimate
-		skills.abilAttributeBoost = unitSelf:GetAbility(4)--Stats
+		skills.abilRegurgitate = unitSelf:GetAbility(0)		--Barf
+		skills.abilDemonicPathogen = unitSelf:GetAbility(1)	--Silence
+		skills.abilSpawnMinions = unitSelf:GetAbility(2)	--Corpse pickup / Minions
+		skills.abilHellOnNewerth = unitSelf:GetAbility(3)	--Ultimate
+		skills.abilAttributeBoost = unitSelf:GetAbility(4)	--Stats
 	end
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then
 		return
@@ -165,9 +165,9 @@ local function FindItemsOverride(botBrain)
 					core.itemEnergizer = core.WrapInTable(curItem)
 				elseif core.itemGhostMarchers == nil and curItem:GetName() == "Item_EnhancedMarchers" then
 					core.itemGhostMarchers = core.WrapInTable(curItem)
-				elseif core.itemBols == nil and curItem:GetName() == "Item_SolsBulwark" then
-					core.itemBols = core.WrapInTable(curItem)
-					core.OrderItemClamp(botBrain, unitSelf, core.itemBols) --turn to negative bols
+				elseif core.itemBulwark == nil and curItem:GetName() == "Item_SolsBulwark" then
+					core.itemBulwark = core.WrapInTable(curItem)
+					core.OrderItemClamp(botBrain, unitSelf, core.itemBulwark) --turn to negative bols
 				end
 			end
 		end
@@ -212,9 +212,9 @@ function object:onthinkOverride(tGameVariables) --This is run, even while dead. 
 	---------------------------------
 	if (nNumMinions == 0 and unitSelf:IsAlive() and core.localUnits ~= nil) then
 		object.tMinions = {}
-		i = 1--keep track of array index
+		i = 1 --keep track of array index
 		for key, unit in pairs(core.localUnits["AllyUnits"]) do
-			if (unit:GetTypeName() == "Pet_Bephelgor_Ability2" and unit:GetOwnerPlayer() == unitSelf:GetOwnerPlayer()) then
+			if (unit:GetTypeName() == "Pet_Bephelgor_Ability2" and unit:GetOwnerPlayerID() == unitSelf:GetOwnerPlayerID()) then
 				object.tMinions[i] = unit
 				if (bDebugLines) then core.DrawDebugArrow(object.tMinions[i]:GetPosition(), vecSelfPos, 'white') end
 				i = i + 1
@@ -272,7 +272,7 @@ function object:onthinkOverride(tGameVariables) --This is run, even while dead. 
 					core.OrderAttack(botBrain, object.tMinions[i], target, false)
 				end
 			end
-			object.nMinionSkip = 500--500ms till next cycle
+			object.nMinionSkip = 500 --500ms till next cycle
 			   
 		---------------------------------
 		--    3.Minions Hero Attack    --
@@ -307,12 +307,14 @@ function object:onthinkOverride(tGameVariables) --This is run, even while dead. 
 					if (object.tMinions[i] and object.tMinions[i]:IsValid() and object.tMinions[i]:IsAlive() and object.tMinions[i]:GetPosition()) then
 						vecTrappingPosition = positionOffset(vecTargetPos, angleToWell + 2 * pi * i / nNumMinions, distance)
 						nDistFromTargetSq = Vector3.Distance2DSq(object.tMinions[i]:GetPosition(), vecTargetPos)
-						-- Don't try to trap if you or they are unitwalking, or trapping already.
-						if (target:GetUnitwalking() or HoN:GetGameTime()-object.nTimeEnergizered < 5200 or -- they are unitwalking, or we used energizer
-						  (HoN:GetGameTime() - object.nTimeEnergizered > 6000 and object.tMinions[i]:GetUnitwalking()) or -- we are unit waling
-						  target:GetHealthPercent() * 100 < 5 or  --they are really low health
-						  (Vector3.Distance2DSq(object.tMinions[i]:GetPosition(), vecTrappingPosition) < object.trapEffectiveness[core.nDifficulty]) and -- we are in position
-						  nDistFromTargetSq < object.trapEffectiveness[core.nDifficulty]) then -- we close enough
+					
+						local bJustEnergized = (HoN:GetGameTime() - object.nTimeEnergizered) < (6000 - 800)
+						local bUnplannedUnitwalking = object.tMinions[i]:GetUnitwalking() and (HoN:GetGameTime() - object.nTimeEnergizered) > 6000
+						local bLowTargetHealth = target:GetHealthPercent() < 0.05
+						local bInPosition = (Vector3.Distance2DSq(object.tMinions[i]:GetPosition(), vecTrappingPosition) < object.trapEffectiveness[core.nDifficulty])
+						local bCloseEnough = nDistFromTargetSq < object.trapEffectiveness[core.nDifficulty]
+	
+						if (target:GetUnitwalking() or bJustEnergized or bUnplannedUnitwalking or bLowTargetHealth or (bInPosition and bCloseEnough)) then
 							---------------------------------
 							--  	 a.Attack Target	   --
 							---------------------------------
@@ -321,10 +323,10 @@ function object:onthinkOverride(tGameVariables) --This is run, even while dead. 
 								if (core.GetAttackSequenceProgress(object.tMinions[i]) ~= "windup") then--this is needed, don't cancel attacks param doesn't work for some reason.
 									core.OrderMoveToPos(botBrain, object.tMinions[i], vecTargetPos, false)
 								end
-								if (bDebugLines)then core.DrawXPosition(vecTargetPos, 'yellow') end
+								if (bDebugLines) then core.DrawXPosition(vecTargetPos, 'yellow') end
 							else
 								core.OrderAttack(botBrain, object.tMinions[i], target, false)
-								if (bDebugLines)then core.DrawXPosition(vecTargetPos, 'red') end
+								if (bDebugLines) then core.DrawXPosition(vecTargetPos, 'red') end
 							end
 						else --TRAP, they are trappable.
 							---------------------------------
@@ -335,7 +337,7 @@ function object:onthinkOverride(tGameVariables) --This is run, even while dead. 
 						end
 						i = i + 1
 					else
-						table.remove(object.tMinions, i)
+						tremove(object.tMinions, i)
 						nNumMinions = table.getn(object.tMinions)
 					end
 				end
@@ -344,7 +346,7 @@ function object:onthinkOverride(tGameVariables) --This is run, even while dead. 
 				--  	 c.Attack  Target      --
 				---------------------------------
 				--we don't have enough minions to trap, just attack.
-				object.nMinionSkip = 250--250ms till next cycle
+				object.nMinionSkip = 250 --250ms till next cycle
 				for i = 1, nNumMinions do
 					if (object.tMinions[i] and object.tMinions[i]:IsValid() and object.tMinions[i]:IsAlive()) then
 						core.OrderAttack(botBrain, object.tMinions[i], target)
@@ -363,8 +365,8 @@ function object:onthinkOverride(tGameVariables) --This is run, even while dead. 
 					if (object.tMinions[i] and object.tMinions[i]:IsValid() and object.tMinions[i]:IsAlive()) then
 						core.OrderAttackPosition(botBrain, object.tMinions[i], destPos, false, false)--attackmove
 					else
-						table.remove(object.tMinions, i) 
-						i = i-1 
+						tremove(object.tMinions, i) 
+						i = i - 1 
 						nNumMinions = table.getn(object.tMinions)
 					end
 				end
@@ -376,6 +378,22 @@ function object:onthinkOverride(tGameVariables) --This is run, even while dead. 
 end
 object.onthinkOld = object.onthink
 object.onthink  = object.onthinkOverride
+ 
+ 
+----------------------------------------------
+--  	BotBrainInitialize Override  	--
+----------------------------------------------
+function BotBrainInitializeOverride(tGameVariables)
+	object.BotBrainInitializeOverrideOld(tGameVariables)
+	
+	if (core.nDifficulty == core.nEASY_DIFFICULTY) then
+		object.bTrapping = false
+	end
+end
+object.BotBrainInitializeOverrideOld = core.BotBrainCoreInitialize
+core.BotBrainCoreInitialize = BotBrainInitializeOverride
+ 
+ 
  
 ----------------------------------------------
 --  	OnCombatEvent Override  	--

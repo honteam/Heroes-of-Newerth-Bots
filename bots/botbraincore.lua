@@ -80,7 +80,6 @@ end
 
 --Called every frame the engine gives us during the actual match
 function object:onthink(tGameVariables)
-
 	StartProfile('onthink')
 	if core.coreInitialized == false or core.coreInitialized == nil then
 		core.CoreInitialize(self)
@@ -449,21 +448,21 @@ function core.BotBrainCoreInitialize(tGameVariables)
 		end
 	end
 	
+	--[Tutorial] Make everyone less aggressive and easy mode. Later legion will switch to Medium.
+	if core.bIsTutorial then
+		core.nDifficulty = core.nEASY_DIFFICULTY
+		
+		core.bTutorialBehaviorReset = false
+	end
+	
 	--[Difficulty]
 	if core.nDifficulty == core.nEASY_DIFFICULTY then
 		behaviorLib.harassUtilityWeight = 0.30
+		behaviorLib.nCreepAggroUtility = behaviorLib.nCreepAggroUtilityEasy
 	elseif core.nDifficulty == core.nMEDIUM_DIFFICULTY then
 		behaviorLib.harassUtilityWeight = 0.65
 	elseif core.nDifficulty == core.nHARD_DIFFICULTY then
 		--leave everything in
-	end
-	
-	--[Tutorial] Make everyone less aggressive and easy mode. Later legion will switch to Medium.
-	if core.bIsTutorial then
-		core.nDifficulty = core.nEASY_DIFFICULTY
-		behaviorLib.harassUtilityWeight = 0.3
-		
-		core.bTutorialBehaviorReset = false
 	end
 	
 	behaviorLib.addCurrentItemBehaviors()

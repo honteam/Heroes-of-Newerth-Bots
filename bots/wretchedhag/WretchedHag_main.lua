@@ -200,14 +200,14 @@ function object:oncombateventOverride(EventData)
 		end
 	elseif EventData.Type == "Item" then
 		if EventData.SourceUnit == core.unitSelf:GetUniqueID() then
-		local sInflictorName = EventData.InflictorName
-		local itemHellflower = core.GetItem("Item_Silence")
-		local itemSheepstick = core.GetItem("Item_Morph")
-		if itemHellflower and sInflictorName == itemHellflower:GetName() then
-			nAddBonus = nAddBonus + self.nHellflowerUse
-		elseif itemSheepstick and sInflictorName == itemSheepstick:GetName() then
-			nAddBonus = nAddBonus + self.nSheepstickUse
-		end
+			local sInflictorName = EventData.InflictorName
+			local itemHellflower = core.GetItem("Item_Silence")
+			local itemSheepstick = core.GetItem("Item_Morph")
+			if itemHellflower ~= nil and sInflictorName == itemHellflower:GetName() then
+				nAddBonus = nAddBonus + self.nHellflowerUse
+			elseif itemSheepstick ~= nil and sInflictorName == itemSheepstick:GetName() then
+				nAddBonus = nAddBonus + self.nSheepstickUse
+			end
 		end
 	end
  
@@ -411,7 +411,9 @@ end
 -- Returns the magic damage that Hag Ult will do
 local function blastDamage()
 	local nBlastLevel = skills.abilBlast:GetLevel()
-	if nBlastLevel < 1 then return end
+	if nBlastLevel < 1 then 
+		return nil
+	end
 	
 	local nHauntLevel = skills.abilHaunt:GetLevel()
 	local tHauntDamageValues = {50, 100, 200, 250}

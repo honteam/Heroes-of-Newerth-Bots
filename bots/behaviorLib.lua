@@ -475,6 +475,10 @@ behaviorLib.bLastPortResult = false
 -------- Helper Functions --------
 function core.GetClosestTeleportUnit(vecDesiredPosition)
 	local unitBuilding = core.GetClosestTeleportBuilding(vecDesiredPosition)
+	if (unitBuilding == nil) then
+		return nil
+	end
+		
 	local vecBuildingPosition = unitBuilding:GetPosition()
 	local nDistance = Vector3.Distance2D(vecBuildingPosition, vecDesiredPosition)
 	local nDistancePositionToTowerSq = nDistance * nDistance
@@ -2283,6 +2287,7 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.PositionSelfBehavior)
 ----------------------------------
 --TODO: work in a "stand away from threatening heroes" behavior?
 
+behaviorLib.nCreepAggroUtilityEasy = 2
 behaviorLib.nCreepAggroUtility = 25
 behaviorLib.nRecentDamageMul = 0.35
 behaviorLib.nTowerProjectileUtility = 33
