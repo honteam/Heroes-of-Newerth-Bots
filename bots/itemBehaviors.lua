@@ -219,7 +219,7 @@ function behaviorLib.UseManaPotUtility(botBrain)
 		
 		return core.ATanFn(nManaMissing, vecPoint, vecOrigin, 100)
 	elseif not behaviorLib.itemManaPot then
-		behaviorLib.addItemBehavior("Item_ManaPotion", true)
+		behaviorLib.removeItemBehavior("Item_ManaPotion")
 	end
 	
 	return 0
@@ -349,7 +349,7 @@ function behaviorLib.UseHealthPotUtility(botBrain)
 		local vecOrigin = Vector3.Create(200, -40)
 		return core.ATanFn(nHealthMissing, vecPoint, vecOrigin, 100)
 	elseif not behaviorLib.itemHealthPot then
-		behaviorLib.addItemBehavior("Item_HealthPotion", true)
+		behaviorLib.removeItemBehavior("Item_HealthPotion")
 	end
 	return 0
 end
@@ -401,7 +401,7 @@ function behaviorLib.UseRunesOfTheBlightUtility(botBrain)
 		
 		return core.ATanFn(nHealthMissing, vecPoint, vecOrigin, 100)
 	elseif not behaviorLib.itemBlights then
-		behaviorLib.addItemBehavior("Item_RunesOfTheBlight", true)
+		behaviorLib.removeItemBehavior("Item_RunesOfTheBlight")
 	end
 	
 	return 0
