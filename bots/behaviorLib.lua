@@ -9,8 +9,8 @@ local core, eventsLib, behaviorLib, metadata = object.core, object.eventsLib, ob
 
 local print, ipairs, pairs, string, table, next, type, tinsert, tremove, tsort, format, tostring, tonumber, strfind, strsub
 	= _G.print, _G.ipairs, _G.pairs, _G.string, _G.table, _G.next, _G.type, _G.table.insert, _G.table.remove, _G.table.sort, _G.string.format, _G.tostring, _G.tonumber, _G.string.find, _G.string.sub
-local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
-	= _G.math.ceil, _G.math.floor, _G.math.pi, _G.math.tan, _G.math.atan, _G.math.atan2, _G.math.abs, _G.math.cos, _G.math.sin, _G.math.acos, _G.math.max, _G.math.random
+local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, asin, max, random
+	= _G.math.ceil, _G.math.floor, _G.math.pi, _G.math.tan, _G.math.atan, _G.math.atan2, _G.math.abs, _G.math.cos, _G.math.sin, _G.math.acos, _G.math.asin, _G.math.max, _G.math.random
 
 local nSqrtTwo = math.sqrt(2)
 
@@ -80,8 +80,8 @@ function behaviorLib.PositionSelfCreepWave(botBrain, unitCurrentTarget)
 	
 	local nMyThreat =  funcGetThreat(unitSelf)
 	local nMyDefense = funcGetDefense(unitSelf)
-	local vecBackUp = behaviorLib.PositionSelfBackUp()
-	
+	local nodeBackUp, nNodeBackUp = core.GetPrevWaypoint(core.tMyLane, vecMyPos, core.bTraverseForward)
+	local vecBackUp = nodeBackUp:GetPosition()
 	
 	local nExtraThreat = 0.0
 	if unitSelf:HasState("State_HealthPotion") then
@@ -650,10 +650,133 @@ function behaviorLib.PortLogic(botBrain, vecDesiredPosition)
 	return behaviorLib.bLastPortResult
 end
 
-	
 behaviorLib.nPathEnemyTerritoryMul = 1.5
 behaviorLib.nPathBaseMul = 1.75
-behaviorLib.nPathTowerMul = 3.0
+behaviorLib.nPathEnemyTowerMul = 3.0
+behaviorLib.nPathAllyTowerMul = -0.3
+function behaviorLib.GetSafePath(vecDesiredPosition)
+	local sEnemyZone = "hellbourne"
+	if core.myTeam == HoN.GetHellbourneTeam() then
+		sEnemyZone = "legion"
+	end
+
+	if bDebugEchos then BotEcho("enemy zone: "..sEnemyZone) end
+
+	local nEnemyTerritoryMul = behaviorLib.nPathEnemyTerritoryMul
+	local nEnemyTowerMul     = behaviorLib.nPathEnemyTowerMul
+	local nAllyTowerMul      = behaviorLib.nPathAllyTowerMul
+	local nBaseMul           = behaviorLib.nPathBaseMul
+
+	local function funcNodeCost(nodeParent, nodeCurrent, link, nOriginalCost)
+		--TODO: local nDistance = link:GetLength()
+		local nDistance = Vector3.Distance(nodeParent:GetPosition(), nodeCurrent:GetPosition())
+		local nCostToParent = nOriginalCost - nDistance
+
+		--BotEcho(format("nOriginalCost: %s  nDistance: %s  nSq: %s", nOriginalCost, nDistance, nDistance*nDistance))
+
+		local sZoneProperty  = nodeCurrent:GetProperty("zone")
+		local bTowerProperty = nodeCurrent:GetProperty("tower")
+		local bBaseProperty  = nodeCurrent:GetProperty("base")
+
+		local nMultiplier = 1.0
+		local bEnemyZone = false
+		if sZoneProperty and sZoneProperty == sEnemyZone then
+			bEnemyZone = true
+		end
+
+		if bEnemyZone then
+			nMultiplier = nMultiplier + nEnemyTerritoryMul
+			if bBaseProperty then
+				nMultiplier = nMultiplier + nBaseMul
+			end
+		end
+
+		if bTowerProperty then
+			--check if the tower is there
+			local tBuildings = HoN.GetUnitsInRadius(nodeCurrent:GetPosition(), 800, core.UNIT_MASK_ALIVE + core.UNIT_MASK_BUILDING)
+
+			for _, unitBuilding in pairs(tBuildings) do
+				if unitBuilding:IsTower() then
+					if bEnemyZone then
+						nMultiplier = nMultiplier + nEnemyTowerMul
+					else
+						nMultiplier = nMultiplier + nAllyTowerMul
+					end
+					break
+				end
+			end
+		end
+
+		return nCostToParent + nDistance * nMultiplier
+	end
+
+	return BotMetaData.FindPath(core.unitSelf:GetPosition(), vecDesiredPosition, funcNodeCost)
+end
+
+function behaviorLib.GetSafeBlinkPosition(vecDesiredPosition, nRange)
+	local nRangeSq = nRange * nRange
+
+	local vecMyPos = core.unitSelf:GetPosition()
+
+	if Vector3.Distance2DSq(vecMyPos, vecDesiredPosition) <= nRangeSq then
+		return vecDesiredPosition
+	end
+
+	--vecDesiredPosition further away position. You are normaly going to well
+	local tPath = behaviorLib.GetSafePath(vecDesiredPosition)
+
+	if #tPath == 1 then
+		return tpath[1]:GetPosition()
+	end
+
+	--Iterate from end to start.
+	--When going around cliffs there may be multiple "good" spots, get the last one
+	local nIndex = 0
+
+	local vecInRange = nil
+	local vecOutRange = nil
+
+	--
+	for i = #tPath, 1, -1 do
+		local nodeCurrent = tPath[i]
+		if Vector3.Distance2DSq(vecMyPos, nodeCurrent:GetPosition()) <= nRangeSq then
+			vecInRange = nodeCurrent:GetPosition()
+			if tPath[i + 1] ~= nil then
+				vecOutRange = tPath[i + 1]:GetPosition()
+			else
+				vecOutRange = nil
+			end
+		end
+	end
+
+	--the first node is not in range
+	if vecInRange == nil then
+		-- just blink towards the first node
+		return vecMyPos + Vector3.Normalize(tpath[1]:GetPosition() - vecMyPos) * nRange
+	end
+
+	-- Find the point D such that the lenght of CD is equal to nRange
+	--     c
+	--  A-----D---------B
+	--   \   /
+	-- d  \ /   a
+	--     C
+
+	--law of sin
+	-- a/sin(A) = d/sin(D)
+	--sin(D) = d*sin(A)/a
+
+	local nAngleAtA = core.AngleBetween(vecOutRange - vecInRange, vecMyPos - vecInRange)
+	local nAngleAtD = asin(Vector3.Distance2D(vecInRange, vecMyPos) * sin(nAngleAtA) / nRange)
+
+	-- C = 180 - A - D
+	local nAngleAtC = pi - nAngleAtA - nAngleAtD
+
+	-- law of sin again
+	local nDistanceAToD = nRange/sin(nAngleAtA)*sin(nAngleAtC)
+
+	return Vector3.Normalize(vecOutRange - vecInRange) * nDistanceAToD + vecInRange
+end
 
 behaviorLib.tPath = nil
 behaviorLib.nPathNode = 1
@@ -664,74 +787,24 @@ function behaviorLib.PathLogic(botBrain, vecDesiredPosition)
 	local bDebugLines = false
 	local bDebugEchos = false
 	local bMarkProperties = false
-	
+
 	--if object.myName == "ShamanBot" then bDebugLines = true bDebugEchos = true end
-	
+
 	local bRepath = false
 	if Vector3.Distance2DSq(vecDesiredPosition, behaviorLib.vecGoal) > behaviorLib.nGoalToleranceSq then
 		bRepath = true
 	end
-	
+
 	local unitSelf = core.unitSelf
 	local vecMyPosition = unitSelf:GetPosition()
-	
+
 	if bRepath then
 		if bDebugEchos then BotEcho("Repathing!") end
-		
-		local sEnemyZone = "hellbourne"
-		if core.myTeam == HoN.GetHellbourneTeam() then
-			sEnemyZone = "legion"
-		end
-		
-		if bDebugEchos then BotEcho("enemy zone: "..sEnemyZone) end
-		
-		local nEnemyTerritoryMul = behaviorLib.nPathEnemyTerritoryMul
-		local nTowerMul          = behaviorLib.nPathTowerMul
-		local nBaseMul           = behaviorLib.nPathBaseMul
-		
-		local function funcNodeCost(nodeParent, nodeCurrent, link, nOriginalCost)
-			--TODO: local nDistance = link:GetLength()
-			local nDistance = Vector3.Distance(nodeParent:GetPosition(), nodeCurrent:GetPosition())
-			local nCostToParent = nOriginalCost - nDistance
-			
-			--BotEcho(format("nOriginalCost: %s  nDistance: %s  nSq: %s", nOriginalCost, nDistance, nDistance*nDistance))
-		
-			local sZoneProperty  = nodeCurrent:GetProperty("zone")
-			local bTowerProperty = nodeCurrent:GetProperty("tower")
-			local bBaseProperty  = nodeCurrent:GetProperty("base")
-			
-			local nMultiplier = 1.0
-			local bEnemyZone = false
-			if sZoneProperty and sZoneProperty == sEnemyZone then
-				bEnemyZone = true
-			end
-			
-			if bEnemyZone then
-				nMultiplier = nMultiplier + nEnemyTerritoryMul
-				if bBaseProperty then
-					nMultiplier = nMultiplier + nBaseMul
-				end
-				
-				if bTowerProperty then
-					--check if the tower is there
-					local tBuildings = HoN.GetUnitsInRadius(nodeCurrent:GetPosition(), 800, core.UNIT_MASK_ALIVE + core.UNIT_MASK_BUILDING)
-					
-					for _, unitBuilding in pairs(tBuildings) do
-						if unitBuilding:IsTower() then
-							nMultiplier = nMultiplier + nTowerMul
-							break
-						end
-					end
-				end				
-			end
-			
-			return nCostToParent + nDistance * nMultiplier
-		end
-	
-		behaviorLib.tPath = BotMetaData.FindPath(vecMyPosition, vecDesiredPosition, funcNodeCost)
+
+		behaviorLib.tPath = behaviorLib.GetSafePath(vecDesiredPosition)
 		behaviorLib.vecGoal = vecDesiredPosition
 		behaviorLib.nPathNode = 1
-		
+
 		--double check the first node since we have a really sparse graph
 		local tPath = behaviorLib.tPath
 		if #tPath > 1 then
@@ -743,10 +816,10 @@ function behaviorLib.PathLogic(botBrain, vecDesiredPosition)
 			end
 		end
 	end
-	
+
 	--Follow path logic
 	local vecReturn = nil
-	
+
 	local tPath = behaviorLib.tPath
 	local nPathNode = behaviorLib.nPathNode
 	if tPath then
@@ -2299,50 +2372,103 @@ behaviorLib.lastRetreatUtil = 0
 
 function behaviorLib.PositionSelfBackUp()
 	StartProfile('PositionSelfBackUp')
-	
-	local vecMyPos = core.unitSelf:GetPosition()
-	local tLaneSet = core.tMyLane
-	local nLaneSetSize = nil
-	local vecDesiredPos = nil
-	local nodePrev = nil
-	local nPrevNode = nil
 
-	if tLaneSet then
-		nLaneSetSize = #tLaneSet
-		nodePrev,nPrevNode = core.GetPrevWaypoint(tLaneSet, vecMyPos, core.bTraverseForward)
-		if nodePrev then
-			vecDesiredPos = nodePrev:GetPosition()
-		end
-	else
-		BotEcho('PositionSelfBackUp - invalid lane set')
+	local bDebugLines = false
+
+	local vecReturn = nil
+
+	--Metadata have teams as following strings
+	local sEnemyZone = "hellbourne"
+	if core.myTeam == HoN.GetHellbourneTeam() then
+		sEnemyZone = "legion"
 	end
 
-	if nodePrev then
-		local nodePrevPrev = nil
-		if core.bTraverseForward and nPrevNode > 1 then
-			nodePrevPrev = tLaneSet[nPrevNode - 1]
-		elseif not core.bTraverseForward and nPrevNode < nLaneSetSize then
-			nodePrevPrev = tLaneSet[nPrevNode + 1]
+	local vecMyPos = core.unitSelf:GetPosition()
+
+	local bAtLane = false
+	local sLane = ""
+
+	--Check if we are at/on lane
+	nLaneProximityThreshold = core.teamBotBrain.nLaneProximityThreshold
+	tLaneBreakdown = core.GetLaneBreakdown(core.unitSelf)
+	if tLaneBreakdown["mid"] >= nLaneProximityThreshold then
+		bAtLane = true
+		sLane = "middle"
+	elseif tLaneBreakdown["top"] >= nLaneProximityThreshold then
+		bAtLane = true
+		sLane = "top"
+	elseif tLaneBreakdown["bot"] >= nLaneProximityThreshold then
+		bAtLane = true
+		sLane = "bottom"
+	end
+
+	local bDiving = false
+
+	if bAtLane then --bot is at lane
+		local tLane = metadata.GetLane(sLane) --The lane I am at. not the one im supposed to be
+		local nodeClosestLane = BotMetaData.GetClosestNodeOnPath(tLane, vecMyPos)
+
+		local iStartNode = 1
+		local iEndNode = #tLane
+		local iStep = 1
+
+		if not core.bTraverseForward then
+			iStartNode = #tLane
+			iEndNode = 1
+			iStep = -1
 		end
 
-		if nodePrevPrev ~= nil then
-			local vecNodePrevPos = nodePrev:GetPosition()
-			local vecNodePrevPrevPos = nodePrevPrev:GetPosition()
-			local vecForward = Vector3.Normalize(vecNodePrevPos - vecNodePrevPrevPos)
-			if core.RadToDeg(core.AngleBetween(vecNodePrevPos - vecMyPos, vecForward)) < 135 then
-				vecDesiredPos = vecNodePrevPrevPos
+		--Iterate nodes from own base to the node bot is
+		for i = iStartNode,iEndNode,iStep do
+			local nodeCurrent = tLane[i]
+			if nodeCurrent:GetIndex() == nodeClosestLane:GetIndex() then
+				break
+			end
+			if nodeCurrent:GetProperty("zone") == sEnemyZone and nodeCurrent:GetProperty("tower") then
+				--Check if there actualy is tower
+				local tBuildings = HoN.GetUnitsInRadius(nodeCurrent:GetPosition(), 800, core.UNIT_MASK_ALIVE + core.UNIT_MASK_BUILDING)
+				if core.NumberElements(tBuildings) > 0 then
+					bDiving = true
+					break
+				end
 			end
 		end
-	else
-		--BotEcho('PositionSelfBackUp - unable to find previous node!')
+
+		if not bDiving then
+			local nodePrev,nPrevNode = core.GetPrevWaypoint(tLane, vecMyPos, core.bTraverseForward)
+			if nodePrev then
+				vecReturn = nodePrev:GetPosition()
+			else
+				vecReturn = core.allyWell:GetPosition() --at the end of the lane
+			end
+		end
 	end
-	
-	if not vecDesiredPos then
-		vecDesiredPos = core.allyWell:GetPosition()
+
+	if vecReturn == nil then
+
+		local tPath = behaviorLib.GetSafePath(core.allyWell:GetPosition())
+
+		local ClosestNode = BotMetaData.GetClosestNode(vecMyPos)
+
+		if tPath[1]:GetIndex() == ClosestNode:GetIndex() and #tPath > 1 then
+			vecReturn = tPath[2]:GetPosition()
+		end
+	end
+
+	if bDebugLines then
+		local sColor = "blue"
+		if bAtLane then
+			sColor = "green"
+		end
+		if bDiving then
+			sColor = "red"
+		end
+
+		core.DrawDebugArrow(vecMyPos, vecReturn, sColor)
 	end
 
 	StopProfile()
-	return vecDesiredPos
+	return vecReturn
 end
 
 
@@ -2587,7 +2713,7 @@ end
 
 function behaviorLib.HealAtWellExecute(botBrain)
 	--BotEcho("Returning to well!")
-	local wellPos = (core.allyWell and core.allyWell:GetPosition()) or behaviorLib.PositionSelfBackUp()
+	local wellPos = behaviorLib.PositionSelfBackUp()
 	core.OrderMoveToPosAndHoldClamp(botBrain, core.unitSelf, wellPos, false)
 end
 
