@@ -1741,8 +1741,10 @@ function core.OrderBlinkItemToEscape(botBrain, unit, item, bInterruptAttacks, bQ
 	end
 	local itemParam = (item ~= nil and item.object) or item
 	local vecTarget = behaviorLib.GetSafeBlinkPosition(core.allyWell:GetPosition(), item:GetRange())
-	if (itemParam and vecTarget)
+	if (itemParam and vecTarget) then
 		return core.OrderItemPosition(botBrain, unit, item, vecTarget, bInterruptAttacks, bQueueCommand)
+	end
+	return false
 end
 
 function core.ToggleAutoCastItem(botBrain, item, bInterruptAttacks, bQueueCommand)
@@ -1869,8 +1871,10 @@ function core.OrderBlinkAbilityToEscape(botBrain, ability, bInterruptAttacks, bQ
 	end
 	local abilityParam = (ability ~= nil and ability.object) or ability
 	local vecTarget = behaviorLib.GetSafeBlinkPosition(core.allyWell:GetPosition(), ability:GetRange())
-	if (ability and vecTarget)
+	if (ability and vecTarget) then
 		return core.OrderAbilityPosition(botBrain, ability, vecTarget, bInterruptAttacks, bQueueCommand)
+	end
+	return false
 end
 
 function core.OrderAbilityEntity(botBrain, ability, unitTarget, bInterruptAttacks, bQueueCommand)

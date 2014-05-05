@@ -482,14 +482,12 @@ function behaviorLib.CustomReturnToWellExecute(botBrain)
 			botBrain:OrderItem(core.itemEnergizer.object or core.itemEnergizer, false)
 			object.nTimeEnergizered = HoN:GetGameTime()
 		end
-		if (core.itemGhostMarchers and core.itemGhostMarchers:CanActivate())then --when heading to base, use boots
-			botBrain:OrderItem(core.itemGhostMarchers.object or core.itemGhostMarchers, false)
-		end
+
 		if (skills.abilRegurgitate:CanActivate()) then --BARF
 			core.OrderAbility(botBrain, skills.abilRegurgitate)
 		end
 	end
-	return object.HealAtWellExecuteOld(botBrain)
+	return false
 end
 object.HealAtWellUtilityOld = behaviorLib.HealAtWellBehavior["Utility"]
 behaviorLib.HealAtWellBehavior["Utility"] = HealAtWellUtilityOverride

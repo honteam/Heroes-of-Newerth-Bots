@@ -660,8 +660,6 @@ function behaviorLib.GetSafePath(vecDesiredPosition)
 		sEnemyZone = "legion"
 	end
 
-	if bDebugEchos then BotEcho("enemy zone: "..sEnemyZone) end
-
 	local nEnemyTerritoryMul = behaviorLib.nPathEnemyTerritoryMul
 	local nEnemyTowerMul     = behaviorLib.nPathEnemyTowerMul
 	local nAllyTowerMul      = behaviorLib.nPathAllyTowerMul
@@ -726,13 +724,15 @@ function behaviorLib.GetSafeBlinkPosition(vecDesiredPosition, nRange)
 	local tPath = behaviorLib.GetSafePath(vecDesiredPosition)
 
 	if #tPath == 1 then
-		return tpath[1]:GetPosition()
+		if nRangeSq >= Vector3.Distance2DSq(tpath[1]:GetPosition(), vecMyPos) then
+			return tpath[1]:GetPosition()
+		else
+			return vecMyPos + Vector3.Normalize(tpath[1]:GetPosition() - vecMyPos) * nRange
+		end
 	end
 
 	--Iterate from end to start.
 	--When going around cliffs there may be multiple "good" spots, get the last one
-	local nIndex = 0
-
 	local vecInRange = nil
 	local vecOutRange = nil
 
@@ -2725,10 +2725,14 @@ function behaviorLib.CustomReturnToWellExecute(botBrain)
 end
 
 function behaviorLib.HealAtWellExecute(botBrain)
-	local wellPos = (core.allyWell and core.allyWell:GetPosition()) or behaviorLib.PositionSelfBackUp()
+	local wellPos = behaviorLib.PositionSelfBackUp() or (core.allyWell and core.allyWell:GetPosition())
 	-- call the custom functions
 	local bActionTaken = behaviorLib.CustomHealAtWellExecute(botBrain)
 	if not bActionTaken and Vector3.Distance2DSq(core.unitSelf:GetPosition(), wellPos) > 1200 * 1200 then
+		itemGhostMarchers = core.GetItem("Item_EnhancedMarchers")
+		if itemGhostMarchers ~= nil then
+			botBrain:OrderItem(itemGhostMarchers.object or itemGhostMarchers, false)
+		end
 		bActionTaken = behaviorLib.CustomReturnToWellExecute(botBrain)
 	end
 	
