@@ -546,20 +546,6 @@ end
  
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
- 
--------------------------------------------
---          Blink Retreat Logic          --
--------------------------------------------
- 
--- Find the angle in radians between two targets. Modified from St0l3n_ID's AngToTarget code
-local function getAngToPoint(vecOrigin, vecTarget)
-	local nDeltaY = vecTarget.y - vecOrigin.y
-	local nDeltaX = vecTarget.x - vecOrigin.x
-	   
-	nAng = atan2(nDeltaY, nDeltaX)
-	   
-	return nAng
-end
 
 --------------------------------------------------
 --          RetreatFromThreat Override          --
@@ -567,18 +553,18 @@ end
 
 local function funcRetreatFromThreatExecuteOverride(botBrain)
 	local bActionTaken = false
-	   
+       
 	-- Use blink to retreat if possible
-	local abilBlink = skills.abilBlink
-	if abilBlink:CanActivate() and core.unitSelf:GetHealthPercent() < .425 then
-		local vecRetreatPosition = behaviorLib.GetSafeBlinkPosition(core.allyWell:GetPosition(), abilBlink:GetRange())
-		if vecRetreatPosition then
-			bActionTaken = core.OrderAbilityPosition(botBrain, abilBlink, vecRetreatPosition)
-		else
-			bActionTaken = core.OrderAbilityPosition(botBrain, abilBlink, core.allyWell:GetPosition())
+	if not bActionTaken then
+		local abilBlink = skills.abilBlink
+		if abilBlink:CanActivate() and core.unitSelf:GetHealthPercent() < .425 then
+			bActionTaken = core.OrderBlinkAbilityToEscape(botBrain, abilBlink)
+			if not bActionTaken then
+				bActionTaken = core.OrderAbilityPosition(botBrain, abilBlink, core.allyWell:GetPosition())
+			end
 		end
 	end
-
+       
 	return bActionTaken
 end
 behaviorLib.CustomRetreatExecute = funcRetreatFromThreatExecuteOverride
@@ -586,33 +572,10 @@ behaviorLib.CustomRetreatExecute = funcRetreatFromThreatExecuteOverride
 -------------------------------------------------
 --          HealAtWellExecute Overide          --
 -------------------------------------------------
- 
-local function HealAtWellOveride(botBrain)
-	local bSuccess = false
-	local abilBlink = skills.abilBlink
-	   
-	-- Use blink on way to well
-	if abilBlink:CanActivate() then
-		local nRange = abilBlink:GetRange()
-		local vecAllyWell = core.allyWell:GetPosition()
-		local nDistToWellSq = Vector3.Distance2DSq(core.unitSelf:GetPosition(), vecAllyWell)
-		if nDistToWellSq > (nRange * nRange) then
-			local vecRetreatPosition = behaviorLib.GetSafeBlinkPosition(core.allyWell:GetPosition(), abilBlink:GetRange())
-			if vecRetreatPosition then
-				bSuccess = core.OrderAbilityPosition(botBrain, abilBlink, vecRetreatPosition)
-			else
-				bSuccess = core.OrderAbilityPosition(botBrain, abilBlink, vecAllyWell)
-			end
-		end
-	end
-	   
-	if not bSuccess then
-		return object.HealAtWellBehaviorOld(botBrain)
-	end
+
+function behaviorLib.CustomReturnToWellExecute(botBrain)
+	return core.OrderBlinkAbilityToEscape(botBrain, abilBlink)
 end
- 
-object.HealAtWellBehaviorOld = behaviorLib.HealAtWellBehavior["Execute"]
-behaviorLib.HealAtWellBehavior["Execute"] = HealAtWellOveride
  
 -------------------------------------------
 --          PushExecute Overide          --

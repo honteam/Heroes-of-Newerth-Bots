@@ -400,6 +400,13 @@ end
 object.funcPushUtilityOld = behaviorLib.PushingStrengthUtility
 behaviorLib.PushingStrengthUtility = PushingStrengthUtilityOverride
 
+-----------------------
+-- Return to well
+-----------------------
+--this is a great function to override with using retreating skills, such as blinks, travels, stuns or slows.
+function behaviorLib.CustomReturnToWellExecute(botBrain)
+	return core.OrderBlinkItemToEscape(botBrain, core.unitSelf, core.itemPortalKey, true)
+end
 
 ----------------------------------
 --	Hammerstorm items
