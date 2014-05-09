@@ -894,44 +894,9 @@ behaviorLib.HealAtWellBehavior["Utility"] = CustomHealAtWellUtilityFnOverride
 ------------------------------------------------------------------
 --Heal at well execute
 ------------------------------------------------------------------
-local function HealAtWellExecuteFnOverride(botBrain)
-	--BotEcho("Returning to well!")
-	local vecWellPos = core.allyWell and core.allyWell:GetPosition() or behaviorLib.PositionSelfBackUp()
-	local nDistanceWellSq =  Vector3.Distance2DSq(core.unitSelf:GetPosition(), vecWellPos)
-
-	--Activate ghost marchers if we can
-	local itemGhostMarchers = core.itemGhostMarchers
-	if itemGhostMarchers and itemGhostMarchers:CanActivate() and nDistanceWellSq > (500 * 500) then
-		local bSuccess = core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
-		if bSuccess then
-			return
-		end
-	end
-
-	--Just use Tablet
-	local itemTablet = core.itemTablet
-	if itemTablet then
-		if itemTablet:CanActivate() and nDistanceWellSq > (500 * 500) then		
-			--TODO: GetHeading math to ensure we're actually going in the right direction
-			core.OrderItemEntityClamp(botBrain, core.unitSelf, itemTablet, core.unitSelf)
-			return
-		end
-	end
-
-	--Portal Key: Port away
-	local itemPortalKey = core.itemPortalKey
-	if itemPortalKey then
-		if itemPortalKey:CanActivate() and nDistanceWellSq > (1000 * 1000) then
-			core.OrderItemPosition(botBrain, unitSelf, itemPortalKey, vecWellPos)
-			return
-		end
-	end
-
-	core.OrderMoveToPosAndHoldClamp(botBrain, core.unitSelf, vecWellPos, false)
+function behaviorLib.CustomReturnToWellExecute(botBrain)
+	return core.OrderBlinkItemToEscape(botBrain, core.unitSelf, core.itemPortalKey, true)
 end
-object.HealAtWellExecuteOld = behaviorLib.HealAtWellExecute
-behaviorLib.HealAtWellBehavior["Execute"] = HealAtWellExecuteFnOverride
-
 
 --Function removes any item that is not valid
 local function funcRemoveInvalidItems()

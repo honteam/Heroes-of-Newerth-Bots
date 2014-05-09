@@ -462,8 +462,8 @@ behaviorLib.CustomHarassUtility = CustomHarassUtilityOverride
 ----------------------------------------------------
 --  	   Heal At Well Override		  --
 ----------------------------------------------------
---return to well more often. --2000 gold adds 8 to return utility, 0 % mana also adds 8.
 --When returning to well, use skills and items.
+
 local function HealAtWellUtilityOverride(botBrain)
 	local vecBackupPos = core.allyWell and core.allyWell:GetPosition() or behaviorLib.PositionSelfBackUp()
 	local nOldHealingMultiplier = 1.75
@@ -474,26 +474,23 @@ local function HealAtWellUtilityOverride(botBrain)
 	end
 	return object.HealAtWellUtilityOld(botBrain) * nOldHealingMultiplier + (botBrain:GetGold() * nGoldSpendingDesire) + 1-(core.unitSelf:GetManaPercent()) * nManaRefillingDesire --courageously flee back to base.
 end
-local function HealAtWellExecuteOverride(botBrain)
+
+function behaviorLib.CustomReturnToWellExecute(botBrain)
 	local vecWellPos = (core.allyWell and core.allyWell:GetPosition()) or behaviorLib.PositionSelfBackUp()
 	if (Vector3.Distance2DSq(core.unitSelf:GetPosition(), vecWellPos) > 600 * 600) then
 		if (core.itemEnergizer and core.itemEnergizer:CanActivate() and not unitSelf:HasState("State_Energizer_Buff"))then --when heading to base, use energizer
 			botBrain:OrderItem(core.itemEnergizer.object or core.itemEnergizer, false)
 			object.nTimeEnergizered = HoN:GetGameTime()
 		end
-		if (core.itemGhostMarchers and core.itemGhostMarchers:CanActivate())then --when heading to base, use boots
-			botBrain:OrderItem(core.itemGhostMarchers.object or core.itemGhostMarchers, false)
-		end
+
 		if (skills.abilRegurgitate:CanActivate()) then --BARF
 			core.OrderAbility(botBrain, skills.abilRegurgitate)
 		end
 	end
-	return object.HealAtWellExecuteOld(botBrain)
+	return false
 end
 object.HealAtWellUtilityOld = behaviorLib.HealAtWellBehavior["Utility"]
-object.HealAtWellExecuteOld = behaviorLib.HealAtWellBehavior["Execute"]
 behaviorLib.HealAtWellBehavior["Utility"] = HealAtWellUtilityOverride
-behaviorLib.HealAtWellBehavior["Execute"] = HealAtWellExecuteOverride
  
 ----------------------------------------
 --  	Harass Behaviour	  --
