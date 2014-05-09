@@ -369,7 +369,7 @@ behaviorLib.PushingStrengthUtility = PushingStrengthUtilityOverride
 -----------------------
 --this is a great function to override with using retreating skills, such as blinks, travels, stuns or slows.
 function behaviorLib.CustomReturnToWellExecute(botBrain)
-	return core.OrderBlinkAbilityToEscape(botBrain, skills.abilLavaSurge, true) or core.OrderBlinkItemToEscape(botBrain, core.unitSelf, core.itemPortalKey, true)
+	return core.OrderBlinkItemToEscape(botBrain, core.unitSelf, core.itemPortalKey, true) or core.OrderBlinkAbilityToEscape(botBrain, skills.abilLavaSurge, true)
 end
 
 ----------------------------------

@@ -1340,7 +1340,7 @@ function behaviorLib.attackEnemyMinionsUtility(botBrain)
 	
 	local nUtility = 0
 	for _, unit in pairs(tEnemies) do
-		if not unit:IsInvulnerable() and not unit:IsHero() and unit:GetOwnerPlayer() ~= nil then
+		if not unit:IsInvulnerable() and not unit:IsHero() and unit:GetOwnerPlayerID() ~= nil then
 			local nTempHP = unit:GetHealth()
 			if nTempHP < nMinionHP then
 				unitWeakestMinion = unit
@@ -2724,8 +2724,7 @@ function behaviorLib.CustomReturnToWellExecute(botBrain)
 	return false
 end
 
-function behaviorLib.HealAtWellExecute(botBrain)
-	local wellPos = behaviorLib.PositionSelfBackUp() or (core.allyWell and core.allyWell:GetPosition())
+function behaviorLib.HealAtWellExecute(botBrain)	
 	-- call the custom functions
 	local bActionTaken = behaviorLib.CustomHealAtWellExecute(botBrain)
 	if not bActionTaken and Vector3.Distance2DSq(core.unitSelf:GetPosition(), wellPos) > 1200 * 1200 then
@@ -2737,6 +2736,7 @@ function behaviorLib.HealAtWellExecute(botBrain)
 	end
 	
 	if not bActionTaken then
+		local wellPos = behaviorLib.PositionSelfBackUp() or (core.allyWell and core.allyWell:GetPosition())
 		core.OrderMoveToPosAndHoldClamp(botBrain, core.unitSelf, wellPos, false)
 	end
 end
