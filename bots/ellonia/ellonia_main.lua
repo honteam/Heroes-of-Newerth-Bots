@@ -7,7 +7,7 @@
 --  #  #	# # 		#    #  #    # #	  # 	 #   ## --
 -- ###  ####  ######	 #### #  ####  ###### ###### #    # --
 --------------------------------------------------------------
---			Ellonia Bot Version 0.1		--
+--  		Ellonia Bot Version 0.1		--
 ------------------------------------------
 --	Created by: Mellow_Ink	--
 ------------------------------
@@ -60,8 +60,6 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
 
-local sqrtTwo = math.sqrt(2)
-
 BotEcho(object:GetName()..' loading ellonia_main...')
 
 --------------------------------
@@ -81,7 +79,7 @@ object.heroName = 'Hero_Ellonia'
 behaviorLib.StartingItems  = {"Item_RunesOfTheBlight", "Item_MarkOfTheNovice", "Item_PretendersCrown", "Item_ManaPotion", "2 Item_MinorTotem"}
 behaviorLib.LaneItems  = {"Item_Marchers", "Item_PowerSupply", "Item_Intelligence5", "Item_Replenish", "Item_MajorTotem"}
 behaviorLib.MidItems  = {"Item_Steamboots", "Item_Weapon1", "Item_NomesWisdom", "Item_Manatube"}
-behaviorLib.LateItems  = {"Item_Morph", "Item_HarkonsBlade", "Item_FrostfieldPlate", "Item_BehemothsHeart", "Item_Lightning2"}
+behaviorLib.LateItems  = {"Item_Morph", "Item_HarkonsBlade", "Item_FrostfieldPlate", "Item_BehemothsHeart"}
 
 -- skill build table, 0 = Glacial Spike, 1 = Frigid Field, 2 = Flash Freeze, 3 = Absolute Zero, 4 = Attribute
 object.tSkills = {
@@ -98,7 +96,6 @@ object.nFlashFreezeUp = 7
 object.nAbsoluteZeroUp = 10
 object.nSheepstickUp = 7
 object.nFrostplateUp = 6
-object.nChargedUp = 6
 
 -- bonus aggression points that are applied to the bot upon successfully using a skill/item
 object.nGlacialSpikeUse = 10
@@ -107,16 +104,20 @@ object.nFlashFreezeUse = 18
 object.nAbsoluteZeroUse = 20
 object.nSheepstickUse = 14
 object.nFrostplateUse = 14
-object.nChargedUse = 16
 
 --thresholds of aggression the bot must reach to use these abilities
 object.nGlacialSpikeThreshold = 24
 object.nFrigidFieldThreshold = 24
 object.nFlashFreezeThreshold = 35
 object.nAbsoluteZeroThreshold = 40
-object.nSheepstickThreshold = 20
-object.nFrostplateThreshold = 20
-object.nChargedThreshold = 18
+
+--Quick fix for better returning to well ty Kairus
+function HealAtWellUtilityOverride(botBrain)
+	return object.HealAtWellUtilityOld(botBrain) * 1.75 + (botBrain:GetGold() * 8/2000) + 8-(core.unitSelf:GetManaPercent() * 8)
+end
+object.HealAtWellUtilityOld = behaviorLib.HealAtWellBehavior["Utility"]
+behaviorLib.HealAtWellBehavior["Utility"] = HealAtWellUtilityOverride
+
 
 --#####################################################################
 --#####################################################################
@@ -142,7 +143,6 @@ function object:SkillBuild()
 		skills.abilFrigidField  = unitSelf:GetAbility(1)
 		skills.abilFlashFreeze  = unitSelf:GetAbility(2)
 		skills.abilAbsoluteZero = unitSelf:GetAbility(3)
-		skills.abilAttributeBoost = unitSelf:GetAbility(4)
 	end
 	
 	local nPoints = unitSelf:GetAbilityPointsAvailable()
@@ -155,69 +155,6 @@ function object:SkillBuild()
 		unitSelf:GetAbility(object.tSkills[i]):LevelUp()
 	end
 end
-
-
-------------------------------------------
---  		FindItems Override  		--
-------------------------------------------
-
-local function funcFindItemsOverride(botBrain)
-	local bUpdated = object.FindItemsOld(botBrain)
-	
-	-- removes item if sold
-	core.ValidateItem(core.itemRingOfSorcery)
-	core.ValidateItem(core.itemSheepstick)
-	core.ValidateItem(core.itemFrostplate)
-	core.ValidateItem(core.itemChargedHammer)
-	
-	if bUpdated then
-		if core.itemSheepstick and core.itemFrostplate and core.itemChargedHammer then
-			return
-		end
-
-		local inventory = core.unitSelf:GetInventory(false)
-		for slot = 1, 6, 1 do
-			local curItem = inventory[slot]
-			if curItem and not curItem:IsRecipe() then
-				if core.itemRingOfSorcery == nil and curItem:GetName() == "Item_Replenish" then
-					core.itemRingOfSorcery = core.WrapInTable(curItem)
-				elseif core.itemSheepstick == nil and curItem:GetName() == "Item_Morph" then
-					core.itemSheepstick = core.WrapInTable(curItem)
-				elseif core.itemFrostplate == nil and curItem:GetName() == "Item_FrostfieldPlate" then
-					core.itemFrostplate = core.WrapInTable(curItem)
-				elseif core.itemChargedHammer == nil and curItem:GetName() == "Item_Lightning2" then
-					core.itemChargedHammer = core.WrapInTable(curItem)
-				end
-			end
-		end
-	end
-end
-object.FindItemsOld = core.FindItems
-core.FindItems = funcFindItemsOverride
-
-
-------------------------------------------------------
---  		  OnThink override  					--
--- Called every bot tick, custom OnThink code here  --
-------------------------------------------------------
-
-function object:onthinkOverride(tGameVariables)
-	self:onthinkOld(tGameVariables)
-
-	local unitSelf = core.unitSelf
-	local botBrain = self
-	
-	-- ring of sorcery
-	local itemRoS = core.itemRingOfSorcery
-	local givemana = 95
-	if (itemRoS and itemRoS:CanActivate() and unitSelf:GetMaxMana()-unitSelf:GetMana() > givemana) then
-		botBrain:OrderItem(itemRoS.object or itemRoS, false)
-	end
-
-end
-object.onthinkOld = object.onthink
-object.onthink 	= object.onthinkOverride
-
 
 ----------------------------------------------
 --  		OnCombatEvent Override  		--
@@ -239,13 +176,14 @@ function object:oncombateventOverride(EventData)
 		elseif EventData.InflictorName == "Ability_Ellonia4" then
 			nAddBonus = nAddBonus + object.nAbsoluteZeroUse
 		end
-	elseif EventData.Type == "Item" then
-		if core.itemSheepstick ~= nil and EventData.SourceUnit == core.unitSelf:GetUniqueID() and EventData.InflictorName == core.itemSheepstick:GetName() then
+	elseif EventData.Type == "Item" and EventData.SourceUnit == core.unitSelf:GetUniqueID() then
+		local sInflictorName = EventData.InflictorName
+		local itemFrostplate = core.GetItem("Item_FrostfieldPlate")
+		local itemSheepstick = core.GetItem("Item_Morph")
+		if itemSheepstick and  sInflictorName == itemSheepstick:GetName() then
 			nAddBonus = nAddBonus + self.nSheepstickUse
-		elseif core.itemFrostplate ~= nil and EventData.SourceUnit == core.unitSelf:GetUniqueID() and EventData.InflictorName == core.itemFrostplate:GetName() then
+		elseif itemFrostplate and sInflictorName == itemFrostplate:GetName() then
 			nAddBonus = nAddBonus + self.nFrostplateUse
-		elseif core.itemChargedHammer ~= nil and EventData.SourceUnit == core.unitSelf:GetUniqueID() and EventData.InflictorName == core.itemChargedHammer:GetName() then
-			nAddBonus = nAddBonus + self.nChargedHammerUse
 		end
 	end
 
@@ -282,16 +220,14 @@ local function CustomHarassUtilityFnOverride(hero)
 		nUtility = nUtility + object.nAbsoluteZeroUp
 	end
 	
-	if object.itemSheepstick and object.itemSheepstick:CanActivate() then
+	local itemSheepstick = core.GetItem("Item_Morph")
+	if itemSheepstick and itemSheepstick:CanActivate() then
 		nUtility = nUtility + object.nSheepstickUp
 	end
 
-	if object.itemFrostplate and object.itemFrostplate:CanActivate() then
+	local itemFrostplate = core.GetItem("Item_FrostfieldPlate")
+	if itemFrostplate and itemFrostplate:CanActivate() then
 		nUtility = nUtility + object.nFrostplateUp
-	end
-
-	if object.itemChargedHammer and object.itemChargedHammer:CanActivate() then
-		nUtility = nUtility + object.nChargedHammerUp
 	end
 	
 	return nUtility
@@ -314,80 +250,66 @@ local function HarassHeroExecuteOverride(botBrain)
 	
 	local unitSelf = core.unitSelf
 	local vecMyPosition = unitSelf:GetPosition() 
-	local nAttackRange = core.GetAbsoluteAttackRangeToUnit(unitSelf, unitTarget)
-	local nMyExtraRange = core.GetExtraRange(unitSelf)
 	
 	local vecTargetPosition = unitTarget:GetPosition()
-	local nTargetExtraRange = core.GetExtraRange(unitTarget)
 	local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
 	
 	local nLastHarassUtility = behaviorLib.lastHarassUtil
 	local bCanSee = core.CanSeeUnit(botBrain, unitTarget)    
 	local bActionTaken = false
 	
-	--- Insert abilities code here, set bActionTaken to true 
-	--- if an ability command has been given successfully
+	local bIsMagicImmune = bCanSee and object.isMagicImmune(unitTarget)
 	
 	-- GlacialSpike
-	if not bActionTaken then
-		local abilGlacialSpike = skills.abilGlacialSpike
-		if abilGlacialSpike:CanActivate() and nLastHarassUtility > botBrain.nGlacialSpikeThreshold then
-				bActionTaken = core.OrderAbilityPosition(botBrain, abilGlacialSpike, vecTargetPosition, no)
-		end
+	local abilGlacialSpike = skills.abilGlacialSpike
+	if abilGlacialSpike:CanActivate() and nLastHarassUtility > botBrain.nGlacialSpikeThreshold and not bIsMagicImmune then
+			bActionTaken = core.OrderAbilityPosition(botBrain, abilGlacialSpike, vecTargetPosition)
 	end
 
 	-- FrigidField
 	if not bActionTaken then
 		local abilFrigidField = skills.abilFrigidField
-		if abilFrigidField:CanActivate() and nLastHarassUtility > botBrain.nFrigidFieldThreshold then
-			bActionTaken = core.OrderAbilityPosition(botBrain, abilFrigidField, vecTargetPosition, no)
+		if abilFrigidField:CanActivate() and nLastHarassUtility > botBrain.nFrigidFieldThreshold and not bIsMagicImmune then
+			bActionTaken = core.OrderAbilityPosition(botBrain, abilFrigidField, vecTargetPosition)
 		end
 	end
 
 	-- FlashFreeze
 	if not bActionTaken then
 		local abilFlashFreeze = skills.abilFlashFreeze
-		if abilFlashFreeze:CanActivate() and nLastHarassUtility > botBrain.nFlashFreezeThreshold then
-			bActionTaken = core.OrderAbilityEntity(botBrain, abilFlashFreeze, unitTarget, no)
+		if abilFlashFreeze:CanActivate() and nLastHarassUtility > botBrain.nFlashFreezeThreshold and bCanSee and not bIsMagicImmune then
+			bActionTaken = core.OrderAbilityEntity(botBrain, abilFlashFreeze, unitTarget)
 		end
 	end
 	
 	-- AbsoluteZero
 	if not bActionTaken then
 		local abilAbsoluteZero = skills.abilAbsoluteZero
-		if abilAbsoluteZero:CanActivate() and nLastHarassUtility > botBrain.nAbsoluteZeroThreshold then
-			bActionTaken = core.OrderAbilityPosition(botBrain, abilAbsoluteZero, vecTargetPosition, no)
+		if abilAbsoluteZero:CanActivate() and nLastHarassUtility > botBrain.nAbsoluteZeroThreshold and not bIsMagicImmune then
+			bActionTaken = core.OrderAbilityPosition(botBrain, abilAbsoluteZero, vecTargetPosition)
 		end
 	end
 
 	-- Sheepstick
 	if not bActionTaken then
-		local itemSheepstick = core.itemSheepstick
-		if itemSheepstick and itemSheepstick:CanActivate() then
-		bActionTaken = core.OrderItemEntity(botBrain, itemSheepstick, unitTarget, no)
+		local itemSheepstick = core.GetItem("Item_Morph")
+		if itemSheepstick and itemSheepstick:CanActivate() and bCanSee and not bIsMagicImmune then
+			bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, itemSheepstick, unitTarget)
 		end
 	end
 	
 	-- Frostplate
 	if not bActionTaken then
-		local itemFrostplate = core.itemFrostplate
+		local itemFrostplate = core.GetItem("Item_FrostfieldPlate")
 		if itemFrostplate and itemFrostplate:CanActivate() then
 		
-		local nFrostplateRadius = 900
-			if nTargetDistanceSq < (nFrostplateRadius * nFrostplateRadius) then
-					bActionTaken = core.OrderItem(botBrain, itemFrostplate)
+			local nFrostplateRadius = 900
+			if nTargetDistanceSq < (nFrostplateRadius * nFrostplateRadius) and not bIsMagicImmune then
+				bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemFrostplate)
 			end
 		end
 	end
-	
-	-- ChargedHammer
-	if not bActionTaken then
-		local itemChargedHammer = core.itemChargedHammer
-		if itemChargedHammer and itemChargedHammer:CanActivate() then
-			bActionTakes = core.OrderItemEntity(botBrain, itemSheepstick, unitSelf, no)
-		end
-	end
-	
+	    
 	--Default auto attack
 	if not bActionTaken then
 		return object.harassExecuteOld(botBrain)
@@ -397,6 +319,19 @@ local function HarassHeroExecuteOverride(botBrain)
 end
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
+
+--------------------
+-- Magic immunity --
+--------------------
+function object.isMagicImmune(unit)
+	local tStates = { "State_Item3E", "State_Predator_Ability2", "State_Jereziah_Ability2", "State_Rampage_Ability1_Self", "State_Rhapsody_Ability4_Buff", "State_Hiro_Ability1" }
+	for _, sState in ipairs(tStates) do
+		if unit:HasState(sState) then
+			return true
+		end
+	end
+	return false
+end
 
 -----------------------------------
 --  		Custom Chat 		 --
