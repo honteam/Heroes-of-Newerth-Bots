@@ -127,12 +127,14 @@ general_mode_blindbanningpick_desc			Players begin with the full pool of heroes.
 general_mode_banningpick					Banning Pick
 general_mode_banningpick_desc				Players begin with the full pool of heroes. The Blue and Pink players then alternate banning 4 heroes each. After the banning, players take turns choosing their heroes from the remaining pool.
 general_mode_lockpick						Lock Pick
-general_mode_lockpick_desc					Lock Pick requires that you have a full group of 5 players. \n\n Group leaders are the captains of the team and do all of the banning, locking, and picking for the team. \n\nPlayers begin with the full pool of heroes. Two heroes are then blind banned by each captain. \n\nAfter blind banning, captains alternate locking 6 heroes into the lock pool to be chosen from by both teams later. \n\nCaptains then alternate banning 3 heroes each from the remaining pool. \n\nAfter banning, the captains alternate picking heroes from the remaining hero pool for the first 3 players on each team. Finally, the captains alternate picking heroes from the locked pool for the remaining 2 players on each team.
+general_mode_lockpick_desc					Lock Pick requires that you have a full group of 5 players. \n\nGroup leaders are the captains of the team and do all of the banning, locking, and picking for the team. \n\nPlayers begin with the full pool of heroes. Two heroes are then blind banned by each captain. \n\nAfter blind banning, captains alternate locking 6 heroes into the lock pool to be chosen from by both teams later. \n\nCaptains then alternate banning 3 heroes each from the remaining pool. \n\nAfter banning, the captains alternate picking heroes from the remaining hero pool for the first 3 players on each team. Finally, the captains alternate picking heroes from the locked pool for the remaining 2 players on each team.
 general_mode_lockpick_desc_short			Lock Pick is the official game type for competitive play. Lock Pick games require a full group of 5 players and may only be played on the Forests of Caldavar map. The group leader will be made the team captain.
 general_mode_lockpick_desc_short2			Unselecting the Competitive Mode option below will allow you to play additional game modes.
 general_mode_botmatch						Bot Match
 general_mode_captainsmode					Captains Pick
 general_mode_captainsmode_desc				Group leaders are the captains of the team and do all of the banning and picking for the team.
+general_mode_krosmode						Shuffle Pick
+general_mode_krosmode_desc					Players pick a hero, and then heroes who's abilities will be added to a pool. Then, your abilities are randomly selected out of that pool each time you spawn.
 general_mode_gated							Core Pool
 general_mode_gated_desc						Players choose from a crafted pool of 40 heroes. 
 general_mode_restrictivemodes				Restrictive Modes
@@ -170,6 +172,7 @@ general_mode_shuffle						Shuffle Team
 general_mode_autobalance					Auto Balanced
 general_mode_no_leavers						No Leavers
 general_mode_no_stats						No Stats
+general_mode_balaned_random					Balanced Random
 general_mode_official						Official
 general_mode_tournament_rules				Tournament Rules
 general_mode_hardcore						Hardcore
@@ -219,6 +222,25 @@ general_or 									or
 general_pass 								Pass
 general_fail 								Fail
 general_loading 							Loading...
+general_courier 							Courier
+general_leave 								Leave
+general_tickets 							Tickets
+general_how_many 							How Many?
+general_confirm 							Confirm
+general_bundle 								Bundle
+general_okay 								Okay
+general_dontPrompt 							Don't Prompt Again
+
+general_product_type_cc 					Chat Color
+general_product_type_cs						Chat Symbol
+general_product_type_ai						Account Icon
+general_product_type_aa						Alt Avatar
+general_product_type_av 					Announcer
+general_product_type_t						Taunt
+general_product_type_h 						Hero
+general_product_type_eap 					Early Access
+general_product_type_s 						Status
+general_product_type_m 						Miscellaneous
 
 // main.interface
 main_peel_tip								Watch HoN TV
@@ -383,6 +405,7 @@ map_grimmscrossing							Grimm's Crossing
 map_tutorial								Tutorial
 map_watchtower								Watchtower
 map_midwars									Mid Wars
+map_riftwars								Rift Wars
 
 // game_options.package
 options_repair_confirm_head					Repair Install
@@ -3172,6 +3195,8 @@ mstore_product1433_name		Gideon
 mstore_product1434_name		Slickz
 mstore_product1435_name		Hero Alt- Slickz
 mstore_product1436_name		Slickz
+mstore_product1437_name		Turkey Courier
+mstore_product1437_desc		Gobble Gobble
 mstore_product1438_name		Red Raja
 mstore_product1439_name		Hero Alt- Red Raja
 mstore_product1440_name		Hachina
@@ -3231,6 +3256,8 @@ mstore_product1494_name		DJ Rap City
 mstore_product1495_name		Hero Alt- DJ Rap City
 mstore_product1496_name		Topiary Warden
 mstore_product1497_name		Hero Alt- Topiary Warden
+mstore_product1498_name		Fortune Cookie Taunt
+mstore_product1498_desc		Crack your cookie and find your fortune!
 mstore_product1500_name		CIS 1 Year
 mstore_product1501_name		MaraHon
 mstore_product1502_name		Santas Stocking
@@ -3537,6 +3564,8 @@ mstore_product1788_name     Big Monsters
 mstore_product1788_desc     Not all big monsters are mean...are they?
 mstore_product1790_name     Hero Alt- Bunny Predator
 mstore_product1791_name     Hero Alt- Turkey Zephyr
+mstore_product1792_name		Super Taunt
+mstore_product1792_desc		Enhances your current taunt by refreshing it after every successful taunt kill!
 mstore_product1793_name		Laser Etched
 mstore_product1794_name     Slasher Maliken
 mstore_product1795_name     Hero Alt- Slasher Maliken
@@ -3582,10 +3611,14 @@ mstore_product1839_name		Organ Grinder
 mstore_product1840_name		Hero Alt- Organ Grinder
 mstore_product1841_name		Steamoth
 mstore_product1842_name		Hero Alt- Steamoth
+mstore_product1843_name		Steampunk Aluna
+mstore_product1844_name		Hero Alt- Steampunk Aluna
 mstore_product1845_name     Nightmare Predator
 mstore_product1846_name     Hero Alt- Nightmare Predator
 mstore_product1847_name		Hang Tuah
 mstore_product1848_name		Hero Alt- Hang Tuah
+mstore_product1849_name		Sea King Myrmidon
+mstore_product1850_name		Hero Alt- Sea King Myrmidon
 mstore_product1856_name     Power Level
 mstore_product1878_name     Wicked Hag of the West
 mstore_product1879_name     Hero Alt- Wicked Hag of the West
@@ -3636,6 +3669,8 @@ mstore_product1915_name		Cossack
 mstore_product1916_name		Hero Alt- Cossack
 mstore_product1917_name		Ogre Blacksmith
 mstore_product1918_name		Hero Alt- Ogre Blacksmith
+mstore_product1919_name		Willow Keeper
+mstore_product1920_name		Hero Alt- Willow Keeper
 mstore_product1921_name		Cowardly Night Hound
 mstore_product1922_name		Hero Alt- Cowardly Night Hound
 mstore_product1923_name		Robotron
@@ -3661,6 +3696,27 @@ mstore_product1942_name     Camazotz
 mstore_product1943_name     Hero Alt- Camazotz
 mstore_product1944_name     Hel
 mstore_product1945_name     Hero Alt- Hel
+mstore_product1946_name     Cosmonaut Bubbles
+mstore_product1947_name     Hero Alt- Cosmonaut Bubbles
+mstore_product1948_name     Gundromeda
+mstore_product1949_name     Hero Alt- Gundromeda
+mstore_product1950_name     Penitent Lodestone
+mstore_product1951_name     Hero Alt- Penitent Lodestone
+mstore_product1952_name     Eclipse 
+mstore_product1953_name     Hero Alt- Eclipse 
+mstore_product1954_name     Mecha Draconis
+mstore_product1955_name     Hero Alt- Mecha Draconis
+mstore_product1956_name     Cyber Steel Grinex
+mstore_product1957_name     Hero Alt- Cyber Steel Grinex
+
+mstore_product1962_name     Cerberus
+mstore_product1963_name     Hero Alt- Cerberus
+mstore_product1966_name     Grendel
+mstore_product1967_name     Hero Alt- Grendel
+mstore_product1968_name     Chupacabra
+mstore_product1969_name     Hero Alt- Chupacabra
+mstore_product1972_name     Bogatyr
+mstore_product1973_name     Hero Alt- Bogatyr
 mstore_product1986_name     Hero Alt- Dreadknight Salforis
 mstore_product1987_name     Hero Alt- Legendary Valkyrie
 mstore_product1988_name     Hero Alt- Sachi Swiftblade
@@ -3674,11 +3730,145 @@ mstore_product1995_name     Iron Maiden
 mstore_product1996_name     Hero Alt- Iron Maiden
 mstore_product1997_name     Poison Circe
 mstore_product1998_name     Hero Alt- Poison Circe
+mstore_product2000_name     Rainbow Taunt
+mstore_product2000_desc		It's all rainbows and sparkles when you're this good.
+mstore_product2002_name     RoboReaper
+mstore_product2003_name     Hero Alt- RoboReaper
+mstore_product2004_name     Master of Cybernetics
+mstore_product2005_name     Hero Alt- Master of Cybernetics
+mstore_product2006_name     Sally Slither
+mstore_product2007_name     Hero Alt- Sally Slither
+mstore_product2008_name     Bobbi Bramble
+mstore_product2009_name     Hero Alt- Bobbi Bramble
+mstore_product2010_name     Amanda Panda
+mstore_product2011_name     Hero Alt- Amanda Panda
+mstore_product2012_name     Basher Behemoth
+mstore_product2013_name     Hero Alt- Basher Behemoth
+mstore_product2014_name     The Blind Prophet
+mstore_product2015_name     Hero Alt- The Blind Prophet
+mstore_product2018_name     Arbinger
+mstore_product2019_name     Hero Alt- Arbinger
+mstore_product2020_name     Orbode
+mstore_product2021_name     Hero Alt- Orbode
+mstore_product2022_name     Omen
+mstore_product2023_name     Hero Alt- Omen
+mstore_product2024_name     Edium
+mstore_product2025_name     Hero Alt- Edium
+mstore_product2026_name     Augur
+mstore_product2027_name     Hero Alt- Augur
+mstore_product2031_name		Samuel L. Jackson Pack
+mstore_product2031_desc		Unleash your inner BAMF with the Samuel L. Jackson announcer pack.
+mstore_product2032_name     RoboRa
+mstore_product2033_name     Hero Alt- RoboRa
+mstore_product2036_name     NanoParasite
+mstore_product2037_name     Hero Alt- NanoParasite
+mstore_product2038_name     Robodon
+mstore_product2039_name     Hero Alt- Robodon
+mstore_product2040_name     Chastity
+mstore_product2041_name     Hero Alt- Chastity
+mstore_product2042_name     Charity
+mstore_product2043_name     Hero Alt- Charity
+mstore_product2044_name     Patience
+mstore_product2045_name     Hero Alt- Patience
+mstore_product2046_name     Kindness
+mstore_product2047_name     Hero Alt- Kindness
+mstore_product2050_name     Exterminator Nomad
+mstore_product2051_name     Hero Alt- Exterminator Nomad
 mstore_product2061_name     Cinema Savant
 mstore_product2062_name		Circe the Deceiver
 mstore_product2063_name		Iron Maiden
 mstore_product2064_name		Poison Circe
 mstore_product2065_name     GM Badge Icon
+mstore_product2071_name     Tork
+mstore_product2072_name     Hero Alt- Tork
+mstore_product2073_name     Baker Balphagore
+mstore_product2074_name     Hero Alt- Baker Balphagore
+mstore_product2075_name     Lollipop Shaman
+mstore_product2076_name     Hero Alt- Lollipop Shaman
+mstore_product2077_name     Ice Cream Bombardier
+mstore_product2078_name     Hero Alt- Ice Cream Bombardier
+mstore_product2079_name     Candy Rider
+mstore_product2080_name     Hero Alt- Candy Rider
+mstore_product2081_name     Santa Baby Aluna
+mstore_product2082_name     Hero Alt- Santa Baby Aluna
+mstore_product2083_name     Winter Solstice
+mstore_product2084_name     Hero Alt- Winter Solstice
+mstore_product2085_name     Cryo Magmus
+mstore_product2086_name     Hero Alt- Cryo Magmus
+mstore_product2087_name     Jupiter
+mstore_product2088_name     Hero Alt- Jupiter
+mstore_product2089_name     Apollo
+mstore_product2090_name     Hero Alt- Apollo
+mstore_product2091_name     Poseidon
+mstore_product2092_name     Hero Alt- Poseidon
+mstore_product2095_name     Basilisk
+mstore_product2096_name     Hero Alt- Basilisk
+mstore_product2105_name     Eskinomad
+mstore_product2106_name     Hero Alt- Eskinomad
+mstore_product2107_name		RCT
+mstore_product2108_name		Samuel L. Jackson Pack
+mstore_product2108_desc		Unleash your inner BAMF with the Samuel L. Jackson announcer pack.
+mstore_product2109_name     Klanx
+mstore_product2110_name     Hero- Klanx
+mstore_product2111_name     Sky Pirate Klanx
+mstore_product2112_name     Hero Alt- Sky Pirate Klanx
+mstore_product2113_name     Doomsday Klanx
+mstore_product2114_name     Hero Alt- Doomsday Klanx
+mstore_product2115_name     Robot Wars - Hell Forged
+mstore_product2116_name     Robot Wars - Iron Legion
+mstore_product2120_name     POG Accursed
+mstore_product2121_name     Hero Alt- POG Accursed
+mstore_product2126_name     POG Armadon
+mstore_product2127_name     Hero Alt- POG Armadon
+mstore_product2138_name     Amazing Artist
+mstore_product2139_name     Drafting Dominator
+mstore_product2140_name     iNF Member
+mstore_product2141_name     iNF Officer
+mstore_product2142_name     iNF Supervisor
+mstore_product2143_name		Klanx
+mstore_product2144_name		Sky Pirate Klanx
+mstore_product2145_name		Doomsday Klanx
+mstore_product2150_name		Doomsday Klanx
+mstore_product2151_name		Sky Pirate Klanx
+mstore_product2152_name		Elite Klanx Bundle
+mstore_product2153_name		Helping Hands
+mstore_product2154_name		Santa's Gift Bag
+mstore_product2154_desc		Purchase Santa's Gift Bag and get 1 chance at any Ultimate Avatar or one of the Seven Sins Avatars! Limit 5 per customer.
+mstore_product2155_name     1st Day of Christmas
+mstore_product2156_name     2nd Day of Christmas
+mstore_product2157_name     3rd Day of Christmas
+mstore_product2158_name     4th Day of Christmas
+mstore_product2159_name     5th Day of Christmas
+mstore_product2160_name     6th Day of Christmas
+mstore_product2161_name     7th Day of Christmas
+mstore_product2162_name     8th Day of Christmas
+mstore_product2163_name     9th Day of Christmas
+mstore_product2164_name     10th Day of Christmas
+mstore_product2165_name     11th Day of Christmas
+mstore_product2166_name     12th Day of Christmas
+mstore_product2167_name		Frost Fields Silver
+mstore_product2167_desc		This dazzling silver name color hails from the frozen north, and only the most dedicated players can obtain it!
+mstore_product2168_name		Taunt Bundle
+mstore_product2168_desc		This is a pack for you to show your skills against your enemies in the battlefield, humiliate them with these taunts.
+mstore_product2169_name		Stocking Stuffers
+mstore_product2169_desc		Purchase Stocking Stuffers to get 3 chests, each of which could contain any Basic or Premium avatar! Limit 5 per customer.
+mstore_product2170_name		Kongor's Stash
+mstore_product2170_desc		When you raid Kongor's Stash you get 5 chests, each of which could contain any Basic or Premium avatar! Limit 5 per customer.
+mstore_product2171_name     Yeniceri
+mstore_product2172_name     Hero Alt- Yeniceri
+mstore_product2179_name		Hero Alt- Winter Solstice Night
+mstore_product2204_name		Tournament Bundle
+mstore_product2204_desc		Support the regional tournament by purchasing this bundle!
+mstore_product2205_name     2 Year HoNiversary
+mstore_product2206_name     Flag- CIS
+mstore_product2206_desc
+mstore_product2207_name     Nfinity
+mstore_product2208_name		SBT Premium
+mstore_product2208_desc		SBT Premium HELL YEAH!
+mstore_product2213_name		Master of Balance
+mstore_product2214_name		CNY 2014
+mstore_product2215_name		Happiness
+mstore_product2216_name		Prosperity
 
 mstore_product999999001_name	Default Account Icon
 mstore_product999999002_name	Default Chat Symbol
@@ -3831,6 +4021,7 @@ mstore_eap_only_right				Avatar &
 mstore_eap_avatar_right				Symbol!
 mstore_eap_gainea					Gain
 mstore_eap_only						EA Only
+mstore_plinko_only					Plinko Only
 
 mstore_noeap_select					Select
 mstore_noeap_add					Add
@@ -4049,6 +4240,48 @@ mstore_collectorsEditionSet18_owned			Revenge of the Neutrals
 mstore_collectorsEditionSet18_owned_tip		This avatar is part of the Revenge of the Neutrals pack.
 mstore_collectorsEditionSet18_expired		Revenge of the Neutrals - Unavailable
 mstore_collectorsEditionSet18_expired_tip	This avatar is part of the Revenge of the Neutrals pack and is not currently available for purchase.
+
+mstore_collectorsEditionSet19				Iron Legion
+mstore_collectorsEditionSet19_tip			This avatar is part of the Iron Legion pack.
+mstore_collectorsEditionSet19_owned			Legion Robots
+mstore_collectorsEditionSet19_owned_tip		This avatar is part of the Iron Legion pack.
+mstore_collectorsEditionSet19_expired		Iron Legion - Unavailable
+mstore_collectorsEditionSet19_expired_tip	This avatar is part of the Iron Legion pack and is not currently available for purchase.
+
+mstore_collectorsEditionSet20				Hell Forged
+mstore_collectorsEditionSet20_tip			This avatar is part of the Hell Forged pack.
+mstore_collectorsEditionSet20_owned			Hell Forged
+mstore_collectorsEditionSet20_owned_tip		This avatar is part of the Hell Forged pack.
+mstore_collectorsEditionSet20_expired		Hell Forged - Unavailable
+mstore_collectorsEditionSet20_expired_tip	This avatar is part of the Hell Forged pack and is not currently available for purchase.
+
+mstore_collectorsEditionSet21				The Blind Disciples
+mstore_collectorsEditionSet21_tip			This avatar is part of The Blind Disciples pack.
+mstore_collectorsEditionSet21_owned			The Blind Disciples
+mstore_collectorsEditionSet21_owned_tip		This avatar is part of The Blind Disciples pack.
+mstore_collectorsEditionSet21_expired		The Blind Disciples - Unavailable
+mstore_collectorsEditionSet21_expired_tip	This avatar is part of The Blind Disciples pack and is not currently available for purchase.
+
+mstore_collectorsEditionSet22				Candy World
+mstore_collectorsEditionSet22_tip			This avatar is part of Candy World pack.
+mstore_collectorsEditionSet22_owned			Candy World
+mstore_collectorsEditionSet22_owned_tip		This avatar is part of Candy World pack.
+mstore_collectorsEditionSet22_expired		Candy World - Unavailable
+mstore_collectorsEditionSet22_expired_tip	This avatar is part of Candy World pack and is not currently available for purchase.
+
+mstore_collectorsEditionSet23				Xmas Party
+mstore_collectorsEditionSet23_tip			This avatar is part of Xmas Party pack.
+mstore_collectorsEditionSet23_owned			Xmas Party
+mstore_collectorsEditionSet23_owned_tip		This avatar is part of Xmas Party pack.
+mstore_collectorsEditionSet23_expired		Xmas Party - Unavailable
+mstore_collectorsEditionSet23_expired_tip	This avatar is part of Xmas Party pack and is not currently available for purchase.
+
+mstore_collectorsEditionSet24				7 Heavenly Virtues
+mstore_collectorsEditionSet24_tip			This avatar is part of 7 Heavenly Virtues avatar set.
+mstore_collectorsEditionSet24_owned			7 Heavenly Virtues
+mstore_collectorsEditionSet24_owned_tip		This avatar is part of 7 Heavenly Virtues avatar set.
+mstore_collectorsEditionSet24_expired		7 Heavenly Virtues - Unavailable
+mstore_collectorsEditionSet24_expired_tip	This avatar is part of 7 Heavenly Virtues avatar set and is not currently available for purchase.
 
 mstore_ultimateedition					Ultimate Avatar
 mstore_ultimateedition_tip				This avatar is an Ultimate Avatar.
@@ -4362,6 +4595,14 @@ mstore_error44		This product is not able to be gifted to another player.
 mstore_error45		This code has already been used.
 mstore_error46		You can only use this promotion once.
 mstore_error47		Invalid Promo Code
+mstore_error48		Unable to purchase this grab bag because you own too many items in it.
+mstore_error49		You have reached the maximum amount of purchases for this grab bag.
+mstore_error50		There was an error processing your request. Please try again later.
+mstore_error51		Your request has been processed successfully!
+mstore_error52		You do not have enough tickets to purchase this item.
+mstore_error53		The product could not be assigned to your account, you may already own it.
+mstore_error54		There was an error processing your request, we were unable to load the product. Please try again later.
+mstore_error50		Plinko is currently disabled. Please try again later.
 
 mstore_formerror16		The nickname you entered was too long. Choose a shorter nickname.
 mstore_formerror17		Nicknames cannot begin with a number [0-9] or 'S2'.
@@ -4496,6 +4737,7 @@ mstore_Hero_Salomon_name			Salomon
 mstore_Hero_Prisoner_name			Prisoner 945
 mstore_Hero_SirBenzington_name		Sir Benzington
 mstore_Hero_Circe_name				Circe the Deceiver
+mstore_Hero_Klanx_name				Klanx
 
 //Account Icons
 mstore_unlock_icon_btn				Unlock Icon Slot
@@ -4556,6 +4798,8 @@ garena_create_account_body					Before you can log in, you must first create a He
 region_create_account_title					Create a HoN Account
 region_create_account_body					Before you can log in, you must first create a Heroes of Newerth account which will then be linked to your {region} account.
 region_create_account_tip					Enter your desired account name and click the Create Account button.
+
+region_turkey_buy_coins						In order to puchase goblin coins you must visit http://freegoblincoins.freeinternethosting.s2.ru.com.
 
 // states
 create_acc_state_alabama					Alabama
@@ -5082,6 +5326,11 @@ courier_controller_desc 					The courier is currently being controlled by, or ex
 
 courier_uncontrollable 						This courier cannot be controlled by you because the player whom owns it has has not shared it with you.
 
+player_tip_permadead						You are dead and cannot respawn.
+team_tip_permadead							This player is dead and cannot respawn.
+
+game_krosmode_base_health					{health} Pts
+
 // game_chat.package
 gamechat_button_send_message				Send Message
 gamechat_tip_hit_history					^y*Tip:^* Hit "{key}" to bring up chat history
@@ -5268,8 +5517,10 @@ endstats_label_xp_min						XP/Min
 endstats_label_rate							Rate
 endstats_simple_view_midwars				Mid Wars Game Summary
 endstats_simple_view_bots					Bots Summary
+endstats_simple_view_riftwars 				Rift Wars Game Summary
 endstats_simple_view_midwars_played			{value} Mid Wars games played!
 endstats_simple_view_bots_played			{value} Bots games played!
+endstats_simple_view_riftwars_played		{value} Rift Wars games played!
 endstats_header_player_statistics			Player Statistics
 endstats_label_xp_earned					XP Earned
 endstats_label_deaths						Deaths
@@ -5335,6 +5586,8 @@ game_end_stats_download_retry_btn			Failed - Retry
 game_end_stats_watch_replay_btn				Watch Replay
 game_end_stats_compat_btn					Compatize
 game_end_stats_refresh_btn					Check for File
+game_end_stats_matches_until_tokens			{value} matches to go!
+game_end_stats_match_until_token 			{value} match to go!
 
 main_stats_retrieving_match					Retrieving match information...
 main_stats_retrieving_matches				Retrieving matches...
@@ -5670,6 +5923,7 @@ mainlobby_label_single_draft				Single Draft
 mainlobby_label_banning_draft				Banning Draft
 mainlobby_label_banning_pick				Banning Pick
 mainlobby_label_lockpick					Lockpick
+mainlobby_label_krosmode					Shuffle Pick
 mainlobby_label_botmatch					Bot Match
 mainlobby_label_captainsmode 				Captains Pick
 mainlobby_label_all_random					All Random
@@ -5748,7 +6002,7 @@ mainlobby_label_custom_game_KR			Korea
 mainlobby_label_custom_game_KO			Korea
 mainlobby_label_custom_game_TR			Turkey
 mainlobby_label_custom_game_LAT 		Latin America
-mainlobby_label_custom_game_BR				South America
+mainlobby_label_custom_game_BR				Brazil
 mainlobby_label_custom_team_size			Team Size
 mainlobby_label_custom_team_size_desc		Restrict games to a particular team size.
 main_lobby_filter_team_size_none			Do Not Limit Team Size
@@ -5866,6 +6120,8 @@ mainlobby_gamelist_grimmscrossing_title		Grimm's Crossing
 mainlobby_gamelist_grimmscrossing_desc		Play a game on Grimm's Crossing
 mainlobby_gamelist_midwars_title			Mid Wars
 mainlobby_gamelist_midwars_desc				Play a game on Mid Wars
+mainlobby_gamelist_riftwars_title			Rift Wars
+mainlobby_gamelist_riftwars_desc			Play a game on Rift Wars
 mainlobby_gamelist_midwars_text				Have Fun!
 mainlobby_gamelist_test_title				Test Map
 mainlobby_gamelist_test_desc				It's a secret to everybody.
@@ -5882,6 +6138,8 @@ mainlobby_gamelist_lockpick_title			Lockpick
 mainlobby_gamelist_banningpick_desc			Team captains take turns banning three players per team, and then players alternate picking from the remaining hero pool.
 mainlobby_gamelist_captainsdraft_title		Captains Draft
 mainlobby_gamelist_captainsdraft_desc		Captains first take turns banning heroes from a random pool and then take turns selecting a lineup for their teammates.
+mainlobby_gamelist_krosmode_title			Shuffle Pick
+mainlobby_gamelist_krosmode_desc			Players pick a hero, and then heroes who's abilities will be added to a pool. Then, your abilities are randomly selected out of that pool each time you spawn.
 mainlobby_gamelist_captainsmode_title		Captains Pick
 mainlobby_gamelist_captainsmode_desc		Group leaders are the captains of the team and do all of the banning and picking for the team.
 mainlobby_gamelist_deathmatch_title			Deathmatch
@@ -6120,6 +6378,7 @@ game_lobby_picking							Picking
 game_lobby_first_ban						First Ban
 game_lobby_captains_pick					Captn's Pick
 game_lobby_set_first_ban					Set First Ban
+game_lobby_shuffle_picking					Shuffling
 game_lobby_phase_waiting					Lobby
 game_lobby_phase_banning					Banning Phase
 game_lobby_phase_picking					Picking Phase
@@ -6130,6 +6389,7 @@ game_lobby_phase_ended 						Match Over
 game_lobby_phase_hiddenban					Hidden Banning Phase
 game_lobby_phase_locking					Locking Phase
 game_lobby_phase_lock_pick					Lock Pick Phase
+game_lobby_phase_shuffle_pick				Shuffle Pick Phase
 
 game_lobby_quickstats_recent				Recent Matches
 game_lobby_quickstats_favorite				Favorites
@@ -6420,6 +6680,7 @@ player_stats_unranked_normal				Unranked Normal
 player_stats_unranked_casual				Unranked Casual
 player_stats_public							Public
 player_stats_midwars						Mid Wars
+player_stats_krosmode						Rift Wars
 player_stats_used							Used:
 
 player_stats_ranked_tab						Normal Mode Stats
@@ -6470,6 +6731,7 @@ game_setup_single_draft						Single Draft
 game_setup_banningdraft						Banning Draft
 game_setup_banningpick						Banning Pick
 game_setup_lockpick							Lockpick
+game_setup_krosmode							Shuffle Pick
 game_setup_botmatch							Bot Match
 game_setup_gated							Core Pool
 game_setup_gated_desc						Players choose from a crafted pool of 40 heroes. 
@@ -6484,6 +6746,7 @@ game_setup_custom_post_save_btn				Set Post URL
 game_setup_custom_post_description			You can submit the stats of this game to a URL of your choice.  This URL should be a script written to accept a Post submission that contains all the statistics for this match.  To learn more detailed information about the stats array and sample code please visit ^yhttp://www.heroesofnewerth.com/submitstats.php^*
 game_setup_practice							Practice
 game_setup_casual							Casual
+game_setup_allrandom						All Random
 
 game_setup_Garena_Info						View The Garena VIP Benefits
 
@@ -7628,6 +7891,11 @@ news_honcast_copyURL						Click To Copy URL
 
 news_time_left								Time Left To Buy
 
+news_unowned_hero							Unowned Hero
+news_unowned_hero_eap						This avatar is for an EAP hero that you do not have access to. Would you like to be taken to the store to buy this hero?
+news_unowned_hero_body						This avatar is for a hero that you do not have access to. Would you like to be taken to the store to buy this hero?
+news_unowned_hero_unaccessable				This avatar is for a hero that you do not have access to and is not currently available for purchase.
+
 //tournaments.package
 tournament_name								Tournament Name
 tournament_teams							Teams:
@@ -7819,6 +8087,8 @@ specui_tower_team			Team Towers
 specui_tower_team_tip		Remaining towers for this team.
 specui_raxx_team			Team Barracks
 specui_raxx_team_tip		Remaining barracks for this team.
+specui_base_health_team			Team Base Health
+specui_base_health_team_tip		Remaining base health for the team, used as points in Rift Wars.
 
 specui_help_1						Welcome Spectator!
 specui_help_2						Here's a few things you can do...
@@ -8520,6 +8790,7 @@ ccu_region_TR	Turkey
 tpp_selected_unit			Selected Unit
 tpp_refresh					Refresh!
 tpp_kill					Kill
+tpp_delete 					Delete Unit
 tpp_exp						Exp
 tpp_lvl						Lvl
 tpp_give_gold				+15000 Gold
@@ -8673,6 +8944,9 @@ chat_walkthrough_info_1				Hold '{key}' to view chat history and options.
 chat_walkthrough_info_2				Left click the tabs above the chat window to quickly change chat filters.
 chat_walkthrough_info_3				Right click the tabs above the chat window add or remove chat channels from each tab.
 chat_walkthrough_info_4				You have automatically activated the All Chat tab by using All Chat. Hold '{key}' to select a different tab.
+
+krosmode_legion_basedead			^rThe Legion Base^* is almost dead! ^yLegion Heroes no longer respawn^* and their Base Defences are weakened. Finish them off!
+krosmode_hellbourne_basedead		^gThe Hellbourne Base^* is almost dead! ^yHellbourne Heroes no longer respawn^* and their Base Defences are weakened. Finish them off!
 
 // QA - In Game Item
 
@@ -9393,6 +9667,11 @@ hero_tip_offensive_tip_Hero_Circe_2				Deceive can be used as both a ganking or 
 hero_tip_defensive_tip_Hero_Circe_1				Doppelgangers add alot of damage to a team fight however they are very vulnerable when attacked.
 hero_tip_defensive_tip_Hero_Circe_2				Twisted Visage has a notable link and channel time before Circe can clone the enemy. This can be disrupted by moving out of range or by interrupting Circe.
 
+hero_tip_offensive_tip_Hero_Klankx_1			H.A.W.K. loses duration when you're attacked but causes you to move over terrain. Use your surroundings to your advantage to kite enemies and attack safely.
+hero_tip_offensive_tip_Hero_Klankx_2			B.A.N.G. only applies the slow when your opponent is facing the center. Predict your enemies movements and lead them with your cast.
+hero_tip_defensive_tip_Hero_Klankx_1			The rockets that fire from Klanx lacky fire in a straight line whenever he attacks, sidestep them to avoid the damage.
+hero_tip_defensive_tip_Hero_Klankx_2			B.A.N.G deals increased damage and applies a slow in a large area only if you are facing the center when it triggers. Be sure to face away briefly when you see it.
+
 // Match Rewards
 match_stat_rewards_player_breakdown				Player Breakdown:
 match_stat_rewards_match_breakdown				Match Breakdown:
@@ -9420,7 +9699,6 @@ match_stat_rewards_played_games					Played
 match_stat_rewards_won_games					Won
 match_stat_rewards_gated_games					Core Pool
 match_stat_rewards_bots_games					Bot
-
 
 match_stat_rewards_header						{play} {value}{gametype} Games {withfriends}
 match_stat_rewards_sub_header					{played} {value} of {target} stat-enabled{gametype} matchmaking games {withfriends}
@@ -9711,7 +9989,11 @@ bot_description_soul_reaper			Soul Reaper is a strong, versatile hero who can he
 bot_description_engineer			A capable ganker, Engineer also provides a lot of teamfight capability. Authored by V1P3R`!
 bot_description_gravekeeper			Gravekeeper is a versatile hero with solid Magic and Physical damage. Authored by Schnarchnase!
 bot_description_ellonia				Ellonia is a ranged intelligence hero known for her frost spells, freezing the opposition! Authored by Mellow_Ink!
-bot_description_balphagore			Balphagore is a melee strength hero, with insane pushing potential die to his minions. Authored by Kairus101!
+bot_description_balphagore			Balphagore is a melee strength hero, with insane pushing potential due to his minions. Authored by Kairus101!
+bot_description_bombardier			Bombardier is a ranged intelligence hero, with strong magic damage spells. Authored by Anakonda!
+bot_description_revenant			Revenant is a ganker who lowers armor while adding magical damage to allies. Authored by Rinestone!
+bot_description_wretched_hag		Wretched Hag is a mobile ganker and semicarry who excels in AoE magic damage. Authored by DarkFire!
+bot_description_moon_queen			Moon Queen is a short-ranged carry with strong early ganking and a deadly ult. Authored by Anakonda!
 bot_description_blacksmith			A powerful, luck-based intelligence hero who has a nuke with a high damage cap! Authored by Kormoranos!
 
 // Maintenance
@@ -9772,5 +10054,88 @@ radial_comingToHelp				Coming to Help Here
 eightBitButton_tip 				Click this button to opt-in and out of the new experimental graphics mode.
 eightBitHeader 					Experimental Graphics Mode
 eightBitBody 					A new experimental graphics mode is available for testing. If you would like to try it out click accept! You can opt-out of the testing anytime using the button on the system bar.
+
+// Plinko
+plinko_name 					HoN Plinko
+plinko_ticket 					Ticket
+plinko_redemption 				Redemption
+plinko_ticket_redemption		Ticket\nRedemption
+plinko_buy_drops 				Buy Chips
+plinko_drops 					Chips
+plinko_drops_amount 			{amount} Chips
+plinko_drop 					Drop!
+plinko_board_header				Play Using
+plinko_cost 					Cost:
+
+plinko_drop_gold_header			Play Using Gold
+plinko_drop_gold_body			Do you want to play plinko using gold? This will cost you {cost} gold.
+
+plinko_drop_tickets_header		Play Using Tickets
+plinko_drop_tickets_body		Do you want to play plinko using tickets? This will cost you {cost} tickets.
+
+plinko_no_gold_header			Not Enough Gold
+plinko_no_gold_body				You do not have enough gold coins to play Plinko. You can purchase more gold coins in the store.
+
+plinko_no_tickets_header		Not Enough Tickets
+plinko_no_tickets_body			You do not have enough tickets to play Plinko. You can win more tickets by playing Plinko with gold coins.
+
+plinko_ticket_tooltip_aa 		This is an Alt Avatar for the hero {heroName}!\n\nAlt Avatars allow you to change how your hero appears in-game!
+plinko_ticket_tooltip_cc 		This is a Chat Color!\n\nChat Colors change color of your name in the chat userlist as well as your placement in it!
+plinko_ticket_tooltip_cs		This is a Chat Symbol!\n\nChat Symbols are the icon that appears to the right of your name in the chat userlist as well as other places.
+plinko_ticket_tooltip_ai		This is an Account Icon!\n\nAccount Icons are the icon that appears to the left of your name in teh chat userlist as well as other places.
+plinko_ticket_tooltip_av 		This is an Announcer!\n\nAnnouncers changes what the in-game announcer sounds like as well as its animations.
+plinko_ticket_tooltip_t			This is a Taunt!\n\nTaunts changes how your in-game taunt looks and sounds when used.
+plinko_ticket_tooltip_h 		This is a Hero! By selecting this item, you will be given this hero permanently to play!
+plinko_ticket_tooltip_eap		This gives you early access to the hero {heroName}!
+plinko_ticket_tooltip_s 		This is a status!
+plinko_ticket_tooltip_m 		This is a miscellaneous item!
+plinko_ticket_tooltip_courier 	This is a courier!\n\nCouriers allow you to change the look of your in-game courier while playing.
+plinko_ticket_tooltip_bundle 	This is a bundle!\n\nThis can include all kinds of different products!
+plinko_ticket_tooltip_owned 	^gYou already own this item!^*
+
+plinko_ticket_tooltip_cost 		^rYou don't have enough tickets for this item!^*
+
+plinko_ticket_purchase 			This item costs ^994{ticketCost}^* tickets! This will leave you with ^994{ticketsLeft}^* tickets after the transction!
+
+plinko_prize_tier_1 			Diamond Chest
+plinko_prize_tier_2 			Gold Chest
+plinko_prize_tier_3 			Silver Chest
+plinko_prize_tier_4 			Bronze Chest
+plinko_prize_tier_5 			Tickets
+plinko_prize_tier_6 			Tickets
+
+plinko_prize_tier_1_tip 		The Diamond Chest includes a chance for any Gold or Early Access Avatars.
+plinko_prize_tier_2_tip			The Gold Chest includes a chance for any Limited or Holiday Edition Avatars.
+plinko_prize_tier_3_tip			The Silver Chest includes a chance for any Premium Avatars.
+plinko_prize_tier_4_tip			The Bronze Chest includes a chance for any Basic Avatars.
+plinko_prize_tier_5_tip			Large bundle of tickets.
+plinko_prize_tier_6_tip			Bundle of tickets.
+
+plinko_won_tickets 				You have won {amount} tickets!
+plinko_products_exhausted		You have received tickets because you already own all the products currently available for this tier!
+
+plinko_request_net_error 		There was an error processing your request. You can retry, or try again later.
+plinko_area_net_error			There was an error loading this area. You can retry or leave and try again later.
+plinko_request_net_error_title	An Error Has Occurred
+plinko_request_retry_error		There was an error when attempting to retry your request.
+
+plinko_drop_request_status_0	There was an error processing your request. Please try again later.
+plinko_drop_request_status_1	Your request has been processed successfully!
+plinko_drop_request_status_2	You don't have enough tickets to complete this request.
+plinko_drop_request_status_3	You don't have enough gold to complete this request.
+plinko_drop_request_status_4	A currency was not specified in the request.
+
+plinko_tickets_redeemed 		Your tickets have successfully been redeemed for your prize!
+plinko_drops_bought 			You have successfully bought more Chips!
+
+plinko_dont_remind_session		Don't Show Again This Session
+
+// dice
+dice_name 						Amulet of Rebirth
+dice_tooltip_body				Throw away your existing form in return for a new one. Others may be unable to rebuild you, but the Rift can!
+dice_tooltip_body2				Using the amulet will give you a new set of abilities. This will either cost you an existing use, or {cost} goblin coins if you don't have any.
+dice_tooltip_unusable			The amulet can only be used if you can afford them and you are in your team's well.
+
+dice_prompt_body				Using the amulet will either consume one of your uses or, if you have no uses, cost you {cost} goblin coins.\n\nYou currently have {tokens} uses and {gold} goblin coins.
 
 // End - do not delete this line

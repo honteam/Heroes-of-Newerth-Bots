@@ -8,7 +8,11 @@ local _G = getfenv(0)
 local object = _G.object
 
 object.core = object.core or {}
-local core, eventsLib, behaviorLib, metadata = object.core, object.eventsLib, object.behaviorLib, object.metadata
+
+runfile "bots/illusionLib.lua"
+
+local core, eventsLib, behaviorLib, metadata, illusionLib = object.core, object.eventsLib, object.behaviorLib, object.metadata, object.illusionLib
+
 
 local print, ipairs, pairs, string, table, next, type, tinsert, tremove, tsort, format, tostring, tonumber, strfind, strsub
 	= _G.print, _G.ipairs, _G.pairs, _G.string, _G.table, _G.next, _G.type, _G.table.insert, _G.table.remove, _G.table.sort, _G.string.format, _G.tostring, _G.tonumber, _G.string.find, _G.string.sub
@@ -76,7 +80,6 @@ end
 
 --Called every frame the engine gives us during the actual match
 function object:onthink(tGameVariables)
-
 	StartProfile('onthink')
 	if core.coreInitialized == false or core.coreInitialized == nil then
 		core.CoreInitialize(self)
@@ -143,7 +146,7 @@ function object:onthink(tGameVariables)
 	core.ProcessChatMessages(self)
 	StopProfile()
 
-	if core.unitSelf:GetHealth() <= 0 then
+	if not core.unitSelf:IsAlive() then
 		StopProfile()
 		return
 	end
@@ -358,6 +361,36 @@ function object:onthink(tGameVariables)
 			BotEcho('No current behavior!!!')
 		end
 		StopProfile()
+		
+		StartProfile("Execute Illusion Behavior")
+		if illusionLib.bRunBehaviors ~= false and illusionLib.nNextBehaviorTime <= HoN.GetGameTime() then
+			illusionLib.updateIllusions(self)
+			-- Dont run behaviors if there are no illusions
+			if #illusionLib.tIllusions > 0 then
+				local funcBehavior = nil
+				
+				if illusionLib.bForceIllusionsToIdle == true then
+					funcBehavior = illusionLib.tIllusionBehaviors["Idle"]
+				else
+					local sCurrentBehaviorName = core.GetCurrentBehaviorName(self)
+					if sCurrentBehaviorName ~= nil then
+						funcBehavior = illusionLib.tIllusionBehaviors[sCurrentBehaviorName]
+					end
+					
+					-- If this behavior does not exist revert to default behavior
+					if funcBehavior == nil then
+						funcBehavior = illusionLib.tIllusionBehaviors["NoBehavior"]
+					end
+				end
+				
+				if not funcBehavior(self) then
+					illusionLib.tIllusionBehaviors["NoBehavior"](self)
+				end
+			end
+			
+			illusionLib.nNextBehaviorTime = HoN.GetGameTime() + illusionLib.nBehaviorAssessInterval
+		end
+		StopProfile()
 	end
 	
 	StopProfile()
@@ -415,21 +448,21 @@ function core.BotBrainCoreInitialize(tGameVariables)
 		end
 	end
 	
+	--[Tutorial] Make everyone less aggressive and easy mode. Later legion will switch to Medium.
+	if core.bIsTutorial then
+		core.nDifficulty = core.nEASY_DIFFICULTY
+		
+		core.bTutorialBehaviorReset = false
+	end
+	
 	--[Difficulty]
 	if core.nDifficulty == core.nEASY_DIFFICULTY then
 		behaviorLib.harassUtilityWeight = 0.30
+		behaviorLib.nCreepAggroUtility = behaviorLib.nCreepAggroUtilityEasy
 	elseif core.nDifficulty == core.nMEDIUM_DIFFICULTY then
 		behaviorLib.harassUtilityWeight = 0.65
 	elseif core.nDifficulty == core.nHARD_DIFFICULTY then
 		--leave everything in
-	end
-	
-	--[Tutorial] Make everyone less aggressive and easy mode. Later legion will switch to Medium.
-	if core.bIsTutorial then
-		core.nDifficulty = core.nEASY_DIFFICULTY
-		behaviorLib.harassUtilityWeight = 0.3
-		
-		core.bTutorialBehaviorReset = false
 	end
 	
 	behaviorLib.addCurrentItemBehaviors()
@@ -1702,6 +1735,18 @@ function core.OrderItemPosition(botBrain, unit, item, vecTarget, bInterruptAttac
 	return true
 end
 
+function core.OrderBlinkItemToEscape(botBrain, unit, item, bInterruptAttacks, bQueueCommand)
+	if not item or not item:CanActivate() or not item:GetRange() and core.allyWell and core.allyWell:GetPosition() then -- passed a bad item/well doesn't exist..
+		return false
+	end
+	local itemParam = (item ~= nil and item.object) or item
+	local vecTarget = behaviorLib.GetSafeBlinkPosition(core.allyWell:GetPosition(), item:GetRange())
+	if (itemParam and vecTarget) then
+		return core.OrderItemPosition(botBrain, unit, itemParam, vecTarget, bInterruptAttacks, bQueueCommand)
+	end
+	return false
+end
+
 function core.ToggleAutoCastItem(botBrain, item, bInterruptAttacks, bQueueCommand)
 	if object.bRunCommands == false or object.bAbilityCommands == false then
 		return false
@@ -1818,6 +1863,18 @@ function core.OrderAbilityPosition(botBrain, ability, vecTarget, bInterruptAttac
 	
 	botBrain:OrderAbilityPosition(abilityParam, vecTarget, bQueueCommand)
 	return true
+end
+
+function core.OrderBlinkAbilityToEscape(botBrain, ability, bInterruptAttacks, bQueueCommand)
+	if not ability or not ability:CanActivate() or not ability:GetRange() and core.allyWell and core.allyWell:GetPosition() then -- passed a bad ability/well doesn't exist..
+		return false
+	end
+	local abilityParam = (ability ~= nil and ability.object) or ability
+	local vecTarget = behaviorLib.GetSafeBlinkPosition(core.allyWell:GetPosition(), ability:GetRange())
+	if (abilityParam and vecTarget) then
+		return core.OrderAbilityPosition(botBrain, abilityParam, vecTarget, bInterruptAttacks, bQueueCommand)
+	end
+	return false
 end
 
 function core.OrderAbilityEntity(botBrain, ability, unitTarget, bInterruptAttacks, bQueueCommand)

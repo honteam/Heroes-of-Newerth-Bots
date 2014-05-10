@@ -7,10 +7,11 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
 
---this is so that developers can tell this code to ignore certain items they have written bot-specific code for.
+--This table is so that developers can tell this code to ignore certain items they have written bot-specific code for.
+--  Add the item's entity name string to the table to not add that item's default behavior.
 behaviorLib.tDontUseDefaultItemBehavior = {}
 
-function behaviorLib.addCurrentItemBehaviors()  --run on initialization, too add current item behaviors.
+function behaviorLib.addCurrentItemBehaviors()  --run on initialization, to add current item behaviors.
 	local inventory = core.unitSelf:GetInventory(false)
 	for slot = 1, 6 do
 		local curItem = inventory[slot]
@@ -20,9 +21,32 @@ function behaviorLib.addCurrentItemBehaviors()  --run on initialization, too add
 	end
 end
 
-	
-function behaviorLib.addItemBehavior(itemName, remove)
-	local bDebugEchos = true
+behaviorLib.tItemBehaviors = {}
+--[[
+	Items currently supported:
+		Ring Of Sorcery
+		Mana Pot
+		Bottle
+		Health Pot
+		Runes Of The Blight
+		Battery Supply
+		Astrolabe
+		Sacrificial Stone
+		Blood Chalice
+		Charged Hammer
+		Elder Parasite
+		Assassins Shroud
+		Shrunken Head
+		Geometer's Bane
+		Tablet --TODO apply change to blinkLib
+		Plated Greaves
+		Alchemist Bones
+		Insanitarius
+		Symbol Of Rage
+]]
+
+function behaviorLib.addItemBehavior(itemName)
+	local bDebugEchos = false
 	
 	-- Ignore items on our ignore list
 	if core.tableContains(behaviorLib.tDontUseDefaultItemBehavior, itemName) > 0 then
@@ -30,56 +54,10 @@ function behaviorLib.addItemBehavior(itemName, remove)
 		return
 	end
 	
-	remove = (remove == nil and false) or remove
-	behaviorLib.behaviorToModify = nil
-	
-	if itemName == "Item_Replenish" then
-		behaviorLib.behaviorToModify = behaviorLib.RingOfSorceryBehavior
-	elseif itemName == "Item_ManaPotion" then
-		behaviorLib.behaviorToModify = behaviorLib.UseManaPotBehavior
-	elseif itemName == "Item_Bottle" then
-		behaviorLib.behaviorToModify = behaviorLib.UseBottleBehavior
-	elseif itemName == "Item_HealthPotion" then
-		behaviorLib.behaviorToModify = behaviorLib.UseHealthPotBehavior
-	elseif itemName == "Item_RunesOfTheBlight" then
-		behaviorLib.behaviorToModify = behaviorLib.UseRunesOfTheBlightBehavior
-	elseif (itemName == "Item_ManaBattery" or itemName == "Item_PowerSupply") then
-		behaviorLib.behaviorToModify = behaviorLib.UseBatterySupplyBehavior
-	elseif itemName == "Item_Astrolabe" then
-		behaviorLib.behaviorToModify = behaviorLib.AstrolabeBehavior
-	elseif itemName == "Item_SacrificialStone" then
-		behaviorLib.behaviorToModify = behaviorLib.SacrificialStoneBehavior
-	elseif itemName == "Item_BloodChalice" then
-		behaviorLib.behaviorToModify = behaviorLib.BloodChaliceBehavior
-	elseif itemName == "Item_Lightning2" then
-		behaviorLib.behaviorToModify = behaviorLib.ChargedHammerBehavior
-	elseif itemName == "Item_ElderParasite" then
-		behaviorLib.behaviorToModify = behaviorLib.ElderParasiteBehavior
-	elseif itemName == "Item_Stealth" then
-		behaviorLib.behaviorToModify = behaviorLib.AssassinsShroudBehavior
-	elseif itemName == "Item_Immunity" then
-		behaviorLib.behaviorToModify = behaviorLib.ShrunkenHeadBehavior
-	elseif itemName == "Item_ManaBurn2" then
-		behaviorLib.behaviorToModify = behaviorLib.GeometersBehavior
-	elseif itemName == "Item_PushStaff" then --waiting on healAtWell fixes
-		behaviorLib.behaviorToModify = behaviorLib.TabletBehavior
-	elseif itemName == "Item_PlatedGreaves" then
-		behaviorLib.behaviorToModify = behaviorLib.PlatedGreavesBehavior
-	elseif itemName == "Item_Gloves3" then
-		behaviorLib.behaviorToModify = behaviorLib.AlchemistBonesBehavior
-	elseif itemName == "Item_Insanitarius" then
-		behaviorLib.behaviorToModify = behaviorLib.InsanitariusBehavior
-	end
-	
+	behaviorLib.behaviorToModify = behaviorLib.tItemBehaviors[itemName]
 	
 	if behaviorLib.behaviorToModify ~= nil then
-		if remove then
-			if core.RemoveByValue(behaviorLib.tBehaviors, behaviorLib.behaviorToModify) then
-				if bDebugEchos then BotEcho("^rRemoved "..itemName) end
-			else
-				BotEcho("^rFailed to remove "..itemName.." from behaviours!?") --this is an error we should know about.
-			end
-		elseif core.tableContains(behaviorLib.tBehaviors, behaviorLib.behaviorToModify) == 0 then
+		if core.tableContains(behaviorLib.tBehaviors, behaviorLib.behaviorToModify) == 0 then
 			tinsert(behaviorLib.tBehaviors, behaviorLib.behaviorToModify)
 			if bDebugEchos then BotEcho("^gadded "..itemName) end
 			
@@ -108,6 +86,22 @@ function behaviorLib.addItemBehavior(itemName, remove)
 	end
 end
 
+function behaviorLib.removeItemBehavior(itemName)
+	-- Ignore items on our ignore list
+	if core.tableContains(behaviorLib.tDontUseDefaultItemBehavior, itemName) > 0 then
+		if bDebugEchos then BotEcho("^rDisabled "..itemName) end
+		return
+	end
+	
+	behaviorLib.behaviorToModify = behaviorLib.tItemBehaviors[itemName]
+	if behaviorLib.behaviorToModify ~= nil then
+		if core.RemoveByValue(behaviorLib.tBehaviors, behaviorLib.behaviorToModify) then
+			if bDebugEchos then BotEcho("^rRemoved "..itemName) end
+		else
+			--BotEcho("^rFailed to remove "..itemName.." from behaviours!?") --this is an error we should know about.
+		end
+	end
+end
 
 ----------------------------------
 --  Behaviors start below!
@@ -145,11 +139,10 @@ function behaviorLib.RingOfSorceryExecute(botBrain)
 	local unitSelf = core.unitSelf
 	return core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemRingOfSorcery) -- Use Ring of Sorcery
 end
-
-behaviorLib.RingOfSorceryBehavior = {}
-behaviorLib.RingOfSorceryBehavior["Utility"] = behaviorLib.RingOfSorceryUtility
-behaviorLib.RingOfSorceryBehavior["Execute"] = behaviorLib.RingOfSorceryExecute
-behaviorLib.RingOfSorceryBehavior["Name"] = "RingOfSorcery"
+behaviorLib.tItemBehaviors["Item_Replenish"] = {}
+behaviorLib.tItemBehaviors["Item_Replenish"]["Utility"] = behaviorLib.RingOfSorceryUtility
+behaviorLib.tItemBehaviors["Item_Replenish"]["Execute"] = behaviorLib.RingOfSorceryExecute
+behaviorLib.tItemBehaviors["Item_Replenish"]["Name"] = "RingOfSorcery"
 
 
 --------------------------------------
@@ -226,7 +219,7 @@ function behaviorLib.UseManaPotUtility(botBrain)
 		
 		return core.ATanFn(nManaMissing, vecPoint, vecOrigin, 100)
 	elseif not behaviorLib.itemManaPot then
-		behaviorLib.addItemBehavior("Item_ManaPotion", true)
+		behaviorLib.removeItemBehavior("Item_ManaPotion")
 	end
 	
 	return 0
@@ -250,10 +243,10 @@ function behaviorLib.UseManaPotExecute(botBrain)
 	return bActionTaken
 end
 
-behaviorLib.UseManaPotBehavior = {}
-behaviorLib.UseManaPotBehavior["Utility"] = behaviorLib.UseManaPotUtility
-behaviorLib.UseManaPotBehavior["Execute"] = behaviorLib.UseManaPotExecute
-behaviorLib.UseManaPotBehavior["Name"] = "UseManaPot"
+behaviorLib.tItemBehaviors["Item_ManaPotion"] = {}
+behaviorLib.tItemBehaviors["Item_ManaPotion"]["Utility"] = behaviorLib.UseManaPotUtility
+behaviorLib.tItemBehaviors["Item_ManaPotion"]["Execute"] = behaviorLib.UseManaPotExecute
+behaviorLib.tItemBehaviors["Item_ManaPotion"]["Name"] = "UseManaPot"
 
 ------------------------------------
 
@@ -318,23 +311,22 @@ function behaviorLib.UseBottleExecute(botBrain)
 	local bActionTaken = false
 	local unitSelf = core.unitSelf
 
-	if not core.IsTableEmpty(tItemBottle) then
-		local vecRetreatDirection = behaviorLib.GetSafeDrinkDirection()
-		-- Check if it is safe to drink
-		if vecRetreatDirection then
-			bActionTaken = core.OrderMoveToPosClamp(botBrain, unitSelf, vecSelfPos + vecRetreatDirection * core.moveVecMultiplier, false)
-		else
-			bActionTaken = core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemBottle)
-		end
+
+	local vecRetreatDirection = behaviorLib.GetSafeDrinkDirection()
+	-- Check if it is safe to drink
+	if vecRetreatDirection then
+		bActionTaken = core.OrderMoveToPosClamp(botBrain, unitSelf, vecSelfPos + vecRetreatDirection * core.moveVecMultiplier, false)
+	else
+		bActionTaken = core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemBottle)
 	end
-	
+
 	return bActionTaken
 end
 
-behaviorLib.UseBottleBehavior = {}
-behaviorLib.UseBottleBehavior["Utility"] = behaviorLib.UseBottleUtility
-behaviorLib.UseBottleBehavior["Execute"] = behaviorLib.UseBottleExecute
-behaviorLib.UseBottleBehavior["Name"] = "UseBottle"
+behaviorLib.tItemBehaviors["Item_Bottle"] = {}
+behaviorLib.tItemBehaviors["Item_Bottle"]["Utility"] = behaviorLib.UseBottleUtility
+behaviorLib.tItemBehaviors["Item_Bottle"]["Execute"] = behaviorLib.UseBottleExecute
+behaviorLib.tItemBehaviors["Item_Bottle"]["Name"] = "UseBottle"
 
 ------------------------------------
 --  		Health Potion   	  --
@@ -357,7 +349,7 @@ function behaviorLib.UseHealthPotUtility(botBrain)
 		local vecOrigin = Vector3.Create(200, -40)
 		return core.ATanFn(nHealthMissing, vecPoint, vecOrigin, 100)
 	elseif not behaviorLib.itemHealthPot then
-		behaviorLib.addItemBehavior("Item_HealthPotion", true)
+		behaviorLib.removeItemBehavior("Item_HealthPotion")
 	end
 	return 0
 end
@@ -379,10 +371,10 @@ function behaviorLib.UseHealthPotExecute(botBrain)
 	return bActionTaken
 end
 
-behaviorLib.UseHealthPotBehavior = {}
-behaviorLib.UseHealthPotBehavior["Utility"] = behaviorLib.UseHealthPotUtility
-behaviorLib.UseHealthPotBehavior["Execute"] = behaviorLib.UseHealthPotExecute
-behaviorLib.UseHealthPotBehavior["Name"] = "UseHealthPot"
+behaviorLib.tItemBehaviors["Item_HealthPotion"] = {}
+behaviorLib.tItemBehaviors["Item_HealthPotion"]["Utility"] = behaviorLib.UseHealthPotUtility
+behaviorLib.tItemBehaviors["Item_HealthPotion"]["Execute"] = behaviorLib.UseHealthPotExecute
+behaviorLib.tItemBehaviors["Item_HealthPotion"]["Name"] = "UseHealthPot"
 
 
 ------------------------------------
@@ -409,7 +401,7 @@ function behaviorLib.UseRunesOfTheBlightUtility(botBrain)
 		
 		return core.ATanFn(nHealthMissing, vecPoint, vecOrigin, 100)
 	elseif not behaviorLib.itemBlights then
-		behaviorLib.addItemBehavior("Item_RunesOfTheBlight", true)
+		behaviorLib.removeItemBehavior("Item_RunesOfTheBlight")
 	end
 	
 	return 0
@@ -449,10 +441,10 @@ function behaviorLib.UseRunesOfTheBlightExecute(botBrain)
 		
 	return bActionTaken
 end
-behaviorLib.UseRunesOfTheBlightBehavior = {}
-behaviorLib.UseRunesOfTheBlightBehavior["Utility"] = behaviorLib.UseRunesOfTheBlightUtility
-behaviorLib.UseRunesOfTheBlightBehavior["Execute"] = behaviorLib.UseRunesOfTheBlightExecute
-behaviorLib.UseRunesOfTheBlightBehavior["Name"] = "UseRunesOfTheBlight"
+behaviorLib.tItemBehaviors["Item_RunesOfTheBlight"] = {}
+behaviorLib.tItemBehaviors["Item_RunesOfTheBlight"]["Utility"] = behaviorLib.UseRunesOfTheBlightUtility
+behaviorLib.tItemBehaviors["Item_RunesOfTheBlight"]["Execute"] = behaviorLib.UseRunesOfTheBlightExecute
+behaviorLib.tItemBehaviors["Item_RunesOfTheBlight"]["Name"] = "UseRunesOfTheBlight"
 
 ------------------------------------
 --   Mana Battery/PowerSupply     --
@@ -551,11 +543,11 @@ function behaviorLib.UseBatterySupplyExecute(botBrain)
 	
 	return bActionTaken
 end
-behaviorLib.UseBatterySupplyBehavior = {}
-behaviorLib.UseBatterySupplyBehavior["Utility"] = behaviorLib.UseBatterySupplyUtility
-behaviorLib.UseBatterySupplyBehavior["Execute"] = behaviorLib.UseBatterySupplyExecute
-behaviorLib.UseBatterySupplyBehavior["Name"] = "UseBatterySupply"
-
+behaviorLib.tItemBehaviors["Item_ManaBattery"] = {} -- they have the same behavior.
+behaviorLib.tItemBehaviors["Item_PowerSupply"] = behaviorLib.tItemBehaviors["Item_ManaBattery"]
+behaviorLib.tItemBehaviors["Item_ManaBattery"]["Utility"] = behaviorLib.UseBatterySupplyUtility
+behaviorLib.tItemBehaviors["Item_ManaBattery"]["Execute"] = behaviorLib.UseBatterySupplyExecute
+behaviorLib.tItemBehaviors["Item_ManaBattery"]["Name"] = "UseBatterySupply"
 
 ------------------------------------
 --   		  Astrolabe 		  --
@@ -658,21 +650,19 @@ function behaviorLib.AstrolabeExecute(botBrain)
 		local vecTargetPosition = unitHealTarget:GetPosition()
 		local nDistance = Vector3.Distance2DSq(unitSelf:GetPosition(), vecTargetPosition)
 		if nDistance < 500 * 500 then
-			core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemAstrolabe)
+			return core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemAstrolabe)
 		else
-			core.OrderMoveToUnitClamp(botBrain, unitSelf, unitHealTarget)
+			return core.OrderMoveToUnitClamp(botBrain, unitSelf, unitHealTarget)
 		end
-	else
-		return false
 	end
 	
-	return true
+	return false
 end
 
-behaviorLib.AstrolabeBehavior = {}
-behaviorLib.AstrolabeBehavior["Utility"] = behaviorLib.AstrolabeUtility
-behaviorLib.AstrolabeBehavior["Execute"] = behaviorLib.AstrolabeExecute
-behaviorLib.AstrolabeBehavior["Name"] = "UseAstrolabe"
+behaviorLib.tItemBehaviors["Item_Astrolabe"] = {}
+behaviorLib.tItemBehaviors["Item_Astrolabe"]["Utility"] = behaviorLib.AstrolabeUtility
+behaviorLib.tItemBehaviors["Item_Astrolabe"]["Execute"] = behaviorLib.AstrolabeExecute
+behaviorLib.tItemBehaviors["Item_Astrolabe"]["Name"] = "UseAstrolabe"
 
 
 ------------------------------------
@@ -693,10 +683,10 @@ function behaviorLib.SacrificialStoneExecute(botBrain)
 	local unitSelf = core.unitSelf
 	return core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemSacrificialStone)
 end
-behaviorLib.SacrificialStoneBehavior = {}
-behaviorLib.SacrificialStoneBehavior["Utility"] = behaviorLib.SacrificialStoneUtility
-behaviorLib.SacrificialStoneBehavior["Execute"] = behaviorLib.SacrificialStoneExecute
-behaviorLib.SacrificialStoneBehavior["Name"] = "UseSacrificialStone"
+behaviorLib.tItemBehaviors["Item_SacrificialStone"] = {}
+behaviorLib.tItemBehaviors["Item_SacrificialStone"]["Utility"] = behaviorLib.SacrificialStoneUtility
+behaviorLib.tItemBehaviors["Item_SacrificialStone"]["Execute"] = behaviorLib.SacrificialStoneExecute
+behaviorLib.tItemBehaviors["Item_SacrificialStone"]["Name"] = "UseSacrificialStone"
 
 
 ------------------------------------
@@ -723,10 +713,10 @@ function behaviorLib.BloodChaliceExecute(botBrain)
 	local unitSelf = core.unitSelf
 	return core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemBloodChalice)
 end
-behaviorLib.BloodChaliceBehavior = {}
-behaviorLib.BloodChaliceBehavior["Utility"] = behaviorLib.BloodChaliceUtility
-behaviorLib.BloodChaliceBehavior["Execute"] = behaviorLib.BloodChaliceExecute
-behaviorLib.BloodChaliceBehavior["Name"] = "UseBloodChalice"
+behaviorLib.tItemBehaviors["Item_BloodChalice"] = {}
+behaviorLib.tItemBehaviors["Item_BloodChalice"]["Utility"] = behaviorLib.BloodChaliceUtility
+behaviorLib.tItemBehaviors["Item_BloodChalice"]["Execute"] = behaviorLib.BloodChaliceExecute
+behaviorLib.tItemBehaviors["Item_BloodChalice"]["Name"] = "UseBloodChalice"
 
 ------------------------------------
 --  		Charged Hammer 		  --
@@ -756,10 +746,10 @@ function behaviorLib.ChargedHammerExecute(botBrain)
 	local unitSelf = core.unitSelf
 	return core.OrderItemEntityClamp(botBrain, unitSelf, behaviorLib.itemChargedHammer, behaviorLib.unitChargedHammerTarget, false)
 end
-behaviorLib.ChargedHammerBehavior = {}
-behaviorLib.ChargedHammerBehavior["Utility"] = behaviorLib.ChargedHammerUtility
-behaviorLib.ChargedHammerBehavior["Execute"] = behaviorLib.ChargedHammerExecute
-behaviorLib.ChargedHammerBehavior["Name"] = "UseChargedHammer"
+behaviorLib.tItemBehaviors["Item_Lightning2"] = {}
+behaviorLib.tItemBehaviors["Item_Lightning2"]["Utility"] = behaviorLib.ChargedHammerUtility
+behaviorLib.tItemBehaviors["Item_Lightning2"]["Execute"] = behaviorLib.ChargedHammerExecute
+behaviorLib.tItemBehaviors["Item_Lightning2"]["Name"] = "UseChargedHammer"
 
 ------------------------------------
 --  		Elder Parasite		  --
@@ -786,10 +776,10 @@ function behaviorLib.ElderParasiteExecute(botBrain)
 	local unitSelf = core.unitSelf
 	return core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemElderParasite)
 end
-behaviorLib.ElderParasiteBehavior = {}
-behaviorLib.ElderParasiteBehavior["Utility"] = behaviorLib.ElderParasiteUtility
-behaviorLib.ElderParasiteBehavior["Execute"] = behaviorLib.ElderParasiteExecute
-behaviorLib.ElderParasiteBehavior["Name"] = "UseElderParasite"
+behaviorLib.tItemBehaviors["Item_ElderParasite"] = {}
+behaviorLib.tItemBehaviors["Item_ElderParasite"]["Utility"] = behaviorLib.ElderParasiteUtility
+behaviorLib.tItemBehaviors["Item_ElderParasite"]["Execute"] = behaviorLib.ElderParasiteExecute
+behaviorLib.tItemBehaviors["Item_ElderParasite"]["Name"] = "UseElderParasite"
 
 ------------------------------------
 --  	  Assassins Shroud		  --
@@ -816,10 +806,10 @@ function behaviorLib.AssassinsShroudExecute(botBrain)
 	local unitSelf = core.unitSelf
 	return core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemAssassinsShroud)
 end
-behaviorLib.AssassinsShroudBehavior = {}
-behaviorLib.AssassinsShroudBehavior["Utility"] = behaviorLib.AssassinsShroudUtility
-behaviorLib.AssassinsShroudBehavior["Execute"] = behaviorLib.AssassinsShroudExecute
-behaviorLib.AssassinsShroudBehavior["Name"] = "UseAssassinsShroud"
+behaviorLib.tItemBehaviors["Item_Stealth"] = {}
+behaviorLib.tItemBehaviors["Item_Stealth"]["Utility"] = behaviorLib.AssassinsShroudUtility
+behaviorLib.tItemBehaviors["Item_Stealth"]["Execute"] = behaviorLib.AssassinsShroudExecute
+behaviorLib.tItemBehaviors["Item_Stealth"]["Name"] = "UseAssassinsShroud"
 
 ------------------------------------
 --  	   Shrunken Head		  --
@@ -843,10 +833,10 @@ function behaviorLib.ShrunkenHeadExecute(botBrain)
 	local unitSelf = core.unitSelf
 	return core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemShrunkenHead)
 end
-behaviorLib.ShrunkenHeadBehavior = {}
-behaviorLib.ShrunkenHeadBehavior["Utility"] = behaviorLib.ShrunkenHeadUtility
-behaviorLib.ShrunkenHeadBehavior["Execute"] = behaviorLib.ShrunkenHeadExecute
-behaviorLib.ShrunkenHeadBehavior["Name"] = "UseShrunkenHead"
+behaviorLib.tItemBehaviors["Item_Immunity"] = {}
+behaviorLib.tItemBehaviors["Item_Immunity"]["Utility"] = behaviorLib.ShrunkenHeadUtility
+behaviorLib.tItemBehaviors["Item_Immunity"]["Execute"] = behaviorLib.ShrunkenHeadExecute
+behaviorLib.tItemBehaviors["Item_Immunity"]["Name"] = "UseShrunkenHead"
 
 ------------------------------------
 --  	   Geometers Bane		  --
@@ -873,10 +863,10 @@ function behaviorLib.GeometersExecute(botBrain)
 	local unitSelf = core.unitSelf
 	return core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemGeometers)
 end
-behaviorLib.GeometersBehavior = {}
-behaviorLib.GeometersBehavior["Utility"] = behaviorLib.GeometersUtility
-behaviorLib.GeometersBehavior["Execute"] = behaviorLib.GeometersExecute
-behaviorLib.GeometersBehavior["Name"] = "UseGeometers"
+behaviorLib.tItemBehaviors["Item_ManaBurn2"] = {}
+behaviorLib.tItemBehaviors["Item_ManaBurn2"]["Utility"] = behaviorLib.GeometersUtility
+behaviorLib.tItemBehaviors["Item_ManaBurn2"]["Execute"] = behaviorLib.GeometersExecute
+behaviorLib.tItemBehaviors["Item_ManaBurn2"]["Name"] = "UseGeometers"
 
 
 ------------------------------------
@@ -907,10 +897,10 @@ function behaviorLib.TabletExecute(botBrain)
 	local unitSelf = core.unitSelf
 	return core.OrderItemEntityClamp(botBrain, unitSelf, behaviorLib.itemTablet, unitSelf)
 end
-behaviorLib.TabletBehavior = {}
-behaviorLib.TabletBehavior["Utility"] = behaviorLib.TabletUtility
-behaviorLib.TabletBehavior["Execute"] = behaviorLib.TabletExecute
-behaviorLib.TabletBehavior["Name"] = "UseTablet"
+behaviorLib.tItemBehaviors["Item_PushStaff"] = {}
+behaviorLib.tItemBehaviors["Item_PushStaff"]["Utility"] = behaviorLib.TabletUtility
+behaviorLib.tItemBehaviors["Item_PushStaff"]["Execute"] = behaviorLib.TabletExecute
+behaviorLib.tItemBehaviors["Item_PushStaff"]["Name"] = "UseTablet"
 
 
 ------------------------------------
@@ -932,10 +922,10 @@ function behaviorLib.PlatedGreavesExecute(botBrain)
 	local unitSelf = core.unitSelf
 	return core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemPlatedGreaves)
 end
-behaviorLib.PlatedGreavesBehavior = {}
-behaviorLib.PlatedGreavesBehavior["Utility"] = behaviorLib.PlatedGreavesUtility
-behaviorLib.PlatedGreavesBehavior["Execute"] = behaviorLib.PlatedGreavesExecute
-behaviorLib.PlatedGreavesBehavior["Name"] = "UsePlatedGreaves"
+behaviorLib.tItemBehaviors["Item_PlatedGreaves"] = {}
+behaviorLib.tItemBehaviors["Item_PlatedGreaves"]["Utility"] = behaviorLib.PlatedGreavesUtility
+behaviorLib.tItemBehaviors["Item_PlatedGreaves"]["Execute"] = behaviorLib.PlatedGreavesExecute
+behaviorLib.tItemBehaviors["Item_PlatedGreaves"]["Name"] = "UsePlatedGreaves"
 
 ------------------------------------
 --   	  Alchemist Bones 		  --
@@ -945,10 +935,10 @@ local vecAlchBonesCampPos
 local nAlchBonesTimeUsed=0
 function behaviorLib.AlchemistBonesUtility(botBrain)
 	behaviorLib.itemAlchemistBones = core.GetItem("Item_Gloves3")
-	if (not behaviorLib.itemAlchemistBones or behaviorLib.itemAlchemistBones:GetCharges()==0 or not behaviorLib.itemAlchemistBones:CanActivate() )then 
+	if (not behaviorLib.itemAlchemistBones or behaviorLib.itemAlchemistBones:GetCharges() == 0 or not behaviorLib.itemAlchemistBones:CanActivate()) then 
 		return 0
 	end
-	if nAlchBonesTimeUsed+550 > HoN:GetGameTime() then --continue if we are
+	if nAlchBonesTimeUsed + 550 > HoN:GetGameTime() then --continue if we are
 		return 25
 	end
 	
@@ -971,12 +961,12 @@ function behaviorLib.AlchemistBonesExecute(botBrain)
 	local unitSelf = core.unitSelf
 	local vecMyPos=core.unitSelf:GetPosition()
 	
-	if nAlchBonesTimeUsed+550 > HoN:GetGameTime() then --continue if we are
+	if nAlchBonesTimeUsed + 550 > HoN:GetGameTime() then --continue if we are
 		return true
 	end
 	
 	--walk to target camp
-	if ( Vector3.Distance2DSq(vecMyPos, vecAlchBonesCampPos)>400*400 ) then
+	if ( Vector3.Distance2DSq(vecMyPos, vecAlchBonesCampPos) > 400 * 400 ) then
 		return core.OrderMoveToPosAndHoldClamp(botBrain, unitSelf, vecAlchBonesCampPos, false)
 	else--we are finally at a good camp!
 		local tUnits = HoN.GetUnitsInRadius(vecMyPos, 500, core.UNIT_MASK_ALIVE + core.UNIT_MASK_UNIT)
@@ -1001,10 +991,10 @@ function behaviorLib.AlchemistBonesExecute(botBrain)
 	end
 	return false
 end
-behaviorLib.AlchemistBonesBehavior = {}
-behaviorLib.AlchemistBonesBehavior["Utility"] = behaviorLib.AlchemistBonesUtility
-behaviorLib.AlchemistBonesBehavior["Execute"] = behaviorLib.AlchemistBonesExecute
-behaviorLib.AlchemistBonesBehavior["Name"] = "UseAlchemistBones"
+behaviorLib.tItemBehaviors["Item_Gloves3"] = {}
+behaviorLib.tItemBehaviors["Item_Gloves3"]["Utility"] = behaviorLib.AlchemistBonesUtility
+behaviorLib.tItemBehaviors["Item_Gloves3"]["Execute"] = behaviorLib.AlchemistBonesExecute
+behaviorLib.tItemBehaviors["Item_Gloves3"]["Name"] = "UseAlchemistBones"
 
 ------------------------------------
 --  		Insanitarius		  --
@@ -1038,7 +1028,42 @@ function behaviorLib.InsanitariusExecute(botBrain)
 		return false
 	end
 end
-behaviorLib.InsanitariusBehavior = {}
-behaviorLib.InsanitariusBehavior["Utility"] = behaviorLib.InsanitariusUtility
-behaviorLib.InsanitariusBehavior["Execute"] = behaviorLib.InsanitariusExecute
-behaviorLib.InsanitariusBehavior["Name"] = "UseInsanitarius"
+behaviorLib.tItemBehaviors["Item_Insanitarius"] = {}
+behaviorLib.tItemBehaviors["Item_Insanitarius"]["Utility"] = behaviorLib.InsanitariusUtility
+behaviorLib.tItemBehaviors["Item_Insanitarius"]["Execute"] = behaviorLib.InsanitariusExecute
+behaviorLib.tItemBehaviors["Item_Insanitarius"]["Name"] = "UseInsanitarius"
+
+------------------------------------
+--  		Symbol of rage		  --
+------------------------------------
+behaviorLib.nSymbolThreshhold = 55
+behaviorLib.nSymbolHealthThreshold = 0.4
+behaviorLib.nSymbolHarassBonusThreshold = 50
+function behaviorLib.InsanitariusUtility(botBrain)
+	local unitSelf = core.unitSelf
+	behaviorLib.itemSymbolOfRage = core.GetItem("Item_LifeSteal4")
+		
+	if behaviorLib.itemSymbolOfRage and behaviorLib.itemSymbolOfRage:CanActivate() then
+		-- on when we are low hp or killing something
+		if (behaviorLib.heroTarget) then -- when we have a target
+			if behaviorLib.lastHarassUtil > behaviorLib.nSymbolThreshhold and unitSelf:GetHealthPercent() < behaviorLib.nSymbolHealthThreshold then	-- when we are low enough
+				return 9999
+			end
+		end
+	end
+	return 0
+end
+
+function behaviorLib.InsanitariusExecute(botBrain)
+	local unitSelf = core.unitSelf
+	if core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemSymbolOfRage) then
+		core.nHarassBonus = core.nHarassBonus + behaviorLib.nSymbolHarassBonusThreshold
+		return true
+	else
+		return false
+	end
+end
+behaviorLib.tItemBehaviors["Item_LifeSteal4"] = {}
+behaviorLib.tItemBehaviors["Item_LifeSteal4"]["Utility"] = behaviorLib.InsanitariusUtility
+behaviorLib.tItemBehaviors["Item_LifeSteal4"]["Execute"] = behaviorLib.InsanitariusExecute
+behaviorLib.tItemBehaviors["Item_LifeSteal4"]["Name"] = "UseSymbolOfRage"

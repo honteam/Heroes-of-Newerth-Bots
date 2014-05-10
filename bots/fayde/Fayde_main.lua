@@ -380,12 +380,12 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.CheckRuneBehavior)
 
 -- Order all illusions to attack the target
 local function funcIllusionLogic(botBrain, unitTarget)
-	local playerSelf = core.unitSelf:GetOwnerPlayer()
+	local playerSelf = core.unitSelf:GetOwnerPlayerID()
 	local tAllyHeroes = HoN.GetHeroes(core.myTeam)
 	local tIllusions = {}
 	for nUID, unitHero in pairs(tAllyHeroes) do
 		if core.teamBotBrain.tAllyHeroes[nUID] == nil then
-			if unitHero:GetOwnerPlayer() == playerSelf then
+			if unitHero:GetOwnerPlayerID() == playerSelf then
 				tinsert(tIllusions, unitHero)
 			end
 		end

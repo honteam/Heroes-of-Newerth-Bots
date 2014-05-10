@@ -130,9 +130,11 @@ function object:oncombatevent(EventData)
 			core.idefHealthPotion.expireTime = curTimeMS + EventData.StateDuration
 		end
 	elseif EventData.Type == "Kill" then
-		--BotEcho("Kill event on "..EventData.TargetName)
-		core.ProcessKillChat(EventData.TargetUnit, EventData.TargetPlayerName)
-		behaviorLib.ProcessKill(EventData.TargetUnit)
+		if core.tableContains(core.EnemyHeroes, EventData.TargetUnit) > 0 then
+			--BotEcho("Kill event on "..EventData.TargetName)
+			core.ProcessKillChat(EventData.TargetUnit, EventData.TargetPlayerName)
+			behaviorLib.ProcessKill(EventData.TargetUnit)
+		end
 	elseif EventData.Type == "Death" then	
 		--BotEcho("Death event on "..EventData.SourceName)
 		core.ProcessDeathChat(EventData.SourceUnit, EventData.SourcePlayerName)

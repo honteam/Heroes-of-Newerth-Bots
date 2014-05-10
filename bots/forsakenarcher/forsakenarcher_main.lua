@@ -211,7 +211,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	local bDebugEchos = false
 	
 	local unitTarget = behaviorLib.heroTarget
-	if unitTarget == nil then
+	if unitTarget == nil or not unitTarget:IsValid() then
 		return false --can not execute, move on to the next behavior
 	end
 	
@@ -299,9 +299,13 @@ local function HarassHeroExecuteOverride(botBrain)
 			end
 
 			if itemGhostMarchers and itemGhostMarchers:CanActivate() then
-				core.OrderItemClamp(botBrain, unitSelf, itemGhostMarchers)
-				return
-			elseif behaviorLib.lastHarassUtil < behaviorLib.diveThreshold then
+				local bSuccess = core.OrderItemClamp(botBrain, unitSelf, itemGhostMarchers)
+				if bSuccess then
+					return
+				end
+			end
+			
+			if behaviorLib.lastHarassUtil < behaviorLib.diveThreshold then
 				if bDebugEchos then BotEcho("DON'T DIVE!") end
 				local bChanged = false
 				desiredPos, bChanged = core.AdjustMovementForTowerLogic(desiredPos)

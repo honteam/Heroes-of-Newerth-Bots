@@ -1323,10 +1323,10 @@ local function getFireAndIce()
     --looking for Fire and Ice
     tUnits = HoN.GetUnitsInRadius(core.unitSelf:GetPosition(), 20000, core.UNIT_MASK_UNIT+core.UNIT_MASK_ALIVE)
             for x, unit in pairs(tUnits) do
-                if unit:GetTypeName() == "Heropet_Gemini_Ability4_Fire" and unit:GetOwnerPlayer() == core.unitSelf:GetOwnerPlayer() then
+                if unit:GetTypeName() == "Heropet_Gemini_Ability4_Fire" and unit:GetOwnerPlayerID() == core.unitSelf:GetOwnerPlayerID() then
                     --BotEcho("found Fire")
                     tOwnedUnits[Fire] = unit
-                elseif unit:GetTypeName() == "Heropet_Gemini_Ability4_Ice" and unit:GetOwnerPlayer() == core.unitSelf:GetOwnerPlayer() then
+                elseif unit:GetTypeName() == "Heropet_Gemini_Ability4_Ice" and unit:GetOwnerPlayerID() == core.unitSelf:GetOwnerPlayerID() then
                     --BotEcho("found Ice")
                     tOwnedUnits[Ice] = unit
                 end

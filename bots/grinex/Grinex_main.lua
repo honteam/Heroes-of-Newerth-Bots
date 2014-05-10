@@ -5,7 +5,7 @@
 -- | | |_ | '__| | '_ \ / _ \ \/ /  _ < / _ \| __| --
 -- | |__| | |  | | | | |  __/>  <| |_) | (_) | |_  --
 --  \_____|_|  |_|_| |_|\___/_/\_\____/ \___/ \__| --
---                       -v0.7 By: DarkFire-       --
+--                          -By: DarkFire-         --
 -----------------------------------------------------
 
 ------------------------------------------
@@ -50,9 +50,9 @@ runfile "bots/behaviorLib.lua"
 local core, eventsLib, behaviorLib, metadata, skills = object.core, object.eventsLib, object.behaviorLib, object.metadata, object.skills
 
 local print, ipairs, pairs, string, table, next, type, tinsert, tremove, tsort, format, tostring, tonumber, strfind, strsub
-    = _G.print, _G.ipairs, _G.pairs, _G.string, _G.table, _G.next, _G.type, _G.table.insert, _G.table.remove, _G.table.sort, _G.string.format, _G.tostring, _G.tonumber, _G.string.find, _G.string.sub
+	= _G.print, _G.ipairs, _G.pairs, _G.string, _G.table, _G.next, _G.type, _G.table.insert, _G.table.remove, _G.table.sort, _G.string.format, _G.tostring, _G.tonumber, _G.string.find, _G.string.sub
 local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, asin, max, random
-    = _G.math.ceil, _G.math.floor, _G.math.pi, _G.math.tan, _G.math.atan, _G.math.atan2, _G.math.abs, _G.math.cos, _G.math.sin, _G.math.acos, _G.math.asin, _G.math.max, _G.math.random
+	= _G.math.ceil, _G.math.floor, _G.math.pi, _G.math.tan, _G.math.atan, _G.math.atan2, _G.math.abs, _G.math.cos, _G.math.sin, _G.math.acos, _G.math.asin, _G.math.max, _G.math.random
 
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
@@ -66,11 +66,23 @@ BotEcho('loading Grinex_main...')
 -- Grinex
 object.heroName = 'Hero_Grinex'
 
+-- Lane Preferences
+core.tLanePreferences = {
+	Jungle = 0,
+	Mid = 2, 
+	ShortSolo = 3, 
+	LongSolo = 1, 
+	ShortSupport = 3, 
+	LongSupport = 3, 
+	ShortCarry = 4, 
+	LongCarry = 5
+}
+
 -- Item buy order. internal names  
-behaviorLib.StartingItems  = {"Item_IronBuckler", "Item_RunesOfTheBlight", "Item_LoggersHatchet"}
-behaviorLib.LaneItems  = {"Item_Marchers", "Item_Steamboots", "Item_Lightbrand", "Item_Sicarius"}
-behaviorLib.MidItems  = {"Item_Pierce 3", "Item_Critical1 4"}
-behaviorLib.LateItems  = {"Item_Weapon3", "Item_DaemonicBreastplate"}
+behaviorLib.StartingItems = {"Item_IronBuckler", "Item_RunesOfTheBlight", "Item_LoggersHatchet"}
+behaviorLib.LaneItems = {"Item_Marchers", "Item_Steamboots", "Item_Lightbrand", "Item_Searinglight"}
+behaviorLib.MidItems = {"Item_Pierce 3", "Item_Critical1 4"}
+behaviorLib.LateItems = {"Item_Weapon3", "Item_DaemonicBreastplate"}
 
 -- Skillbuild table, 0=q, 1=w, 2=e, 3=r, 4=attri
 object.tSkills = {
@@ -78,7 +90,7 @@ object.tSkills = {
 	3, 2, 0, 0, 0,
 	3, 1, 1, 1, 4,
 	3, 4, 4, 4, 4,
-	4, 4, 4, 4, 4,
+	4, 4, 4, 4, 4
 }
 
 -- Bonus agression points if a skill/item is available for use
@@ -94,9 +106,9 @@ object.nStrike4Up = 18
 
 -- Bonus agression points that are applied to the bot upon successfully using a skill/item
 
-object.nStepUse = 18
-object.nStalkUse = 12
-object.nAssaultUse = 40
+object.nStepUse = 30
+object.nStalkUse = 20
+object.nAssaultUse = 44
 
 -- Thresholds of aggression the bot must reach to use these abilities
 
@@ -114,14 +126,14 @@ behaviorLib.nTargetPositioningMul = 0.6
 ------------------------------
 
 function object:SkillBuild()
-    local unitSelf = self.core.unitSelf
-    if  skills.abilStep == nil then
-        skills.abilStep = unitSelf:GetAbility(0)
-        skills.abilStalk = unitSelf:GetAbility(1)
-        skills.abilStrike = unitSelf:GetAbility(2)
-        skills.abilAssault = unitSelf:GetAbility(3)
-        skills.abilAttributeBoost = unitSelf:GetAbility(4)
-    end
+	local unitSelf = self.core.unitSelf
+	if  skills.abilStep == nil then
+		skills.abilStep = unitSelf:GetAbility(0)
+		skills.abilStalk = unitSelf:GetAbility(1)
+		skills.abilStrike = unitSelf:GetAbility(2)
+		skills.abilAssault = unitSelf:GetAbility(3)
+		skills.abilAttributeBoost = unitSelf:GetAbility(4)
+	end
 	
 	local nPoints = unitSelf:GetAbilityPointsAvailable()
 	if nPoints <= 0 then
@@ -134,70 +146,37 @@ function object:SkillBuild()
 	end
 end
 
-------------------------------------------
---          FindItems Override          --
-------------------------------------------
-
-local function funcFindItemsOverride(botBrain)
-    local bUpdated = object.FindItemsOld(botBrain)
- 
-	if core.itemSteamboots ~= nil and not core.itemSteamboots:IsValid() then
-		core.itemSteamboots = nil
-	end
-     
-    if bUpdated then
-        --only update if we need to
-        if core.itemSteamboots and  core.itemHellflower and core.itemSheepstick then
-            return
-        end
-         
-        local inventory = core.unitSelf:GetInventory(true)
-        for slot = 1, 12, 1 do
-            local curItem = inventory[slot]
-            if curItem then
-				if core.itemSteamboots == nill and curItem:GetName() == "Item_Steamboots" then
-					core.itemSteamboots = core.WrapInTable(curItem)
-                end
-            end
-        end
-    end
-end
-
-object.FindItemsOld = core.FindItems
-core.FindItems = funcFindItemsOverride
-
 ----------------------------------------
 --          OnThink Override          --
 ----------------------------------------
 
 function object:onthinkOverride(tGameVariables)
-    self:onthinkOld(tGameVariables)
---[[
-	local unitSelf = core.unitSelf
-	core.FindItems()
-	
+	self:onthinkOld(tGameVariables)
+
 	-- Toggle Steamboots for more Health/Mana
-	local itemSteamboots = core.itemSteamboots
-	if itemSteamboots then
-		if itemSteamboots:CanActivate() then
-			local sKey = itemSteamboots:GetActiveModifierKey()
+	local itemSteamboots = core.GetItem("Item_Steamboots")
+	if itemSteamboots and itemSteamboots:CanActivate() then
+		local unitSelf = core.unitSelf
+		local nHealthPercent = unitSelf:GetHealthPercent()
+		local nManaPercent = unitSelf:GetManaPercent()
+		local sKey = itemSteamboots:GetActiveModifierKey()
+		if sKey == "str" then
 			-- Toggle away from STR if health is high enough
-			if sKey == "str" then
-				if unitSelf:GetHealthPercent() > .575 then
-					core.OrderItem(itemSteamboots)
-				end
-			-- Always toggle past AGI
-			elseif sKey == "agi" then
-					core.OrderItem(itemSteamboots)
-			-- Toggle away from INT if health gets too low
-			elseif sKey == "int" then
-				if unitSelf:GetHealthPercent() < .375 then
-					core.OrderItem(itemSteamboots)
-				end
+			if nHealthPercent > .65 then
+				self:OrderItem(itemSteamboots.object, false)
+			end
+		elseif sKey == "agi" then
+			-- Toggle away from AGI if health or mana is low
+			if nHealthPercent < .45 or nManaPercent < .6 then
+				self:OrderItem(itemSteamboots.object, false)
+			end
+		elseif sKey == "int" then
+			-- Toggle away from INT if health gets too low or mana is close to full
+			if nHealthPercent < .45 or nManaPercent > .85 then
+				self:OrderItem(itemSteamboots.object, false)
 			end
 		end
 	end
---]]
 end
 
 object.onthinkOld = object.onthink
@@ -211,21 +190,20 @@ function object:oncombateventOverride(EventData)
 	self:oncombateventOld(EventData)
 
 	local nAddBonus = 0
-	
 	if EventData.Type == "Ability" then
-        if EventData.InflictorName == "Ability_Grinex1" then
-            nAddBonus = nAddBonus + self.nStepUse
+		if EventData.InflictorName == "Ability_Grinex1" then
+			nAddBonus = nAddBonus + self.nStepUse
 		elseif EventData.InflictorName == "Ability_Grinex2" then
 			nAddBonus = nAddBonus + self.nStalkUse
-        elseif EventData.InflictorName == "Ability_Grinex4" then
-            nAddBonus = nAddBonus + self.nAssaultUse
-        end
-    end
+		elseif EventData.InflictorName == "Ability_Grinex4" then
+			nAddBonus = nAddBonus + self.nAssaultUse
+		end
+	end
  
-    if nAddBonus > 0 then
-        core.DecayBonus(self)
-        core.nHarassBonus = core.nHarassBonus + nAddBonus
-    end
+	if nAddBonus > 0 then
+		core.DecayBonus(self)
+		core.nHarassBonus = core.nHarassBonus + nAddBonus
+	end
 end
 
 object.oncombateventOld = object.oncombatevent
@@ -237,32 +215,32 @@ object.oncombatevent = object.oncombateventOverride
 
 local function CustomHarassUtilityFnOverride(hero)
 	local nUtility = 0
-
-    if skills.abilStep:CanActivate() then
-        nUtility = nUtility + object.nStepUp
-    end
- 
-    if skills.abilStalk:CanActivate() then
-        nUtility = nUtility + object.nStalkUp
-    end
- 
-    if skills.abilAssault:CanActivate() then
-        nUtility = nUtility + object.nAssaultUp
-    end
+	
+	if skills.abilStep:CanActivate() then
+		nUtility = nUtility + object.nStepUp
+	end
+	
+	if skills.abilStalk:CanActivate() then
+		nUtility = nUtility + object.nStalkUp
+	end
+	
+	if skills.abilAssault:CanActivate() then
+		nUtility = nUtility + object.nAssaultUp
+	end
 
 	-- Use diiferent Utility values for each level of Nether Strike
 	local nStrikeLevel = skills.abilStrike:GetLevel()
 	if nStrikeLevel == 1 then
-        nUtility = nUtility + object.nStrike1Up
+		nUtility = nUtility + object.nStrike1Up
 	elseif nStrikeLevel == 2 then
-        nUtility = nUtility + object.nStrike2Up
+		nUtility = nUtility + object.nStrike2Up
 	elseif nStrikeLevel == 3 then
-        nUtility = nUtility + object.nStrike3Up
+		nUtility = nUtility + object.nStrike3Up
 	elseif nStrikeLevel == 4 then
-        nUtility = nUtility + object.nStrike4Up
+		nUtility = nUtility + object.nStrike4Up
 	end
 	
-    return nUtility
+	return nUtility
 end
 
 behaviorLib.CustomHarassUtility = CustomHarassUtilityFnOverride   
@@ -290,128 +268,143 @@ local function filterGroupRange(tGroup, vecCenter, nRange)
 end
 
 -- Cycles through the table to find the closest target to the position, then returns the direction to that target
-local function getClosestUnitDirectionFromTable(vecPosition, tUnitTable)
-	local vecDirection = nil
+-- Used for casting entity vector skills towards a moving target
+local function getBestPushDirectionFromTable(unitPushTarget, vecPushTargetPosition, tUnitTable)
 	local nDistanceSq = nil
-	local nBestDistanceSq = (350 * 350)
+	local nBestDistanceSq = (375 * 375)
 	local vecTargetPosition = nil
-	local vecBestPosition = nil
-	for _, unitTarget in pairs(tUnitTable) do
-		vecTargetPosition = unitTarget:GetPosition()
-		core.DrawXPosition(vecTargetPosition, "Yellow", 100)
-		nDistanceSq = Vector3.Distance2DSq(vecPosition, vecTargetPosition)
-		if nDistanceSq <= nBestDistanceSq and nDistanceSq ~= 0 then
-			vecBestPosition = vecTargetPosition
+	local vecBestTargetPosition = nil
+	local unitBestTarget = nil
+
+	-- Find the closest unit from tUnitTable
+	for _, unitHitTarget in pairs(tUnitTable) do
+		vecTargetPosition = unitHitTarget:GetPosition()
+		nDistanceSq = Vector3.Distance2DSq(vecPushTargetPosition, vecTargetPosition)
+		if nDistanceSq <= nBestDistanceSq and unitHitTarget ~= unitPushTarget then
+			vecBestTargetPosition = vecTargetPosition
 			nBestDistanceSq = nDistanceSq
+			unitBestTarget = unitHitTarget
 		end
 	end
 
-	if vecBestPosition then
-		vecDirection = Vector3.Normalize(vecBestPosition - vecPosition)
+	if unitBestTarget and vecBestTargetPosition then
+		-- Reserve full prediction for hard mode bots
+		if core.nDifficulty ~= core.nHARD_DIFFICULTY or not unitBestTarget.bIsMemoryUnit then
+			return Vector3.Normalize(vecBestTargetPosition - vecPushTargetPosition)
+		else
+			local vecBestTargetHeading = Vector3.Normalize(unitBestTarget.storedPosition - unitBestTarget.lastStoredPosition)
+			return Vector3.Normalize(vecBestTargetPosition + vecBestTargetHeading * 110 - vecPushTargetPosition)
+		end
 	end
 	
-	return vecDirection
+	return nil
 end
 
 -- Find the best direction to cast Shadow Step
 local function getStepDirection(botBrain, unitTarget)
-	local bSuccess = false
 	local vecDirection = nil
 	local vecTargetPosition = unitTarget:GetPosition()
 	
+	-- No prediction for easy mode bots
+	if core.nDifficulty ~= core.nEASY_DIFFCULTY and unitTarget.bIsMemoryUnit then
+		local vecTargetHeading = Vector3.Normalize(unitTarget.storedPosition - unitTarget.lastStoredPosition)
+		vecTargetPosition = vecTargetPosition + vecTargetHeading * 85
+	end
+
 	local tLocalUnits = core.localUnits
 	if tLocalUnits then
 		-- Check Enemy Heroes
-		if not bSuccess then
-			local tLocalEnemyHeroes = filterGroupRange(tLocalUnits["EnemyHeroes"], vecTargetPosition, 350)
+		if not vecDirection then
+			local tLocalEnemyHeroes = filterGroupRange(tLocalUnits["EnemyHeroes"], vecTargetPosition, 375)
 			if core.NumberElements(tLocalEnemyHeroes) > 1 then
-				vecDirection = getClosestUnitDirectionFromTable(vecTargetPosition, tLocalEnemyHeroes)
-				if vecDirection then
-					core.DrawDebugArrow(vecTargetPosition, vecTargetPosition + vecDirection * 350, "Red")
-					bSuccess = true
-				end
+				vecDirection = getBestPushDirectionFromTable(unitTarget, vecTargetPosition, tLocalEnemyHeroes)
 			end
 		end
 		
 		-- Check Allied Heroes
-		if not bSuccess then
-			local tLocalAllyHeroes = filterGroupRange(tLocalUnits["AllyHeroes"], vecTargetPosition, 350)
+		if not vecDirection then
+			local tLocalAllyHeroes = filterGroupRange(tLocalUnits["AllyHeroes"], vecTargetPosition, 375)
 			if core.NumberElements(tLocalAllyHeroes) > 0 then
-				vecDirection = getClosestUnitDirectionFromTable(vecTargetPosition, tLocalAllyHeroes)
-				if vecDirection then
-					core.DrawDebugArrow(vecTargetPosition, vecTargetPosition + vecDirection * 350, "Red")
-					bSuccess = true
-				end
+				vecDirection = getBestPushDirectionFromTable(unitTarget, vecTargetPosition, tLocalAllyHeroes)
 			end
 		end
 		
 		-- Check Enemy Buildings
-		if not bSuccess then
-			local tLocalEnemyBuildings = filterGroupRange(tLocalUnits["EnemyBuildings"], vecTargetPosition, 350)
+		if not vecDirection then
+			local tLocalEnemyBuildings = filterGroupRange(tLocalUnits["EnemyBuildings"], vecTargetPosition, 375)
 			if core.NumberElements(tLocalEnemyBuildings) > 0 then
-				vecDirection = getClosestUnitDirectionFromTable(vecTargetPosition, tLocalEnemyBuildings)
-				if vecDirection then
-					core.DrawDebugArrow(vecTargetPosition, vecTargetPosition + vecDirection * 350, "Red")
-					bSuccess = true
-				end
+				vecDirection = getBestPushDirectionFromTable(unitTarget, vecTargetPosition, tLocalEnemyBuildings)
 			end
 		end
 		
 		-- Check Allied Buildings
-		if not bSuccess then
-			local tLocalAllyBuildings = filterGroupRange(tLocalUnits["AllyBuildings"], vecTargetPosition, 350)
+		if not vecDirection then
+			local tLocalAllyBuildings = filterGroupRange(tLocalUnits["AllyBuildings"], vecTargetPosition, 375)
 			if core.NumberElements(tLocalAllyBuildings) > 0 then
-				vecDirection = getClosestUnitDirectionFromTable(vecTargetPosition, tLocalAllyBuildings)
-				if vecDirection then
-					core.DrawDebugArrow(vecTargetPosition, vecTargetPosition + vecDirection * 350, "Red")
-					bSuccess = true
-				end
+				vecDirection = getBestPushDirectionFromTable(unitTarget, vecTargetPosition, tLocalAllyBuildings)
 			end
 		end
 	end
 	
 	-- Check Trees
-	if not bSuccess then
-		local tLocalTrees = HoN.GetTreesInRadius(vecTargetPosition, 350)
+	if not vecDirection then
+		local tLocalTrees = HoN.GetTreesInRadius(vecTargetPosition, 375)
 		if tLocalTrees then
 			if core.NumberElements(tLocalTrees) > 0 then
-				vecDirection = getClosestUnitDirectionFromTable(vecTargetPosition, tLocalTrees)
-				if vecDirection then
-					core.DrawDebugArrow(vecTargetPosition, vecTargetPosition + vecDirection * 350, "Green")
-					bSuccess = true
-				end
+				vecDirection = getBestPushDirectionFromTable(unitTarget, vecTargetPosition, tLocalTrees)
 			end
 		end
 	end 
 
-	--[[ Check Cliffs
-	if not bSuccess then
-
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	end
-	--]]
+	-- Cliff checking would go here if it were possible
 	
 	-- Push Towards Ally Well
-	if not bSuccess then
+	if not vecDirection then
 		local unitAllyWell = core.allyWell
 		if unitAllyWell then
 			vecDirection = Vector3.Normalize(unitAllyWell:GetPosition() - vecTargetPosition)
-			if vecDirection then
-				core.DrawDebugArrow(vecTargetPosition, vecTargetPosition + vecDirection * 350, "Blue")
-				bSuccess = true
-			end
 		end
 	end
-	
+
 	return vecDirection
+end
+
+----------------------------------------------
+--          Illusory Assault Logic          --
+----------------------------------------------
+
+local function getAssaultDamage()
+	local nSkillLevel = skills.abilAssault:GetLevel()
+
+	if nSkillLevel == 1 then
+		return 200
+	elseif nSkillLevel == 2 then
+		return 360
+	elseif nSkillLevel == 3 then
+		return 560
+	else
+		return nil
+	end
+end
+
+-----------------------------------
+--          Combo Logic          --
+-----------------------------------
+
+local function getComboManaCost()
+	local nCost = skills.abilStalk:GetManaCost()
+	
+	local abilStep = skills.abilStep
+	if abilStep:GetLevel() > 0 then
+		nCost = nCost + abilStep:GetManaCost()
+	end
+	
+	local abilAssault = skills.abilAssault
+	if abilAssault:GetLevel() > 0 and abilAssault:CanActivate() then
+		nCost = nCost + abilAssault:GetManaCost()
+	end
+	
+	return nCost
 end
 
 ---------------------------------------
@@ -419,24 +412,25 @@ end
 ---------------------------------------
 
 local function HarassHeroExecuteOverride(botBrain)
-    
-    local unitTarget = behaviorLib.heroTarget
-    if unitTarget == nil then
-        return object.harassExecuteOld(botBrain)
-    end
-    
-    local unitSelf = core.unitSelf
-    local vecMyPosition = unitSelf:GetPosition() 
-    local nAttackRange = core.GetAbsoluteAttackRangeToUnit(unitSelf, unitTarget)
-    local nMyExtraRange = core.GetExtraRange(unitSelf)
-    
-    local vecTargetPosition = unitTarget:GetPosition()
-    local nTargetExtraRange = core.GetExtraRange(unitTarget)
-    local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
-    
-    local nLastHarassUtility = behaviorLib.lastHarassUtil
-    local bCanSee = core.CanSeeUnit(botBrain, unitTarget)    
-    local bActionTaken = false
+	
+	local unitTarget = behaviorLib.heroTarget
+	if unitTarget == nil then
+		return object.harassExecuteOld(botBrain)
+	end
+	
+	local unitSelf = core.unitSelf
+	local vecMyPosition = unitSelf:GetPosition()
+	
+	local vecTargetPosition = unitTarget:GetPosition()
+	local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
+	local bCanSeeTarget = core.CanSeeUnit(botBrain, unitTarget)
+	local nTargetPhysicalEHP = nil
+	if bCanSeeTarget then
+		nTargetPhysicalEHP = unitTarget:GetHealth() / (1 - unitTarget:GetPhysicalResistance())
+	end
+	
+	local nLastHarassUtility = behaviorLib.lastHarassUtil
+	local bActionTaken = false
 	
 	-- Stop the bot from trying to harass heroes while dead
 	if not bActionTaken and not unitSelf:IsAlive() then
@@ -445,30 +439,24 @@ local function HarassHeroExecuteOverride(botBrain)
 	
 	-- Don't cast spells while the bot has the Nether Strike buff
 	if unitSelf:HasState("State_Grinex_Ability3") then
-        return object.harassExecuteOld(botBrain)
+		return object.harassExecuteOld(botBrain)
 	end
 	
 	-- Rift Stalk (Out of Shadow Step range)
 	if not bActionTaken then
 		local abilStalk = skills.abilStalk
-		if abilStalk:CanActivate() and nLastHarassUtility > object.nStalkThreshold then
-			-- Only use if the enemy is far away and the bot has follow up mana,
-			-- or the target is at critical health levels
-			if (nTargetDistanceSq > (450 * 450) and (unitSelf:GetManaPercent() > .35) or unitTarget:GetHealthPercent() < .125) then
-				bActionTaken = core.OrderAbility(botBrain, abilStalk)
-			end
+		if abilStalk:CanActivate() and nLastHarassUtility > object.nStalkThreshold and bCanSeeTarget and ((nTargetDistanceSq > (450 * 450) and unitSelf:GetMana() > getComboManaCost()) or nTargetPhysicalEHP < (core.GetFinalAttackDamageAverage(unitSelf) * 2)) then
+			bActionTaken = core.OrderAbility(botBrain, abilStalk)
 		end
 	end
 	
 	-- Shadow Step
 	if not bActionTaken then
 		local abilStep = skills.abilStep
-		if abilStep:CanActivate() and nLastHarassUtility > object.nStepThreshold then
-			if nTargetDistanceSq < (450 * 450) then
-				local vecPushDirection = getStepDirection(botBrain, unitTarget)
-				if vecPushDirection then
-					-- bActionTaken = core.OrderAbilityEntity(botBrain, abilStep)
-				end
+		if abilStep:CanActivate() and bCanSeeTarget and not unitTarget:IsStunned() and nLastHarassUtility > object.nStepThreshold and nTargetDistanceSq < (450 * 450) then
+			local vecPushDirection = getStepDirection(botBrain, unitTarget)
+			if vecPushDirection then
+				bActionTaken = core.OrderAbilityEntityVector(botBrain, abilStep, unitTarget, vecPushDirection * 100)
 			end
 		end
 	end	
@@ -476,11 +464,8 @@ local function HarassHeroExecuteOverride(botBrain)
 	-- Illusory Assault
 	if not bActionTaken then
 		local abilAssault = skills.abilAssault
-		if abilAssault:CanActivate() and nLastHarassUtility > object.nAssaultThreshold then
-			-- Only use if target is close to melee range
-			if nTargetDistanceSq < (300 * 300) then
-				bActionTaken = core.OrderAbility(botBrain, abilAssault)
-			end
+		if abilAssault:CanActivate() and nLastHarassUtility > object.nAssaultThreshold and (nTargetDistanceSq < (300 * 300) or (nTargetDistanceSq < (1200 * 1200) and nTargetPhysicalEHP < getAssaultDamage())) then
+			bActionTaken = core.OrderAbility(botBrain, abilAssault)
 		end
 	end
 	
@@ -497,8 +482,10 @@ local function HarassHeroExecuteOverride(botBrain)
 	end
 
 	if not bActionTaken then
-        return object.harassExecuteOld(botBrain)
-    end 
+		return object.harassExecuteOld(botBrain)
+	end
+	
+	return bActionTaken
 end
 
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
@@ -508,15 +495,20 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 --          RetreatFromThreat Override          --
 --------------------------------------------------
 
-function funcRetreatFromThreatExecuteOverride(botBrain)
+local function funcRetreatFromThreatExecuteOverride(botBrain)
 	local bActionTaken = false
-	local abilStalk = skills.abilStalk
+	local nHealthPercent = core.unitSelf:GetHealthPercent()
 	
 	-- Use Rift Stalk to retreat if possible
-	if abilStalk:CanActivate() then
-		local unitSelf = core.unitSelf
-		if unitSelf:GetHealthPercent() < .55 then
+	if not core.unitSelf:HasState("State_Grinex_Ability2") then
+		local abilStalk = skills.abilStalk
+		if abilStalk:CanActivate() and nHealthPercent < .625 then
 			bActionTaken = core.OrderAbility(botBrain, abilStalk)
+		end
+
+		local abilAssault = skills.abilAssault
+		if abilAssault:CanActivate() and nHealthPercent < .25 then
+				bActionTaken = core.OrderAbility(botBrain, abilAssault)
 		end
 	end
 	
@@ -533,22 +525,17 @@ behaviorLib.RetreatFromThreatBehavior["Execute"] = funcRetreatFromThreatExecuteO
 -------------------------------------------------
 
 local function HealAtWellOveride(botBrain)
-    local bActionTaken = false
-    local abilStalk = skills.abilStalk
+	local bActionTaken = false
  
 	-- Use Rift Stalk on way to well
-	if abilStalk:CanActivate() then
-		local unitSelf = core.unitSelf
-		local vecAllyWell = core.allyWell:GetPosition()
-		local nDistToWellSq = Vector3.Distance2DSq(unitSelf:GetPosition(), vecAllyWell)
-		if nDistToWellSq > (1000 * 1000) then
-			bActionTaken = core.OrderAbility(botBrain, abilStalk)
-		end
+	local abilStalk = skills.abilStalk
+	if abilStalk:CanActivate() and Vector3.Distance2DSq(core.unitSelf:GetPosition(), core.allyWell:GetPosition()) > (1000 * 1000) then
+		bActionTaken = core.OrderAbility(botBrain, abilStalk)
 	end
  
-    if not bActionTaken then
-        return object.HealAtWellBehaviorOld(botBrain)
-    end
+	if not bActionTaken then
+		return object.HealAtWellBehaviorOld(botBrain)
+	end
 end
 
 object.HealAtWellBehaviorOld = behaviorLib.HealAtWellBehavior["Execute"]

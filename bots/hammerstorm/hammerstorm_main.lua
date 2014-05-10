@@ -286,7 +286,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	local bDebugEchos = false
 	
 	local unitTarget = behaviorLib.heroTarget
-	if unitTarget == nil then
+	if unitTarget == nil or not unitTarget:IsValid() then
 		return false --can not execute, move on to the next behavior
 	end
 	
@@ -400,6 +400,13 @@ end
 object.funcPushUtilityOld = behaviorLib.PushingStrengthUtility
 behaviorLib.PushingStrengthUtility = PushingStrengthUtilityOverride
 
+-----------------------
+-- Return to well
+-----------------------
+--this is a great function to override with using retreating skills, such as blinks, travels, stuns or slows.
+function behaviorLib.CustomReturnToWellExecute(botBrain)
+	return core.OrderBlinkItemToEscape(botBrain, core.unitSelf, core.itemPortalKey, true)
+end
 
 ----------------------------------
 --	Hammerstorm items

@@ -652,7 +652,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	local bDebugHarassUtility = false and bDebugEchos
 	
 	local unitTarget = behaviorLib.heroTarget
-	if unitTarget == nil then
+	if unitTarget == nil or not unitTarget:IsValid() then
 		return false --can not execute, move on to the next behavior
 	end
 	

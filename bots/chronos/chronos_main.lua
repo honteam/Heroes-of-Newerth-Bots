@@ -210,7 +210,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	local bDebugEchos = false
 	
 	local unitTarget = behaviorLib.heroTarget
-	if unitTarget == nil then
+	if unitTarget == nil or not unitTarget:IsValid() then
 		return false --can not execute, move on to the next behavior
 	end
 	
@@ -283,6 +283,14 @@ end
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 
+-----------------------
+-- Return to well
+-----------------------
+--this is a great function to override with using retreating skills, such as blinks, travels, stuns or slows.
+function behaviorLib.CustomReturnToWellExecute(botBrain)
+	core.OrderBlinkAbilityToEscape(botBrain, skills.abilTimeLeap, true)
+end
+
 
 ----------------------------------
 --	Chronos items
@@ -329,7 +337,7 @@ BotEcho('finished loading chronos_main')
 --[[
 -- example of how to override default item behaviors. To disable the default, use tinsert(behaviorLib.tDontUseDefaultItemBehavior, "Item_ElderParasite")
 function behaviorLib.ElderParasiteExecute(botBrain)
-	BotEcho("overriden!")
+	BotEcho("overridden!")
 end
 behaviorLib.ElderParasiteBehavior["Execute"] = behaviorLib.ElderParasiteExecute
 ]]

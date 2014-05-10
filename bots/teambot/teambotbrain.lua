@@ -160,6 +160,10 @@ function object:onthink(tGameVariables)
 		return
 	end
 	
+	if self.tAllyHeroes == nil or core.NumberElements(self.tAllyHeroes) < 1 then
+		return
+	end
+	
 	self.bPurchasedThisFrame = false
 	
 	StartProfile('Validation')
@@ -214,7 +218,7 @@ function object:onthink(tGameVariables)
 		jungleLib.assess(self)
 	StopProfile()
 
-	time = HoN.GetMatchTime()
+	local time = HoN.GetMatchTime()
 	if time and time > object.nRuneNextSpawnCheck then
 		object.nRuneNextSpawnCheck = object.nRuneNextSpawnCheck + 120000
 
@@ -235,7 +239,7 @@ end
 function object.CheckRunes()
 	for _,rune in pairs(object.runes) do
 		if HoN.CanSeePosition(rune.vecLocation) then
-			units = HoN.GetUnitsInRadius(rune.vecLocation, 50, core.UNIT_MASK_POWERUP + core.UNIT_MASK_ALIVE)
+			local units = HoN.GetUnitsInRadius(rune.vecLocation, 50, core.UNIT_MASK_POWERUP + core.UNIT_MASK_ALIVE)
 			local bRuneFound = false
 			for _,unit in pairs(units) do
 				local typeName = unit:GetTypeName()
@@ -815,7 +819,7 @@ end
 
 function object:GetThreat(unitHero)
 	if self.tStoredThreats[unitHero:GetUniqueID()] then
-		return self.tStoredThreats[unitHero:GetUniqueID()]
+		return self.tStoredThreats[unitHero:GetUniqueID()] or self.CalculateThreat(unitHero)
 	end
 	-- we don't have a threat?
 	--BotEcho("no threat value for "..unitHero:GetTypeName())
@@ -834,7 +838,7 @@ end
 
 function object:GetDefense(unitHero)
 	if self.tStoredDefenses[unitHero:GetUniqueID()] then
-		return self.tStoredDefenses[unitHero:GetUniqueID()]
+		return self.tStoredDefenses[unitHero:GetUniqueID()] or object.CalculateDefense(unitHero)
 	end
 	-- we don't have a defense?
 	--BotEcho("no defense value for "..unitHero:GetTypeName())
@@ -1433,6 +1437,10 @@ function object:BuildLanes()
 	
 	
 	--Assign bots to lane.
+	if object.tCombinations[1] == nil then
+		return
+	end
+	
 	for key, value in pairs(object.tCombinations[1]) do
 		local hero = object.tLanePreferences[key].hero
 		--BotEcho(hero:GetTypeName().."("..hero:GetUniqueID()..")'s role is "..value)

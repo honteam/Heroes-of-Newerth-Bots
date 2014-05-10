@@ -400,7 +400,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	
 	-- moved unitTarget definition here, as its better for cpu if he isnt nil
 	local unitTarget = behaviorLib.heroTarget
-	if unitTarget == nil then
+	if unitTarget == nil or not unitTarget:IsValid() then
 		return false --can not execute, move on to the next behavior
 	end
 	

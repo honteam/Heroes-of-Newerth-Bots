@@ -26,8 +26,8 @@ end
 
 local print, ipairs, pairs, string, table, next, type, tinsert, tremove, tsort, format, tostring, tonumber, strfind, strsub
 	= _G.print, _G.ipairs, _G.pairs, _G.string, _G.table, _G.next, _G.type, _G.table.insert, _G.table.remove, _G.table.sort, _G.string.format, _G.tostring, _G.tonumber, _G.string.find, _G.string.sub
-local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, min, max, random
-	= _G.math.ceil, _G.math.floor, _G.math.pi, _G.math.tan, _G.math.atan, _G.math.atan2, _G.math.abs, _G.math.cos, _G.math.sin, _G.math.acos, _G.math.min, _G.math.max, _G.math.random
+local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, asin, min, max, random
+	= _G.math.ceil, _G.math.floor, _G.math.pi, _G.math.tan, _G.math.atan, _G.math.atan2, _G.math.abs, _G.math.cos, _G.math.sin, _G.math.acos, _G.math.asin, _G.math.min, _G.math.max, _G.math.random
 
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 	
@@ -680,7 +680,7 @@ function core.GetAbsoluteAttackRangeToUnit(unit, unitTarget, bSquared)
 		end
 		nRange = nRange + core.GetExtraRange(unit)
 	end
-	if unitTarget then
+	if unitTarget and unitTarget:IsValid() then
 		nRange = nRange + core.GetExtraRange(unitTarget)
 	end
 	
@@ -1181,23 +1181,41 @@ function core.InventoryContains(inventory, val, bIgnoreRecipes, bIncludeStash)
     return tableOfThings
 end
 
+core.tFoundItems = {}
+core.tsearchTimes = {}
+core.nSearchFrequency = 2000
 --Finds an item on your hero.
 function core.GetItem(val, bIncludeStash)
-	inventory = core.unitSelf:GetInventory()
-	if bIncludeStash == nil then
-		bIncludeStash = false
+	if core.tFoundItems[val] then -- We have checked the item before. Validate it.
+		core.ValidateItem(core.tFoundItems[val])
+		if core.tFoundItems[val] and core.tFoundItems[val]:IsValid() then -- still valid, return it
+			return core.tFoundItems[val]
+		else
+			core.tFoundItems[val] = nil
+		end
 	end
-	local nLast = (bIncludeStash and 12) or 6
-	for slot = 1, nLast, 1 do
-		local curItem = inventory[slot]
-		if curItem then
-			if curItem:GetTypeName() == val and not curItem:IsRecipe() then --ignore recipies!
-				--BotEcho("Found " .. val)
-				return core.WrapInTable(curItem)
+	--First time seeing the item, or it was invalidated.
+	if not core.tFoundItems[val] then
+		local nLastSearchTime = core.tsearchTimes[val] or 0
+		if nLastSearchTime + core.nSearchFrequency <= HoN:GetGameTime() then -- Only look at every x seconds
+			core.tsearchTimes[val] = HoN:GetGameTime()
+			inventory = core.unitSelf:GetInventory()
+			if bIncludeStash == nil then
+				bIncludeStash = false
+			end
+			local nLast = (bIncludeStash and 12) or 6
+			for slot = 1, nLast, 1 do
+				local curItem = inventory[slot]
+				if curItem then
+					if curItem:GetTypeName() == val and not curItem:IsRecipe() then --ignore recipes!
+						core.tFoundItems[val] = core.WrapInTable(curItem)
+						return core.tFoundItems[val]
+					end
+				end
 			end
 		end
 	end
-    return nil
+	return nil
 end
 
 function core.IsLaneCreep(unit)

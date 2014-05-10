@@ -270,12 +270,12 @@ behaviorLib.HitBuildingBehavior["Execute"] = HitBuildingExecuteOverride
 --	Flint harass actions
 ----------------------------------
 local function HarassHeroExecuteOverride(botBrain)
-	local unitTarget = behaviorLib.heroTarget 
-	local vecTargetPos = unitTarget and unitTarget:GetPosition()
-	
-	if unitTarget == nil or vecTargetPos == nil then
+	local unitTarget = behaviorLib.heroTarget
+	if unitTarget == nil or not unitTarget:IsValid() then
 		return false -- we can't procede, reassess behaviors
 	end
+	
+	local vecTargetPos = unitTarget:GetPosition()
 	
 	local unitSelf = core.unitSelf
 	local bCanSee = core.CanSeeUnit(botBrain, unitTarget)
