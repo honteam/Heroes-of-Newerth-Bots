@@ -1,11 +1,11 @@
 --------------------------------------------------------------
--- ###                   #####                              --
---  #   ####  ######    #     # #    # ###### ###### #    # --
---  #  #    # #         #     # #    # #      #      ##   # --
---  #  #      #####     #     # #    # #####  #####  # #  # --
---  #  #      #         #   # # #    # #      #      #  # # --
---  #  #    # #         #    #  #    # #      #      #   ## --
--- ###  ####  ######     #### #  ####  ###### ###### #    # --
+-- ###  				 #####  							--
+--  #   ####  ######	#     # #    # ###### ###### #    # --
+--  #  #	# # 		#     # #    # #	  # 	 ##   # --
+--  #  #	  ##### 	#     # #    # #####  #####  # #  # --
+--  #  #	  # 		#   # # #    # #	  # 	 #  # # --
+--  #  #	# # 		#    #  #    # #	  # 	 #   ## --
+-- ###  ####  ######	 #### #  ####  ###### ###### #    # --
 --------------------------------------------------------------
 --			Ellonia Bot Version 0.1		--
 ------------------------------------------
@@ -13,36 +13,36 @@
 ------------------------------
 
 ------------------------------------------
---          Bot Initialization          --
-------------------------------------------                         
+--  		Bot Initialization  		--
+------------------------------------------  					   
 
 local _G 					= getfenv(0)
 local object 				= _G.object
 
 object.myName 				= object:GetName()
-object.bRunLogic        	= true
-object.bRunBehaviors    	= true
-object.bUpdates         	= true
-object.bUseShop          	= true
+object.bRunLogic			= true
+object.bRunBehaviors		= true
+object.bUpdates 			= true
+object.bUseShop 		 	= true
 
-object.bRunCommands      	= true 
-object.bMoveCommands    	= true
+object.bRunCommands 	 	= true 
+object.bMoveCommands		= true
 object.bAttackCommands  	= true
 object.bAbilityCommands 	= true
 object.bOtherCommands    	= true
 
 object.bReportBehavior  	= false
-object.bDebugUtility     	= false
+object.bDebugUtility	 	= false
 
 object.logger = {}
 object.logger.bWriteLog  	= false
 object.logger.bVerboseLog	= false
 
-object.core         		= {}
-object.eventsLib    	 	= {}
-object.metadata     		= {}
+object.core 				= {}
+object.eventsLib		 	= {}
+object.metadata 			= {}
 object.behaviorLib     		= {}
-object.skills         		= {}
+object.skills   	  		= {}
 
 runfile "bots/core.lua"
 runfile "bots/botBraincore.lua"
@@ -53,9 +53,9 @@ runfile "bots/behaviorLib.lua"
 local core, eventsLib, behaviorLib, metadata, skills = object.core, object.eventsLib, object.behaviorLib, object.metadata, object.skills
 
 local print, ipairs, pairs, string, table, next, type, tinsert, tremove, tsort, format, tostring, tonumber, strfind, strsub
-    = _G.print, _G.ipairs, _G.pairs, _G.string, _G.table, _G.next, _G.type, _G.table.insert, _G.table.remove, _G.table.sort, _G.string.format, _G.tostring, _G.tonumber, _G.string.find, _G.string.sub
+	= _G.print, _G.ipairs, _G.pairs, _G.string, _G.table, _G.next, _G.type, _G.table.insert, _G.table.remove, _G.table.sort, _G.string.format, _G.tostring, _G.tonumber, _G.string.find, _G.string.sub
 local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
-    = _G.math.ceil, _G.math.floor, _G.math.pi, _G.math.tan, _G.math.atan, _G.math.atan2, _G.math.abs, _G.math.cos, _G.math.sin, _G.math.acos, _G.math.max, _G.math.random
+	= _G.math.ceil, _G.math.floor, _G.math.pi, _G.math.tan, _G.math.atan, _G.math.atan2, _G.math.abs, _G.math.cos, _G.math.sin, _G.math.acos, _G.math.max, _G.math.random
 
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
@@ -70,10 +70,10 @@ BotEcho(object:GetName()..' loading ellonia_main...')
 core.tLanePreferences = {Jungle = 0, Mid = 2, ShortSolo = 1, LongSolo = 1, ShortSupport = 5, LongSupport = 4, ShortCarry = 2, LongCarry = 1}
 
 ---------------------------------
---          Constants          --
+--  		Constants   	   --
 ---------------------------------
 
--- hero_<hero>  to reference the internal hon name of a hero, Hero_Yogi == wildsoul
+-- hero_ < hero >  to reference the internal hon name of a hero, Hero_Yogi == wildsoul
 object.heroName = 'Hero_Ellonia'
 
 
@@ -83,12 +83,12 @@ behaviorLib.LaneItems  = {"Item_Marchers", "Item_PowerSupply", "Item_Intelligenc
 behaviorLib.MidItems  = {"Item_Steamboots", "Item_Weapon1", "Item_NomesWisdom", "Item_Manatube"}
 behaviorLib.LateItems  = {"Item_Morph", "Item_HarkonsBlade", "Item_FrostfieldPlate", "Item_BehemothsHeart", "Item_Lightning2"}
 
--- skill build table, 0=Glacial Spike, 1=Frigid Field, 2=Flash Freeze, 3=Absolute Zero, 4=Attribute
+-- skill build table, 0 = Glacial Spike, 1 = Frigid Field, 2 = Flash Freeze, 3 = Absolute Zero, 4 = Attribute
 object.tSkills = {
-    0, 2, 0, 2, 1,
-    3, 0, 2, 0, 2,
-    3, 1, 1, 1, 4,
-    3, 4, 4, 4, 4,
+	0, 2, 0, 2, 1,
+	3, 0, 2, 0, 2,
+	3, 1, 1, 1, 4,
+	3, 4, 4, 4, 4,
 	4, 4, 4, 4, 4}
 
 -- bonus aggression points if a skill/item is available for use
@@ -120,9 +120,9 @@ object.nChargedThreshold = 18
 
 --#####################################################################
 --#####################################################################
---##                                                                 ##
---##   					Bot Function Overrides                       ##
---##                                                                 ##
+--##																 ##
+--##   					Bot Function Overrides  					 ##
+--##																 ##
 --#####################################################################
 --#####################################################################
 
@@ -134,31 +134,31 @@ object.nChargedThreshold = 18
 -- @return: none
 
 function object:SkillBuild()
-    core.VerboseLog("skillbuild()")
+	core.VerboseLog("skillbuild()")
 
 	local unitSelf = self.core.unitSelf
-    if  skills.abilGlacialSpike == nil then
-        skills.abilGlacialSpike = unitSelf:GetAbility(0)
-        skills.abilFrigidField  = unitSelf:GetAbility(1)
-        skills.abilFlashFreeze  = unitSelf:GetAbility(2)
-        skills.abilAbsoluteZero = unitSelf:GetAbility(3)
-        skills.abilAttributeBoost = unitSelf:GetAbility(4)
-    end
+	if  skills.abilGlacialSpike == nil then
+		skills.abilGlacialSpike = unitSelf:GetAbility(0)
+		skills.abilFrigidField  = unitSelf:GetAbility(1)
+		skills.abilFlashFreeze  = unitSelf:GetAbility(2)
+		skills.abilAbsoluteZero = unitSelf:GetAbility(3)
+		skills.abilAttributeBoost = unitSelf:GetAbility(4)
+	end
 	
 	local nPoints = unitSelf:GetAbilityPointsAvailable()
-    if nPoints <= 0 then
-        return
-    end
-    
-    local nLevel = unitSelf:GetLevel()
-    for i = nLevel, (nLevel+nPoints) do
-        unitSelf:GetAbility(object.tSkills[i]):LevelUp()
-    end
+	if nPoints <= 0 then
+		return
+	end
+	
+	local nLevel = unitSelf:GetLevel()
+	for i = nLevel, (nLevel + nPoints) do
+		unitSelf:GetAbility(object.tSkills[i]):LevelUp()
+	end
 end
 
 
 ------------------------------------------
---          FindItems Override          --
+--  		FindItems Override  		--
 ------------------------------------------
 
 local function funcFindItemsOverride(botBrain)
@@ -180,7 +180,7 @@ local function funcFindItemsOverride(botBrain)
 			local curItem = inventory[slot]
 			if curItem and not curItem:IsRecipe() then
 				if core.itemRingOfSorcery == nil and curItem:GetName() == "Item_Replenish" then
-					core.itemRingOfSorcery= core.WrapInTable(curItem)
+					core.itemRingOfSorcery = core.WrapInTable(curItem)
 				elseif core.itemSheepstick == nil and curItem:GetName() == "Item_Morph" then
 					core.itemSheepstick = core.WrapInTable(curItem)
 				elseif core.itemFrostplate == nil and curItem:GetName() == "Item_FrostfieldPlate" then
@@ -197,12 +197,12 @@ core.FindItems = funcFindItemsOverride
 
 
 ------------------------------------------------------
---            OnThink override                      --
+--  		  OnThink override  					--
 -- Called every bot tick, custom OnThink code here  --
 ------------------------------------------------------
 
 function object:onthinkOverride(tGameVariables)
-    self:onthinkOld(tGameVariables)
+	self:onthinkOld(tGameVariables)
 
 	local unitSelf = core.unitSelf
 	local botBrain = self
@@ -210,7 +210,7 @@ function object:onthinkOverride(tGameVariables)
 	-- ring of sorcery
 	local itemRoS = core.itemRingOfSorcery
 	local givemana = 95
-	if (itemRoS and itemRoS:CanActivate() and unitSelf:GetMaxMana()-unitSelf:GetMana()>givemana) then
+	if (itemRoS and itemRoS:CanActivate() and unitSelf:GetMaxMana()-unitSelf:GetMana() > givemana) then
 		botBrain:OrderItem(itemRoS.object or itemRoS, false)
 	end
 
@@ -220,7 +220,7 @@ object.onthink 	= object.onthinkOverride
 
 
 ----------------------------------------------
---          OnCombatEvent Override          --
+--  		OnCombatEvent Override  		--
 --   use to check for inflictions (buffs)   --
 ----------------------------------------------
 
@@ -255,11 +255,11 @@ function object:oncombateventOverride(EventData)
 	end
 end
 object.oncombateventOld = object.oncombatevent
-object.oncombatevent    = object.oncombateventOverride
+object.oncombatevent	= object.oncombateventOverride
 
 
 ------------------------------------------------------
---           CustomHarassUtility override           --
+--  		 CustomHarassUtility override   		--
 --  change utility according to usable spells here  --
 ------------------------------------------------------
 
@@ -300,34 +300,34 @@ behaviorLib.CustomHarassUtility = CustomHarassUtilityFnOverride
 
 
 --------------------------------------------------------------
---                     Harass Behaviour                     --
+--  				   Harass Behaviour 					--
 --  All code how to use abilities against enemies goes here --
 --------------------------------------------------------------
 
 local function HarassHeroExecuteOverride(botBrain)
-    
-    local unitTarget = behaviorLib.heroTarget
+	
+	local unitTarget = behaviorLib.heroTarget
 	--Target is invalid, move on to the next behaviour
-    if unitTarget == nil then
-        return object.harassExecuteOld(botBrain)
-    end
-    
-    local unitSelf = core.unitSelf
-    local vecMyPosition = unitSelf:GetPosition() 
-    local nAttackRange = core.GetAbsoluteAttackRangeToUnit(unitSelf, unitTarget)
-    local nMyExtraRange = core.GetExtraRange(unitSelf)
-    
-    local vecTargetPosition = unitTarget:GetPosition()
-    local nTargetExtraRange = core.GetExtraRange(unitTarget)
-    local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
-    
-    local nLastHarassUtility = behaviorLib.lastHarassUtil
-    local bCanSee = core.CanSeeUnit(botBrain, unitTarget)    
-    local bActionTaken = false
-    
-    --- Insert abilities code here, set bActionTaken to true 
-    --- if an ability command has been given successfully
-    
+	if unitTarget == nil then
+		return object.harassExecuteOld(botBrain)
+	end
+	
+	local unitSelf = core.unitSelf
+	local vecMyPosition = unitSelf:GetPosition() 
+	local nAttackRange = core.GetAbsoluteAttackRangeToUnit(unitSelf, unitTarget)
+	local nMyExtraRange = core.GetExtraRange(unitSelf)
+	
+	local vecTargetPosition = unitTarget:GetPosition()
+	local nTargetExtraRange = core.GetExtraRange(unitTarget)
+	local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
+	
+	local nLastHarassUtility = behaviorLib.lastHarassUtil
+	local bCanSee = core.CanSeeUnit(botBrain, unitTarget)    
+	local bActionTaken = false
+	
+	--- Insert abilities code here, set bActionTaken to true 
+	--- if an ability command has been given successfully
+	
 	-- GlacialSpike
 	if not bActionTaken then
 		local abilGlacialSpike = skills.abilGlacialSpike
@@ -387,11 +387,11 @@ local function HarassHeroExecuteOverride(botBrain)
 			bActionTakes = core.OrderItemEntity(botBrain, itemSheepstick, unitSelf, no)
 		end
 	end
-    
+	
 	--Default auto attack
-    if not bActionTaken then
-        return object.harassExecuteOld(botBrain)
-    end 
+	if not bActionTaken then
+		return object.harassExecuteOld(botBrain)
+	end 
 	
 	return bActionTaken
 end
@@ -399,18 +399,18 @@ object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 
 -----------------------------------
---          Custom Chat          --
+--  		Custom Chat 		 --
 -----------------------------------
 
-core.tKillChatKeys={
-    "mellow_ink_ellonia_kill1",
-    "mellow_ink_ellonia_kill2",
-    "mellow_ink_ellonia_kill3",
+core.tKillChatKeys = {
+	"mellow_ink_ellonia_kill1",
+	"mellow_ink_ellonia_kill2",
+	"mellow_ink_ellonia_kill3",
 }
 
 core.tDeathChatKeys = {
-    "mellow_ink_ellonia_death1",
-    "mellow_ink_ellonia_death2",
-    "mellow_ink_ellonia_death3",
+	"mellow_ink_ellonia_death1",
+	"mellow_ink_ellonia_death2",
+	"mellow_ink_ellonia_death3",
 }
 BotEcho(object:GetName()..' finished loading ellonia_main')
