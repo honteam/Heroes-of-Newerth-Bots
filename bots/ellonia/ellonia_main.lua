@@ -131,8 +131,6 @@ behaviorLib.HealAtWellBehavior["Utility"] = HealAtWellUtilityOverride
 ------------------------------
 --			skills			--
 ------------------------------
--- @param: none
--- @return: none
 
 function object:SkillBuild()
 	core.VerboseLog("skillbuild()")
