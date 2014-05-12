@@ -1189,7 +1189,13 @@ function core.GetItem(val, bIncludeStash)
 	if core.tFoundItems[val] then -- We have checked the item before. Validate it.
 		core.ValidateItem(core.tFoundItems[val])
 		if core.tFoundItems[val] and core.tFoundItems[val]:IsValid() then -- still valid, return it
-			return core.tFoundItems[val]
+			--check for access
+			if core.unitSelf:CanAccess(core.tFoundItems[val].object) or bIncludeStash then 
+				return core.tFoundItems[val]
+			else
+				--we still have this item in our reference, but it is in stash or courier
+				return
+			end
 		else
 			core.tFoundItems[val] = nil
 		end
