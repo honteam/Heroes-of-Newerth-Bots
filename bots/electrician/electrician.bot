@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="ElectroBot"
+	description="An Electrician Bot by CASHBALLER."
+	heroname="Hero_Electrician"
+	rootlua="electrician_main.lua"
+	defaultplayername="ElectricianBot"
+	precachepath="/heroes/electrician/"
+/>
