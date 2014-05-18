@@ -1,8 +1,29 @@
 --[[
 
- ElectroBot v1.0
+ ElectroBot v1.1
  by CASHBALLER
  
+---------------------------------------------------
+--               Recent Changes
+---------------------------------------------------
+
+----- 1.1 -----
+
+- Functionality
+-- Now purges debuffs on allies and speed buffs on enemies
+-- Updated lane preferences
+
+- Code
+-- Removed object.nGameTime
+-- Renamed val to nUtility
+-- Updated SkillBuild function
+-- Moved constants around for readability (thanks HagBot)
+-- Added bActionTaken back in
+
+---------------------------------------------------
+--                   Notes
+---------------------------------------------------
+
 - Static Grip
 -- used offensively when harass utility is high
 -- sometimes stops channelling right after starting (seems to be a problem with other bots too)
@@ -17,20 +38,21 @@
 -- used during retreat for speed boost
 
 - Static Shock
+-- used to remove perplex/snares/slows/silence from nearby allies
+-- used to remove haste from nearby enemies
 -- used offensively with high harass utility
 -- if target is out of range, may use on self for speed boost (very high harass utility)
 -- used defensively whenever slowed or snared
 -- used to return to well faster
--- could be expanded to remove slows/snares on allies or purge speed buffs on enemies
 
 - General
 -- should increase well return utility when mana is very low, since he's useless without it
 -- harass utility could also use some changes to reflect remaining mana
 -- ability weights probably could use adjustments, but these work fairly well
+-- to implement: Cleansing Shock enemy summoned units
 
 - Code
 -- using a single variable (bDebugLocal) instead of a different bDebugEchos in every method
--- got rid of bActionTaken because it seemed unnecessary
 -- CustomReturnToWellExecute would not work, so overriding HealAtWellExecute instead
 
 --]]
@@ -87,76 +109,42 @@ local Clamp = core.Clamp
 
 BotEcho('loading electrician_main...')
 
---------------------------------
--- Lanes
---------------------------------
-core.tLanePreferences = {Jungle = 0, Mid = 1, ShortSolo = 1, LongSolo = 1, ShortSupport = 4, LongSupport = 4, ShortCarry = 2, LongCarry = 2}
+---------------------------------------------------
+--                  Constants
+---------------------------------------------------
 
 object.heroName = 'Hero_Electrician'
 
---------------------------------
--- Skills
---------------------------------
-function object:SkillBuild()
+-- Lanes
+core.tLanePreferences = {Jungle = 0, Mid = 1, ShortSolo = 1, LongSolo = 1, ShortSupport = 3, LongSupport = 3, ShortCarry = 3, LongCarry = 3}
 
-	local unitSelf = self.core.unitSelf
-	if  skills.abilStaticGrip == nil then
-		skills.abilStaticGrip		= unitSelf:GetAbility(0)
-		skills.abilElectricShield	= unitSelf:GetAbility(1)
-		skills.abilEnergyAbsorption	= unitSelf:GetAbility(2)
-		skills.abilCleansingShock	= unitSelf:GetAbility(3)
-		skills.abilAttributeBoost	= unitSelf:GetAbility(4)
-	end
-	
-	if unitSelf:GetAbilityPointsAvailable() <= 0 then
-		return
-	end
-	
-	-- Shock > Grip level 1 > Absorption > Grip > Shield > Stats
-	if skills.abilCleansingShock:CanLevelUp() then
-		skills.abilCleansingShock:LevelUp()
-	elseif skills.abilStaticGrip:GetLevel() < 1 then
-		skills.abilStaticGrip:LevelUp()	
-	elseif skills.abilEnergyAbsorption:CanLevelUp() then
-		skills.abilEnergyAbsorption:LevelUp()
-	elseif skills.abilStaticGrip:CanLevelUp() then
-		skills.abilStaticGrip:LevelUp()
-	elseif skills.abilElectricShield:CanLevelUp() then
-		skills.abilElectricShield:LevelUp()
-	else
-		skills.abilAttributeBoost:LevelUp()
-	end
-end
+-- Items (internal names)
+behaviorLib.StartingItems = {"2 Item_RunesOfTheBlight", "Item_GuardianRing", "Item_IronBuckler"}
+behaviorLib.LaneItems = {"Item_Marchers", "Item_ManaRegen3", "Item_MysticVestments", "Item_Shield2"}
+behaviorLib.MidItems = {"Item_EnhancedMarchers", "Item_Replenish", "Item_NomesWisdom", "Item_HealthMana2"}
+behaviorLib.LateItems = {"Item_Protect", "Item_SolsBulwark", "Item_DaemonicBreastplate", "Item_BehemothsHeart"}
 
----------------------------------------------------
---                   Overrides                   --
----------------------------------------------------
+-- Skillbuild table, 0 = q, 1 = w, 2 = e, 3 = r, 4 = attri
+object.tSkills = {
+	0, 2, 2, 0, 2,
+	3, 2, 0, 0, 1,
+	3, 1, 1, 1, 4,
+	3, 4, 4, 4, 4,
+	4, 4, 4, 4, 4
+}
 
---[[for testing
-function object:onthinkOverride(tGameVariables)
-	self:onthinkOld(tGameVariables)
-		
-	-- Insert code here
-end
-object.onthinkOld = object.onthink
-object.onthink 	= object.onthinkOverride
---]]
-
-----------------------------------
--- Electrician specific harass bonuses
---
--- Abilities off cd increase harass util
--- Ability use increases harass util for a time
-----------------------------------
+-- Bonus agression points if a skill/item is available for use
 object.nStaticGripUp = 12
 object.nEnergyAbsorptionUp = 20
 object.nCleansingShockUp = 10
 
+-- Bonus agression points that are applied to the bot upon successfully using a skill/item
 object.nStaticGripUse = 28
 object.nElectricShieldUse = 18
 object.nEnergyAbsorptionUse = 0
 object.nCleansingShockUse = 16
 
+-- Thresholds of aggression the bot must reach to use these abilities
 object.nStaticGripLowThreshold = 39 -- use more freely when mana > 250 since we can still absorb/shock after
 object.nStaticGripHighThreshold = 52 -- stricter usage when low mana
 object.nElectricShieldLowThreshold = 38 -- high mana remaining - use freely
@@ -166,30 +154,36 @@ object.nEnergyAbsorptionThreshold = 10
 object.nCleansingShockThreshold = 42
 object.nCleansingShockSelfThreshold = 64 -- used to determine if the self speed boost is more important than waiting to get in range for the slow
 
-object.nGameTime = 0
+-- Stores game time at which shield can be cast again (not constant)
 object.nShieldCooldown = 0
 
--- Increase harass util if abilities are available
-local function AbilitiesUpUtilityFn(hero)
-	
-	local val = 0
-	
-	if skills.abilStaticGrip:CanActivate() then
-		val = val + object.nStaticGripUp
+---------------------------------------------------
+--                   Skills
+---------------------------------------------------
+function object:SkillBuild()
+	local unitSelf = self.core.unitSelf
+	if  skills.abilStaticGrip == nil then
+		skills.abilStaticGrip = unitSelf:GetAbility(0)
+		skills.abilElectricShield = unitSelf:GetAbility(1)
+		skills.abilEnergyAbsorption = unitSelf:GetAbility(2)
+		skills.abilCleansingShock = unitSelf:GetAbility(3)
+		skills.abilAttributeBoost = unitSelf:GetAbility(4)
 	end
-	
-	if skills.abilEnergyAbsorption:CanActivate() then
-		val = val + object.nEnergyAbsorptionUp
+ 
+	local nPoints = unitSelf:GetAbilityPointsAvailable()
+	if nPoints <= 0 then
+		return
 	end
-	
-	if skills.abilCleansingShock:CanActivate() then
-		val = val + object.nCleansingShockUp
+ 
+	local nLevel = unitSelf:GetLevel()
+	for i = nLevel, (nLevel + nPoints) do
+		unitSelf:GetAbility( self.tSkills[i] ):LevelUp()
 	end
-	
-	return val
 end
 
--- Electrician ability use gives bonus to harass util for a while
+---------------------------------------------------
+--            OnCombatEvent Override
+---------------------------------------------------
 function object:oncombateventOverride(EventData)
 	self:oncombateventOld(EventData)
 	
@@ -217,50 +211,116 @@ end
 object.oncombateventOld = object.oncombatevent
 object.oncombatevent 	= object.oncombateventOverride
 
--- Util calc override
+---------------------------------------------------
+--        CustomHarassUtility Override
+---------------------------------------------------
 local function CustomHarassUtilityOverride(hero)
-	local nUtility = AbilitiesUpUtilityFn(hero)
 	
-	-- Increase the weight of Electrician's mana on his utility
-	-- Removed because it made him too aggressive early
-	-- nUtility = nUtility + (core.unitSelf:GetManaPercent() - 0.5) * 20
+	local nUtility = 0
+	
+	if skills.abilStaticGrip:CanActivate() then
+		nUtility = nUtility + object.nStaticGripUp
+	end
+	
+	if skills.abilEnergyAbsorption:CanActivate() then
+		nUtility = nUtility + object.nEnergyAbsorptionUp
+	end
+	
+	if skills.abilCleansingShock:CanActivate() then
+		nUtility = nUtility + object.nCleansingShockUp
+	end
 	
 	return nUtility
 end
 behaviorLib.CustomHarassUtility = CustomHarassUtilityOverride
 
-
-----------------------------------
--- Electric Shield
---
--- Gave it a short cooldown so it doesn't get spammed pointlessly
-----------------------------------
+---------------------------------------------------
+--               Electric Shield
+---------------------------------------------------
 local function checkElectricShieldCooldown()
-	object.nGameTime = HoN.GetGameTime() -- update game time variable
-	if bDebugLocal then BotEcho("ShieldCheck - Checking Shield cooldown at: "..object.nGameTime) end
-	if object.nGameTime > object.nShieldCooldown then
+	local nGameTime = HoN.GetGameTime()
+	if bDebugLocal then BotEcho("ShieldCheck - Checking Shield cooldown at: "..nGameTime) end
+	if nGameTime > object.nShieldCooldown then
 		if bDebugLocal then BotEcho("ShieldCheck - - Shield ready") end
 		return true
 	end
 	return false
 end
 
+-- Short cooldown on shield to prevent spamming
 local function activateElectricShield(botBrain, bDebugEchos)
-	if bDebugEchos then BotEcho("ShieldActivate - Shield casting...") end
-	object.nShieldCooldown = object.nGameTime + 4000 -- four second cooldown
+	local nGameTime = HoN.GetGameTime()
+	if bDebugEchos then BotEcho("ShieldActivate - Shield casting at: "..nGameTime) end
+	object.nShieldCooldown = nGameTime + 4000 -- four second cooldown
 	return core.OrderAbility(botBrain, skills.abilElectricShield, false, bDebugEchos)
 end
 
+---------------------------------------------------
+--         Cleansing Shock TargetFinder
+---------------------------------------------------
+local function findPurgeTarget(botBrain, unitSelf)
+	local tNearbyUnits = HoN.GetUnitsInRadius(unitSelf:GetPosition(), 600, core.UNIT_MASK_ALIVE + core.UNIT_MASK_HERO)
+	local tSortedUnits = {}
+	core.SortUnitsAndBuildings(tNearbyUnits, tSortedUnits, false)
+	local unitPurgePerplex = nil
+	local unitPurgeSnare = nil
+	local unitPurgeSlow = nil
+	local unitPurgeSilence = nil
+	local nSlowSpeed = 275
+	
+	-- Check nearby allies for debuffs we can purge
+	for nUID,unitAlly in pairs(tSortedUnits.allyHeroes) do		
+		if unitAlly:IsPerplexed() then
+			unitPurgePerplex = unitAlly
+		end
+		if unitAlly:IsImmobilized() then
+			unitPurgeSnare = unitAlly
+		end
+		local nUnitSpeed = unitAlly:GetMoveSpeed()
+		if nUnitSpeed < nSlowSpeed then
+			unitPurgeSlow = unitAlly
+			nSlowSpeed = nUnitSpeed
+		end
+		if unitAlly:IsSilenced() then
+			unitPurgeSilence = unitAlly
+		end
+	end
+	
+	-- Purge debuffs if any exist
+	if unitPurgePerplex ~= nil then
+		if bDebugLocal then BotEcho("PurgeFinder - Targeting ally to remove perplex") end
+		return unitPurgePerplex
+	elseif unitPurgeSnare ~= nil then
+		if bDebugLocal then BotEcho("PurgeFinder - Targeting ally to remove snare") end
+		return unitPurgeSnare
+	elseif unitPurgeSlow ~= nil then
+		if bDebugLocal then BotEcho("PurgeFinder - Targeting ally to remove slow") end
+		return unitPurgeSlow
+	elseif unitPurgeSilence ~= nil then
+		if bDebugLocal then BotEcho("PurgeFinder - Targeting ally to remove silence") end
+		return unitPurgeSilence
+	else
+		
+		-- Otherwise check for hasted enemies
+		for nUID,unitEnemy in pairs(tSortedUnits.enemyHeroes) do
+			if (unitEnemy:GetMoveSpeed() > 500 or unitEnemy:IsStealth()) and botBrain.CanSeeUnit(unitEnemy) then
+				if bDebugLocal then BotEcho("PurgeFinder - Targeting enemy to remove speed buff") end
+				return unitEnemy
+			end
+		end
+	end
+end
 
-----------------------------------
--- Electrician harass actions
-----------------------------------
+---------------------------------------------------
+--          Electrician harass actions
+---------------------------------------------------
 local function HarassHeroExecuteOverride(botBrain)
 
+	local bActionTaken = false
 	local unitTarget = behaviorLib.heroTarget
 	if unitTarget == nil or not unitTarget:IsValid() then
 		if bDebugLocal then BotEcho("HarassHero - No target") end
-		return false --can not execute, move on to the next behavior
+		return object.harassExecuteOld(botBrain)
 	end
 	
 	local unitSelf = core.unitSelf
@@ -274,16 +334,16 @@ local function HarassHeroExecuteOverride(botBrain)
 			local nManaPercent = unitSelf:GetManaPercent()
 			if nLastHarassUtility > botBrain.nElectricShieldLowThreshold and nManaPercent > 0.8 then
 				if bDebugLocal then BotEcho("HarassHero - - Channeling and have extra mana, using Electric Shield!") end
-				return activateElectricShield(botBrain, bDebugLocal)
+				bActionTaken = activateElectricShield(botBrain, bDebugLocal)
 			elseif nLastHarassUtility > botBrain.nElectricShieldMedThreshold and nManaPercent > 0.4 then
 				if bDebugLocal then BotEcho("HarassHero - - Channeling and have mana, using Electric Shield!") end
-				return activateElectricShield(botBrain, bDebugLocal)
+				bActionTaken = activateElectricShield(botBrain, bDebugLocal)
 			elseif nLastHarassUtility > botBrain.nElectricShieldHighThreshold then
 				if bDebugLocal then BotEcho("HarassHero - - Channeling and using Electric Shield!") end
-				return activateElectricShield(botBrain, bDebugLocal)
+				bActionTaken = activateElectricShield(botBrain, bDebugLocal)
 			end
 		end
-		return
+		return bActionTaken
 	end
 	
 	local vecMyPosition = unitSelf:GetPosition()	
@@ -291,162 +351,162 @@ local function HarassHeroExecuteOverride(botBrain)
 	local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
 	
 	-- Energy Absorption
-	if nLastHarassUtility > botBrain.nEnergyAbsorptionThreshold then
+	if not bActionTaken and nLastHarassUtility > botBrain.nEnergyAbsorptionThreshold then
 		local abilEnergyAbsorption = skills.abilEnergyAbsorption
 		if bDebugLocal then BotEcho("HarassHero - - Checking Energy Absorption range and activatable...") end
 		if abilEnergyAbsorption:CanActivate() and nTargetDistanceSq < (300 * 300) then
 			if bDebugLocal then BotEcho("HarassHero - - - Harassing with Energy Absorption") end
-			return core.OrderAbility(botBrain, skills.abilEnergyAbsorption, false, bDebugLocal)
+			bActionTaken = core.OrderAbility(botBrain, skills.abilEnergyAbsorption, false, bDebugLocal)
 		end 
 	end
 	
 	-- Static Grip
-	local abilStaticGrip = skills.abilStaticGrip
-	if abilStaticGrip:CanActivate() then
-		if bDebugLocal then BotEcho("HarassHero - - Checking Static Grip worth casting...") end
-		if (nLastHarassUtility > botBrain.nStaticGripHighThreshold or (nLastHarassUtility > botBrain.nStaticGripLowThreshold and unitSelf:GetMana() > 250)) and not (unitTarget:IsStunned() or unitTarget:IsImmobilized()) then
-			if bDebugLocal then BotEcho("HarassHero - - - Harassing with Static Grip") end
-			return core.OrderAbilityEntity(botBrain, abilStaticGrip, unitTarget)
-		end 
-	end
-	
-	-- Cleansing Shock
-	if nLastHarassUtility > botBrain.nCleansingShockThreshold then
-		local abilCleansingShock = skills.abilCleansingShock
-		if bDebugLocal then BotEcho("HarassHero - - Checking Cleansing Shock range and activatable...") end
-		if abilCleansingShock:CanActivate() and unitTarget:GetMoveSpeed() > 275 then
-			local nRange = abilCleansingShock:GetRange()
-			if nTargetDistanceSq < (nRange * nRange) then
-				if bDebugLocal then BotEcho("HarassHero - - - Harassing with Cleansing Shock") end
-				return core.OrderAbilityEntity(botBrain, abilCleansingShock, unitTarget)
-			elseif nLastHarassUtility > botBrain.nCleansingShockSelfThreshold then
-				if bDebugLocal then BotEcho("HarassHero - - - Speeding myself up with Cleansing Shock") end
-				return core.OrderAbilityEntity(botBrain, abilCleansingShock, unitSelf)
-			else
-				if bDebugLocal then BotEcho("HarassHero - - - Harassing with Cleansing Shock") end
-				return core.OrderAbilityEntity(botBrain, abilCleansingShock, unitTarget)
-			end
-		end 
-	end
-	
-	-- Electric Shield
-	local abilElectricShield = skills.abilElectricShield
-	if nTargetDistanceSq < (300 * 300) and abilElectricShield:CanActivate() and checkElectricShieldCooldown() then
-		local nManaPercent = unitSelf:GetManaPercent()
-		if bDebugLocal then BotEcho("HarassHero - - Checking for Electric Shield with mana percent: "..nManaPercent) end
-		if nLastHarassUtility > botBrain.nElectricShieldLowThreshold and nManaPercent > 0.8 then
-			if bDebugLocal then BotEcho("HarassHero - - - Harassing with Electric Shield") end
-			return activateElectricShield(botBrain, bDebugLocal)
-		elseif nLastHarassUtility > botBrain.nElectricShieldMedThreshold and nManaPercent > 0.5 then
-			if bDebugLocal then BotEcho("HarassHero - - - Harassing with Electric Shield") end
-			return activateElectricShield(botBrain, bDebugLocal)
-		elseif nLastHarassUtility > botBrain.nElectricShieldHighThreshold and nManaPercent > 0.3 then
-			if bDebugLocal then BotEcho("HarassHero - - - Harassing with Electric Shield") end
-			return activateElectricShield(botBrain, bDebugLocal)
+	if not bActionTaken then
+		local abilStaticGrip = skills.abilStaticGrip
+		if abilStaticGrip:CanActivate() then
+			if bDebugLocal then BotEcho("HarassHero - - Checking Static Grip worth casting...") end
+			if (nLastHarassUtility > botBrain.nStaticGripHighThreshold or (nLastHarassUtility > botBrain.nStaticGripLowThreshold and unitSelf:GetMana() > 250)) and not (unitTarget:IsStunned() or unitTarget:IsImmobilized()) then
+				if bDebugLocal then BotEcho("HarassHero - - - Harassing with Static Grip") end
+				bActionTaken = core.OrderAbilityEntity(botBrain, abilStaticGrip, unitTarget)
+			end 
 		end
 	end
 	
-	if bDebugLocal then BotEcho("HarassHero - - No action yet, proceeding with normal harass execute.") end
-	return object.harassExecuteOld(botBrain)
+	-- Cleansing Shock
+	if not bActionTaken then
+		local abilCleansingShock = skills.abilCleansingShock
+		if abilCleansingShock:CanActivate() then
+			-- Find nearby heroes to Cleansing Shock
+			local unitPurgeTarget = findPurgeTarget(botBrain, unitSelf)
+			if unitPurgeTarget ~= nil then
+				if bDebugLocal then BotEcho("HarassHero - - Casting Cleansing Shock on nearby hero") end
+				bActionTaken = core.OrderAbilityEntity(botBrain, abilCleansingShock, unitPurgeTarget)
+			elseif nLastHarassUtility > botBrain.nCleansingShockThreshold and unitTarget:GetMoveSpeed() > 275 then
+				if nTargetDistanceSq < (600 * 600) then
+					if bDebugLocal then BotEcho("HarassHero - - Harassing with Cleansing Shock") end
+					bActionTaken = core.OrderAbilityEntity(botBrain, abilCleansingShock, unitTarget)
+				elseif nLastHarassUtility > botBrain.nCleansingShockSelfThreshold then
+					if bDebugLocal then BotEcho("HarassHero - - Speeding myself up with Cleansing Shock") end
+					bActionTaken = core.OrderAbilityEntity(botBrain, abilCleansingShock, unitSelf)
+				else
+					if bDebugLocal then BotEcho("HarassHero - - Harassing with Cleansing Shock") end
+					bActionTaken = core.OrderAbilityEntity(botBrain, abilCleansingShock, unitTarget)
+				end
+			end
+		end
+	end
+	
+	-- Electric Shield
+	if not bActionTaken then
+		local abilElectricShield = skills.abilElectricShield
+		if nTargetDistanceSq < (300 * 300) and abilElectricShield:CanActivate() and checkElectricShieldCooldown() then
+			local nManaPercent = unitSelf:GetManaPercent()
+			if bDebugLocal then BotEcho("HarassHero - - Checking for Electric Shield with mana percent: "..nManaPercent) end
+			if nLastHarassUtility > botBrain.nElectricShieldLowThreshold and nManaPercent > 0.8 then
+				if bDebugLocal then BotEcho("HarassHero - - - Harassing with Electric Shield") end
+				bActionTaken = activateElectricShield(botBrain, bDebugLocal)
+			elseif nLastHarassUtility > botBrain.nElectricShieldMedThreshold and nManaPercent > 0.5 then
+				if bDebugLocal then BotEcho("HarassHero - - - Harassing with Electric Shield") end
+				bActionTaken = activateElectricShield(botBrain, bDebugLocal)
+			elseif nLastHarassUtility > botBrain.nElectricShieldHighThreshold and nManaPercent > 0.3 then
+				if bDebugLocal then BotEcho("HarassHero - - - Harassing with Electric Shield") end
+				bActionTaken = activateElectricShield(botBrain, bDebugLocal)
+			end
+		end
+	end
+	
+	if not bActionTaken then
+		if bDebugLocal then BotEcho("HarassHero - - No action yet, proceeding with normal harass execute.") end
+		return object.harassExecuteOld(botBrain)
+	end
+	
+	return bActionTaken
 end
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 
-
-----------------------------------
---  Electrician specific retreat
-----------------------------------
+---------------------------------------------------
+--       Electrician specific retreat
+---------------------------------------------------
 local function CustomRetreatExecuteOverride(botBrain)
 
+	local bActionTaken = false
 	local unitSelf = core.unitSelf
 	
-	-- Use Cleansing Shock if snared
-	local abilCleansingShock = skills.abilCleansingShock
-	if abilCleansingShock:CanActivate() and (unitSelf:GetMoveSpeed() < 275 or unitSelf:IsImmobilized()) then
-		if bDebugLocal then BotEcho("Retreat - Using Cleansing Shock to remove snare") end
-		return core.OrderAbilityEntity(botBrain, abilCleansingShock, unitSelf)
+	-- Use Cleansing Shock if snared (prioritize self)
+	if not bActionTaken then
+		local abilCleansingShock = skills.abilCleansingShock
+		if abilCleansingShock:CanActivate() then
+			if unitSelf:GetMoveSpeed() < 275 or unitSelf:IsImmobilized() then
+				if bDebugLocal then BotEcho("Retreat - Using Cleansing Shock to remove snare") end
+				bActionTaken = core.OrderAbilityEntity(botBrain, abilCleansingShock, unitSelf)
+			else
+				-- Find nearby heroes to Cleansing Shock
+				local unitPurgeTarget = findPurgeTarget(botBrain, unitSelf)
+				if unitPurgeTarget ~= nil then
+					if bDebugLocal then BotEcho("Retreat - Casting Cleansing Shock on nearby hero") end
+					bActionTaken = core.OrderAbilityEntity(botBrain, abilCleansingShock, unitPurgeTarget)
+				end
+			end
+		end
 	end
 	
 	-- Use Energy Absorption if we are near any enemy heroes (speed boost + free harass while retreating)
-	local abilEnergyAbsorption = skills.abilEnergyAbsorption
-	if abilEnergyAbsorption:CanActivate() then
-		local tNearbyUnits = HoN.GetUnitsInRadius(unitSelf:GetPosition(), 300, core.UNIT_MASK_ALIVE + core.UNIT_MASK_HERO)
-		local sortedUnits = {}
-		core.SortUnitsAndBuildings(tNearbyUnits, sortedUnits, false)
-		local nearbyEnemyHeroes = core.NumberElements(sortedUnits.enemyHeroes)
-		if bDebugLocal then BotEcho("Retreat - Checking number of nearby enemy heroes: "..nearbyEnemyHeroes) end
-		if nearbyEnemyHeroes > 0 then
-			if bDebugLocal then BotEcho("Retreat - - Using Energy Absorption to retreat faster") end
-			return core.OrderAbility(botBrain, abilEnergyAbsorption, false, bDebugLocal)
+	if not bActionTaken then
+		local abilEnergyAbsorption = skills.abilEnergyAbsorption
+		if abilEnergyAbsorption:CanActivate() then
+			local tNearbyUnits = HoN.GetUnitsInRadius(unitSelf:GetPosition(), 300, core.UNIT_MASK_ALIVE + core.UNIT_MASK_HERO)
+			local tSortedUnits = {}
+			core.SortUnitsAndBuildings(tNearbyUnits, tSortedUnits, false)
+			local nNearbyEnemyHeroes = core.NumberElements(tSortedUnits.enemyHeroes)
+			if bDebugLocal then BotEcho("Retreat - Checking number of nearby enemy heroes: "..nNearbyEnemyHeroes) end
+			if nNearbyEnemyHeroes > 0 then
+				if bDebugLocal then BotEcho("Retreat - - Using Energy Absorption to retreat faster") end
+				bActionTaken = core.OrderAbility(botBrain, abilEnergyAbsorption, false, bDebugLocal)
+			end
 		end
 	end
 	
 	-- Use Electric Shield if low health and enough extra mana
-	local abilElectricShield = skills.abilElectricShield
-	if abilElectricShield:CanActivate() and checkElectricShieldCooldown() then
-		if bDebugLocal then BotEcho("Retreat - Checking if we have enough mana for a decent shield") end
-		if unitSelf:GetManaPercent() > unitSelf:GetHealthPercent() * 2 and unitSelf:GetMana() - unitSelf:GetMaxMana() * 0.2 > 25 then
-			if bDebugLocal then BotEcho("Retreat - Casting Electric Shield defensively") end
-			return activateElectricShield(botBrain, bDebugLocal)
+	if not bActionTaken then
+		local abilElectricShield = skills.abilElectricShield
+		if abilElectricShield:CanActivate() and checkElectricShieldCooldown() then
+			if bDebugLocal then BotEcho("Retreat - Checking if we have enough mana for a decent shield") end
+			if unitSelf:GetManaPercent() > unitSelf:GetHealthPercent() * 2 and unitSelf:GetMana() - unitSelf:GetMaxMana() * 0.2 > 25 then
+				if bDebugLocal then BotEcho("Retreat - Casting Electric Shield defensively") end
+				bActionTaken = activateElectricShield(botBrain, bDebugLocal)
+			end
 		end
 	end
+	
+	return bActionTaken
 end
 behaviorLib.CustomRetreatExecute = CustomRetreatExecuteOverride
 
-
------------------------
--- Return to well
------------------------
+---------------------------------------------------
+--               Return to well
+---------------------------------------------------
 local function HealAtWellExecuteOverride(botBrain)
 
+	local bActionTaken = false
 	local unitSelf = core.unitSelf
 	
 	-- Use Cleansing Shock
-	local abilCleansingShock = skills.abilCleansingShock
-	if abilCleansingShock:CanActivate() then
-		if bDebugLocal then BotEcho("Well Return - Using Cleansing Shock to return faster") end
-		return core.OrderAbilityEntity(botBrain, abilCleansingShock, unitSelf)
+	if not bActionTaken then
+		local abilCleansingShock = skills.abilCleansingShock
+		if abilCleansingShock:CanActivate() then
+			if bDebugLocal then BotEcho("Well Return - Using Cleansing Shock to return faster") end
+			bActionTaken = core.OrderAbilityEntity(botBrain, abilCleansingShock, unitSelf)
+		end
 	end
 	
-	return object.healExecuteOld(botBrain)
+	if not bActionTaken then
+		return object.healExecuteOld(botBrain)
+	end
+	
+	return bActionTaken
 end
 object.healExecuteOld = behaviorLib.HealAtWellBehavior["Execute"]
 behaviorLib.HealAtWellBehavior["Execute"] = HealAtWellExecuteOverride
-
-
-----------------------------------
---	Electrician items
-----------------------------------
---[[ list code:
-	"# Item" is "get # of these"
-	"Item #" is "get this level of the item" --]]
-behaviorLib.StartingItems = {"2 Item_RunesOfTheBlight", "Item_GuardianRing", "Item_IronBuckler"}
-behaviorLib.LaneItems = {"Item_Marchers", "Item_ManaRegen3", "Item_MysticVestments", "Item_Shield2"} -- Ring of the Teacher and Helm of the Black Legion
-behaviorLib.MidItems = {"Item_EnhancedMarchers", "Item_Replenish", "Item_NomesWisdom", "Item_HealthMana2"} -- Ring of Sorcery and Icon of the Goddess
-behaviorLib.LateItems = {"Item_Protect", "Item_SolsBulwark", "Item_DaemonicBreastplate", "Item_BehemothsHeart"} --Nullstone
-
-
-
---[[ colors:
-	red
-	aqua == cyan
-	gray
-	navy
-	teal
-	blue
-	lime
-	black
-	brown
-	green
-	olive
-	white
-	silver
-	purple
-	maroon
-	yellow
-	orange
-	fuchsia == magenta
-	invisible
---]]
 
 BotEcho('finished loading electrician_main')
