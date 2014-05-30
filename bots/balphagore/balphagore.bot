@@ -1,9 +1,9 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <bot
-    name="BalfagoreBot"
+    name="BalphagoreBot"
     description="bot_description_balphagore"
     heroname="Hero_Bephelgor"
-    rootlua="balfagore_main.lua"
-    defaultplayername="BalfagoreBot"
+    rootlua="balphagore_main.lua"
+    defaultplayername="BalphagoreBot"
     precachepath="/heroes/bephelgor/"
 />
