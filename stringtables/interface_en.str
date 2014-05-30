@@ -10424,6 +10424,7 @@ bot_description_bombardier			Bombardier is a ranged intelligence hero, with stro
 bot_description_revenant			Revenant is a ganker who lowers armor while adding magical damage to allies. Authored by Rinestone!
 bot_description_wretched_hag		Wretched Hag is a mobile ganker and semicarry who excels in AoE magic damage. Authored by DarkFire!
 bot_description_moon_queen			Moon Queen is a short-ranged carry with strong ganking and a deadly ult. Authored by Anakonda!
+bot_description_blacksmith			A powerful, luck-based intelligence hero who has a nuke with a high damage cap! Authored by Kormoranos!
 
 // Maintenance
 maintenance_general 			Under Maintenance
