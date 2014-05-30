@@ -362,10 +362,10 @@ behaviorLib.RetreatFromThreatBehavior["Execute"] = funcRetreatFromThreatExecuteO
 
 
 --------------------------------------------------------------
---                   PushExecute Override                   --
+--                   		Pushing		                    --
 --    needed to make rhapbot use dance inferno on pushes    --
 --------------------------------------------------------------
-function AbilityPush(botBrain)
+function behaviorLib.customPushExecute(botBrain)
 	local bSuccess = false
 	local abilDance = skills.abilDanceInferno
 	local unitSelf = core.unitSelf
@@ -384,23 +384,6 @@ function AbilityPush(botBrain)
 	
 	return bSuccess
 end
-
-local function PushExecuteOverride(botBrain)
-	if not AbilityPush(botBrain) then 
-		return object.PushExecuteOld(botBrain)
-	end
-end
-object.PushExecuteOld = behaviorLib.PushBehavior["Execute"]
-behaviorLib.PushBehavior["Execute"] = PushExecuteOverride
-
-
-local function TeamGroupBehaviorOverride(botBrain)
-	if not AbilityPush(botBrain) then 
-		return object.TeamGroupBehaviorOld(botBrain)
-	end
-end
-object.TeamGroupBehaviorOld = behaviorLib.TeamGroupBehavior["Execute"]
-behaviorLib.TeamGroupBehavior["Execute"] = TeamGroupBehaviorOverride
 
 
 --####################################################################

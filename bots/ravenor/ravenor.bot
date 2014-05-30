@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="RavenorBot"
+	description="bot_description_ravenor"
+	heroname="Hero_Ravenor"
+	rootlua="ravenor_main.lua"
+	defaultplayername="RavenorBot"
+	precachepath="/heroes/ravenor"
+/>

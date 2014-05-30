@@ -1,16 +1,16 @@
 -----------------------------------------
---  _   _            ______       _    --
--- | | | |           | ___ \     | |   --
+--  _   _	    ______       _    --
+-- | | | |	   | ___ \     | |   --
 -- | |_| | __ _  __ _| |_/ / ___ | |_  --
 -- |  _  |/ _` |/ _` | ___ \/ _ \| __| --
 -- | | | | (_| | (_| | |_/ / (_) | |_  --
 -- \_| |_/\__,_|\__, \____/ \___/ \__| --
---               __/ |                 --
---              |___/  -By: DarkFire   --
+--	       __/ |		 --
+--	      |___/  -By: DarkFire   --
 -----------------------------------------
  
 ------------------------------------------
---          Bot Initialization          --
+--	  Bot Initialization	  --
 ------------------------------------------
  
 local _G = getfenv(0)
@@ -145,7 +145,7 @@ end
  
  
 ----------------------------------------
---          OnThink Override          --
+--	  OnThink Override	  --
 ----------------------------------------
  
 function object:onthinkOverride(tGameVariables)
@@ -177,7 +177,7 @@ object.onthinkOld = object.onthink
 object.onthink = object.onthinkOverride
  
 ----------------------------------------------
---          OnCombatEvent Override          --
+--	  OnCombatEvent Override	  --
 ----------------------------------------------
  
 function object:oncombateventOverride(EventData)
@@ -221,7 +221,7 @@ object.oncombateventOld = object.oncombatevent
 object.oncombatevent = object.oncombateventOverride
  
 ----------------------------------------------------
---          CustomHarassUtility Override          --
+--	  CustomHarassUtility Override	  --
 ----------------------------------------------------
  
 local function CustomHarassUtilityFnOverride(hero)
@@ -255,7 +255,7 @@ end
 behaviorLib.CustomHarassUtility = CustomHarassUtilityFnOverride 
  
 -----------------------------------
---          Haunt Logic          --
+--	  Haunt Logic	  --
 -----------------------------------
  
 -- Returns the magic damage Haunt will do
@@ -276,7 +276,7 @@ local function hauntDamage()
 end
  
 ------------------------------------
---          Scream Logic          --
+--	  Scream Logic	  --
 ------------------------------------
  
 -- Returns the radius of Scream
@@ -297,7 +297,7 @@ local function screamRadius()
 end
  
 -----------------------------------
---          Blast Logic          --
+--	  Blast Logic	  --
 -----------------------------------
  
 -- Filters a group to be within a given range. Modified from St0l3n_ID's Chronos bot
@@ -431,7 +431,7 @@ local function blastDamage()
 end
  
 ---------------------------------------
---          Harass Behavior          --
+--	  Harass Behavior	  --
 ---------------------------------------
  
 local function HarassHeroExecuteOverride(botBrain)
@@ -548,7 +548,7 @@ object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 
 --------------------------------------------------
---          RetreatFromThreat Override          --
+--	  RetreatFromThreat Override	  --
 --------------------------------------------------
 
 local function funcRetreatFromThreatExecuteOverride(botBrain)
@@ -570,7 +570,7 @@ end
 behaviorLib.CustomRetreatExecute = funcRetreatFromThreatExecuteOverride
  
 -------------------------------------------------
---          HealAtWellExecute Overide          --
+--	  HealAtWellExecute Overide	  --
 -------------------------------------------------
 
 function behaviorLib.CustomReturnToWellExecute(botBrain)
@@ -578,16 +578,21 @@ function behaviorLib.CustomReturnToWellExecute(botBrain)
 end
  
 -------------------------------------------
---          PushExecute Overide          --
+--	  	 Pushing				 --
 -------------------------------------------
  
 -- These are modified from fane_maciuca's Rhapsody Bot
-local function AbilityPush(botBrain)
+function behaviorLib.customPushExecute(botBrain)
 	local bSuccess = false
 	local abilScream = skills.abilScream
 	local unitSelf = core.unitSelf
 	local nMinimumCreeps = 3
-	   
+       
+	-- Stop the bot from trying to farm creeps if the creeps approach the spot where the bot died
+	if not unitSelf:IsAlive() then
+		return bSuccess
+	end
+       
 	--Don't use Scream if it would put mana too low
 	if abilScream:CanActivate() and unitSelf:GetManaPercent() > .32 then
 		local tLocalEnemyCreeps = core.localUnits["EnemyCreeps"]
@@ -605,26 +610,7 @@ local function AbilityPush(botBrain)
 			end
 		end
 	end
-	   
+       
 	return bSuccess
 end
- 
-local function PushExecuteOverride(botBrain)
-	if not AbilityPush(botBrain) then
-		return object.PushExecuteOld(botBrain)
-	end
-end
- 
-object.PushExecuteOld = behaviorLib.PushBehavior["Execute"]
-behaviorLib.PushBehavior["Execute"] = PushExecuteOverride
- 
-local function TeamGroupBehaviorOverride(botBrain)
-	if not AbilityPush(botBrain) then
-		return object.TeamGroupBehaviorOld(botBrain)
-	end
-end
- 
-object.TeamGroupBehaviorOld = behaviorLib.TeamGroupBehavior["Execute"]
-behaviorLib.TeamGroupBehavior["Execute"] = TeamGroupBehaviorOverride
- 
 BotEcho(object:GetName()..' finished loading WretchedHag_main')
