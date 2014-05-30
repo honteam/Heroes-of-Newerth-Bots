@@ -589,8 +589,8 @@ local function abilityPush(botBrain, unitSelf)
 	return false
 end
 
-
-function object.CreepPush(botBrain)
+--this is a good function to override to help push
+function behaviorLib.customPushExecute(botBrain)
 	local debugPushLines = false
 	if debugPushLines then BotEcho('^yGotta execute em *greedy*') end
 	
@@ -612,23 +612,6 @@ function object.CreepPush(botBrain)
 	
 	return bSuccess
 end
-
--- both functions below call for the creep push, however 
-function object.PushExecuteOverride(botBrain)
-	if not object.CreepPush(botBrain) then 
-		object.PushExecuteOld(botBrain)
-	end
-end
-object.PushExecuteOld = behaviorLib.PushBehavior["Execute"]
-behaviorLib.PushBehavior["Execute"] = object.PushExecuteOverride
-
-
-local function TeamGroupBehaviorOverride(botBrain)
-	object.TeamGroupBehaviorOld(botBrain)
-	object.CreepPush(botBrain)
-end
-object.TeamGroupBehaviorOld = behaviorLib.TeamGroupBehavior["Execute"]
-behaviorLib.TeamGroupBehavior["Execute"] = TeamGroupBehaviorOverride
 
 
 

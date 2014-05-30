@@ -2036,8 +2036,15 @@ function behaviorLib.PushUtility(botBrain)
 	return utility
 end
 
-function behaviorLib.PushExecute(botBrain)
+function behaviorLib.customPushExecute(botBrain)
+	--This is a great function to override with your pushing shiznizzle. -Karius
+end
 
+function behaviorLib.PushExecute(botBrain)
+	if (behaviorLib.customPushExecute(botBrain)) then
+		return
+	end
+	
 	local bDebugLines = false
 	
 	--if botBrain.myName == 'ShamanBot' then bDebugLines = true end

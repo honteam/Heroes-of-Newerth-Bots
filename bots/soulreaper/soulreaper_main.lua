@@ -925,7 +925,7 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.HealBehavior)
 
 
 --------------------------------------------------
---    Push ability use override
+--    Push ability
 --------------------------------------------------
 local function abilityPush(botBrain, unitSelf)
 	local debugAbilityPush = false
@@ -980,7 +980,7 @@ local function abilityPush(botBrain, unitSelf)
 	return false
 end
 
-function object.CreepPush(botBrain)
+function behaviorLib.customPushExecute(botBrain)
 	local bDebugEchos = false
 	if bDebugEchos then BotEcho('^yGotta execute em *greedy*') end
 	
@@ -1002,21 +1002,5 @@ function object.CreepPush(botBrain)
 	
 	return bSuccess
 end
-
-function object.PushExecuteOverride(botBrain)
-	if not object.CreepPush(botBrain) then 
-		object.PushExecuteOld(botBrain)
-	end
-end
-object.PushExecuteOld = behaviorLib.PushBehavior["Execute"]
-behaviorLib.PushBehavior["Execute"] = object.PushExecuteOverride
-
-
-local function TeamGroupBehaviorOverride(botBrain)
-	object.TeamGroupBehaviorOld(botBrain)
-	object.CreepPush(botBrain)
-end
-object.TeamGroupBehaviorOld = behaviorLib.TeamGroupBehavior["Execute"]
-behaviorLib.TeamGroupBehavior["Execute"] = TeamGroupBehaviorOverride
 
 BotEcho('finished loading soulreaper_main')
