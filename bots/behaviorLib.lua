@@ -723,59 +723,64 @@ function behaviorLib.GetSafeBlinkPosition(vecDesiredPosition, nRange)
 	--vecDesiredPosition further away position. You are normaly going to well
 	local tPath = behaviorLib.GetSafePath(vecDesiredPosition)
 
-	if #tPath == 1 then
-		if nRangeSq >= Vector3.Distance2DSq(tpath[1]:GetPosition(), vecMyPos) then
-			return tpath[1]:GetPosition()
-		else
-			return vecMyPos + Vector3.Normalize(tpath[1]:GetPosition() - vecMyPos) * nRange
-		end
-	end
-
-	--Iterate from end to start.
-	--When going around cliffs there may be multiple "good" spots, get the last one
-	local vecInRange = nil
-	local vecOutRange = nil
-
-	--
-	for i = #tPath, 1, -1 do
-		local nodeCurrent = tPath[i]
-		if Vector3.Distance2DSq(vecMyPos, nodeCurrent:GetPosition()) <= nRangeSq then
-			vecInRange = nodeCurrent:GetPosition()
-			if tPath[i + 1] ~= nil then
-				vecOutRange = tPath[i + 1]:GetPosition()
+	if tPath ~= nil then
+		local vecStartPosition = tPath[1]:GetPosition()
+		if #tPath == 1 then
+			if nRangeSq >= Vector3.Distance2DSq(vecStartPosition, vecMyPos) then
+				return vecStartPosition
 			else
-				vecOutRange = nil
+				return vecMyPos + Vector3.Normalize(vecStartPosition - vecMyPos) * nRange
 			end
 		end
+
+		--Iterate from end to start.
+		--When going around cliffs there may be multiple "good" spots, get the last one
+		local vecInRange = nil
+		local vecOutRange = nil
+
+		--
+		for i = #tPath, 1, -1 do
+			local nodeCurrent = tPath[i]
+			if Vector3.Distance2DSq(vecMyPos, nodeCurrent:GetPosition()) <= nRangeSq then
+				vecInRange = nodeCurrent:GetPosition()
+				if tPath[i + 1] ~= nil then
+					vecOutRange = tPath[i + 1]:GetPosition()
+				else
+					vecOutRange = nil
+				end
+			end
+		end
+
+		--the first node is not in range
+		if vecInRange == nil then
+			-- just blink towards the first node
+			return vecMyPos + Vector3.Normalize(vecStartPosition - vecMyPos) * nRange
+		end
+
+		-- Find the point D such that the lenght of CD is equal to nRange
+		--     c
+		--  A-----D---------B
+		--   \   /
+		-- d  \ /   a
+		--     C
+
+		--law of sin
+		-- a/sin(A) = d/sin(D)
+		--sin(D) = d*sin(A)/a
+
+		local nAngleAtA = core.AngleBetween(vecOutRange - vecInRange, vecMyPos - vecInRange)
+		local nAngleAtD = asin(Vector3.Distance2D(vecInRange, vecMyPos) * sin(nAngleAtA) / nRange)
+
+		-- C = 180 - A - D
+		local nAngleAtC = pi - nAngleAtA - nAngleAtD
+
+		-- law of sin again
+		local nDistanceAToD = nRange/sin(nAngleAtA)*sin(nAngleAtC)
+
+		return Vector3.Normalize(vecOutRange - vecInRange) * nDistanceAToD + vecInRange
 	end
-
-	--the first node is not in range
-	if vecInRange == nil then
-		-- just blink towards the first node
-		return vecMyPos + Vector3.Normalize(tpath[1]:GetPosition() - vecMyPos) * nRange
-	end
-
-	-- Find the point D such that the lenght of CD is equal to nRange
-	--     c
-	--  A-----D---------B
-	--   \   /
-	-- d  \ /   a
-	--     C
-
-	--law of sin
-	-- a/sin(A) = d/sin(D)
-	--sin(D) = d*sin(A)/a
-
-	local nAngleAtA = core.AngleBetween(vecOutRange - vecInRange, vecMyPos - vecInRange)
-	local nAngleAtD = asin(Vector3.Distance2D(vecInRange, vecMyPos) * sin(nAngleAtA) / nRange)
-
-	-- C = 180 - A - D
-	local nAngleAtC = pi - nAngleAtA - nAngleAtD
-
-	-- law of sin again
-	local nDistanceAToD = nRange/sin(nAngleAtA)*sin(nAngleAtC)
-
-	return Vector3.Normalize(vecOutRange - vecInRange) * nDistanceAToD + vecInRange
+	
+	return nil
 end
 
 behaviorLib.tPath = nil
@@ -2724,7 +2729,10 @@ function behaviorLib.CustomReturnToWellExecute(botBrain)
 	return false
 end
 
-function behaviorLib.HealAtWellExecute(botBrain)	
+function behaviorLib.HealAtWellExecute(botBrain)
+	local wellPos = (core.allyWell and core.allyWell:GetPosition())
+	local backUpPos = behaviorLib.PositionSelfBackUp() or wellPos
+	
 	-- call the custom functions
 	local bActionTaken = behaviorLib.CustomHealAtWellExecute(botBrain)
 	if not bActionTaken and Vector3.Distance2DSq(core.unitSelf:GetPosition(), wellPos) > 1200 * 1200 then
@@ -2736,8 +2744,7 @@ function behaviorLib.HealAtWellExecute(botBrain)
 	end
 	
 	if not bActionTaken then
-		local wellPos = behaviorLib.PositionSelfBackUp() or (core.allyWell and core.allyWell:GetPosition())
-		core.OrderMoveToPosAndHoldClamp(botBrain, core.unitSelf, wellPos, false)
+		core.OrderMoveToPosAndHoldClamp(botBrain, core.unitSelf, backUpPos, false)
 	end
 end
 

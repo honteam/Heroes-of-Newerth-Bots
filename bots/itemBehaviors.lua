@@ -45,8 +45,13 @@ behaviorLib.tItemBehaviors = {}
 		Symbol Of Rage
 ]]
 
+-- These are needed to keep track of consumables which may be on their way to us via courier.
+local usedHealthPotion = false
+local usedManaPotion = false
+local usedRunes = false
+
+local bDebugEchos = false
 function behaviorLib.addItemBehavior(itemName)
-	local bDebugEchos = false
 	
 	-- Ignore items on our ignore list
 	if core.tableContains(behaviorLib.tDontUseDefaultItemBehavior, itemName) > 0 then
@@ -62,6 +67,15 @@ function behaviorLib.addItemBehavior(itemName)
 			if bDebugEchos then BotEcho("^gadded "..itemName) end
 			
 			-- item-specific add code
+			if itemName == 'Item_ManaPotion' then
+				usedManaPotion = false
+			end
+			if itemName == 'Item_HealthPotion' then
+				usedHealthPotion = false
+			end
+			if itemName == 'Item_RunesOfTheBlight' then
+				usedRunes = false
+			end
 			
 			--AlchemistBones
 			core.AddJunglePreferences("AlchemistBones", {
@@ -218,7 +232,7 @@ function behaviorLib.UseManaPotUtility(botBrain)
 		local vecOrigin = Vector3.Create(-100, -45)
 		
 		return core.ATanFn(nManaMissing, vecPoint, vecOrigin, 100)
-	elseif not behaviorLib.itemManaPot then
+	elseif not behaviorLib.itemManaPot and usedManaPotion then
 		behaviorLib.removeItemBehavior("Item_ManaPotion")
 	end
 	
@@ -237,6 +251,9 @@ function behaviorLib.UseManaPotExecute(botBrain)
 			bActionTaken = core.OrderMoveToPosClamp(botBrain, unitSelf, vecSelfPos + vecRetreatDirection * core.moveVecMultiplier, false)
 		else
 			bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, behaviorLib.itemManaPot, unitSelf)
+			if bActionTaken then
+				usedManaPotion = true
+			end
 		end
 	end
 		
@@ -348,7 +365,7 @@ function behaviorLib.UseHealthPotUtility(botBrain)
 		local vecPoint = Vector3.Create(nHealAmount, nUtilityThreshold)
 		local vecOrigin = Vector3.Create(200, -40)
 		return core.ATanFn(nHealthMissing, vecPoint, vecOrigin, 100)
-	elseif not behaviorLib.itemHealthPot then
+	elseif not behaviorLib.itemHealthPot and usedHealthPotion then
 		behaviorLib.removeItemBehavior("Item_HealthPotion")
 	end
 	return 0
@@ -366,6 +383,9 @@ function behaviorLib.UseHealthPotExecute(botBrain)
 			bActionTaken = core.OrderMoveToPosClamp(botBrain, unitSelf, vecSelfPos + vecRetreatDirection * core.moveVecMultiplier, false)
 		else
 			bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, behaviorLib.itemHealthPot, unitSelf)
+			if bActionTaken then
+				usedHealthPotion = true
+			end
 		end
 	end
 	return bActionTaken
@@ -400,7 +420,7 @@ function behaviorLib.UseRunesOfTheBlightUtility(botBrain)
 		local vecOrigin = Vector3.Create(-1000, -20)
 		
 		return core.ATanFn(nHealthMissing, vecPoint, vecOrigin, 100)
-	elseif not behaviorLib.itemBlights then
+	elseif not behaviorLib.itemBlights and usedRunes then
 		behaviorLib.removeItemBehavior("Item_RunesOfTheBlight")
 	end
 	
@@ -437,6 +457,9 @@ function behaviorLib.UseRunesOfTheBlightExecute(botBrain)
 	end
 	if unitClosestTree ~= nil then
 		bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf,  behaviorLib.itemBlights, unitClosestTree)
+		if bActionTaken then
+			usedRunes = true
+		end
 	end
 		
 	return bActionTaken

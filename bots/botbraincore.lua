@@ -1365,6 +1365,11 @@ function core.OrderMoveToPosClamp(botBrain, unit, position, bInterruptAttacks, b
 	if object.bRunCommands == false or object.bMoveCommands == false then
 		return false
 	end
+	
+	if unit == nil or position == nil then
+		BotEcho("invalid OrderMoveToPosClamp call!")
+		return false
+	end
 
 	local curTimeMS = HoN.GetGameTime()
 	if curTimeMS < core.nextOrderTime then

@@ -113,7 +113,7 @@ object.nAbsoluteZeroThreshold = 40
 
 --Quick fix for better returning to well ty Kairus
 function HealAtWellUtilityOverride(botBrain)
-	return object.HealAtWellUtilityOld(botBrain) * 1.75 + (botBrain:GetGold() * 8/2000) + 8-(core.unitSelf:GetManaPercent() * 8)
+	return object.HealAtWellUtilityOld(botBrain) + (botBrain:GetGold() * 8/2000)
 end
 object.HealAtWellUtilityOld = behaviorLib.HealAtWellBehavior["Utility"]
 behaviorLib.HealAtWellBehavior["Utility"] = HealAtWellUtilityOverride
