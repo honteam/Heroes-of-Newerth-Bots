@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="Kormoranos'Blacksmith"
+	description="bot_description_blacksmith"
+	heroname="Hero_DwarfMagi"
+	rootlua="blacksmith_main.lua"
+	defaultplayername="BlacksmithBot"
+	precachepath="/heroes/dwarfmagi/"
+/>
