@@ -220,7 +220,7 @@ local function HarassHeroExecuteOverride(botBrain)
 		end
 	
 		-- Ball Lightning
-		if not bActionTaken  and not bTargetRooted and nLastHarassUtility > botBrain.nLightningThreshold and not object.isMagicImmune(unitTarget) then
+		if not bActionTaken and not bTargetRooted and nLastHarassUtility > botBrain.nLightningThreshold and not unitTarget:isMagicImmune() then
 			local abilLightning = skills.abilLightning
 			if abilLightning:CanActivate() then
 				local bCanTeleport = (abilLightning:GetManaCost() == 0) and unitSelf:HasState("State_Ravenor_Ability1")
@@ -235,7 +235,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	end
 
 	-- Blades
-	if not bActionTaken and nLastHarassUtility > botBrain.nBladesThreshold and not object.isMagicImmune(unitTarget) then
+	if not bActionTaken and nLastHarassUtility > botBrain.nBladesThreshold and not unitTarget:isMagicImmune() then
 		local abilBlades = skills.abilBlades
 		if abilBlades:CanActivate() and nTargetDistanceSq < nAttackRangeSq then
 			-- only activate if we are close to the target
@@ -354,19 +354,6 @@ function behaviorLib.customPushExecute(botBrain) --this had much more to it, whi
 		-- Be conservative with mana, so we can cast our combo afterwards
 		if  abilBlades:CanActivate() and unitSelf:GetMana() > (abilBlades:GetManaCost() * 2 + abilLightning:GetManaCost()) then 
 			return core.OrderAbility(botBrain, abilBlades)
-		end
-	end
-	return false
-end
-
---------------------
--- Magic immunity --
---------------------
-function object.isMagicImmune(unit)
-	local tStates = { "State_Item3E", "State_Predator_Ability2", "State_Jereziah_Ability2", "State_Rampage_Ability1_Self", "State_Rhapsody_Ability4_Buff", "State_Hiro_Ability1" }
-	for _, sState in ipairs(tStates) do
-		if unit:HasState(sState) then
-			return true
 		end
 	end
 	return false
