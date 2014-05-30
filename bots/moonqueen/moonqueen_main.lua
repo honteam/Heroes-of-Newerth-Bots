@@ -220,9 +220,10 @@ function object:oncombateventOverride(EventData)
 			nAddBonus = nAddBonus + object.nSymbolofRageUseBonus
 		end
 	elseif EventData.Type == "Respawn" then
-		--To keep track status of 2nd skill
-		skills.abilBounce.bTargetAll = true
-		object.toggleBounce(self, false)
+		if skills.abilBounce ~= nil then --To keep track status of 2nd skill
+			skills.abilBounce.bTargetAll = true
+			object.toggleBounce(self, false)
+		end
 	end
 	
 	if nAddBonus > 0 then

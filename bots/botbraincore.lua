@@ -67,7 +67,7 @@ core.nEasyLowHumanHealthKillChance = 0.166666
 core.bEasyTurnOffHealAtWell = false
 core.nEasyTurnOffHealAtWellDuration = 5000
 core.nEasyTurnOffHealAtWellHumanLastSeenTime = 0
-core.bBetterErrors = true
+core.bBetterErrors = false
 
 --Called every frame the engine gives us during the pick phase
 function object:onpickframe()
@@ -416,6 +416,10 @@ function core.BotBrainCoreInitialize(tGameVariables)
 	
 	core.unitSelf = object:GetHeroUnit()
 	core.teamBotBrain = HoN.GetTeamBotBrain()
+	
+	if (tGameVariables.bIsRetail == false) then
+		core.bBetterErrors = true
+	end
 	
 	if core.teamBotBrain == nil then
 		BotEcho('teamBotBrain is nil!')		
@@ -1359,6 +1363,11 @@ end
 
 function core.OrderMoveToPosClamp(botBrain, unit, position, bInterruptAttacks, bQueueCommand)
 	if object.bRunCommands == false or object.bMoveCommands == false then
+		return false
+	end
+	
+	if unit == nil or position == nil then
+		BotEcho("invalid OrderMoveToPosClamp call!")
 		return false
 	end
 

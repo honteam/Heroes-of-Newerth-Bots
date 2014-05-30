@@ -471,7 +471,7 @@ options_special_effects_tip					Special effects are used in unit abilities and s
 options_reflections							Reflections
 options_reflections_tip						Reflections are used in objects like armor and water to show real-time reflections at the expense of performance.
 options_rim_lighting						Rim Lighting
-options_rim_lighting_tip					Rim Lighting enhances the visual clarity of the models in the game by making the dark areas brighter and the bright areas dimmer around the edge of the model facing the camera.
+options_rim_lighting_tip					Rim Lighting enhances the visual contrast of models against the background by simulating the effects of a bright light behind the model, creating a bright rim around the upper edges.
 options_refraction							Refraction
 options_refraction_tip						Refraction allows for higher end special effects using scene warping at the expense of performance.
 options_post_processing						Post Processing
@@ -822,6 +822,9 @@ options_limit_pings_tip 					If enabled, only 3 pings to the map will be shown a
 options_checkbox_health_always_on			Always Show Health Bars
 options_screen_health_always_on_tip			If enabled, health bars will always be displayed.
 
+options_checkbox_hide_full_healthbar 		Hide Full Healthbars
+options_screen_hide_full_healthbar_trip 	IF enabled, full health bars will be hidden for non hero units.
+
 options_checkbox_hover_hero_info			Display Hover Info
 options_screen_hover_hero_info_tip			If enabled, hero info will be displayed when hovering.
 
@@ -984,6 +987,7 @@ options_notifications_invitations_team_matchmaking	Arranged Team Matchmaking
 options_notifications_miscellaneous					Miscellaneous
 options_notifications_miscellaneous_newpatch		New Patch
 options_notifications_miscellaneous_activestream	Active Stream
+options_notifications_miscellaneous_replay			Replay Available
 notification_history								Notification History
 notification_history_remove_all_button				Remove All Notifications
 
@@ -1074,7 +1078,7 @@ options_simple_dynlight_a		Enhances lighting aesthetics
 
 options_simple_refrac_a			Enhances effects
 
-options_simple_rim_a			Models stand out against the background
+options_simple_rim_a			Models stand out against the background (Requires high shader quality)
 
 options_simple_reflection_a 	Game objects are reflected in water
 
@@ -3569,6 +3573,8 @@ mstore_product1792_desc		Enhances your current taunt by refreshing it after ever
 mstore_product1793_name		Laser Etched
 mstore_product1794_name     Slasher Maliken
 mstore_product1795_name     Hero Alt- Slasher Maliken
+mstore_product1798_name     POG Bubbles
+mstore_product1799_name     Hero Alt- POG Bubbles
 mstore_product1800_name		Stardust Green Color
 mstore_product1801_name		Stardust Bundle
 mstore_product1800_name		Stardust Green Color
@@ -3619,7 +3625,11 @@ mstore_product1847_name		Hang Tuah
 mstore_product1848_name		Hero Alt- Hang Tuah
 mstore_product1849_name		Sea King Myrmidon
 mstore_product1850_name		Hero Alt- Sea King Myrmidon
+mstore_product1851_name		2nd Year Silver
+mstore_product1852_name		2nd Year Gold
 mstore_product1856_name     Power Level
+mstore_product1876_name     Captain Gorebeard
+mstore_product1877_name     Hero Alt- Captain Gorebeard
 mstore_product1878_name     Wicked Hag of the West
 mstore_product1879_name     Hero Alt- Wicked Hag of the West
 mstore_product1880_name     Guanyin
@@ -3708,15 +3718,34 @@ mstore_product1954_name     Mecha Draconis
 mstore_product1955_name     Hero Alt- Mecha Draconis
 mstore_product1956_name     Cyber Steel Grinex
 mstore_product1957_name     Hero Alt- Cyber Steel Grinex
-
+mstore_product1960_name     Baba Yaga
+mstore_product1961_name     Hero Alt- Baba Yaga
 mstore_product1962_name     Cerberus
 mstore_product1963_name     Hero Alt- Cerberus
+mstore_product1964_name     La Llorona
+mstore_product1965_name     Hero Alt- La Llorona
 mstore_product1966_name     Grendel
 mstore_product1967_name     Hero Alt- Grendel
 mstore_product1968_name     Chupacabra
 mstore_product1969_name     Hero Alt- Chupacabra
+mstore_product1970_name     Ultimate Rampage
+mstore_product1971_name     Hero Alt- Ultimate Rampage
 mstore_product1972_name     Bogatyr
 mstore_product1973_name     Hero Alt- Bogatyr
+mstore_product1974_name     Green Knight
+mstore_product1975_name     Hero Alt- Green Knight
+mstore_product1976_name     Merlin
+mstore_product1977_name     Hero Alt- Merlin
+mstore_product1978_name     Artesia le Fay
+mstore_product1979_name     Hero Alt- Artesia le Fay
+mstore_product1980_name     The Kurgan
+mstore_product1981_name     Hero Alt- The Kurgan
+mstore_product1982_name     Elite Bundle
+mstore_product1982_desc     Elite Bundle
+mstore_product1983_name     Limited Bundle
+mstore_product1983_desc     Limited Bundle
+mstore_product1984_name     Djinn Bundle
+mstore_product1984_desc     Djinn Bundle
 mstore_product1986_name     Hero Alt- Dreadknight Salforis
 mstore_product1987_name     Hero Alt- Legendary Valkyrie
 mstore_product1988_name     Hero Alt- Sachi Swiftblade
@@ -3730,6 +3759,8 @@ mstore_product1995_name     Iron Maiden
 mstore_product1996_name     Hero Alt- Iron Maiden
 mstore_product1997_name     Poison Circe
 mstore_product1998_name     Hero Alt- Poison Circe
+mstore_product1999_name     Pirate Announcer Pack
+mstore_product1999_desc     Yar, it be a fine day to announce victory from the topsails! Yar, yar, MMR!
 mstore_product2000_name     Rainbow Taunt
 mstore_product2000_desc		It's all rainbows and sparkles when you're this good.
 mstore_product2002_name     RoboReaper
@@ -3760,6 +3791,8 @@ mstore_product2031_name		Samuel L. Jackson Pack
 mstore_product2031_desc		Unleash your inner BAMF with the Samuel L. Jackson announcer pack.
 mstore_product2032_name     RoboRa
 mstore_product2033_name     Hero Alt- RoboRa
+mstore_product2034_name     Diligence
+mstore_product2035_name     Hero Alt- Diligence
 mstore_product2036_name     NanoParasite
 mstore_product2037_name     Hero Alt- NanoParasite
 mstore_product2038_name     Robodon
@@ -3772,8 +3805,12 @@ mstore_product2044_name     Patience
 mstore_product2045_name     Hero Alt- Patience
 mstore_product2046_name     Kindness
 mstore_product2047_name     Hero Alt- Kindness
+mstore_product2048_name     Temperance
+mstore_product2049_name     Hero Alt- Temperance
 mstore_product2050_name     Exterminator Nomad
 mstore_product2051_name     Hero Alt- Exterminator Nomad
+mstore_product2052_name     Humility
+mstore_product2053_name     Hero Alt- Humility
 mstore_product2061_name     Cinema Savant
 mstore_product2062_name		Circe the Deceiver
 mstore_product2063_name		Iron Maiden
@@ -3801,8 +3838,18 @@ mstore_product2089_name     Apollo
 mstore_product2090_name     Hero Alt- Apollo
 mstore_product2091_name     Poseidon
 mstore_product2092_name     Hero Alt- Poseidon
+mstore_product2093_name     Sir Lancelot
+mstore_product2094_name     Hero Alt- Sir Lancelot
 mstore_product2095_name     Basilisk
 mstore_product2096_name     Hero Alt- Basilisk
+mstore_product2097_name     Dionysus
+mstore_product2098_name     Hero Alt- Dionysus
+mstore_product2099_name     Hermes
+mstore_product2100_name     Hero Alt- Hermes
+mstore_product2101_name     Loki
+mstore_product2102_name     Hero Alt- Loki
+mstore_product2103_name     Anunnaki
+mstore_product2104_name     Hero Alt- Anunnaki
 mstore_product2105_name     Eskinomad
 mstore_product2106_name     Hero Alt- Eskinomad
 mstore_product2107_name		RCT
@@ -3818,8 +3865,15 @@ mstore_product2115_name     Robot Wars - Hell Forged
 mstore_product2116_name     Robot Wars - Iron Legion
 mstore_product2120_name     POG Accursed
 mstore_product2121_name     Hero Alt- POG Accursed
+mstore_product2122_name     POG Andromeda
+mstore_product2123_name     Hero Alt- POG Andromeda
+mstore_product2124_name     POG Electrician
 mstore_product2126_name     POG Armadon
-mstore_product2127_name     Hero Alt- POG Armadon
+mstore_product2128_name     POG Behemoth
+mstore_product2130_name     POG Balphagore
+mstore_product2132_name     POG Blacksmith
+mstore_product2134_name     POG Blood Hunter
+mstore_product2136_name     POG Chipper
 mstore_product2138_name     Amazing Artist
 mstore_product2139_name     Drafting Dominator
 mstore_product2140_name     iNF Member
@@ -3856,7 +3910,37 @@ mstore_product2170_name		Kongor's Stash
 mstore_product2170_desc		When you raid Kongor's Stash you get 5 chests, each of which could contain any Basic or Premium avatar! Limit 5 per customer.
 mstore_product2171_name     Yeniceri
 mstore_product2172_name     Hero Alt- Yeniceri
+mstore_product2173_name     Osiris
+mstore_product2174_name     Hero Alt- Osiris
+mstore_product2175_name     Sphinx
+mstore_product2176_name     Hero Alt- Sphinx
+mstore_product2177_name     Pegasus
+mstore_product2178_name     Hero Alt- Pegasus
 mstore_product2179_name		Hero Alt- Winter Solstice Night
+mstore_product2180_name     Halion
+mstore_product2181_name     Hero Alt- Halion
+mstore_product2182_name     Asgard Thor
+mstore_product2183_name     Hero Alt- Asgard Thor
+mstore_product2184_name     Tyr
+mstore_product2185_name     Hero Alt- Tyr
+mstore_product2186_name     Hercules
+mstore_product2187_name     Hero Alt- Hercules
+mstore_product2188_name     Dionysus Mead Viking
+mstore_product2189_name     Hero Alt- Dionysus Mead Viking
+mstore_product2190_name     Syphon
+mstore_product2191_name     Hero Alt- Syphon
+mstore_product2192_name     Veil
+mstore_product2193_name     Hero Alt- Veil
+mstore_product2194_name     Rhapscallion
+mstore_product2195_name     Hero Alt- Rhapscallion
+mstore_product2196_name     Halcyon Judicator
+mstore_product2197_name     Hero Alt- Halcyon Judicator
+mstore_product2198_name     Vanish
+mstore_product2199_name     Hero Alt- Vanish
+mstore_product2200_name     Horus
+mstore_product2201_name     Hero Alt- Horus
+mstore_product2202_name     Hestia
+mstore_product2203_name     Hero Alt- Hestia
 mstore_product2204_name		Tournament Bundle
 mstore_product2204_desc		Support the regional tournament by purchasing this bundle!
 mstore_product2205_name     2 Year HoNiversary
@@ -3869,6 +3953,266 @@ mstore_product2213_name		Master of Balance
 mstore_product2214_name		CNY 2014
 mstore_product2215_name		Happiness
 mstore_product2216_name		Prosperity
+mstore_product2217_name     Allfather Odin
+mstore_product2218_name     Hero Alt- Allfather Odin
+mstore_product2219_name     Moira
+mstore_product2220_name     Hero- Moira
+mstore_product2221_name     Singularity
+mstore_product2222_name     Hero Alt- Hecate
+mstore_product2223_name     Hecate
+mstore_product2224_name     Hero Alt- Singularity
+mstore_product2225_name     Coral Snake Medusa
+mstore_product2226_name     Hero Alt- Coral Snake Medusa
+mstore_product2227_name     Cursed Woodpuppet Ymir
+mstore_product2228_name     Hero Alt- Cursed Woodpuppet Ymir
+mstore_product2229_name     Chaos Realm Kali
+mstore_product2230_name     Hero Alt- Chaos Realm Kali
+mstore_product2231_name     Jade Empress
+mstore_product2232_name     Hero Alt- Jade Empress
+mstore_product2233_name     Drop Bearzington
+mstore_product2234_name     Hero Alt- Drop Bearzington
+mstore_product2240_name		eSports Footlocker
+mstore_product2240_desc		Support eSports, increase the prize pool of the HoN Tour Season 2 World Finals, AND get awesome avatars?! Sounds like a win-win to me!
+mstore_product2241_name		BeeTalk
+mstore_product2242_name		MSHC 2014
+mstore_product2243_name		Luckphora
+mstore_product2244_name		Hero Alt- Luckphora
+mstore_product2245_name		POG Night Hound
+mstore_product2246_name		Rum Master
+mstore_product2247_name		Hero Alt- Rum Master
+mstore_product2250_name     Ragnarok Hel
+mstore_product2251_name     Hero Alt- Ragnarok Hel
+mstore_product2252_name     Battle Armor Athena
+mstore_product2253_name     Hero Alt- Battle Armor Athena
+mstore_product2254_name     Boudica
+mstore_product2255_name     Hero Alt- Boudica
+mstore_product2256_name     Flinty Widowmaker
+mstore_product2257_name     Hero Alt- Flinty Widowmaker
+mstore_product2258_name     Acolyte
+mstore_product2259_name     Hero Alt- Acolyte
+mstore_product2260_name     POG Succubus
+mstore_product2261_name     Scoutzo the Clown
+mstore_product2262_name     Hero Alt- Scoutzo the Clown
+mstore_product2263_name     Riptide
+mstore_product2264_name     Hero- Riptide
+mstore_product2265_name     Toxin
+mstore_product2266_name     Hero Alt- Toxin
+mstore_product2267_name     Pisces
+mstore_product2268_name     Hero Alt- Pisces
+mstore_product2269_name     War Blossom
+mstore_product2270_name     Hero Alt- War Blossom
+mstore_product2271_name     Gargoyle
+mstore_product2272_name     Hero Alt- Gargoyle
+mstore_product2273_name     GSL 2014
+mstore_product2275_name     Blight Wraith
+mstore_product2276_name     Hero Alt- Blight Wraith
+mstore_product2277_name     Nuclear Winter Glacius
+mstore_product2278_name     Hero Alt- Nuclear Winter Glacius
+mstore_product2279_name     Safari Klanx
+mstore_product2280_name     Hero Alt- Safari Klanx
+mstore_product2281_name     Master of Songkran
+mstore_product2282_name     Hero Alt- Master of Songkran
+mstore_product2283_name     Songkran Rampage
+mstore_product2284_name     Hero Alt- Songkran Rampage
+mstore_product2285_name     Road Rage Rampage
+mstore_product2286_name     Hero Alt- Road Rage Rampage
+mstore_product2287_name     Rabid Night Bunny
+mstore_product2288_name     Hero Alt- Rabid Night Bunny
+mstore_product2289_name     Keeper of the Green
+mstore_product2290_name     Hero Alt- Keeper of the Green
+mstore_product2291_name     Axolotl Pollywog
+mstore_product2292_name     Hero Alt- Axolotl Pollywog
+mstore_product2293_name     Arctic Harrier
+mstore_product2294_name     Hero Alt- Arctic Harrier
+mstore_product2295_name     King Crab Tremble
+mstore_product2296_name     Hero Alt- King Crab Tremble
+mstore_product2297_name     Horny Lizardon
+mstore_product2298_name     Hero Alt- Horny Lizardon
+mstore_product2299_name     Gaia
+mstore_product2300_name     Hero Alt- Gaia
+mstore_product2301_name     Hippomonium
+mstore_product2302_name     Hero Alt- Hippomonium
+mstore_product2303_name     Cyber Samurai
+mstore_product2304_name     Hero Alt- Cyber Samurai
+mstore_product2305_name     Effigy
+mstore_product2306_name     Hero Alt- Effigy
+mstore_product2307_name     Corsair
+mstore_product2308_name     Hero Alt- Corsair
+mstore_product2310_name		Glowing Water Color
+mstore_product2310_desc		Celebrate the Songkran Water Festival in style with this dazzling name color!
+mstore_product2311_name     Songkran Water Festival
+mstore_product2311_desc     Get the Glowing Water Name Color exclusive to the bundle and the Limited Edition Songkran avatars!
+mstore_product2312_name     Game HoN Bundle 1
+mstore_product2312_desc     Earn your rewards for participating in Game HoN events!
+mstore_product2313_name     Game HoN Bundle 2
+mstore_product2313_desc     Earn your rewards for participating in Game HoN events!
+mstore_product2314_name     Game HoN Bundle 3
+mstore_product2314_desc     Earn your rewards for participating in Game HoN events!
+mstore_product2315_name		Flag- Guam
+mstore_product2316_name     Na Khom Thai Announcer
+mstore_product2316_desc     Be Hee-larious with this tip top in a box announcer pack! Put a Na Khom in that Taunt!
+mstore_product2317_name		Riptide
+mstore_product2318_name		Toxin
+mstore_product2319_name		War Blossom
+mstore_product2320_name     POG Nymphora
+mstore_product2321_name     Caller Cthulhuphant
+mstore_product2322_name     Hero Alt- Caller Cthulhuphant
+mstore_product2323_name     POG Fayde
+mstore_product2324_name     Partisan Slayer
+mstore_product2325_name     Hero Alt- Partisan Slayer
+mstore_product2326_name     Liberator
+mstore_product2327_name     Hero Alt- Liberator
+mstore_product2328_name     Cherub
+mstore_product2329_name     Hero Alt- Cherub
+mstore_product2330_name     POG Moon Queen
+mstore_product2331_name     Goddess Armor Athena
+mstore_product2332_name     Hero Alt- Goddess Armor Athena
+mstore_product2333_name     Parrot
+mstore_product2334_name     Hero Alt- Parrot
+mstore_product2335_name     Husher
+mstore_product2336_name     Hero Alt- Husher
+mstore_product2337_name     Kodia
+mstore_product2338_name     Hero Alt- Kodia
+mstore_product2339_name     Ninja Announcer Pack
+mstore_product2339_desc     Real ninjas don't say anything, so let this deadly announcer pack do the talking for you on your path to victory.
+mstore_product2340_name     Imperial Summoner
+mstore_product2341_name     Hero Alt- Imperial Summoner
+mstore_product2342_name     Royal Armor Osiris
+mstore_product2343_name     Hero Alt- Royal Armor Osiris
+mstore_product2344_name     POG Corrupted Disciple
+mstore_product2349_name		HoNiversary Frosting Pink
+mstore_product2349_desc		Clean up the competition with this sweet name color that will make each kill that much more delicious.
+mstore_product2350_name		Vault of the Keeper
+mstore_product2350_desc		When you raid the Vault of the Keeper you get 1 chest. This chest could contain any Premium avatar! Limit 1 per customer.
+mstore_product2351_name		Pandora's Box
+mstore_product2351_desc		Purchase Pandora's Box and get 1 chance at any Ultimate Avatar, Seven Sins Avatars, Early Access or Gold Avatar! Limit 5 per customer.
+mstore_product2352_name		Merrick's Mystery Box
+mstore_product2351_desc		Purchase Pandora's Box and get 1 chance at any Ultimate Avatar, Seven Sins or Virtues Avatars, Early Access or Gold Avatar! Limit 5 per customer.
+mstore_product2353_name     Moira
+mstore_product2354_name     Singularity
+mstore_product2355_name     Hecate
+mstore_product2356_name		3 Year HoNiversary
+mstore_product2357_name     Sexy Librarian
+mstore_product2358_name     Hero Alt- Sexy Librarian
+mstore_product2359_name     Russian Battlebear
+mstore_product2360_name     Hero Alt- Russian Battlebear
+mstore_product2361_name		Izbushka Courier
+mstore_product2361_desc		Get Baba Yaga's house as your own personal courier! Remember to say the magic phrase.
+mstore_product2362_name     Battle Armor Pegasus
+mstore_product2363_name     Hero Alt- Battle Armor Pegasus
+mstore_product2364_name     Venus De Aquarius
+mstore_product2365_name     Hero Alt- Venus De Aquarius
+mstore_product2366_name     POG Flint Beastwood
+mstore_product2367_name     Shock Troop War
+mstore_product2368_name     Hero Alt- Shock Troop War
+mstore_product2369_name     POG Forsaken Archer
+mstore_product2370_name     POG Witch Slayer
+mstore_product2371_name     Redeemed Hades
+mstore_product2372_name     Hero Alt- Redeemed Hades
+mstore_product2373_name     Rock God Apollo
+mstore_product2374_name     Hero Alt- Rock God Apollo
+mstore_product2375_name     Shark Hunter Poseidon
+mstore_product2376_name     Hero Alt- Shark Hunter Poseidon
+mstore_product2377_name     Savage Mace Chronos
+mstore_product2378_name     Hero Alt- Savage Mace Chronos
+mstore_product2379_name     Tarot
+mstore_product2380_name     Hero- Tarot
+mstore_product2381_name     Icosa
+mstore_product2382_name     Hero Alt- Icosa
+mstore_product2383_name     Tyche
+mstore_product2384_name     Hero Alt- Tyche
+mstore_product2385_name     Roulette
+mstore_product2386_name     Hero Alt- Roulette
+mstore_product2387_name     Sister Death
+mstore_product2388_name     Hero Alt- Sister Death
+mstore_product2389_name     POG Zephyr
+mstore_product2390_name     Balrog
+mstore_product2391_name     Hero Alt- Balrog
+mstore_product2392_name     Chameleon Basilisk
+mstore_product2393_name     Hero Alt- Chameleon Basilisk
+mstore_product2394_name     Wave Queen Hestia
+mstore_product2395_name     Hero Alt- Wave Queen Hestia
+mstore_product2396_name     Dark Angel
+mstore_product2397_name     Hero Alt- Dark Angel
+mstore_product2398_name     POG Devourer
+mstore_product2399_name     Luna Moth Cherub
+mstore_product2400_name     Hero Alt- Luna Moth Cherub
+mstore_product2401_name     POG Pharaoh
+mstore_product2402_name     Skullcrusher
+mstore_product2403_name     Hero Alt- Skullcrusher
+mstore_product2404_name     Taurus
+mstore_product2405_name     Hero Alt- Taurus
+mstore_product2406_name     Malice
+mstore_product2407_name     Hero Alt- Malice
+mstore_product2408_name     Manticore
+mstore_product2409_name     Hero Alt- Manticore
+mstore_product2410_name     Insanitarius Berzerker
+mstore_product2411_name     Hero Alt- Insanitarius Berzerker
+mstore_product2412_name     Knightslayer
+mstore_product2413_name     Hero Alt- Knightslayer
+mstore_product2414_name     Wicked Wish
+mstore_product2415_name     Hero Alt- Wicked Wish
+mstore_product2416_name     Forsaken Warg Rider
+mstore_product2417_name     Hero Alt- Forsaken Warg Rider
+mstore_product2418_name     End Bringer Lancelot
+mstore_product2419_name     Hero Alt- End Bringer Lancelot
+mstore_product2420_name     Space Wizard Merlin
+mstore_product2421_name     Hero Alt- Space Wizard Merlin
+mstore_product2422_name     Olympus Armor Pegasus
+mstore_product2423_name     Hero Alt- Olympus Armor Pegasus
+mstore_product2424_name     Aquarius
+mstore_product2425_name     Hero Alt- Aquarius
+mstore_product2426_name     Soviet Klanx
+mstore_product2427_name     Hero Alt- Soviet Klanx
+mstore_product2428_name     Hero Alt- Cheburashka Courier
+mstore_product2428_desc     We found this little guy in a crate of oranges. He was so cute, we decided to give him a job!
+mstore_product2429_name     Ultimate Flint
+mstore_product2430_name     Hero Alt- Ultimate Flint
+mstore_product2431_name     Chinese Phoenix
+mstore_product2432_name     Hero Alt- Chinese Phoenix
+mstore_product2433_name     Bloodtide Brigade
+mstore_product2434_name     The Shroud
+mstore_product2438_name     Axia
+mstore_product2439_name     Hero Alt- Axia
+mstore_product2440_name     Uproar
+mstore_product2441_name     Hero Alt- Uproar
+mstore_product2442_name     Ussuri
+mstore_product2443_name     Hero Alt- Ussuri
+mstore_product2444_name     Riftshards Gladiator
+mstore_product2445_name     Hero Alt- Riftshards Gladiator
+mstore_product2446_name     Persian Manticore
+mstore_product2447_name     Hero Alt- Persian Manticore
+mstore_product2448_name     Preda Tori
+mstore_product2449_name     Hero Alt- Preda Tori
+mstore_product2450_name     EnvyUs
+mstore_product2451_name     Hero Alt- EnvyUs
+mstore_product2452_name     Blood Flo
+mstore_product2453_name     Hero Alt- Blood Flo
+mstore_product2454_name     Lynn X
+mstore_product2455_name     Hero Alt- Lynn X
+mstore_product2456_name     Honeypot
+mstore_product2457_name     Hero Alt- Honeypot
+mstore_product2458_name     Gray Wizard
+mstore_product2459_name     Hero Alt- Gray Wizard
+mstore_product2460_name     Golden Aquarius
+mstore_product2461_name     Hero Alt- Golden Aquarius
+mstore_product2462_name     Golden Leo
+mstore_product2463_name     Hero Alt- Golden Leo
+mstore_product2464_name     Golden Virgo
+mstore_product2465_name     Hero Alt- Golden Virgo
+mstore_product2466_name     Golden Centaur
+mstore_product2467_name     Hero Alt- Golden Centaur
+mstore_product2468_name     Golden Capricorn
+mstore_product2469_name     Hero Alt- Golden Capricorn
+mstore_product2470_name     Golden Libra
+mstore_product2471_name     Hero Alt- Golden Libra
+mstore_product2472_name     Diablo
+mstore_product2473_name     Hero Alt- Diablo
+mstore_product2474_name     Baal
+mstore_product2475_name     Hero Alt- Baal
+mstore_product2476_name     Beelzebub
+mstore_product2477_name     Hero Alt- Beelzebub
+mstore_product2478_name     Greatest of Thailand
 
 mstore_product999999001_name	Default Account Icon
 mstore_product999999002_name	Default Chat Symbol
@@ -4022,6 +4366,7 @@ mstore_eap_avatar_right				Symbol!
 mstore_eap_gainea					Gain
 mstore_eap_only						EA Only
 mstore_plinko_only					Plinko Only
+mstore_esports_only					eSports
 
 mstore_noeap_select					Select
 mstore_noeap_add					Add
@@ -4243,7 +4588,7 @@ mstore_collectorsEditionSet18_expired_tip	This avatar is part of the Revenge of 
 
 mstore_collectorsEditionSet19				Iron Legion
 mstore_collectorsEditionSet19_tip			This avatar is part of the Iron Legion pack.
-mstore_collectorsEditionSet19_owned			Legion Robots
+mstore_collectorsEditionSet19_owned			Iron Legion
 mstore_collectorsEditionSet19_owned_tip		This avatar is part of the Iron Legion pack.
 mstore_collectorsEditionSet19_expired		Iron Legion - Unavailable
 mstore_collectorsEditionSet19_expired_tip	This avatar is part of the Iron Legion pack and is not currently available for purchase.
@@ -4282,6 +4627,48 @@ mstore_collectorsEditionSet24_owned			7 Heavenly Virtues
 mstore_collectorsEditionSet24_owned_tip		This avatar is part of 7 Heavenly Virtues avatar set.
 mstore_collectorsEditionSet24_expired		7 Heavenly Virtues - Unavailable
 mstore_collectorsEditionSet24_expired_tip	This avatar is part of 7 Heavenly Virtues avatar set and is not currently available for purchase.
+
+mstore_collectorsEditionSet25				Scorched Newerth
+mstore_collectorsEditionSet25_tip			This avatar is part of the Scorched Newerth pack.
+mstore_collectorsEditionSet25_owned			Scorched Newerth
+mstore_collectorsEditionSet25_owned_tip		This avatar is part of the Scorched Newerth pack.
+mstore_collectorsEditionSet25_expired		Scorched Newerth - Unavailable
+mstore_collectorsEditionSet25_expired_tip	This avatar is part of the Scorched Newerth pack and is not currently available for purchase.
+
+mstore_collectorsEditionSet26				Guardians of Newerth
+mstore_collectorsEditionSet26_tip			This avatar is part of the Guardians of Newerth pack.
+mstore_collectorsEditionSet26_owned			Guardians of Newerth
+mstore_collectorsEditionSet26_owned_tip		This avatar is part of the Guardians of Newerth pack.
+mstore_collectorsEditionSet26_expired		Guardians of Newerth - Unavailable
+mstore_collectorsEditionSet26_expired_tip	This avatar is part of the Guardians of Newerth pack and is not currently available for purchase.
+
+mstore_collectorsEditionSet27				The Bloodtide Brigade
+mstore_collectorsEditionSet27_tip			This avatar is part of the Bloodtide Brigade pack.
+mstore_collectorsEditionSet27_owned			The Bloodtide Brigade
+mstore_collectorsEditionSet27_owned_tip		This avatar is part of the Bloodtide Brigade pack.
+mstore_collectorsEditionSet27_expired		The Bloodtide Brigade - Unavailable
+mstore_collectorsEditionSet27_expired_tip	This avatar is part of the Bloodtide Brigade pack and is not currently available for purchase.
+
+mstore_collectorsEditionSet28				The Shroud
+mstore_collectorsEditionSet28_tip			This avatar is part of the Shroud pack.
+mstore_collectorsEditionSet28_owned			The Shroud
+mstore_collectorsEditionSet28_owned_tip		This avatar is part of the Shroud pack.
+mstore_collectorsEditionSet28_expired		The Shroud - Unavailable
+mstore_collectorsEditionSet28_expired_tip	This avatar is part of the Shroud pack and is not currently available for purchase.
+
+mstore_collectorsEditionSet29				Item Avatar
+mstore_collectorsEditionSet29_tip			This is an Item Avatar.
+mstore_collectorsEditionSet29_owned			Item Avatar
+mstore_collectorsEditionSet29_owned_tip		This is an Item Avatar.
+mstore_collectorsEditionSet29_expired		Item Avatar - Unavailable
+mstore_collectorsEditionSet29_expired_tip	This is an Item Avatar and is not currently available for purchase.
+
+mstore_collectorsEditionSet30				The URSA Corps
+mstore_collectorsEditionSet30_tip			This avatar is part of the URSA Corps pack.
+mstore_collectorsEditionSet30_owned			The URSA Corps
+mstore_collectorsEditionSet30_owned_tip		This avatar is part of the URSA Corps pack.
+mstore_collectorsEditionSet30_expired		The URSA Corps - Unavailable
+mstore_collectorsEditionSet30_expired_tip	This avatar is part of the URSA Corps pack and is not currently available for purchase.
 
 mstore_ultimateedition					Ultimate Avatar
 mstore_ultimateedition_tip				This avatar is an Ultimate Avatar.
@@ -4501,7 +4888,7 @@ mstore_buygift_confirm				Confirm Purchase - Give Gift?
 mstore_buyitem_confirm_body			Are you sure that you want to purchase this item?
 mstore_buygift_confirm_body			Which player should we send your bonus gift to?
 mstore_buygift_confirm_desc			When you purchase this item, you are additionally able send it to a friend - for free! You can redeem this offer ^r{value}^* more times. 
-mstore_buygift_confirm_exp			This offer expires on the 2nd of January.
+mstore_buygift_confirm_exp			This offer expires on the 21st of May.
 mstore_buygift_enter_player			Enter Player Name
 
 mstore_buycoin_success				Coin Purchase Successful
@@ -4595,7 +4982,7 @@ mstore_error44		This product is not able to be gifted to another player.
 mstore_error45		This code has already been used.
 mstore_error46		You can only use this promotion once.
 mstore_error47		Invalid Promo Code
-mstore_error48		Unable to purchase this grab bag because you own too many items in it.
+mstore_error48		Unable to purchase this product because you own all items in it.
 mstore_error49		You have reached the maximum amount of purchases for this grab bag.
 mstore_error50		There was an error processing your request. Please try again later.
 mstore_error51		Your request has been processed successfully!
@@ -4603,6 +4990,7 @@ mstore_error52		You do not have enough tickets to purchase this item.
 mstore_error53		The product could not be assigned to your account, you may already own it.
 mstore_error54		There was an error processing your request, we were unable to load the product. Please try again later.
 mstore_error50		Plinko is currently disabled. Please try again later.
+mstore_error56		Purchasing coins in-game is currently disabled.
 
 mstore_formerror16		The nickname you entered was too long. Choose a shorter nickname.
 mstore_formerror17		Nicknames cannot begin with a number [0-9] or 'S2'.
@@ -4616,6 +5004,7 @@ mstore_formerror24		Incorrect password.
 mstore_formerror25		You must have a purchased account.
 mstore_formerror26		There was an error reserving your nickname.
 mstore_formerror27		There was an error, please contact support@heroesofnewerth.com
+mstore_formerror50		The nickname you have entered contains censored content, please try a different nickname.
 
 // Probably temp names for things
 mstore_Hero_Frosty_name				Glacius
@@ -4738,6 +5127,7 @@ mstore_Hero_Prisoner_name			Prisoner 945
 mstore_Hero_SirBenzington_name		Sir Benzington
 mstore_Hero_Circe_name				Circe the Deceiver
 mstore_Hero_Klanx_name				Klanx
+mstore_Hero_Riptide_name			Riptide
 
 //Account Icons
 mstore_unlock_icon_btn				Unlock Icon Slot
@@ -4800,6 +5190,7 @@ region_create_account_body					Before you can log in, you must first create a He
 region_create_account_tip					Enter your desired account name and click the Create Account button.
 
 region_turkey_buy_coins						In order to puchase goblin coins you must visit http://freegoblincoins.freeinternethosting.s2.ru.com.
+region_naeu_buy_coins						To purchase coins please visit our website: http://gold.heroesofnewerth.com
 
 // states
 create_acc_state_alabama					Alabama
@@ -5504,6 +5895,7 @@ endstats_label_time							Time
 endstats_label_match_length					Length
 endstats_label_match_ver					Version
 endstats_label_server						Server
+endstats_label_map 							Map
 endstats_label_match_comments				Match Comments
 endstats_button_submit_comment				Submit Comment
 endstats_header_legion_players				Legion Players
@@ -5521,6 +5913,7 @@ endstats_simple_view_riftwars 				Rift Wars Game Summary
 endstats_simple_view_midwars_played			{value} Mid Wars games played!
 endstats_simple_view_bots_played			{value} Bots games played!
 endstats_simple_view_riftwars_played		{value} Rift Wars games played!
+endstats_simple_view_games_played			{value} Stat-Enabled games played!
 endstats_header_player_statistics			Player Statistics
 endstats_label_xp_earned					XP Earned
 endstats_label_deaths						Deaths
@@ -5572,6 +5965,7 @@ endstats_label_kda							K / D / A
 endstats_label_apm							APM
 endstats_label_gpm							GPM
 endstats_label_match_name					^yMatch:^*
+endstats_swap_tip							Switch between the simple and detailed match stats view.
 game_end_stats_victory_legion				Victory for The Legion!
 game_end_stats_victory_hellbourne			Victory for The Hellbourne!
 game_end_stats_detailed						Detailed Stats - {name}
@@ -5607,6 +6001,8 @@ game_end_stats_recentgames					View Recent Game Stats
 game_end_stats_matchdetails					Match Details
 game_end_stats_download_btn					Download Replay
 game_end_stats_download_tootlip				Download the replay for this match.
+game_end_stats_request_btn					Request Replay
+game_end_stats_request_tooltip				This replay is not currently uploaded, but you may request that it be uploaded. Once your request is processed, the file will be available to everyone. You will recieve a notification when it is uploaded and available to you.
 game_end_stats_comment_btn					Comment
 game_end_stats_comment_tooltip				Match comments will be viewable on the HoN replays website.
 game_end_stats_awards						Match Awards
@@ -5619,6 +6015,28 @@ game_end_stats_download_unav_tooltip		This replay is not available for download.
 game_end_stats_download_compat_tooltip		This replay is of an older version of Heroes of Newerth.  Compatibility files will need to be downloaded in order to view this replay.
 game_end_stats_fetch_btn					Fetch Match ID
 game_end_stats_fetch_tooltip				Enter the match ID of a completed game. Past match IDs may be searched on the replays website. After fetching match details, you may view the details of the match, and download a replay, if available.
+
+match_stats_ondemand_-1						No Status
+match_stats_ondemand_0						Failure
+match_stats_ondemand_1						Replay Does Not Exist
+match_stats_ondemand_2						Invalid Host
+match_stats_ondemand_3						Already Uploaded
+match_stats_ondemand_4						Already Queued
+match_stats_ondemand_5						Queued
+match_stats_ondemand_6						Uploading...
+match_stats_ondemand_7						Uploaded!
+
+match_stats_ondemand_-1_tip					There was no status given for the replay.
+match_stats_ondemand_0_tip					There was a failure when attempting to request the replay.
+match_stats_ondemand_1_tip					The requested replay does not exist and cannot be obtained.
+match_stats_ondemand_2_tip					The replay was not found and therefore cannot be obtained.
+match_stats_ondemand_3_tip					The replay is already uploaded, try refreshing the match stats.
+match_stats_ondemand_4_tip					This replay is already queued for upload, check back later to see if it's available.
+match_stats_ondemand_5_tip					The replay is queued to be uploaded, it should be available soon.
+match_stats_ondemand_6_tip					The replay is currently being uploaded...
+match_stats_ondemand_7_tip					The replay has been uploaded and can now be downloaded! Try refreshing the match stats.
+
+match_stats_open							Open Match Stats!
 
 mm_gar_allownonpremium						3. VIP Users
 mm_gar_allownonpremium_desc					If checked, you will only be paired with other VIP users.
@@ -5745,8 +6163,8 @@ match_awards_razed_m_desc					Bet they wish they had insurance on that. Destroye
 match_awards_razed_l_desc					Preserve what few buildings are left in Newerth! Destroyed the least buildings.
 match_awards_secs_dead_m_desc				-
 match_awards_secs_dead_l_desc				Death? Ain't nobody got time for that! Spent the least amount of time dead.
-match_awards_actions_m_desc					There's a direct correlation between APM and skill, right? Had the most actions per minute
-match_awards_actions_l_desc					When will they realize one click can get you to the same place? Had the least actions per minute
+match_awards_actions_m_desc					There's a direct correlation between APM and skill, right? Had the most actions per minute.
+match_awards_actions_l_desc					When will they realize one click can get you to the same place? Had the least actions per minute.
 match_awards_bloodlust_m_desc				I'm not embarrassed to say you were my first! Scored a Bloodlust.
 match_awards_bloodlust_l_desc				-
 match_awards_smackdown_m_desc				Why am I so much better than you? Scored the most Smackdowns.
@@ -6150,7 +6568,7 @@ mainlobby_gamelist_balanced_random_title	Balanced Random
 mainlobby_gamelist_balanced_random_desc		Heroes are randomly distributed to all players.
 mainlobby_gamelist_blindban					Blind Banning
 mainlobby_gamelist_blindban_title			Blind Banning
-mainlobby_gamelist_blindban_desc			Players begin with the full pool of heroes. Three heroes are then banned by the players in the Blue and Pink positions simultaneously without the other team knowing which heroes the other team chose to ban. Players are then shown the bans and are all given the ability to choose from the remaining heroes simultaneously.
+mainlobby_gamelist_blindban_desc			Players begin with the full pool of heroes. During the banning phase, each player gets to ban 1 hero without the other team knowing which heroes the other team chose to ban. Players are then shown the bans and are all given the ability to choose from the remaining heroes simultaneously.
 mainlobby_gamelist_gated					Core Pool
 mainlobby_gamelist_gated_title				Core Pool
 mainlobby_gamelist_gated_desc				Players choose from a crafted pool of 40 heroes. 
@@ -6829,6 +7247,7 @@ tooltip_logout								Log Out
 tooltip_options								Options
 tooltip_offlinereplays						Local Replays
 tooltip_changelog							Change Log
+tooltip_twitchtv 							TwitchTV Streaming
 tooltip_motd								Message of the Day
 tooltip_lang								Language
 tooltip_players_online						Players Online
@@ -7655,6 +8074,12 @@ notify_group_invite_info					invited you to join a group.
 notify_active_stream_situation				Stream Online
 notify_active_stream_dependent				{streamname}
 notify_active_stream_info					Stream is now online!
+//26
+notify_replay_available_situation			Replay Ready
+notify_replay_available_dependent
+notify_replay_available_info				Replay is ready!
+
+notify_match_id								Match#
 
 // compendium.package
 compendium_title							Hero Compendium
@@ -9437,6 +9862,11 @@ hero_tip_offensive_tip_Hero_Rhapsody_2			Use Disco Inferno when you want to stan
 hero_tip_defensive_tip_Hero_Rhapsody_1			You only take damage from Disco Inferno if you are standing still in it.
 hero_tip_defensive_tip_Hero_Rhapsody_2			Disable or burst down Rhapsody when she uses Protective Melody because it will make the rest of her surrounding team nearly invulnerable.
 
+hero_tip_offensive_tip_Hero_Riptide_1			Harrassing an enemy with your Watery Grave can quickly force your enemy out of the lane leaving it free for you to farm!
+hero_tip_offensive_tip_Hero_Riptide_2			Remember whenever your in water you move fast and can go invisible if no enemies are near you, making it a great tool for escaping when you have to.
+hero_tip_defensive_tip_Hero_Riptide_1			When Riptide is on land he is very weak and can lose most encounters, wait for him to use his ultimate and when its over go hunting for him!
+hero_tip_defensive_tip_Hero_Riptide_2			Riptide gains strength against you while you are on water, avoid going toe to toe with him in the river, and remember you can always try to lose him in the jungle.
+
 hero_tip_offensive_tip_Hero_SandWraith_1		For 3 seconds after you move off of Desert's Curse sand trail, you retain the ability to move through any terrain; use this as an escape mechanism.
 hero_tip_offensive_tip_Hero_SandWraith_2		You can use Mirage and Manifest on a surprised enemy to escape from a gank.
 hero_tip_defensive_tip_Hero_SandWraith_1		Sand Wraith can teleport to any of his illusions his ultimate creates. Be ready for him to jump on you at any time.
@@ -9667,11 +10097,6 @@ hero_tip_offensive_tip_Hero_Circe_2				Deceive can be used as both a ganking or 
 hero_tip_defensive_tip_Hero_Circe_1				Doppelgangers add alot of damage to a team fight however they are very vulnerable when attacked.
 hero_tip_defensive_tip_Hero_Circe_2				Twisted Visage has a notable link and channel time before Circe can clone the enemy. This can be disrupted by moving out of range or by interrupting Circe.
 
-hero_tip_offensive_tip_Hero_Klankx_1			H.A.W.K. loses duration when you're attacked but causes you to move over terrain. Use your surroundings to your advantage to kite enemies and attack safely.
-hero_tip_offensive_tip_Hero_Klankx_2			B.A.N.G. only applies the slow when your opponent is facing the center. Predict your enemies movements and lead them with your cast.
-hero_tip_defensive_tip_Hero_Klankx_1			The rockets that fire from Klanx lacky fire in a straight line whenever he attacks, sidestep them to avoid the damage.
-hero_tip_defensive_tip_Hero_Klankx_2			B.A.N.G deals increased damage and applies a slow in a large area only if you are facing the center when it triggers. Be sure to face away briefly when you see it.
-
 // Match Rewards
 match_stat_rewards_player_breakdown				Player Breakdown:
 match_stat_rewards_match_breakdown				Match Breakdown:
@@ -9699,6 +10124,8 @@ match_stat_rewards_played_games					Played
 match_stat_rewards_won_games					Won
 match_stat_rewards_gated_games					Core Pool
 match_stat_rewards_bots_games					Bot
+match_stat_rewards_riftwars_games				Riftwars
+match_stat_rewards_midwars_games				Midwars
 
 match_stat_rewards_header						{play} {value}{gametype} Games {withfriends}
 match_stat_rewards_sub_header					{played} {value} of {target} stat-enabled{gametype} matchmaking games {withfriends}
@@ -9795,6 +10222,9 @@ ms_stats_tabs_stats								S\\nT\\nA\\nT\\nS\\n
 ms_stats_tabs_view_all_items					View All Items	
 ms_stats_tabs_valued_over						Valued Over
 ms_stats_tabs_reward_includes					Reward Includes:
+
+ms_switch_view									Switch View
+ms_switch_view_tip								Switch between the simple and detailed match stats view.
 	
 // Match Rewards Special Rewards ms_match_reward_special_{event_id}_{item_id} 
 
@@ -9989,11 +10419,11 @@ bot_description_soul_reaper			Soul Reaper is a strong, versatile hero who can he
 bot_description_engineer			A capable ganker, Engineer also provides a lot of teamfight capability. Authored by V1P3R`!
 bot_description_gravekeeper			Gravekeeper is a versatile hero with solid Magic and Physical damage. Authored by Schnarchnase!
 bot_description_ellonia				Ellonia is a ranged intelligence hero with powerful, icy skill shots! Authored by Mellow_Ink!
-bot_description_balphagore			Balphagore is a melee strength hero, with insane pushing potential due to his minions. Authored by Kairus101!
+bot_description_balphagore			Balphagore is a melee strength tank with insane pushing potential. Authored by Kairus101!
 bot_description_bombardier			Bombardier is a ranged intelligence hero, with strong magic damage spells. Authored by Anakonda!
 bot_description_revenant			Revenant is a ganker who lowers armor while adding magical damage to allies. Authored by Rinestone!
 bot_description_wretched_hag		Wretched Hag is a mobile ganker and semicarry who excels in AoE magic damage. Authored by DarkFire!
-bot_description_moon_queen			Moon Queen is a short-ranged carry with strong early ganking and a deadly ult. Authored by Anakonda!
+bot_description_moon_queen			Moon Queen is a short-ranged carry with strong ganking and a deadly ult. Authored by Anakonda!
 
 // Maintenance
 maintenance_general 			Under Maintenance
@@ -10081,7 +10511,7 @@ plinko_no_tickets_body			You do not have enough tickets to play Plinko. You can 
 plinko_ticket_tooltip_aa 		This is an Alt Avatar for the hero {heroName}!\n\nAlt Avatars allow you to change how your hero appears in-game!
 plinko_ticket_tooltip_cc 		This is a Chat Color!\n\nChat Colors change color of your name in the chat userlist as well as your placement in it!
 plinko_ticket_tooltip_cs		This is a Chat Symbol!\n\nChat Symbols are the icon that appears to the right of your name in the chat userlist as well as other places.
-plinko_ticket_tooltip_ai		This is an Account Icon!\n\nAccount Icons are the icon that appears to the left of your name in teh chat userlist as well as other places.
+plinko_ticket_tooltip_ai		This is an Account Icon!\n\nAccount Icons are the icon that appears to the left of your name in the chat userlist as well as other places.
 plinko_ticket_tooltip_av 		This is an Announcer!\n\nAnnouncers changes what the in-game announcer sounds like as well as its animations.
 plinko_ticket_tooltip_t			This is a Taunt!\n\nTaunts changes how your in-game taunt looks and sounds when used.
 plinko_ticket_tooltip_h 		This is a Hero! By selecting this item, you will be given this hero permanently to play!
@@ -10103,7 +10533,7 @@ plinko_prize_tier_4 			Bronze Chest
 plinko_prize_tier_5 			Tickets
 plinko_prize_tier_6 			Tickets
 
-plinko_prize_tier_1_tip 		The Diamond Chest includes a chance for any Gold or Early Access Avatars.
+plinko_prize_tier_1_tip 		The Diamond Chest includes a chance for any Gold, Early Access, or Plinko Exclusive Avatars.
 plinko_prize_tier_2_tip			The Gold Chest includes a chance for any Limited or Holiday Edition Avatars.
 plinko_prize_tier_3_tip			The Silver Chest includes a chance for any Premium Avatars.
 plinko_prize_tier_4_tip			The Bronze Chest includes a chance for any Basic Avatars.
@@ -10136,5 +10566,4 @@ dice_tooltip_body2				Using the amulet will give you a new set of abilities. Thi
 dice_tooltip_unusable			The amulet can only be used if you can afford them and you are in your team's well.
 
 dice_prompt_body				Using the amulet will either consume one of your uses or, if you have no uses, cost you {cost} goblin coins.\n\nYou currently have {tokens} uses and {gold} goblin coins.
-
 // End - do not delete this line
