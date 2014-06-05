@@ -1,11 +1,17 @@
 --[[
 
- ElectroBot v1.1
+ ElectroBot v1.2
  by CASHBALLER
  
 ---------------------------------------------------
 --               Recent Changes
 ---------------------------------------------------
+
+----- 1.2 -----
+
+- Functionality
+-- Now purges some dangerous summoned units
+-- Starts with Logger's Hatchet
 
 ----- 1.1 -----
 
@@ -37,9 +43,10 @@
 -- used often with low harass utility threshold (maybe too aggressive for new players)
 -- used during retreat for speed boost
 
-- Static Shock
+- Cleansing Shock
 -- used to remove perplex/snares/slows/silence from nearby allies
--- used to remove haste from nearby enemies
+-- used to purge some deadly enemy summoned units
+-- used to remove haste from nearby enemies (need to improve this to check states)
 -- used offensively with high harass utility
 -- if target is out of range, may use on self for speed boost (very high harass utility)
 -- used defensively whenever slowed or snared
@@ -119,7 +126,7 @@ object.heroName = 'Hero_Electrician'
 core.tLanePreferences = {Jungle = 0, Mid = 1, ShortSolo = 1, LongSolo = 1, ShortSupport = 3, LongSupport = 3, ShortCarry = 3, LongCarry = 3}
 
 -- Items (internal names)
-behaviorLib.StartingItems = {"2 Item_RunesOfTheBlight", "Item_GuardianRing", "Item_IronBuckler"}
+behaviorLib.StartingItems = {"Item_RunesOfTheBlight", "Item_LoggersHatchet", "Item_IronBuckler"}
 behaviorLib.LaneItems = {"Item_Marchers", "Item_ManaRegen3", "Item_MysticVestments", "Item_Shield2"}
 behaviorLib.MidItems = {"Item_EnhancedMarchers", "Item_Replenish", "Item_NomesWisdom", "Item_HealthMana2"}
 behaviorLib.LateItems = {"Item_Protect", "Item_SolsBulwark", "Item_DaemonicBreastplate", "Item_BehemothsHeart"}
@@ -256,10 +263,22 @@ local function activateElectricShield(botBrain, bDebugEchos)
 end
 
 ---------------------------------------------------
+--       List of Summoned Minions to Purge
+---------------------------------------------------
+local function isPurgeablePet(sName)
+	-- Add Coeurl and Shiver?
+	-- Other minions aren't really worth using the ult cooldown on
+	if sName == "Pet_Hellbringer_Ability4" or sName == "Pet_Hellbringer_Ability4_Alt" or sName == "Pet_Hellbringer_Ability4_Alt2" or sName == "Pet_Hellbringer_Ability4_Alt3" or sName == "Pet_NecroRanged" then
+		return true
+	end
+	return false
+end
+
+---------------------------------------------------
 --         Cleansing Shock TargetFinder
 ---------------------------------------------------
 local function findPurgeTarget(botBrain, unitSelf)
-	local tNearbyUnits = HoN.GetUnitsInRadius(unitSelf:GetPosition(), 600, core.UNIT_MASK_ALIVE + core.UNIT_MASK_HERO)
+	local tNearbyUnits = HoN.GetUnitsInRadius(unitSelf:GetPosition(), 600, core.UNIT_MASK_ALIVE + core.UNIT_MASK_HERO + core.UNIT_MASK_UNIT)
 	local tSortedUnits = {}
 	core.SortUnitsAndBuildings(tNearbyUnits, tSortedUnits, false)
 	local unitPurgePerplex = nil
@@ -300,6 +319,15 @@ local function findPurgeTarget(botBrain, unitSelf)
 		if bDebugLocal then BotEcho("PurgeFinder - Targeting ally to remove silence") end
 		return unitPurgeSilence
 	else
+	
+		-- Next check for dangerous enemy summoned units
+		for nUID,unitEnemy in pairs(tSortedUnits.enemyCreeps) do
+			local sName = unitEnemy:GetTypeName()
+			if isPurgeablePet(sName) then
+				if bDebugLocal then BotEcho("PurgeFinder - Targeting summoned unit to destroy: "..sName) end
+				return unitEnemy
+			end
+		end
 		
 		-- Otherwise check for hasted enemies
 		for nUID,unitEnemy in pairs(tSortedUnits.enemyHeroes) do
@@ -310,6 +338,35 @@ local function findPurgeTarget(botBrain, unitSelf)
 		end
 	end
 end
+
+---------------------------------------------------
+--        Custom minion attack behavior
+---------------------------------------------------
+local function AttackEnemyMinionsExecuteOverride(botBrain)
+
+	local bActionTaken = false
+	local unitSelf = core.unitSelf
+	local unitMinionTarget = core.unitMinionTarget
+	
+	if not bActionTaken then
+		local sName = unitMinionTarget:GetTypeName()
+		-- Might as well ult the exploding minion if we're going to attack it anyway
+		if isPurgeablePet(sName) or sName == "Pet_NecroMelee" then
+			local abilCleansingShock = skills.abilCleansingShock
+			if abilCleansingShock:CanActivate() then
+				bActionTaken = core.OrderAbilityEntity(botBrain, abilCleansingShock, unitMinionTarget)
+			end
+		end
+	end
+	
+	if not bActionTaken then
+		return object.attackEnemyMinionsOld(botBrain)
+	end
+	
+	return bActionTaken
+end
+object.attackEnemyMinionsOld = behaviorLib.attackEnemyMinionsBehavior["Execute"]
+behaviorLib.attackEnemyMinionsBehavior["Execute"] = AttackEnemyMinionsExecuteOverride
 
 ---------------------------------------------------
 --          Electrician harass actions
