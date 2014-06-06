@@ -305,7 +305,7 @@ local function HarassHeroExecuteOverride(botBrain)
 
 	local bActionTaken = false
 
-	local bTargetMagicImmune = object.isMagicImmune(unitTarget)
+	local bTargetMagicImmune = unitTarget:isMagicImmune()
 
 	----------------------------------------------------------------------------
 
@@ -358,7 +358,7 @@ function behaviorLib.ultimateUtility(botBrain)
 	local nEnemyCreeps = 0
 
 	for _, unitHero in pairs(tLocalUnits["EnemyHeroes"]) do
-		if Vector3.Distance2DSq(vecMyPosition, unitHero:GetPosition()) < 600*600 and not object.isMagicImmune(unitHero) then
+		if Vector3.Distance2DSq(vecMyPosition, unitHero:GetPosition()) < 600*600 and not unitHero:isMagicImmune() then
 			nEnemyHeroes = nEnemyHeroes + 1
 		end
 	end
@@ -531,19 +531,6 @@ function object.getBounceState()
 		return false
 	end
 	return skills.abilBounce.bTargetAll 
-end
-
---------------------
--- Magic immunity --
---------------------
-function object.isMagicImmune(unit)
-	local tStates = { "State_Item3E", "State_Predator_Ability2", "State_Jereziah_Ability2", "State_Rampage_Ability1_Self", "State_Rhapsody_Ability4_Buff", "State_Hiro_Ability1" }
-	for _, sState in ipairs(tStates) do
-		if unit:HasState(sState) then
-			return true
-		end
-	end
-	return false
 end
 
 -----------------------------
