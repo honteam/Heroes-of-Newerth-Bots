@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="MoiraBot"
+	description="bot_description_moira"
+	heroname="Hero_Moira"
+	rootlua="moira_main.lua"
+	defaultplayername="MoiraBot"
+	precachepath="/heroes/moira/"
+/>
