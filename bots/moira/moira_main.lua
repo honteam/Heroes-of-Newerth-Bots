@@ -393,14 +393,14 @@ function behaviorLib.HelpAllyExecute(botBrain)
 	local vecAllyPos = behaviorLib.unitHelpAlly:GetPosition()
 	local abilIllu = skills.abilIllu
 	if abilIllu:CanActivate() then
-		return OrderAbilityPosition(botBrain, abilIllu, vecAllyPos)
+		return core.OrderAbilityPosition(botBrain, abilIllu, vecAllyPos)
 	end
 
 	local bActionTaken = object.UseSkillsDefensively(botBrain, behaviorLib.unitHelpAlly)
 
 	if not bActionTaken then
 		if Vector3.Distance2DSq(core.unitSelf:GetPosition(), vecAllyPos) > 350 * 350 then
-			bActionTaken = core.OrderMoveToPos(vecAllyPos)
+			bActionTaken = core.OrderMoveToPos(botBrain, core.unitSelf, vecAllyPos)
 		end
 	end
 
