@@ -49,11 +49,7 @@ BotEcho(object:GetName() .. " loading moira...")
 
 
 -- TODO(S)
--- skills up, Tresholds, and use bonuses
--- Actual skill usage
--- Behavior to stop channeling
 -- Find out why findMimic() does not exist until first reloadbots
---
 --
 --
 --
@@ -86,12 +82,12 @@ core.tLanePreferences = {Jungle = 0, Mid = 3, ShortSolo = 3, LongSolo = 2, Short
 --just for me to remember it
 local cyclone = "Item_Intelligence6"
 
---[[
-behaviorLib.StartingItems  = {"Item_RunesOfTheBlight", "Item_IronBuckler", "Item_LoggersHatchet"}
-behaviorLib.LaneItems  = {"Item_Marchers", "Item_Replenish", "Item_EnhancedMarchers"}
-behaviorLib.MidItems  = {"Item_Nuke 3","Item_Morph"}
-behaviorLib.LateItems  = {"Item_Nuke 5","Item_Dawnbringer","Item_Intelligence6","Item_Damage9"}
-]]--
+
+behaviorLib.StartingItems  = {"Item_RunesOfTheBlight", "Item_DuckBoots", "Item_Scarab"}
+behaviorLib.LaneItems  = {"Item_Marchers", "Item_EnhancedMarchers"}
+behaviorLib.MidItems  = {cyclone, "Item_Nuke 3", "Item_Morph"}
+behaviorLib.LateItems  = {"Item_Nuke 5", "Item_Dawnbringer", "Item_Damage9"}
+
 
 object.tSkills = {
 	0, 1, 0, 2, 0,
@@ -104,8 +100,6 @@ object.tSkills = {
 -- This is the real deal, core.unitSelf is going to change to run default behaviors for the mimic
 object.unitHero = nil
 
-object.nStunThreshold = 40
-object.nManaburnThreshold = 50
 
 
 --local tDefaultBehaviors = behaviorLib.tBehaviors
@@ -113,13 +107,56 @@ object.nManaburnThreshold = 50
 --Check from this list instead when mimic is functional
 --local tMimicBehaviors = {}
 
-
 --tholds & up values
+object.nManaburnUpBonus = 10
+object.nStunUpBonus = 15
 
+object.nStunThreshold = 40
+object.nManaburnThreshold = 50
+object.nUltThreshold = 70
 
+object.nDisableTreshold = 45
+
+object.nIlluUseBonus = 20
+object.nStunUseBonus = 15
+object.nManaburnUseBonus = 15
+object.nUltUseBonus = 20
 
 --Illusion of 3rd skill nil if not exist or channeling ended early
 object.unitMoiraMimic = nil
+
+------------------
+-- Misc Helpers --
+------------------
+
+-- Both must be before OnThink or are nil ... dont ask why
+function behaviorLib.IsMimic()
+	local mimic = object.unitMoiraMimic
+	return mimic ~= nil and mimic:IsValid() and core.unitSelf:GetUniqueID() == mimic:GetUniqueID()
+end
+
+function object.findMimic()
+	if core.tControllableUnits == nil then
+		return nil
+	end
+	if not object.unitHero:IsChanneling() then
+		return nil
+	end
+	for _, illu in pairs(core.tControllableUnits["InventoryUnits"]) do
+		if illu:IsValid() and illu:HasState("State_Moira_Ability3_Mimic") then
+			if object.unitMoiraMimic == nil then
+				core.tFoundItems = {} --revalidate items
+				object.unitMoiraMimic = illu
+			end
+			return illu
+		end
+	end
+	if object.unitMoiraMimic ~= nil then
+		object.unitMoiraMimic = nil
+		core.tFoundItems = {} --revalidate items
+	end
+	return nil
+end
 
 ------------------------------
 --	 skills   			--
@@ -145,27 +182,20 @@ function object:SkillBuild()
 	end
 end
 
-
-
 function object:onthinkOverride(tGameVariables)
 	if object.unitHero == nil or not object.unitHero:IsValid() then
 		--init
 		object.unitHero = self:GetHeroUnit()
 	end
-	-- debug
-	--[[if object.unitHero:GetAbility(2):CanActivate() then
-		core.OrderAbilityPosition(self, object.unitHero:GetAbility(2), object.unitHero:GetPosition())
-	end]]
 
 	if core.botBrainInitialized then
 		-- game is running
-		local mimic = behaviorLib.findMimic()
+		local mimic = object.findMimic()
 		if mimic ~= nil then
 			core.unitSelf = mimic
 		else
 			core.unitSelf = self.unitHero
 		end
-
 	end
 	self:onthinkOld(tGameVariables)
 end
@@ -173,10 +203,49 @@ object.onthinkOld = object.onthink
 object.onthink 	= object.onthinkOverride
 
 
+function object:oncombateventOverride(EventData)
+	self:oncombateventOld(EventData)
+
+	local nAddBonus = 0
+	if EventData.Type == "Ability" then
+		if EventData.InflictorName == "Ability_Moira1" then
+			nAddBonus = nAddBonus + object.nStunUseBonus
+		elseif EventData.InflictorName == "Ability_Moira4" then
+			nAddBonus = nAddBonus + object.nUltUseBonus
+		end
+	end
+
+	if nAddBonus > 0 then
+		core.DecayBonus(self)
+		core.nHarassBonus = core.nHarassBonus + nAddBonus
+	end
+end
+object.oncombateventOld = object.oncombatevent
+object.oncombatevent 	= object.oncombateventOverride
+
+function behaviorLib.CustomHarassUtility(hero)
+	local nReturnValue = 0
+	
+	local unitSelf = core.unitSelf
+	if skills.abilStun:CanActivate() then
+		nReturnValue = nReturnValue + object.nStunUpBonus
+	end
+	
+	if skills.abilManaburn:CanActivate() then
+		nReturnValue = nReturnValue + object.nManaburnUpBonus
+	end
+
+	-- Less mana less aggerssion
+	nReturnValue = nReturnValue + (unitSelf:GetManaPercent() - 1) * 20
+
+	return nReturnValue
+
+end
+
 local function HarassHeroExecuteOverride(botBrain)
 
 	local unitSelf = core.unitSelf
-	if unitSelf:IsChanneling() then
+	if unitSelf:IsChanneling() or unitSelf:IsStunned() then
 		return true
 	end
 	local vecMyPosition = unitSelf:GetPosition()
@@ -210,8 +279,19 @@ local function HarassHeroExecuteOverride(botBrain)
 	if nLastHarassUtility > object.nStunThreshold and not bTargetMagicImmune then
 		local stun = unitSelf:GetAbility(0)
 		if stun:CanActivate() then
-			-- todo find ally near the target
-			bActionTaken = core.OrderAbilityEntity(botBrain, stun, unitSelf)
+			local allyTarget = nil
+			if nTargetDistanceSq < 550 * 550 then
+				allyTarget = unitSelf
+			else
+				for _, unit in pairs(core.localUnits.AllyHeroes) do
+					if Vector3.Distance2DSq(vecTargetPosition, unit:GetPosition()) < 550 * 550 then
+						allyTarget = unit
+					end
+				end
+			end
+			if allyTarget ~= nil then
+				bActionTaken = core.OrderAbilityEntity(botBrain, stun, unitSelf)
+			end
 		end
 	end
 
@@ -224,6 +304,27 @@ local function HarassHeroExecuteOverride(botBrain)
 		end
 	end
 
+	if not bActionTaken and not unitTarget:IsStunned() then
+		if object.nDisableTreshold < nLastHarassUtility then
+			local itemMorph = core.GetItem("Item_Morph")
+			if itemMorph and itemMorph:CanActivate() then
+				botBrain:OrderItemEntity(itemMorph.object or itemMorph, unitTarget.object or unitTarget)
+				bActionTaken = true
+			end
+		end
+	end
+
+
+	if not bActionTaken then
+		if core.NumberElements(core.localUnits.EnemyHeroes) > 1 then
+			local nTargetID = unitTarget:GetUniqueID()
+			for _, enemy in pairs(core.localUnits.EnemyHeroes) do
+				if enemy:GetUniqueID() ~= nTargetID then
+					bActionTaken = core.OrderAbilityPosition(botBrain, unitSelf:GetAbility(3), enemy:GetPosition())
+				end
+			end
+		end
+	end
 
 
 	if not bActionTaken then
@@ -235,8 +336,6 @@ end
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 
-
-
 ----------------------
 -- 'gank' with illu --
 ----------------------
@@ -244,24 +343,28 @@ function behaviorLib.IlluGankUtility(botBrain)
 	if behaviorLib.IsMimic() then
 		return 0
 	end
-	local unitSelf = core.unitSelf
 
 	if not skills.abilIllu:CanActivate() then
 		return 0
 	end
 
+	if core.NumberElements(core.localUnits.EnemyHeroes) ~= 0 then
+		return 0
+	end
+
 	local nIlluRange = skills.abilIllu:GetRange()
 
-	vecMyPosition = unitSelf:GetPosition()
+	local unitSelf = core.unitSelf
+	local vecMyPosition = unitSelf:GetPosition()
 
 	--local nSkillsUpBonus = behaviorLib.CustomHarassUtility()
 	local nMyMana = unitSelf:GetManaPercent()
-	local manaBonus = 20 - ((1 - nMyMana) ^ 2) * 30
+	local manaBonus = 20 - (nMyMana ^ 2) * 30
 
 	nUtility = 0
 	unitTarget = nil
 	for _, enemy in pairs(core.teamBotBrain.tEnemyHeroes) do
-		if core.CanSeeUnit(botBrain, enemy) then
+		if enemy:IsAlive() and core.CanSeeUnit(botBrain, enemy) then
 			local nDistanceSQ = Vector3.Distance2DSq(vecMyPosition, enemy:GetPosition())
 			if nDistanceSQ < nIlluRange * nIlluRange and nDistanceSQ > 1200 * 1200 then
 				local enemyHealt = enemy:GetHealthPercent()
@@ -288,40 +391,48 @@ behaviorLib.IlluGankBehavior["Name"] = "Moira gank with illu"
 tinsert(behaviorLib.tBehaviors, behaviorLib.IlluGankBehavior)
 
 
-
-
-
-
--- Mimic cant tp
-function behaviorLib.ShouldPortOverride(botBrain, vecDesiredPosition)
-	local mimicID = object.unitMoiraMimic and object.unitMoiraMimic:GetUniqueID()
-	if core.unitSelf:GetUniqueID() == mimicID then
-		return false, nil, nil
-	end
-	return behaviorLib.ShouldPortOld(botBrain, vecDesiredPosition)
-end
-
-behaviorLib.ShouldPortOld = behaviorLib.ShouldPort
-behaviorLib.ShouldPort = behaviorLib.ShouldPortOverride
-
-
 function object.UseSkillsDefensively(botBrain, ally)
 	local unitSelf = core.unitSelf
 	local ally = ally or unitSelf
 	local bActionTaken = false
+	local nUtility = behaviorLib.lastRetreatUtil
+	if behaviorLib.nAllyHelpUtility > nUtility then
+		nUtility = behaviorLib.nAllyHelpUtility
+	end
 
 	for _, enemy in pairs(core.localUnits.EnemyHeroes) do
-		if not enemy:IsInvulnerable() or not enemy:IsStunned() then
-			local stormspirit = core.GetItem(cyclone)
-			if stormspirit ~= nil and stormspirit:CanActivate() then
-				botBrain:OrderItemEntity(stormspirit.object or stormspirit, enemy.object or enemy)
-				bActionTaken = true
+		if not enemy:IsInvulnerable() or not enemy:IsStunned() and not enemy:isMagicImmune() then
+			if nUtility > object.nDisableTreshold then
+				local stormspirit = core.GetItem(cyclone)
+				if stormspirit ~= nil and stormspirit:CanActivate() then
+					botBrain:OrderItemEntity(stormspirit.object or stormspirit, enemy.object or enemy)
+					bActionTaken = true
+				end
+
+				if not bActionTaken then
+					local itemMorph = core.GetItem("Item_Morph")
+					if itemMorph ~= nil and itemMorph:CanActivate() then
+						botBrain:OrderItemEntity(itemMorph.object or itemMorph, enemy.object or enemy)
+						bActionTaken = true
+					end
+				end
 			end
 
 			if not bActionTaken then
-				local stun = unitSelf:GetAbility(0)
-				if stun:CanActivate() then
-					bActionTaken = core.OrderAbilityEntity(botBrain, stun, ally)
+				if nUtility > object.nStunThreshold then
+					local stun = unitSelf:GetAbility(0)
+					if stun:CanActivate() then
+						bActionTaken = core.OrderAbilityEntity(botBrain, stun, ally)
+					end
+				end
+			end
+
+			if not bActionTaken then
+				if nUtility > object.nUltThreshold then
+					local vecEnemyPos = enemy:GetPosition()
+					if Vector3.Distance2DSq(ally:GetPosition(), vecEnemyPos) > 90000 then
+						bActionTaken = core.OrderAbilityPosition(botBrain, unitSelf:GetAbility(3), vecEnemyPos)
+					end
 				end
 			end
 
@@ -330,7 +441,6 @@ function object.UseSkillsDefensively(botBrain, ally)
 			end
 		end
 	end
-
 	return bActionTaken
 
 end
@@ -338,8 +448,46 @@ end
 behaviorLib.CustomRetreatExecute = object.UseSkillsDefensively
 
 
+function behaviorLib.StopChannelUtility(botBrain)
+	if not behaviorLib.IsMimic() then
+		return 0
+	end
 
+	if not object.unitHero:HasState("State_Moira_Ability3_Self") then
+		-- atleast channel first 2 secs
+		return 0
+	end
+	if object.findMimic() == nil then
+		-- if mimic dies, manualy stop channel
+		return 100
+	end
 
+	BotEcho("cancel mimic")
+	--[[if core.NumberElements(core.localUnits.EnemyHeroes) == 0 then
+		BotEcho("no local enemies")
+		return 100
+	end]]
+
+	local nearEnemies = 0
+	local heroesInRange = HoN.GetUnitsInRadius(object.unitHero:GetPosition(), 1000, core.UNIT_MASK_ALIVE + core.UNIT_MASK_HERO)
+	for _, hero in pairs(heroesInRange) do
+		if hero:GetTeam() == core.enemyTeam then
+			nearEnemies = nearEnemies + 1
+		end
+	end
+	BotEcho("Stop channel utility: EnemyHeroes:" .. tostring(30 * nearEnemies) .. " Recent Damage: " .. tostring(eventsLib.recentDamageSec / object.unitHero:GetMaxHealth() * 100))
+	return 30 * nearEnemies + eventsLib.recentDamageSec / object.unitHero:GetMaxHealth() * 1000
+end
+
+function behaviorLib.StopChannelExecute(botBrain)
+	return core.OrderStop(botBrain, object.unitHero)
+end
+
+behaviorLib.StopChannelBehavior = {}
+behaviorLib.StopChannelBehavior["Utility"] = behaviorLib.StopChannelUtility
+behaviorLib.StopChannelBehavior["Execute"] = behaviorLib.StopChannelExecute
+behaviorLib.StopChannelBehavior["Name"] = "Moira stop channel"
+tinsert(behaviorLib.tBehaviors, behaviorLib.StopChannelBehavior)
 
 
 ---------------
@@ -347,6 +495,7 @@ behaviorLib.CustomRetreatExecute = object.UseSkillsDefensively
 ---------------
 
 behaviorLib.unitHelpAlly = nil
+behaviorLib.nAllyHelpUtility = 0
 function behaviorLib.HelpAllyUtility(botBrain)
 	local unitSelf = core.unitSelf
 
@@ -363,36 +512,46 @@ function behaviorLib.HelpAllyUtility(botBrain)
 
 	for _, unit in pairs(core.teamBotBrain.tAllyHeroes) do
 		local nHPPercent = unit:GetHealthPercent()
-		if nHPPercent < 0.8 then
-			local vecUnitPosition = unit:GetPosition()
-			local nDistanceSQ = Vector3.Distance2DSq(vecUnitPosition, vecMyPosition)
-			if nDistanceSQ < 1200*1200 or (bMimicUp and nLocalEnemies == 0 and nDistanceSQ < nCastRange * nCastRange) then
-				local nNewUtility = (1 - nHPPercent) * 30
-				local heroesInRange = HoN.GetUnitsInRadius(vecUnitPosition, 800, core.UNIT_MASK_ALIVE + core.UNIT_MASK_HERO)
-				for _, hero in pairs(heroesInRange) do
-					if hero:GetTeam() == core.enemyTeam then
-						nNewUtility = nNewUtility + 13
+		local nSelfID = unitSelf:GetUniqueID()
+		if unit:IsAlive() and unit:GetUniqueID() ~= nSelfID then
+			if nHPPercent < 0.8 then
+				local vecUnitPosition = unit:GetPosition()
+				local nDistanceSQ = Vector3.Distance2DSq(vecUnitPosition, vecMyPosition)
+				if nDistanceSQ < 1200*1200 or (bMimicUp and nLocalEnemies == 0 and nDistanceSQ < nCastRange * nCastRange) then
+					local nNewUtility = (1 - nHPPercent) * 30
+					local heroesInRange = HoN.GetUnitsInRadius(vecUnitPosition, 1200, core.UNIT_MASK_ALIVE + core.UNIT_MASK_HERO)
+					local nEnemyHeroes = 0
+					for _, hero in pairs(heroesInRange) do
+						if hero:GetTeam() == core.enemyTeam then
+							nEnemyHeroes = nEnemyHeroes + 1
+						end
 					end
-				end
-				if nNewUtility > nUtility then
-					nUtility = nNewUtility
-					ally = unit
+					if nEnemyHeroes ~= 0 then
+						nNewUtility = nNewUtility + 13 * nEnemyHeroes
+						if nNewUtility > nUtility then
+							nUtility = nNewUtility
+							ally = unit
+						end
+					end
 				end
 			end
 		end
 	end
 
 	behaviorLib.unitHelpAlly = ally
-	if ally ~= nil then
-		BotEcho("moira help utility "  .. tostring(nUtility) .. " " .. ally:GetTypeName())
-	end
+	behaviorLib.nAllyHelpUtility = nUtility
 	return nUtility
 end
 
 function behaviorLib.HelpAllyExecute(botBrain)
+	local unitHero = object.unitHero
+	if unitHero:IsChanneling() and core.unitSelf:GetUniqueID() == unitHero:GetUniqueID() then
+		return true
+	end
+
 	local vecAllyPos = behaviorLib.unitHelpAlly:GetPosition()
 	local abilIllu = skills.abilIllu
-	if abilIllu:CanActivate() then
+	if abilIllu:CanActivate() and Vector3.Distance2DSq(vecAllyPos, core.unitSelf:GetPosition()) > 1200*1200 then
 		return core.OrderAbilityPosition(botBrain, abilIllu, vecAllyPos)
 	end
 
@@ -408,7 +567,6 @@ function behaviorLib.HelpAllyExecute(botBrain)
 	return true
 end
 
-
 behaviorLib.HelpAllyBehavior = {}
 behaviorLib.HelpAllyBehavior["Utility"] = behaviorLib.HelpAllyUtility
 behaviorLib.HelpAllyBehavior["Execute"] = behaviorLib.HelpAllyExecute
@@ -416,10 +574,21 @@ behaviorLib.HelpAllyBehavior["Name"] = "Moira help ally"
 tinsert(behaviorLib.tBehaviors, behaviorLib.HelpAllyBehavior)
 
 
-
 --------------------
 -- Misc Overrides --
 --------------------
+
+-- Mimic cant tp
+function behaviorLib.ShouldPortOverride(botBrain, vecDesiredPosition)
+	local mimicID = object.unitMoiraMimic and object.unitMoiraMimic:GetUniqueID()
+	if core.unitSelf:GetUniqueID() == mimicID then
+		return false, nil, nil
+	end
+	return behaviorLib.ShouldPortOld(botBrain, vecDesiredPosition)
+end
+
+behaviorLib.ShouldPortOld = behaviorLib.ShouldPort
+behaviorLib.ShouldPort = behaviorLib.ShouldPortOverride
 
 -- Mimic doesnt buy, would break the shopping system
 function ShopUtilityOverride(botBrain)
@@ -431,7 +600,6 @@ end
 
 object.ShopUtilityOld = behaviorLib.ShopBehavior["Utility"]
 behaviorLib.ShopBehavior["Utility"] = ShopUtilityOverride
-
 
 -- not to include mimic here nor the real one when mimic is unitSelf
 function illusionLib.updateIllusions(botBrain)
@@ -489,28 +657,4 @@ teambot.GetDesiredLane = function(self, unitAsking)
 	end	
 	
 	return nil
-end
-
--------------
--- Misc Helpers --
--------------
-
-function behaviorLib.findMimic()
-	if core.tControllableUnits == nil then
-		return nil
-	end
-	if not object.unitHero:IsChanneling() then
-		return nil
-	end
-	for _, illu in pairs(core.tControllableUnits["InventoryUnits"]) do
-		if illu:IsValid() and illu:HasState("State_Moira_Ability3_Mimic") then
-			object.unitMoiraMimic = illu
-			return illu
-		end
-	end
-	object.unitMoiraMimic = nil
-end
-
-function behaviorLib.IsMimic()
-	return object.unitMoiraMimic ~= nil and core.unitSelf:GetUniqueID() == object.unitMoiraMimic:GetUniqueID()
 end
