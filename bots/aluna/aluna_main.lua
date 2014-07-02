@@ -87,9 +87,6 @@ function object:SkillBuild()
     end
 end
 
-behaviorLib.nCreepPushbackMul = 0.5
-behaviorLib.nTargetPositioningMul = 0.6
-
 ----------------------------------
 --	Aluna specific harass bonuses
 --
@@ -234,8 +231,9 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 end
 
 ----------------------------------------
---		  Snipe Losers Behaviour	  --
+--		  	  Snipe Behaviour	  	  --
 ----------------------------------------
+-- This is where things get interesting.
 object.vecEstimatedSnipePosition = nil
 object.unitSnipeTarget = nil
 object.unitSnipeEstimatedTime = nil
@@ -311,7 +309,7 @@ end
 behaviorLib.snipeBehavior = {}
 behaviorLib.snipeBehavior["Utility"] = snipeUtility
 behaviorLib.snipeBehavior["Execute"] = snipeExecute
-behaviorLib.snipeBehavior["Name"] = "snipeSuckers"
+behaviorLib.snipeBehavior["Name"] = "snipe"
 tinsert(behaviorLib.tBehaviors, behaviorLib.snipeBehavior)
 
 local function ProcessKillChatOverride(unitTarget, sTargetPlayerName)
@@ -322,7 +320,10 @@ local function ProcessKillChatOverride(unitTarget, sTargetPlayerName)
 		if sTargetName == nil or sTargetName == "" then
 			sTargetName = unitTarget:GetTypeName()
 		end
-		core.AllChatLocalizedMessage("^900B^990O^090O^099O^009O^909M^900! ^990H^090E^099A^009D^909S^900H^990O^090T^099!", {target=sTargetName}, 0)
+		-- The super taunt. 1/100 chance to say: BOOM HEADSHOT
+		if random(100) == 1 then
+			core.AllChatLocalizedMessage("^900B^990O^090O^099O^009O^909M^900! ^990H^090E^099A^009D^909S^900H^990O^090T^099!", {target=sTargetName}, 0)
+		end
 	else
 		object.funcProcessKillChatOld(unitTarget, sTargetPlayerName)
 	end
