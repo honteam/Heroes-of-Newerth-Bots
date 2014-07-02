@@ -336,6 +336,10 @@ end
 ---- Memory units ----
 object.tMemoryUnits = {}
 
+function object:GetMemoryUnit(unit)
+	return self.tMemoryUnits[unit:GetUniqueID()]
+end
+
 object.nMemoryUnitHealthIntervalMS = 3000
 function object:CreateMemoryUnit(unit)	
 	StartProfile('CreateMemoryUnit')
