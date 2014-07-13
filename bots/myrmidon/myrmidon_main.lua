@@ -231,7 +231,7 @@ core.FindItems = funcFindItemsOverride
 ----------------------------------------
 
 local bTrackingCarp=false
-local uCarpTarget
+local unitCarpTarget
 
 function object:onthinkOverride(tGameVariables)
 	self:onthinkOld(tGameVariables)
@@ -361,9 +361,9 @@ local tRelativeMovements = {}
 local function createRelativeMovementTable(key)
 	--BotEcho('Created a relative movement table for: '..key)
 	tRelativeMovements[key] = {
-		vLastPos = Vector3.Create(),
-		vRelMov = Vector3.Create(),
-		timestamp = 0
+		vecLastPos = Vector3.Create(),
+		vecRelMov = Vector3.Create(),
+		ntimestamp = 0
 	}
 --	BotEcho('Created a relative movement table for: '..tRelativeMovements[key].timestamp)
 end
@@ -449,7 +449,6 @@ local function HarassHeroExecuteOverride(botBrain)
 	--Weed Field
 	--Currently trying to use Stolen's Ra prediction code.  Consider reworking and track all old hero positions?
 	if not bActionTaken then
-		local bDebugEchoes = true
 		local abilWeedField = skills.abilWeedField
 		if abilWeedField:CanActivate() and nLastHarassUtility > object.nWeedFieldThreshold then
 			local nRange = abilWeedField:GetRange()
