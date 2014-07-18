@@ -243,7 +243,6 @@ function behaviorLib.CustomHarassUtility(hero)
 end
 
 local function HarassHeroExecuteOverride(botBrain)
-
 	local unitSelf = core.unitSelf
 	if unitSelf:IsChanneling() or unitSelf:IsStunned() then
 		return true
@@ -314,7 +313,6 @@ local function HarassHeroExecuteOverride(botBrain)
 		end
 	end
 
-
 	if not bActionTaken then
 		if core.NumberElements(core.localUnits.EnemyHeroes) > 1 then
 			local nTargetID = unitTarget:GetUniqueID()
@@ -325,7 +323,6 @@ local function HarassHeroExecuteOverride(botBrain)
 			end
 		end
 	end
-
 
 	if not bActionTaken then
 		return object.harassExecuteOld(botBrain)
@@ -463,10 +460,6 @@ function behaviorLib.StopChannelUtility(botBrain)
 	end
 
 	BotEcho("cancel mimic")
-	--[[if core.NumberElements(core.localUnits.EnemyHeroes) == 0 then
-		BotEcho("no local enemies")
-		return 100
-	end]]
 
 	local nearEnemies = 0
 	local heroesInRange = HoN.GetUnitsInRadius(object.unitHero:GetPosition(), 1000, core.UNIT_MASK_ALIVE + core.UNIT_MASK_HERO)
