@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="MalikenBot"
+	description="bot_description_maliken"
+	heroname="Hero_Maliken"
+	rootlua="maliken_main.lua"
+	defaultplayername="MalikenBot"
+	precachepath="/heroes/maliken/"
+/>
