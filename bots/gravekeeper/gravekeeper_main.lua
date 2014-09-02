@@ -54,6 +54,8 @@ object.bAttackCommands  = true
 object.bAbilityCommands = true
 object.bOtherCommands   = true
 
+behaviorLib.bGank = true
+
 object.bReportBehavior = false
 object.bDebugUtility = false
 object.bDebugExecute = false

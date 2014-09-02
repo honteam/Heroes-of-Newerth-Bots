@@ -3604,17 +3604,14 @@ behaviorLib.PickRuneBehavior["Execute"] = behaviorLib.PickRuneExecute
 behaviorLib.PickRuneBehavior["Name"] = "Pick Rune"
 tinsert(behaviorLib.tBehaviors, behaviorLib.PickRuneBehavior)
 
-
-
-behaviorLib.Ganking = false
-behaviorLib.GankStartTime = 0
+behaviorLib.bGanking = false
+behaviorLib.nGankStartTime = 0
 behaviorLib.GankTargetLane = ""
 behaviorLib.GankTarget = nil
 
 behaviorLib.nGankingMinLevel = 4
 function behaviorLib.GankUtility(botBrain)
-	if false then
-	--if object.Gank ~= true then
+	if behaviorLib.bGank ~= true then
 		return 0
 	end
 	local teamBotBrain = core.teamBotBrain
@@ -3622,17 +3619,17 @@ function behaviorLib.GankUtility(botBrain)
 	if unitSelf:GetLevel() < behaviorLib.nGankingMinLevel then
 		return 0
 	end
-	if behaviorLib.Ganking == true then
+	if behaviorLib.bGanking == true then
 		-- we have decided to gank
 		-- Gank lasts until 3min have passed, target is dead or havent seen target in last 15s
-		if behaviorLib.GankStartTime + 180000 > HoN.GetMatchTime() then
+		if behaviorLib.nGankStartTime + 180000 > HoN.GetMatchTime() then
 			if not behaviorLib.GankTarget:IsAlive() then
-				behaviorLib.Ganking = false
+				behaviorLib.bGanking = false
 				tremove(teamBotBrain.tGanks, unitSelf:GetUniqueID())
 				return 0
 			else
 				if teamBotBrain.EnemyPositions[behaviorLib.GankTarget:GetUniqueID()].nLastSeen + 15000 < HoN.GetMatchTime() then
-					behaviorLib.Ganking = false
+					behaviorLib.bGanking = false
 					tremove(teamBotBrain.tGanks, unitSelf:GetUniqueID())
 					return 0
 				end
@@ -3640,7 +3637,7 @@ function behaviorLib.GankUtility(botBrain)
 			end
 		else
 			--re-evaluate
-			behaviorLib.Ganking = false
+			behaviorLib.bGanking = false
 			tremove(teamBotBrain.tGanks, unitSelf:GetUniqueID())
 		end
 	end
@@ -3718,7 +3715,8 @@ function behaviorLib.GankUtility(botBrain)
 							behaviorLib.GankTargetLane = enemyLane
 							behaviorLib.GankTarget = EnemyHero
 							teamBotBrain.tGanks[unitSelf:GetUniqueID()] = {nStarted = time, sTargetLane = enemyLane}
-							core.AllChat("Ganking " .. EnemyHero:GetTypeName() .. " at "  .. enemyLane .. " lane")
+							--Todo translate and move to execute so it is said if bot executes this behavior
+							core.TeamChat("Ganking "  .. enemyLane .. " lane")
 							return 23
 						end
 					end
