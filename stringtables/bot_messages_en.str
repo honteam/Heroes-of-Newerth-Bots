@@ -23,6 +23,7 @@ respawn4		Er, uh, um... Recalculating?
 respawn5		Reconstruction complete.
 
 group_up		Grouping up to push the {lane} lane.
+gank			Ganking {lane} lane.
 
 defend			Going {lane} to defend.
 

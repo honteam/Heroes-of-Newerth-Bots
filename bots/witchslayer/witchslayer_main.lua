@@ -16,13 +16,9 @@ object.bMoveCommands 	= true
 object.bAttackCommands 	= true
 object.bAbilityCommands = true
 object.bOtherCommands 	= true
-
-behaviorLib.bGank = true
-
 object.bReportBehavior = false
 object.bDebugUtility = false
 object.bDebugExecute = false
-
 
 object.logger = {}
 object.logger.bWriteLog = false
@@ -51,6 +47,8 @@ local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
 
 BotEcho('loading witchslayer_main...')
+
+behaviorLib.bGank = true
 
 object.heroName = 'Hero_WitchSlayer'
 

@@ -109,7 +109,7 @@ object.runes = {
 local tRuneNames = {"Powerup_Damage", "Powerup_Illusion", "Powerup_Stealth", "Powerup_Refresh", "Powerup_Regen", "Powerup_MoveSpeed", "Powerup_Super"}
 
 object.nNextEnemyPosCheck = 0
-object.nEnemyPosCheckInterval = 5000
+object.nEnemyPosCheckInterval = 2000
 object.EnemyPositions = {} -- int unitID => {Node node, int nLastSeen}
 -- enemyLanes = {}
 object.tGanks = {} -- int unitID => {int nStarted, string sTargetLane}

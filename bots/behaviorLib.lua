@@ -3606,8 +3606,8 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.PickRuneBehavior)
 
 behaviorLib.bGanking = false
 behaviorLib.nGankStartTime = 0
-behaviorLib.GankTargetLane = ""
-behaviorLib.GankTarget = nil
+behaviorLib.sGankTargetLane = ""
+behaviorLib.unitGankTarget = nil
 
 behaviorLib.nGankingMinLevel = 4
 function behaviorLib.GankUtility(botBrain)
@@ -3621,14 +3621,14 @@ function behaviorLib.GankUtility(botBrain)
 	end
 	if behaviorLib.bGanking == true then
 		-- we have decided to gank
-		-- Gank lasts until 3min have passed, target is dead or havent seen target in last 15s
+		-- Gank lasts until 3min have passed, target is dead or havent seen target in last 10s
 		if behaviorLib.nGankStartTime + 180000 > HoN.GetMatchTime() then
-			if not behaviorLib.GankTarget:IsAlive() then
+			if not behaviorLib.unitGankTarget:IsAlive() then
 				behaviorLib.bGanking = false
 				tremove(teamBotBrain.tGanks, unitSelf:GetUniqueID())
 				return 0
 			else
-				if teamBotBrain.EnemyPositions[behaviorLib.GankTarget:GetUniqueID()].nLastSeen + 15000 < HoN.GetMatchTime() then
+				if teamBotBrain.EnemyPositions[behaviorLib.unitGankTarget:GetUniqueID()].nLastSeen + 10000 < HoN.GetMatchTime() then
 					behaviorLib.bGanking = false
 					tremove(teamBotBrain.tGanks, unitSelf:GetUniqueID())
 					return 0
@@ -3712,11 +3712,11 @@ function behaviorLib.GankUtility(botBrain)
 						if nAlliesNear >= nEnemiesNear or nEnemiesNear == 1 then
 							behaviorLib.Ganking = true
 							behaviorLib.GankStartTime = time
-							behaviorLib.GankTargetLane = enemyLane
-							behaviorLib.GankTarget = EnemyHero
+							behaviorLib.sGankTargetLane = enemyLane
+							behaviorLib.unitGankTarget = EnemyHero
 							teamBotBrain.tGanks[unitSelf:GetUniqueID()] = {nStarted = time, sTargetLane = enemyLane}
-							--Todo translate and move to execute so it is said if bot executes this behavior
-							core.TeamChat("Ganking "  .. enemyLane .. " lane")
+
+
 							return 23
 						end
 					end
@@ -3728,15 +3728,23 @@ function behaviorLib.GankUtility(botBrain)
 end
 
 
+behaviorLib.nNextGankMessageTime = 0
 function behaviorLib.GankExecute(botBrain)
-	-- just walk there for now
+	-- Chat about it
+	local time = HoN.GetMatchTime()
+	if behaviorLib.nNextGankMessageTime < time then
+		local nDelay = random(core.nChatDelayMin, core.nChatDelayMax)
+		core.TeamChatLocalizedMessage("gank", {lane=behaviorLib.sGankTargetLane}, nDelay)
+		behaviorLib.nNextGankMessageTime = time + 60000
+	end
+
 	local unitSelf = core.unitSelf
 	local teamBotBrain = core.teamBotBrain
-	local enemyPosition = teamBotBrain.EnemyPositions[behaviorLib.GankTarget:GetUniqueID()].node:GetPosition()
+	local enemyPosition = teamBotBrain.EnemyPositions[behaviorLib.unitGankTarget:GetUniqueID()].node:GetPosition()
 	if Vector3.Distance2DSq(unitSelf:GetPosition(), enemyPosition) > 1000 * 1000 then
-		return behaviorLib.MoveExecute(botBrain, core.teamBotBrain.EnemyPositions[behaviorLib.GankTarget:GetUniqueID()].node:GetPosition())
+		return behaviorLib.MoveExecute(botBrain, core.teamBotBrain.EnemyPositions[behaviorLib.unitGankTarget:GetUniqueID()].node:GetPosition())
 	else
-		behaviorLib.heroTarget = behaviorLib.GankTarget
+		behaviorLib.heroTarget = behaviorLib.unitGankTarget
 		behaviorLib.HarassHeroBehavior["Execute"](botBrain)
 	end
 
