@@ -17,12 +17,9 @@ object.bAttackCommands 	= true
 object.bAbilityCommands = true
 object.bOtherCommands 	= true
 
-behaviorLib.bGank = true
-
 object.bReportBehavior = false
 object.bDebugUtility = false
 object.bDebugExecute = false
-
 
 object.logger = {}
 object.logger.bWriteLog = false
@@ -51,6 +48,8 @@ local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
 
 local sqrtTwo = math.sqrt(2)
+
+behaviorLib.bGank = true
 
 BotEcho('loading glacius_main...')
 

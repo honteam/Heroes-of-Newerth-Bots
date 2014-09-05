@@ -3604,6 +3604,14 @@ behaviorLib.PickRuneBehavior["Execute"] = behaviorLib.PickRuneExecute
 behaviorLib.PickRuneBehavior["Name"] = "Pick Rune"
 tinsert(behaviorLib.tBehaviors, behaviorLib.PickRuneBehavior)
 
+
+-------------
+-- Ganking --
+-------------
+-- This is laning phase ganging
+-- 23 when we have target to gank
+-- no team ganks
+
 behaviorLib.bGanking = false
 behaviorLib.nGankStartTime = 0
 behaviorLib.sGankTargetLane = ""
