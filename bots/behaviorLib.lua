@@ -1755,6 +1755,11 @@ function behaviorLib.HarassHeroExecute(botBrain)
 				if behaviorLib.lastHarassUtil < behaviorLib.diveThreshold then
 					if bDebugEchos then BotEcho("DON'T DIVE!") end
 									
+					if core.NumberElements(core.GetTowersThreateningPosition(vecDesiredPos, nil, core.myTeam)) > 0 then
+						return false
+					end
+
+
 					if bUseTargetPosition and not bChanged then
 						core.OrderMoveToUnitClamp(botBrain, unitSelf, unitTarget, false)
 					else
