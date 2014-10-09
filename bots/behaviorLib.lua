@@ -3612,6 +3612,8 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.PickRuneBehavior)
 -- 23 when we have target to gank
 -- no team ganks
 
+behaviorLib.bGank = true
+
 behaviorLib.bGanking = false
 behaviorLib.nGankStartTime = 0
 behaviorLib.sGankTargetLane = ""
@@ -3655,7 +3657,7 @@ function behaviorLib.GankUtility(botBrain)
 	end
 
 	-- From mid we gank side lanes. From side lanes gank mid. From forest gank mid and other side lane
-	-- TODO: Where I am not Where I should be
+	-- TODO: Where I am, not Where I should be
 	-- TODO: If mid check rune & if Im at rune spot
 	local tMyLane = teamBotBrain:GetDesiredLane(unitSelf)
 	if tMyLane == nil then
@@ -3724,7 +3726,6 @@ function behaviorLib.GankUtility(botBrain)
 							behaviorLib.unitGankTarget = EnemyHero
 							teamBotBrain.tGanks[unitSelf:GetUniqueID()] = {nStarted = time, sTargetLane = enemyLane}
 
-
 							return 23
 						end
 					end
@@ -3749,9 +3750,11 @@ function behaviorLib.GankExecute(botBrain)
 	local unitSelf = core.unitSelf
 	local teamBotBrain = core.teamBotBrain
 	local enemyPosition = teamBotBrain.EnemyPositions[behaviorLib.unitGankTarget:GetUniqueID()].node:GetPosition()
+	-- Get there
 	if Vector3.Distance2DSq(unitSelf:GetPosition(), enemyPosition) > 1000 * 1000 then
 		return behaviorLib.MoveExecute(botBrain, core.teamBotBrain.EnemyPositions[behaviorLib.unitGankTarget:GetUniqueID()].node:GetPosition())
 	else
+		-- Kill
 		behaviorLib.heroTarget = behaviorLib.unitGankTarget
 		behaviorLib.HarassHeroBehavior["Execute"](botBrain)
 	end

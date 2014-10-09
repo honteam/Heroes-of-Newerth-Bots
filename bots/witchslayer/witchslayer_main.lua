@@ -48,8 +48,6 @@ local Clamp = core.Clamp
 
 BotEcho('loading witchslayer_main...')
 
-behaviorLib.bGank = true
-
 object.heroName = 'Hero_WitchSlayer'
 
 --------------------------------

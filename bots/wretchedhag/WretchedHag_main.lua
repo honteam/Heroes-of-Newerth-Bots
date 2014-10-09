@@ -57,8 +57,6 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, asin, max, random
  
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
-
-behaviorLib.bGank = true
  
 BotEcho('loading WretchedHag_main...')
 

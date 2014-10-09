@@ -49,8 +49,6 @@ local Clamp = core.Clamp
 
 local sqrtTwo = math.sqrt(2)
 
-behaviorLib.bGank = true
-
 BotEcho('loading glacius_main...')
 
 --------------------------------
