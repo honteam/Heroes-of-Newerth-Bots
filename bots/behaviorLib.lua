@@ -3608,3 +3608,166 @@ behaviorLib.PickRuneBehavior["Utility"] = behaviorLib.PickRuneUtility
 behaviorLib.PickRuneBehavior["Execute"] = behaviorLib.PickRuneExecute
 behaviorLib.PickRuneBehavior["Name"] = "Pick Rune"
 tinsert(behaviorLib.tBehaviors, behaviorLib.PickRuneBehavior)
+
+
+-------------
+-- Ganking --
+-------------
+-- This is laning phase ganging
+-- 23 when we have target to gank
+-- no team ganks
+
+behaviorLib.bGank = true
+
+behaviorLib.bGanking = false
+behaviorLib.nGankStartTime = 0
+behaviorLib.sGankTargetLane = ""
+behaviorLib.unitGankTarget = nil
+
+behaviorLib.nGankingMinLevel = 4
+function behaviorLib.GankUtility(botBrain)
+	if behaviorLib.bGank ~= true then
+		return 0
+	end
+	local teamBotBrain = core.teamBotBrain
+	unitSelf = core.unitSelf
+	if unitSelf:GetLevel() < behaviorLib.nGankingMinLevel then
+		return 0
+	end
+	if behaviorLib.bGanking == true then
+		-- we have decided to gank
+		-- Gank lasts until 3min have passed, target is dead or havent seen target in last 10s
+		if behaviorLib.nGankStartTime + 180000 > HoN.GetMatchTime() then
+			if not behaviorLib.unitGankTarget:IsAlive() then
+				behaviorLib.bGanking = false
+				tremove(teamBotBrain.tGanks, unitSelf:GetUniqueID())
+				return 0
+			else
+				if teamBotBrain.EnemyPositions[behaviorLib.unitGankTarget:GetUniqueID()].nLastSeen + 10000 < HoN.GetMatchTime() then
+					behaviorLib.bGanking = false
+					tremove(teamBotBrain.tGanks, unitSelf:GetUniqueID())
+					return 0
+				end
+				return 23
+			end
+		else
+			--re-evaluate
+			behaviorLib.bGanking = false
+			tremove(teamBotBrain.tGanks, unitSelf:GetUniqueID())
+		end
+	end
+
+	if unitSelf:GetHealthPercent() < 0.8 or unitSelf:GetManaPercent() < 0.7 then
+		return 0
+	end
+
+	-- From mid we gank side lanes. From side lanes gank mid. From forest gank mid and other side lane
+	-- TODO: Where I am, not Where I should be
+	-- TODO: If mid check rune & if Im at rune spot
+	local tMyLane = teamBotBrain:GetDesiredLane(unitSelf)
+	if tMyLane == nil then
+		return 0
+	end
+	for _, tGankData in pairs(teamBotBrain.tGanks) do
+		if tGankData.sTargetLane == tMyLane.sLaneName then
+			return 0
+		end
+	end
+	local targetLanes = {}
+	if tMyLane.sLaneName == "middle" then
+		tinsert(targetLanes, "top")
+		tinsert(targetLanes, "bottom")
+	elseif tMyLane.sLaneName == "top" or tMyLane.sLaneName == "bottom" then
+		tinsert(targetLanes, "middle")
+	elseif tMyLane.sLaneName == "jungle" then
+		tinsert(targetLanes, "middle")
+		if core.myTeam == HoN.GetHellbourneTeam() then
+			tinsert(targetLanes, "top")
+		else
+			tinsert(targetLanes, "bottom")
+		end
+	end
+
+	--Find targets
+	local time = HoN.GetMatchTime()
+	local checkInterval = teamBotBrain.nEnemyPosCheckInterval
+	local sOurTerritory = "legion"
+	if core.myTeam ==  HoN.GetHellbourneTeam() then
+		sOurTerritory = "hellbourne"
+	end
+	for _, EnemyHero in pairs(teamBotBrain.tEnemyHeroes) do
+		if EnemyHero:IsAlive() then
+			local enemyPos = teamBotBrain.EnemyPositions[EnemyHero:GetUniqueID()]
+			if enemyPos ~= nil and enemyPos.nLastSeen + checkInterval > time then
+				node = enemyPos.node
+				if node:GetProperty("zone") == sOurTerritory then
+					local enemyLane = node:GetProperty("lane")
+					local enemyAtNearLane = false
+					if enemyLane ~= nil then
+						for  _, targetLane in pairs(targetLanes) do
+							if enemyLane == targetLane then
+								enemyAtNearLane = true
+							end
+						end
+					end
+					if enemyAtNearLane then
+						-- Strength in numbers boys, strength in numbers
+						local nAlliesNear = 0
+						local nEnemiesNear = 0
+						for _, unitEnemy in pairs(teamBotBrain.EnemyPositions) do
+							if Vector3.Distance2DSq(enemyPos.node:GetPosition(), unitEnemy.node:GetPosition()) < 1000 * 1000 then
+								nEnemiesNear = nEnemiesNear + 1
+							end
+						end
+						for _, unitAlly in pairs(teamBotBrain.tAllyHeroes) do
+							if Vector3.Distance2DSq(enemyPos.node:GetPosition(), unitAlly:GetPosition()) < 1000 * 1000 then
+								nAlliesNear = nAlliesNear + 1
+							end
+						end
+						if nAlliesNear >= nEnemiesNear or nEnemiesNear == 1 then
+							behaviorLib.Ganking = true
+							behaviorLib.GankStartTime = time
+							behaviorLib.sGankTargetLane = enemyLane
+							behaviorLib.unitGankTarget = EnemyHero
+							teamBotBrain.tGanks[unitSelf:GetUniqueID()] = {nStarted = time, sTargetLane = enemyLane}
+
+							return 23
+						end
+					end
+				end
+			end
+		end
+	end
+	return 0
+end
+
+
+behaviorLib.nNextGankMessageTime = 0
+function behaviorLib.GankExecute(botBrain)
+	-- Chat about it
+	local time = HoN.GetMatchTime()
+	if behaviorLib.nNextGankMessageTime < time then
+		local nDelay = random(core.nChatDelayMin, core.nChatDelayMax)
+		core.TeamChatLocalizedMessage("gank", {lane=behaviorLib.sGankTargetLane}, nDelay)
+		behaviorLib.nNextGankMessageTime = time + 60000
+	end
+
+	local unitSelf = core.unitSelf
+	local teamBotBrain = core.teamBotBrain
+	local enemyPosition = teamBotBrain.EnemyPositions[behaviorLib.unitGankTarget:GetUniqueID()].node:GetPosition()
+	-- Get there
+	if Vector3.Distance2DSq(unitSelf:GetPosition(), enemyPosition) > 1000 * 1000 then
+		return behaviorLib.MoveExecute(botBrain, core.teamBotBrain.EnemyPositions[behaviorLib.unitGankTarget:GetUniqueID()].node:GetPosition())
+	else
+		-- Kill
+		behaviorLib.heroTarget = behaviorLib.unitGankTarget
+		behaviorLib.HarassHeroBehavior["Execute"](botBrain)
+	end
+
+end
+
+behaviorLib.GankBehavior = {}
+behaviorLib.GankBehavior["Utility"] = behaviorLib.GankUtility
+behaviorLib.GankBehavior["Execute"] = behaviorLib.GankExecute
+behaviorLib.GankBehavior["Name"] = "Gank"
+tinsert(behaviorLib.tBehaviors, behaviorLib.GankBehavior)

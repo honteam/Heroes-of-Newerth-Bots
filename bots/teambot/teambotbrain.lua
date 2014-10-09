@@ -101,12 +101,18 @@ object.nRuneNextSpawnCheck = 120000 --2min mark
 object.nRuneNextCheck = 120000
 object.nRuneCheckInterval = 1000
 
+
 object.runes = {
 	{vecLocation = Vector3.Create(5824, 9728), unit=nil, bPicked = true, bBetter=true},
 	{vecLocation = Vector3.Create(11136, 5376), unit=nil, bPicked = true, bBetter=true}
 }
 local tRuneNames = {"Powerup_Damage", "Powerup_Illusion", "Powerup_Stealth", "Powerup_Refresh", "Powerup_Regen", "Powerup_MoveSpeed", "Powerup_Super"}
 
+object.nNextEnemyPosCheck = 0
+object.nEnemyPosCheckInterval = 2000
+object.EnemyPositions = {} -- int unitID => {Node node, int nLastSeen}
+-- enemyLanes = {}
+object.tGanks = {} -- int unitID => {int nStarted, string sTargetLane}
 
 local tMapLanes = {}
 
@@ -247,6 +253,19 @@ function object:onthink(tGameVariables)
 	if time and time > object.nRuneNextCheck then
 		object.nRuneNextCheck = object.nRuneNextCheck + object.nRuneCheckInterval
 		object.CheckRunes()
+	end
+	if time and time > object.nNextEnemyPosCheck then
+		object.nNextEnemyPosCheck = object.nNextEnemyPosCheck + object.nEnemyPosCheckInterval
+		object.CheckEnemyPositions()
+	end
+end
+
+function object.CheckEnemyPositions()
+	local time = HoN.GetMatchTime()
+	for _, EnemyHero in pairs(object.tEnemyHeroes) do
+		if object.CanSeeUnit(object, EnemyHero) then
+			object.EnemyPositions[EnemyHero:GetUniqueID()] = {node = BotMetaData.GetClosestNode(EnemyHero:GetPosition()), nLastSeen = time}
+		end
 	end
 end
 

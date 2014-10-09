@@ -16,11 +16,9 @@ object.bMoveCommands 	= true
 object.bAttackCommands 	= true
 object.bAbilityCommands = true
 object.bOtherCommands 	= true
-
 object.bReportBehavior = false
 object.bDebugUtility = false
 object.bDebugExecute = false
-
 
 object.logger = {}
 object.logger.bWriteLog = false

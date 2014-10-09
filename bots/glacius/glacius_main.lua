@@ -21,7 +21,6 @@ object.bReportBehavior = false
 object.bDebugUtility = false
 object.bDebugExecute = false
 
-
 object.logger = {}
 object.logger.bWriteLog = false
 object.logger.bVerboseLog = false
