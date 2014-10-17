@@ -96,12 +96,19 @@ object.nFrenzyUtility = 50
 ------------------------------
 --	 skills   			--
 ------------------------------
+local bSkillsValid = false
 function object:SkillBuild()
 	local unitSelf = self.core.unitSelf
-	if  skills.abilStun == nil then
+	if not bSkillsValid then
 		skills.abilStun = unitSelf:GetAbility(0)
 		skills.abilSlow = unitSelf:GetAbility(1)
 		skills.abilFrenzy = unitSelf:GetAbility(2)
+	
+		if skills.abilStun and skills.abilSlow and skills.abilFrenzy then
+			bSkillsValid = true
+		else
+			return
+		end		
 	end
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then
 		return

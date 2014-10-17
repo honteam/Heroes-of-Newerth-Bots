@@ -68,15 +68,22 @@ object.heroName = 'Hero_Shaman'
 --------------------------------
 -- Skills
 --------------------------------
+local bSkillsValid = false
 function object:SkillBuild()
 	local unitSelf = self.core.unitSelf
 
-	if skills.abilEntangle == nil then
+	if not bSkillsValid then
 		skills.abilEntangle			= unitSelf:GetAbility(0)
 		skills.abilUnbreakable		= unitSelf:GetAbility(1)
 		skills.abilHealingWave		= unitSelf:GetAbility(2)
 		skills.abilStormCloud		= unitSelf:GetAbility(3)
 		skills.abilAttributeBoost	= unitSelf:GetAbility(4)
+		
+		if skills.abilEntangle and skills.abilUnbreakable and skills.abilHealingWave and skills.abilStormCloud and skills.abilAttributeBoost then
+			bSkillsValid = true
+		else
+			return
+		end
 	end
 
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then

@@ -104,17 +104,23 @@ At Level 2 he puts a pint into his Toss.
 Afterwards maxing his Corpse Explosion before finishing his Toss.
 Skills ZombieAcopalypse whenever possible.
 --]]
+local bSkillsValid = false
 function object:SkillBuild()
-
 	local unitSelf = self.core.unitSelf
 
-	if  skills.abilCorpseToss == nil then
+	if not bSkillsValid then
 		skills.abilCorpseToss		= unitSelf:GetAbility(0)
 		skills.abilCorpseExplosion  = unitSelf:GetAbility(1)
 		skills.abilDefilingTouch	= unitSelf:GetAbility(2)
 		skills.abilZombieApocalypse	= unitSelf:GetAbility(3)
 		skills.abilAttributeBoost	= unitSelf:GetAbility(4)
 		skills.abilTaunt			= unitSelf:GetAbility(8)
+		
+		if skills.abilCorpseToss and skills.abilCorpseExplosion and skills.abilDefilingTouch and skills.abilZombieApocalypse and skills.abilAttributeBoost and skills.abilTaunt then
+			bSkillsValid = true
+		else
+			return
+		end
 	end
 
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then

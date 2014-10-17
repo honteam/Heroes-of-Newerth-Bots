@@ -121,15 +121,21 @@ behaviorLib.nPositionHeroInfluenceMul = 3.75
 ------------------------------
 --  	Skills  	--
 ------------------------------
- 
+local bSkillsValid = false
 function object:SkillBuild()
 	local unitSelf = self.core.unitSelf
-	if  skills.abilHaunt == nil then
-		skills.abilHaunt = unitSelf:GetAbility(0)
-		skills.abilBlink = unitSelf:GetAbility(1)
-		skills.abilScream = unitSelf:GetAbility(2)
-		skills.abilBlast = unitSelf:GetAbility(3)
+	if not bSkillsValid then
+		skills.abilHaunt		= unitSelf:GetAbility(0)
+		skills.abilBlink		= unitSelf:GetAbility(1)
+		skills.abilScream		= unitSelf:GetAbility(2)
+		skills.abilBlast		= unitSelf:GetAbility(3)
 		skills.abilAttributeBoost = unitSelf:GetAbility(4)
+		
+		if skills.abilHaunt and skills.abilBlink and skills.abilScream and skills.abilBlast and skills.abilAttributeBoost then
+			bSkillsValid = true
+		else
+			return
+		end
 	end
  
 	local nPoints = unitSelf:GetAbilityPointsAvailable()

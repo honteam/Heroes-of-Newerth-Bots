@@ -118,20 +118,28 @@ core.tLanePreferences = {Jungle = 0, Mid = 3, ShortSolo = 4, LongSolo = 2, Short
 ------------------------------
 --     skills               --
 ------------------------------
+local bSkillsValid = false
 function object:SkillBuild()
   core.VerboseLog("skillbuild()")
 
 	local unitSelf = self.core.unitSelf
-	if skills.abilMoonbeam == nil then
-		skills.abilMoonbeam = unitSelf:GetAbility(0)
-		skills.abilBounce = core.WrapInTable(unitSelf:GetAbility(1))
-		skills.abilAura = core.WrapInTable(unitSelf:GetAbility(2))
-		skills.abilMoonFinale = unitSelf:GetAbility(3)
+	if not bSkillsValid then
+		skills.abilMoonbeam		= unitSelf:GetAbility(0)
+		skills.abilBounce		= core.WrapInTable(unitSelf:GetAbility(1))
+		skills.abilAura			= core.WrapInTable(unitSelf:GetAbility(2))
+		skills.abilMoonFinale	= unitSelf:GetAbility(3)
 
 		--To keep track status of 2nd and 3rd skill
 		skills.abilBounce.bTargetAll = true
 		skills.abilAura.bTargetAll = true
+		
+		if skills.abilMoonbeam and skills.abilBounce and skills.abilAura and skills.abilMoonFinale then
+			bSkillsValid = true
+		else
+			return
+		end		
 	end
+	
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then
 		return
 	end

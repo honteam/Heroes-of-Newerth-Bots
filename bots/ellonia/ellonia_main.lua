@@ -131,16 +131,22 @@ behaviorLib.HealAtWellBehavior["Utility"] = HealAtWellUtilityOverride
 ------------------------------
 --			skills			--
 ------------------------------
-
+local bSkillsValid = false
 function object:SkillBuild()
 	core.VerboseLog("skillbuild()")
 
 	local unitSelf = self.core.unitSelf
-	if  skills.abilGlacialSpike == nil then
+	if not bSkillsValid then
 		skills.abilGlacialSpike = unitSelf:GetAbility(0)
 		skills.abilFrigidField  = unitSelf:GetAbility(1)
 		skills.abilFlashFreeze  = unitSelf:GetAbility(2)
 		skills.abilAbsoluteZero = unitSelf:GetAbility(3)
+		
+		if skills.abilGlacialSpike and skills.abilFrigidField and skills.abilFlashFreeze and skills.abilAbsoluteZero then
+			bSkillsValid = true
+		else
+			return
+		end
 	end
 	
 	local nPoints = unitSelf:GetAbilityPointsAvailable()

@@ -131,7 +131,7 @@ function object:onthink(tGameVariables)
 		self:TeamBotBrainInitialize()
 	end
 	if metadata.bInitialized ~= true then
-		metadata.Initialize()
+		metadata.Initialize(tGameVariables.sMapName)
 	end	
 	
 	if core.tGameVariables == nil then
@@ -140,7 +140,7 @@ function object:onthink(tGameVariables)
 		else
 			core.tGameVariables = tGameVariables
 			getMapLanes()
-			core.bIsTutorial = core.tGameVariables.sMapName == 'tutorial'
+			core.bIsTutorial = core.tGameVariables.sMapName == 'tutorial' or core.tGameVariables.sMapName == 'tutorial_laning'
 			core.nDifficulty = core.tGameVariables.nDifficulty or core.nEASY_DIFFICULTY
 			
 			--[Tutorial] Hellbourne heroes don't group up to push and Legion waits longer to push

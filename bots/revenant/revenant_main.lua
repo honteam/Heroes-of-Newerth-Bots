@@ -96,22 +96,28 @@ object.nHellflowerThreshold = 38
 ----------------------------------
 ------Bot Function Overrides------
 ----------------------------------
-
+local bSkillsValid = false
 function object:SkillBuild()
 	core.VerboseLog("SkillBuild()")
 
 	local unitSelf = self.core.unitSelf
-	if  skills.abilDefile == nil then
-		skills.abilDefile = unitSelf:GetAbility(0)
-		skills.abilMortification = unitSelf:GetAbility(1)
-		skills.abilShroud = unitSelf:GetAbility(2)
-		skills.abilManifestation = unitSelf:GetAbility(3)
-		skills.abilAttributeBoost = unitSelf:GetAbility(4)
+	if not bSkillsValid then
+		skills.abilDefile			= unitSelf:GetAbility(0)
+		skills.abilMortification	= unitSelf:GetAbility(1)
+		skills.abilShroud			= unitSelf:GetAbility(2)
+		skills.abilManifestation	= unitSelf:GetAbility(3)
+		skills.abilAttributeBoost	= unitSelf:GetAbility(4)
+		
+		if skills.abilDefile and skills.abilMortification and skills.abilShroud and skills.abilManifestation and skills.abilAttributeBoost then
+			bSkillsValid = true
+		else
+			return
+		end
 	end
+		
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then
 		return
 	end
-
 
 	local nLev = unitSelf:GetLevel()
 	local nLevPts = unitSelf:GetAbilityPointsAvailable()
