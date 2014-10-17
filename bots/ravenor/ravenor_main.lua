@@ -105,16 +105,24 @@ object.nPortalKeyThreshold = 50
 ------------------------------
 --     skills   			--
 ------------------------------
+local bSkillsValid = false
 function object:SkillBuild()
 	core.VerboseLog("skillbuild()")
 
 	local unitSelf = self.core.unitSelf
-	if  skills.abilLightning == nil then
-		skills.abilLightning = unitSelf:GetAbility(0)
-		skills.abilBlades = unitSelf:GetAbility(1)
-		skills.abilFeedback = unitSelf:GetAbility(2)
-		skills.abilPower = unitSelf:GetAbility(3)
+	if not bSkillsValid then
+		skills.abilLightning	= unitSelf:GetAbility(0)
+		skills.abilBlades		= unitSelf:GetAbility(1)
+		skills.abilFeedback		= unitSelf:GetAbility(2)
+		skills.abilPower		= unitSelf:GetAbility(3)
+		
+		if skills.abilLightning and skills.abilBlades and skills.abilFeedback and skills.abilPower then
+			bSkillsValid = true
+		else
+			return
+		end
 	end
+	
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then
 		return
 	end
@@ -358,3 +366,26 @@ function behaviorLib.customPushExecute(botBrain) --this had much more to it, whi
 	end
 	return false
 end
+
+--[[for testing
+runfile "bots/miscTestCode.lua"
+function object:onthinkOverride(tGameVariables)
+	self:onthinkOld(tGameVariables)
+	
+	core.unitSelf:TeamShare()
+	
+	core.DrawXPosition(core.unitSelf:GetPosition(), "teal", 150)
+
+	if self.testDisplayAllNodes == nil then
+		Echo("derp")
+	else
+		self.testDisplayAllNodes()
+	end
+end
+object.onthinkOld = object.onthink
+object.onthink 	= object.onthinkOverride
+--]]
+
+
+
+

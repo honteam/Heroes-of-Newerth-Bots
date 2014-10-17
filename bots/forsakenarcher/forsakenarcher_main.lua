@@ -59,15 +59,22 @@ object.heroName = 'Hero_ForsakenArcher'
 --------------------------------
 -- Skills
 --------------------------------
+local bSkillsValid = false
 function object:SkillBuild()
 	local unitSelf = self.core.unitSelf	
 	
-	if  skills.abilCripplingVolley == nil then
+	if not bSkillsValid then
 		skills.abilCripplingVolley	= unitSelf:GetAbility(0)
 		skills.abilSplitFire		= unitSelf:GetAbility(1)
 		skills.abilCallOfTheDamned	= unitSelf:GetAbility(2)
 		skills.abilPiercingArrows	= unitSelf:GetAbility(3)
 		skills.abilAttributeBoost	= unitSelf:GetAbility(4)
+		
+		if skills.abilCripplingVolley and skills.abilSplitFire and skills.abilCallOfTheDamned and skills.abilPiercingArrows and skills.abilAttributeBoost then
+			bSkillsValid = true
+		else
+			return
+		end
 	end
 	
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then

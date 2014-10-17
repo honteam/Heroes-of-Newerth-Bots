@@ -29,6 +29,7 @@ behaviorLib.tItemBehaviors = {}
 		Bottle
 		Health Pot
 		Runes Of The Blight
+		Potion Of Blight
 		Battery Supply
 		Astrolabe
 		Sacrificial Stone
@@ -468,6 +469,46 @@ behaviorLib.tItemBehaviors["Item_RunesOfTheBlight"] = {}
 behaviorLib.tItemBehaviors["Item_RunesOfTheBlight"]["Utility"] = behaviorLib.UseRunesOfTheBlightUtility
 behaviorLib.tItemBehaviors["Item_RunesOfTheBlight"]["Execute"] = behaviorLib.UseRunesOfTheBlightExecute
 behaviorLib.tItemBehaviors["Item_RunesOfTheBlight"]["Name"] = "UseRunesOfTheBlight"
+
+
+------------------------------------
+--  	 Potion of Blight 	  --
+------------------------------------
+function behaviorLib.UsePotionOfBlightUtility(botBrain)
+	-- Roughly 20 + when we are missing 115 hp
+	-- Function which crosses 20 at x = 115 and is 30 at roughly x = 600, convex down
+
+	local unitSelf = core.unitSelf
+	local tInventory = unitSelf:GetInventory()
+	behaviorLib.itemBlightPotion = core.GetItem("Item_PotionOfBlight")
+	
+	if behaviorLib.itemBlightPotion and not unitSelf:HasState("State_PotionOfBlight") then
+		local unitSelf = core.unitSelf
+		local nHealthMissing = unitSelf:GetMaxHealth() - unitSelf:GetHealth()
+		local nHealthRegen = unitSelf:GetHealthRegen()
+		local nHealAmount = 115
+		local nHealBuffer = nHealthRegen * 16
+		local nUtilityThreshold = 20
+			
+		local vecPoint = Vector3.Create(nHealAmount + nHealBuffer, nUtilityThreshold)
+		local vecOrigin = Vector3.Create(-1000, -20)
+		
+		return core.ATanFn(nHealthMissing, vecPoint, vecOrigin, 100)
+	elseif not behaviorLib.itemBlightPotion then
+		behaviorLib.removeItemBehavior("Item_PotionOfBlight")
+	end
+	
+	return 0
+end
+
+function behaviorLib.UsePotionOfBlightExecute(botBrain)
+	return core.OrderItemClamp(botBrain, core.unitSelf, behaviorLib.itemBlightPotion)
+end
+behaviorLib.tItemBehaviors["Item_PotionOfBlight"] = {}
+behaviorLib.tItemBehaviors["Item_PotionOfBlight"]["Utility"] = behaviorLib.UsePotionOfBlightUtility
+behaviorLib.tItemBehaviors["Item_PotionOfBlight"]["Execute"] = behaviorLib.UsePotionOfBlightExecute
+behaviorLib.tItemBehaviors["Item_PotionOfBlight"]["Name"] = "UsePotionOfBlight"
+
 
 ------------------------------------
 --   Mana Battery/PowerSupply     --

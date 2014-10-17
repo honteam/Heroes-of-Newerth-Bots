@@ -60,15 +60,22 @@ object.heroName = 'Hero_Magmar'
 --------------------------------
 -- Skills
 --------------------------------
+local bSkillsValid = false
 function object:SkillBuild()
 	local unitSelf = self.core.unitSelf
 
-	if  skills.abilLavaSurge == nil then
+	if not bSkillsValid then
 		skills.abilLavaSurge		= unitSelf:GetAbility(0)
 		skills.abilSteamBath		= unitSelf:GetAbility(1)
 		skills.abilVolcanicTouch	= unitSelf:GetAbility(2)
 		skills.abilEruption			= unitSelf:GetAbility(3)
 		skills.abilAttributeBoost	= unitSelf:GetAbility(4)
+		
+		if skills.abilLavaSurge and skills.abilSteamBath and skills.abilVolcanicTouch and skills.abilEruption and skills.abilAttributeBoost then
+			bSkillsValid = true
+		else
+			return
+		end
 	end
 	
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then

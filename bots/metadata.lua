@@ -12,11 +12,6 @@ local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 
 --------------------------------
 
-BotMetaData.RegisterLayer('/bots/test.botmetadata')
-BotMetaData.SetActiveLayer('/bots/test.botmetadata')
-
---------------------------------
-
 metadata.tTop = {}
 metadata.tMiddle = {}
 metadata.tBottom = {}
@@ -47,13 +42,30 @@ function metadata.GetLane(sLane)
 	return {}
 end
 
+metadata.MapMetadataFile = ""
 metadata.bInitialized = false
 
-function metadata.Initialize()
+function metadata.Initialize(sMapName)	
+	if sMapName == "caldavar" then
+		metadata.MapMetadataFile = '/bots/caldavar.botmetadata'
+	elseif sMapName == "tutorial_stage1" then
+		metadata.MapMetadataFile = '/bots/tutorial1.botmetadata'
+	elseif sMapName == "tutorial" then
+		metadata.MapMetadataFile = '/bots/caldavar.botmetadata'
+	elseif sMapName == "tutorial_lasthit" then
+		metadata.MapMetadataFile = '/bots/tutorial1.botmetadata'
+	else
+		BotEcho(" ! ! Warning, no metadata for map "..sMapName.." ! !")
+	end
+		
+	BotMetaData.RegisterLayer(metadata.MapMetadataFile)
+	BotMetaData.SetActiveLayer(metadata.MapMetadataFile)
+
+	-- Set up lanes
 	local vecStart = Vector3.Create()
 	local vecEnd = Vector3.Create(16000, 16000)
 	
-	local sLane = 'top'
+	local sLane = 'top' -- upvalue for funcLaneCost
 	
 	local function funcLaneCost(nodeParent, nodeCurrent, link, nOriginalCost)	
 		local laneProperty = nodeCurrent:GetProperty('lane')
@@ -65,23 +77,26 @@ function metadata.Initialize()
 	end
 	
 	metadata.tTop = BotMetaData.FindPath(vecStart, vecEnd, funcLaneCost)
-	metadata.tTop.sLaneName = 'top'
+	metadata.tTop.sLaneKey = sLane
+	metadata.tTop.sLaneName = 'lane_top'
 	
 	sLane = 'middle'
 	metadata.tMiddle = BotMetaData.FindPath(vecStart, vecEnd, funcLaneCost)
-	metadata.tMiddle.sLaneName = 'middle'
+	metadata.tMiddle.sLaneKey = sLane
+	metadata.tMiddle.sLaneName = 'lane_mid'
 	
 	sLane = 'bottom'
 	metadata.tBottom = BotMetaData.FindPath(vecStart, vecEnd, funcLaneCost)
-	metadata.tBottom.sLaneName = 'bottom'
+	metadata.tBottom.sLaneKey = sLane
+	metadata.tBottom.sLaneName = 'lane_bot'
 	
-	if metadata.tTop == nil then
+	if metadata.tTop == nil or core.NumberElements(metadata.tTop) == 0 then
 		BotEcho('Top lane is invalid!')
 	end
-	if metadata.tMiddle == nil then
+	if metadata.tMiddle == nil or core.NumberElements(metadata.tMiddle) == 0 then
 		BotEcho('Middle lane is invalid!')
 	end
-	if metadata.tBottom == nil then
+	if metadata.tBottom == nil or core.NumberElements(metadata.tBottom) == 0 then
 		BotEcho('Bottom lane is invalid!')
 	end
 

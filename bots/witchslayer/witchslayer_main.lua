@@ -60,15 +60,22 @@ core.tLanePreferences = {Jungle = 0, Mid = 2, ShortSolo = 2, LongSolo = 1, Short
 --------------------------------
 -- Skills
 --------------------------------
+local bSkillsValid = false
 function object:SkillBuild()
 	local unitSelf = self.core.unitSelf	
 	
-	if  skills.abilGraveyard == nil then
+	if not bSkillsValid then
 		skills.abilGraveyard		= unitSelf:GetAbility(0)
 		skills.abilMiniaturization	= unitSelf:GetAbility(1)
 		skills.abilPowerDrain		= unitSelf:GetAbility(2)
 		skills.abilSilverBullet		= unitSelf:GetAbility(3)
 		skills.abilAttributeBoost	= unitSelf:GetAbility(4)
+		
+		if skills.abilGraveyard and skills.abilMiniaturization and skills.abilPowerDrain and skills.abilSilverBullet and skills.abilAttributeBoost then
+			bSkillsValid = true
+		else
+			return
+		end
 	end
 	
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then

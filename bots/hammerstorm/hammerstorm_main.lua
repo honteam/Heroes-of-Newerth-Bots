@@ -124,15 +124,22 @@ core.FindItems = funcFindItemsOverride
 --------------------------------
 -- Skills
 --------------------------------
+local bSkillsValid = false
 function object:SkillBuild()
 	local unitSelf = self.core.unitSelf
 
-	if  skills.abilHammerThrow == nil then
+	if not bSkillsValid then
 		skills.abilHammerThrow = unitSelf:GetAbility(0)
 		skills.abilMightySwing = unitSelf:GetAbility(1)
 		skills.abilGalvanize = unitSelf:GetAbility(2)
 		skills.abilBruteStrength = unitSelf:GetAbility(3)
 		skills.abilAttributeBoost = unitSelf:GetAbility(4)
+		
+		if skills.abilHammerThrow and skills.abilMightySwing and skills.abilGalvanize and skills.abilBruteStrength and skills.abilAttributeBoost then
+			bSkillsValid = true
+		else
+			return
+		end		
 	end
 	
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then

@@ -59,15 +59,22 @@ object.heroName = 'Hero_Chronos'
 --------------------------------
 -- Skills
 --------------------------------
+local bSkillsValid = false
 function object:SkillBuild()
 	local unitSelf = self.core.unitSelf	
 	
-	if  skills.abilTimeLeap == nil then
+	if not bSkillsValid then
 		skills.abilTimeLeap			= unitSelf:GetAbility(0)
 		skills.abilRewind			= unitSelf:GetAbility(1)
 		skills.abilCurseOfAges		= unitSelf:GetAbility(2)
 		skills.abilChronosphere		= unitSelf:GetAbility(3)
 		skills.abilAttributeBoost	= unitSelf:GetAbility(4)
+		
+		if skills.abilTimeLeap and skills.abilRewind and skills.abilCurseOfAges and skills.abilChronosphere and skills.abilAttributeBoost then
+			bSkillsValid = true
+		else
+			return
+		end
 	end
 	
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then
@@ -134,7 +141,7 @@ object.nTimeLeapThreshold = 35
 object.nChronosphereThreshold = 50
 
 local function IsCurseOfAgesNext()
-	return skills.abilCurseOfAges:GetCharges() <= 1 
+	return skills.abilCurseOfAges and skills.abilCurseOfAges:GetCharges() <= 1 
 end
 
 local function AbilitiesUpUtility(hero)
@@ -143,7 +150,7 @@ local function AbilitiesUpUtility(hero)
 	
 	local nUtility = 0
 	
-	if skills.abilTimeLeap:CanActivate() then
+	if skills.abilTimeLeap and skills.abilTimeLeap:CanActivate() then
 		nUtility = nUtility + object.nTimeLeapUp
 	end
 	
@@ -151,7 +158,7 @@ local function AbilitiesUpUtility(hero)
 		nUtility = nUtility + object.nCurseOfAgesNext
 	end
 	
-	if skills.abilChronosphere:CanActivate() then
+	if skills.abilChronosphere and skills.abilChronosphere:CanActivate() then
 		nUtility = nUtility + object.nChronosphereUp
 	end
 	
@@ -236,7 +243,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	if not bActionTaken and not bTargetRooted and nLastHarassUtility > botBrain.nTimeLeapThreshold then
 		if bDebugEchos then BotEcho("  No action yet, checking time leap") end
 		local abilTimeLeap = skills.abilTimeLeap
-		if abilTimeLeap:CanActivate() then
+		if abilTimeLeap and abilTimeLeap:CanActivate() then
 			local vecTargetTraveling = nil
 			if unitTarget.bIsMemoryUnit and unitTarget.lastStoredPosition then
 				vecTargetTraveling = Vector3.Normalize(vecTargetPosition - unitTarget.lastStoredPosition)
@@ -261,7 +268,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	if not bActionTaken and nLastHarassUtility > botBrain.nChronosphereThreshold then
 		if bDebugEchos then BotEcho("  No action yet, checking chronosphere") end
 		local abilChronosphere = skills.abilChronosphere
-		if abilChronosphere:CanActivate() then
+		if abilChronosphere and abilChronosphere:CanActivate() then
 			local nCheckRange = abilChronosphere:GetRange() + object.nChronosphereCheckRangeBuffer
 			local nRadius = GetChronosphereRadius()
 					
@@ -288,7 +295,7 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 -----------------------
 --this is a great function to override with using retreating skills, such as blinks, travels, stuns or slows.
 function behaviorLib.CustomReturnToWellExecute(botBrain)
-	core.OrderBlinkAbilityToEscape(botBrain, skills.abilTimeLeap, true)
+	return core.OrderBlinkAbilityToEscape(botBrain, skills.abilTimeLeap, true)
 end
 
 
@@ -308,29 +315,6 @@ behaviorLib.MidItems =
 behaviorLib.LateItems = 
 	{"Item_DaemonicBreastplate", "Item_Lightning2", "Item_BehemothsHeart", 'Item_Damage9'} --Item_Lightning2 is Charged Hammer. Item_Damage9 is Doombringer
 
-
-
---[[ colors:
-	red
-	aqua == cyan
-	gray
-	navy
-	teal
-	blue
-	lime
-	black
-	brown
-	green
-	olive
-	white
-	silver
-	purple
-	maroon
-	yellow
-	orange
-	fuchsia == magenta
-	invisible
---]]
 
 BotEcho('finished loading chronos_main')
 

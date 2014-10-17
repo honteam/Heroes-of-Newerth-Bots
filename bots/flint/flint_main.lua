@@ -62,15 +62,22 @@ object.heroName = 'Hero_FlintBeastwood'
 --------------------------------
 -- Skills
 --------------------------------
+local bSkillsValid = false
 function object:SkillBuild()	
 	local unitSelf = self.core.unitSelf
 
-	if skills.flare == nil then
+	if not bSkillsValid then
 		skills.flare		= unitSelf:GetAbility(0)
 		skills.hollowpoint	= unitSelf:GetAbility(1)
 		skills.deadeye		= unitSelf:GetAbility(2)
 		skills.moneyshot	= unitSelf:GetAbility(3)
 		skills.attributeBoost = unitSelf:GetAbility(4)
+		
+		if skills.flare and skills.hollowpoint and skills.deadeye and skills.moneyshot and skills.attributeBoost then
+			bSkillsValid = true
+		else
+			return
+		end
 	end	
 	
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then

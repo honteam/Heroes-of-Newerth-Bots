@@ -788,10 +788,12 @@ function core.AdjustMovementForTowerLogic(vecDesiredPos, bCanEnterRange)
 	
 	--Anti-Towerdive
 	local unitWellAttacker = core.enemyWellAttacker 
-	local nWellAttackerID = unitWellAttacker:GetUniqueID()
+	local nWellAttackerID = unitWellAttacker ~= nil and unitWellAttacker:GetUniqueID() or -1
 
 	local tTowers = core.CopyTable(core.localUnits["EnemyTowers"])
-	tTowers[nWellAttackerID] = unitWellAttacker
+	if unitWellAttacker ~= nil then
+		tTowers[nWellAttackerID] = unitWellAttacker
+	end
 
 	--[[
 	local nMoveStep = 200
@@ -803,7 +805,7 @@ function core.AdjustMovementForTowerLogic(vecDesiredPos, bCanEnterRange)
 	--]]
 
 	for id, localTower in pairs(tTowers) do
-		if localTower:IsAlive() then		
+		if localTower ~= nil and localTower:IsAlive() then		
 			local nTowerDistanceSq = Vector3.Distance2DSq(vecMyPos, localTower:GetPosition())		
 			local nTowerBuffer = core.towerBuffer
 			local nTowerRange = core.GetAbsoluteAttackRangeToUnit(localTower, core.unitSelf)
@@ -1044,9 +1046,9 @@ function core.GetFurthestCreepWavePos(tLane, bTraverseForward)
 		return nil
 	end
 		
-	vecReturn = tbotTeam:GetFrontOfCreepWavePosition(tLane.sLaneName)
+	vecReturn = tbotTeam:GetFrontOfCreepWavePosition(tLane.sLaneKey)
 	
-	if bDebugEchos then BotEcho("Front of "..tLane.sLaneName..":"..tostring(vecReturn)) end	
+	if bDebugEchos then BotEcho("Front of "..tLane.sLaneKey..":"..tostring(vecReturn)) end	
 	if bDebugLines and vecReturn then
 		core.DrawXPosition(vecReturn, 'red')
 	end
@@ -2112,3 +2114,25 @@ if unitMetatable.isMagicImmune == nil then
 		return false
 	end
 end
+
+--[[ colors:
+	red
+	aqua == cyan
+	gray
+	navy
+	teal
+	blue
+	lime
+	black
+	brown
+	green
+	olive
+	white
+	silver
+	purple
+	maroon
+	yellow
+	orange
+	fuchsia == magenta
+	invisible
+--]]

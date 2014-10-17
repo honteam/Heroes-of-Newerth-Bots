@@ -2,9 +2,9 @@
 ----------------------------------------------------------------------
 --   ____    _	     _____   _____   _____     ____    ________  -----
 --  |    \  | |	    /	  \ /     \ |	  \   /	   \  |  _  _  | -----
---  | Ѻ _|  | |___  |  Ѻ  | |  Ѻ  | |  ѻ__/  |   _  | |__    __| -----
---  |   \   |  _  \ |  _  | |  ___/ 3      \ |  (Ѻ) |    |  |    -----
---  | |\ \  | |	| | | | | | | |     |  Ѻ   | |	 ¯  |    |  |	 -----
+--  | O _|  | |___  |  O  | |  O  | |  o__/  |   _  | |__    __| -----
+--  |   \   |  _  \ |  _  | |  ___/ 3      \ |  (O) |    |  |    -----
+--  | |\ \  | |	| | | | | | | |     |  O   | |	 �  |    |  |	 -----
 --  |_| \_\ |_| |_| |_| |_| |_,     |______,  \____,     |__|	 -----
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
@@ -156,15 +156,21 @@ object.nRetreatStunThreshold = 43		--used for the defensive stunning
 ------------------------------
 --     skills               --
 ------------------------------
-
+local bSkillsValid = false
 function object:SkillBuild()
 	local unitSelf = self.core.unitSelf
-	if  skills.abilStaccato == nil then
-		skills.abilStaccato = unitSelf:GetAbility(0)
-		skills.abilDanceInferno = unitSelf:GetAbility(1)
-		skills.abilHymn = unitSelf:GetAbility(2)
-		skills.abilProtectiveMelody = unitSelf:GetAbility(3)
-		skills.abilAttributeBoost = unitSelf:GetAbility(4)
+	if not bSkillsValid then
+		skills.abilStaccato			= unitSelf:GetAbility(0)
+		skills.abilDanceInferno		= unitSelf:GetAbility(1)
+		skills.abilHymn				= unitSelf:GetAbility(2)
+		skills.abilProtectiveMelody	= unitSelf:GetAbility(3)
+		skills.abilAttributeBoost	= unitSelf:GetAbility(4)
+		
+		if skills.abilStaccato and skills.abilDanceInferno and skills.abilHymn and skills.abilProtectiveMelody and skills.abilAttributeBoost then
+			bSkillsValid = true
+		else
+			return
+		end
 	end
 	
 	local nPoints = unitSelf:GetAbilityPointsAvailable()
@@ -210,16 +216,18 @@ object.oncombatevent    = object.oncombateventOverride
 -- change utility according to usable spells here   --
 ------------------------------------------------------
 local function CustomHarassUtilityFnOverride(hero)
-   local nUtility = 0
+	local nUtility = 0
+	
+	if bSkillsValid then
+		if skills.abilStaccato:CanActivate() then
+			nUtility = nUtility + object.nStaccatoUp
+		end
 	 
-	if skills.abilStaccato:CanActivate() then
-		nUtility = nUtility + object.nStaccatoUp
+		if skills.abilDanceInferno:CanActivate() then
+			nUtility = nUtility + object.nDanceInfernoUp
+		end
 	end
  
-	if skills.abilDanceInferno:CanActivate() then
-		nUtility = nUtility + object.nDanceInfernoUp
-	end
- --BotEcho(nUtil..' nutil')
 	return nUtility
 end
 -- assisgn custom Harrass function to the behaviourLib object
@@ -264,7 +272,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	----------------------------------------------------- Staccato / Stun
 	if core.CanSeeUnit(botBrain, unitTarget) then
 		if not bActionTaken then
-			if abilStun:CanActivate() and nLastHarassUtility > botBrain.nStaccatoThreshold and not unitSelf:HasState("State_Rhapsody_Ability1_Self") then
+			if abilStun ~= nil and abilStun:CanActivate() and nLastHarassUtility > botBrain.nStaccatoThreshold and not unitSelf:HasState("State_Rhapsody_Ability1_Self") then
 				-- state_rhapsody_ability1_self means that rhapsody has staccato charges
 				local nRange = abilStun:GetRange()								
 				if nTargetDistanceSq < (nRange * nRange) then
@@ -278,7 +286,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	end 
 	----------------------------------------------------- Dance dance 
 	if not bActionTaken then
-		if abilDance:CanActivate() and unitTarget:GetHealthPercent() > 0.1 then --not gonna use this on a sure kill, won't waste
+		if abilDance ~= nil and abilDance:CanActivate() and unitTarget:GetHealthPercent() > 0.1 then --not gonna use this on a sure kill, won't waste
 			if nLastHarassUtility > botBrain.nDanceInfernoThreshold or bTargetVuln then --hey malloc would this if statement just override the dance threshold if i add bTargetVuln ?
 				local nRange = abilDance:GetRange()										--just delete if you deem necesarry, same with this comment
 				if nTargetDistanceSq < (nRange * nRange) then
@@ -321,7 +329,7 @@ function funcRetreatFromThreatExecuteOverride(botBrain)
 	--BotEcho("Checkin defensive Stun")
 	if not bActionTaken then
 		--Stun use		
-		if abilStun:CanActivate() and not unitSelf:HasState("State_Rhapsody_Ability1_Self") then
+		if abilStun ~= nil and abilStun:CanActivate() and not unitSelf:HasState("State_Rhapsody_Ability1_Self") then
 			--BotEcho("CanActivate!  nRetreatUtil: "..behaviorLib.lastRetreatUtil.."  thresh: "..object.nRetreatStunThreshold)
 			local tTargets = core.localUnits["EnemyHeroes"]
 			if behaviorLib.lastRetreatUtil >= object.nRetreatStunThreshold and tTargets then
@@ -522,7 +530,7 @@ function behaviorLib.HealUtility(botBrain)
 	local nTargetTimeToLive = nil
 	local sAbilName = ""
 	
-	if abilMelody:CanActivate() then
+	if abilMelody ~= nil and abilMelody:CanActivate() then
 		local tTargets = core.CopyTable(core.localUnits["AllyHeroes"])
 		tTargets[unitSelf:GetUniqueID()] = unitSelf --I am also a target
 		local nMyID = unitSelf:GetUniqueID()
@@ -588,7 +596,7 @@ function behaviorLib.HealExecute(botBrain) -- this is used for Ultimate triggeri
 	end
 	
 	--Priority order is Ultimate
-	if unitHealTarget then 
+	if abilMelody ~= nil and unitHealTarget then 
 		if nHealTimeToLive <= nUltimateTTL and abilMelody:CanActivate() and unitHealTarget ~= unitSelf  then  --only attempt ult for other players (not for self, lol)
 			ProtectiveMelodyExecute(botBrain)
 		else 

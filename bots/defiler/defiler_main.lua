@@ -59,15 +59,22 @@ object.heroName = 'Hero_Defiler'
 --------------------------------
 -- Skills
 --------------------------------
+local bSkillsValid = false
 function object:SkillBuild()
 	local unitSelf = self.core.unitSelf	
 	
-	if  skills.abilWaveOfDeath == nil then
+	if not bSkillsValid then
 		skills.abilWaveOfDeath		= unitSelf:GetAbility(0)
 		skills.abilGraveSilence		= unitSelf:GetAbility(1)
 		skills.abilPowerInDeath		= unitSelf:GetAbility(2)
 		skills.abilUnholyExpulsion	= unitSelf:GetAbility(3)
 		skills.abilAttributeBoost	= unitSelf:GetAbility(4)
+		
+		if skills.abilWaveOfDeath and skills.abilGraveSilence and skills.abilPowerInDeath and skills.abilUnholyExpulsion and skills.abilAttributeBoost then
+			bSkillsValid = true
+		else
+			return
+		end
 	end
 	
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then

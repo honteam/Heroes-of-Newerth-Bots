@@ -279,6 +279,8 @@ function behaviorLib.PositionSelfTraverseLane(botBrain)
 			if bDebugEchos then BotEcho("PositionSelfTraverseLane - can't fine furthest creep wave pos in lane " .. tLane.sLaneName) end
 			desiredPos = core.enemyMainBaseStructure:GetPosition()
 		end
+		
+		if bDebugEchos then BotEcho("    vFurthest: "..tostring(vecFurthest)) end
 	else
 		BotEcho('PositionSelfTraverseLane - unable to get my lane!')
 	end
@@ -432,7 +434,7 @@ function behaviorLib.PositionSelfLogic(botBrain)
 	end
 	
 	if not vecDesiredPos then
-		if bDebugEchos then BotEcho("PositionSelfTraverseLane") end
+		if bDebugEchos then BotEcho("PositionSelfTraverseLane: "..tostring(vecLanePosition)) end
 		StartProfile("PositionSelfTraverseLane")
 			vecDesiredPos = vecLanePosition
 		StopProfile()
@@ -1754,6 +1756,10 @@ function behaviorLib.HarassHeroExecute(botBrain)
 			if not bWellDiving then
 				if behaviorLib.lastHarassUtil < behaviorLib.diveThreshold then
 					if bDebugEchos then BotEcho("DON'T DIVE!") end
+					
+					if core.NumberElements(core.GetTowersThreateningPosition(vecDesiredPos, nil, core.myTeam)) > 0 then
+						return false
+					end
 									
 					if bUseTargetPosition and not bChanged then
 						core.OrderMoveToUnitClamp(botBrain, unitSelf, unitTarget, false)
@@ -2340,6 +2346,8 @@ function behaviorLib.PositionSelfExecute(botBrain)
 	local unitTarget = nil
 	vecDesiredPos, unitTarget = behaviorLib.PositionSelfLogic(botBrain)
 
+	if bDebugEchos then BotEcho("PositionSelf myPos: "..tostring(vecMyPosition)); BotEcho("PositionSelf: "..tostring(vecDesiredPos)) end
+	
 	if vecDesiredPos then
 		behaviorLib.MoveExecute(botBrain, vecDesiredPos)
 	else

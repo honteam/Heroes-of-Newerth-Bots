@@ -60,16 +60,23 @@ core.tLanePreferences = {Jungle = 0, Mid = 5, ShortSolo = 4, LongSolo = 3, Short
 --------------------------------
 -- Skills
 --------------------------------
+local bSkillsValid = false
 function object:SkillBuild()
 --Arachna specific
 	local unitSelf = self.core.unitSelf
 
-	if skills.webbedShot == nil then
+	if not bSkillsValid then
 		skills.webbedShot = unitSelf:GetAbility(0)
 		skills.hardenCarapace = unitSelf:GetAbility(1)
 		skills.precision = unitSelf:GetAbility(2)
 		skills.spiderSting = unitSelf:GetAbility(3)
 		skills.attributeBoost = unitSelf:GetAbility(4)
+		
+		if skills.webbedShot and skills.hardenCarapace and skills.precision and skills.spiderSting and skills.attributeBoost then
+			bSkillsValid = true
+		else
+			return
+		end
 	end
 		
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then

@@ -86,7 +86,7 @@ function object:onthink(tGameVariables)
 	end
 
 	if metadata.bInitialized == false then
-		metadata.Initialize()
+		metadata.Initialize(tGameVariables.sMapName)
 	end
 
 	if core.botBrainInitialized == false or core.unitSelf == nil then
@@ -418,7 +418,7 @@ function core.BotBrainCoreInitialize(tGameVariables)
 	core.teamBotBrain = HoN.GetTeamBotBrain()
 	
 	if (tGameVariables.bIsRetail == false) then
-		core.bBetterErrors = true
+		--core.bBetterErrors = true
 	end
 	
 	if core.teamBotBrain == nil then

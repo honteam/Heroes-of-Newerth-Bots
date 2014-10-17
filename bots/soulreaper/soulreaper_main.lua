@@ -126,17 +126,26 @@ object.tSkills ={
 	3, 1, 1, 1, 4,
 	3
 }
+
+local bSkillsValid = false
 function object:SkillBuild()
 	core.VerboseLog("SkillBuild()")
 
 	local unitSelf = self.core.unitSelf
-	if  skills.abilJudgement == nil then
-		skills.abilJudgement = unitSelf:GetAbility(0)
-		skills.abilWitheringPresence = unitSelf:GetAbility(1)
-		skills.abilInhumanNature = unitSelf:GetAbility(2)
-		skills.abilDemonicExecution = unitSelf:GetAbility(3)
-		skills.abilAttributeBoost = unitSelf:GetAbility(4)
+	if not bSkillsValid then
+		skills.abilJudgement			= unitSelf:GetAbility(0)
+		skills.abilWitheringPresence	= unitSelf:GetAbility(1)
+		skills.abilInhumanNature		= unitSelf:GetAbility(2)
+		skills.abilDemonicExecution		= unitSelf:GetAbility(3)
+		skills.abilAttributeBoost		= unitSelf:GetAbility(4)
+		
+		if skills.abilJudgement and skills.abilWitheringPresence and skills.abilInhumanNature and skills.abilDemonicExecution and skills.abilAttributeBoost then
+			bSkillsValid = true
+		else
+			return
+		end
 	end
+		
 	local nPoints = unitSelf:GetAbilityPointsAvailable()
 	if nPoints <= 0 then
 		return
