@@ -90,9 +90,6 @@ runfile "bots/eventsLib.lua"
 runfile "bots/metadata.lua"
 runfile "bots/behaviorLib.lua"
 
-runfile "bots/jungleLib.lua"
-local jungleLib = object.jungleLib
-
 local core, eventsLib, behaviorLib, metadata, skills = object.core, object.eventsLib, object.behaviorLib, object.metadata, object.skills
 
 local print, ipairs, pairs, string, table, next, type, tinsert, tremove, tsort, format, tostring, tonumber, strfind, strsub
@@ -103,18 +100,13 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
 
-local sqrtTwo = math.sqrt(2)
-
 BotEcho('loading myrmidon_main...')
-
---------------------------------
--- Lanes
---------------------------------
-core.tLanePreferences = {Jungle = 0, Mid = 3, ShortSolo = 3, LongSolo = 2, ShortSupport = 5, LongSupport = 5, ShortCarry = 2, LongCarry = 2}
 
 ---------------------------------
 --          Constants          --
 ---------------------------------
+
+core.tLanePreferences = {Jungle = 0, Mid = 3, ShortSolo = 3, LongSolo = 2, ShortSupport = 5, LongSupport = 5, ShortCarry = 2, LongCarry = 2}
 
 -- Myrmidon
 object.heroName = 'Hero_Hydromancer'
@@ -123,23 +115,20 @@ object.heroName = 'Hero_Hydromancer'
 behaviorLib.StartingItems =
 	{"Item_RunesOfTheBlight", "2 Item_MinorTotem", "Item_ManaBattery", "Item_HealthPotion"}
 behaviorLib.LaneItems =
-	{"Item_Steamboots", "Item_BloodChalice", "Item_Gloves3"} 
+	{"Item_Steamboots", "Item_BloodChalice"} --, "Item_Gloves3"}
 	--chalice on a bot will be crazy. Just time it before each kill, as you would a taunt.
 	--Gloves3 is alchemists bones, faster attack speed + extra gold from jungle creeps. May as well impliment it as the first of it's type.
 behaviorLib.MidItems =
-	{"Item_Shield2", "Item_DaemonicBreastplate"} 
-	--shield2 is HotBL. This should be changed to shamans if a high ratio of recieved damage is magic. (is this possible.)
-	--I'm using a guide to set up these items, so, demonic.... maybe not.
+	{"Item_ElderParasite", "Item_Platemail"}
 behaviorLib.LateItems =
-	{"Item_SpellShards 3", "Item_Lightning2", "Item_HarkonsBlade", "Item_BehemothsHeart"}
+	{"Item_SpellShards", "Item_Lightning2", "Item_Intelligence7", "Item_FrostfieldPlate", "Item_BehemothsHeart"}
 	--spellshards, because damage is important.
 	--"Lightning2 is charged hammer. More attack speed, right?
-	--harkons, solid all round.
 	--heart, because we need tankyness now.
 
 -- Skillbuild. 0 is Weed Field, 1 is Magic Carp, 2 is Wave Form, 3 is Forced Evolution, 4 is Attributes
 object.tSkills = {
-	0, 2, 0, 1, 0,
+	0, 2, 1, 0, 0,
 	3, 0, 1, 1, 2,
 	3, 1, 2, 2, 4,
 	3, 4, 4, 4, 4,
@@ -160,15 +149,13 @@ object.nForcedEvolutionUse = 20
 
 -- Thresholds of aggression the bot must reach to use these abilities
 object.nWeedFieldThreshold = 45
-object.nMagicCarpThreshold = 0 -- 0??
 object.nWaveFormThreshold = 70 -- was 100
 object.nWaveFormRetreatThreshold = 50
 object.nForcedEvolutionThreshold = 60
 
 -- Other variables
-object.nOldRetreatFactor = 0.9--Decrease the value of the normal retreat behavior
-object.nMaxLevelDifference = 4--Ensure hero will not be too carefull
-object.nEnemyBaseThreat = 6--Base threat. Level differences and distance alter the actual threat level.
+
+object.nWeedFieldDelay = 1100 -- nCastTime = 1000 --can we extract this from ability/affector? casttime="500" and castactiontime="100" and impactdelay="1000"
 
 ------------------------------
 --          Skills          --
@@ -183,7 +170,6 @@ function object:SkillBuild()
 		skills.abilMagicCarp = unitSelf:GetAbility(1)
 		skills.abilWaveForm = unitSelf:GetAbility(2)
 		skills.abilForcedEvolution = unitSelf:GetAbility(3)
-		skills.abilAttributeBoost = unitSelf:GetAbility(4)
 	end
 
 	local nPoints = unitSelf:GetAbilityPointsAvailable()
@@ -197,64 +183,33 @@ function object:SkillBuild()
 	end
 end
 
-------------------------------------------
---          FindItems Override          --
-------------------------------------------
-
-local function funcFindItemsOverride(botBrain)
-	local bUpdated = object.FindItemsOld(botBrain)
-
-	core.ValidateItem(core.itemSteamboots)
-	
-	if bUpdated then
-		if core.itemSteamboots and core.itemBloodChalice and core.itemAlchBones then
-			return
-		end
-
-		local inventory = core.unitSelf:GetInventory(false)
-		for slot = 1, 6 do
-			local curItem = inventory[slot]
-			if curItem then
-				if core.itemSteamboots == nil and curItem:GetName() == "Item_Steamboots" then
-					core.itemSteamboots = core.WrapInTable(curItem)
-				end
-			end
-		end
-	end
-end
-object.FindItemsOld = core.FindItems
-core.FindItems = funcFindItemsOverride
 
 ----------------------------------------
 --          OnThink Override          --
 ----------------------------------------
 
 local bTrackingCarp=false
-local uCarpTarget
+local unitCarpTarget
 
 function object:onthinkOverride(tGameVariables)
 	self:onthinkOld(tGameVariables)
-	jungleLib.assess(self)
+
 	local bDebugGadgets=false
 	local unitSelf=core.unitSelf
-	
+
 	if (bDebugGadgets or bTrackingCarp) then
-		local tUnits = HoN.GetUnitsInRadius(unitSelf:GetPosition(), 500, core.UNIT_MASK_ALIVE + core.UNIT_MASK_GADGET)
+		local tUnits = HoN.GetUnitsInRadius(unitSelf:GetPosition(), 2000, core.UNIT_MASK_ALIVE + core.UNIT_MASK_GADGET)
 		if tUnits then
 			for _, unit in pairs(tUnits) do
+
 				-- CARP
 				--Carp speed is 600.
 				--Carp gadget is "Gadget_Hydromancer_Ability2_Reveal", and it is at the position of the carp itself.
-				if (bTrackingCarp and unit:GetTypeName()=="Gadget_Hydromancer_Ability2_Reveal") then--carp is alive
-					if (uCarpTarget and uCarpTarget:GetPosition()) then
-						--BotEcho("Time till carp hit: "..Vector3.Distance2DSq(unit:GetPosition(),uCarpTarget:GetPosition() )/(600*600))
-					end
-				end
-				
+
 				if (bTrackingCarp and unit:GetTypeName()=="Gadget_Hydromancer_Ability2_Reveal_Linger") then -- carp is now dead
 					bTrackingCarp=false
 				end
-				
+
 				if (bDebugGadgets) then
 					core.DrawDebugArrow(unitSelf:GetPosition(), unit:GetPosition(), 'yellow') --flint q/r, fairy port, antipull, homecoming, kongor, chronos ult
 					BotEcho(unit:GetTypeName())
@@ -264,25 +219,24 @@ function object:onthinkOverride(tGameVariables)
 	end
 
 	-- Toggle Steamboots for more Health/Mana
-	--TODO: Change this to core.GetItem when available.
-	local itemSteamboots = core.itemSteamboots
+	local itemSteamboots = core.GetItem("Item_Steamboots")
 	if itemSteamboots and itemSteamboots:CanActivate() then
 		local unitSelf = core.unitSelf
 		local sKey = itemSteamboots:GetActiveModifierKey()
 		local sCurrentBehavior = core.GetCurrentBehaviorName(self)
 		if sKey == "str" then
 			-- Toggle away from STR if health is high enough
-			if unitSelf:GetHealthPercent() > .65 or sCurrentBehavior == "UseHealthRegen" or sCurrentBehavior == "UseManaRegen" then
+			if unitSelf:GetHealthPercent() > .65 or sCurrentBehavior == "UseHealthPot" or sCurrentBehavior == "UseRunesOfTheBlight" then
 				self:OrderItem(itemSteamboots.object, false)
 			end
 		elseif sKey == "agi" then
 			-- Toggle away from AGI when we're not using Regen items or at well
-			if sCurrentBehavior ~= "UseHealthRegen" and sCurrentBehavior ~= "UseManaRegen" and not unitSelf:HasState("State_RunesOfTheBlight") and not unitSelf:HasState("State_HealthPotion") then
+			if not unitSelf:HasState("State_ManaPotion") and not unitSelf:HasState("State_RunesOfTheBlight") and not unitSelf:HasState("State_HealthPotion") then
 				self:OrderItem(itemSteamboots.object, false)
 			end
 		elseif sKey == "int" then
 			-- Toggle away from INT if health gets too low
-			if unitSelf:GetHealthPercent() < .45 or sCurrentBehavior == "UseHealthRegen" or sCurrentBehavior == "UseManaRegen" then
+			if unitSelf:GetHealthPercent() < .45 or sCurrentBehavior == "UseManaPot" then
 				self:OrderItem(itemSteamboots.object, false)
 			end
 		end
@@ -357,63 +311,63 @@ behaviorLib.CustomHarassUtility = CustomHarassUtilityFnOverride
 -- A fixed list seems to be better then to check on each cycle if its  exist
 -- so we create it here
 local tRelativeMovements = {}
-local function createRelativeMovementTable(key)
+local function createRelativeMovementTable(sKey)
 	--BotEcho('Created a relative movement table for: '..key)
-	tRelativeMovements[key] = {
-		vLastPos = Vector3.Create(),
-		vRelMov = Vector3.Create(),
-		timestamp = 0
+	tRelativeMovements[sKey] = {
+		vecLastPos = Vector3.Create(),
+		vecRelMov = Vector3.Create(),
+		nTimestamp = 0
 	}
---	BotEcho('Created a relative movement table for: '..tRelativeMovements[key].timestamp)
+--	BotEcho('Created a relative movement table for: '..tRelativeMovements[sKey].nTimestamp)
 end
 
 createRelativeMovementTable("MyrmField") -- for landing Weed Field
 
 -- tracks movement for targets based on a list, so its reusable
--- key is the identifier for different uses (fe. RaMeteor for his path of destruction)
--- vTargetPos should be passed the targets position of the moment
+-- sKey is the identifier for different uses (fe. RaMeteor for his path of destruction)
+-- vecTargetPos should be passed the targets position of the moment
 -- to use this for prediction add the vector to a units position and multiply it
 -- the function checks for 100ms cycles so one second should be multiplied by 20
-local function relativeMovement(sKey, vTargetPos)
-	local debugEchoes = false
+local function relativeMovement(sKey, vecTargetPos)
+	local bDebugEchoes = false
 	
-	local gameTime = HoN.GetGameTime()
-	local key = sKey
-	local vLastPos = tRelativeMovements[key].vLastPos
-	local nTS = tRelativeMovements[key].timestamp
-	local timeDiff = gameTime - nTS 
+	local nGameTime = HoN.GetGameTime()
+	local vecLastPos = tRelativeMovements[sKey].vecLastPos
+	local nTS = tRelativeMovements[sKey].nTimestamp
+	local nTimeDiff = nGameTime - nTS
 	
-	if debugEchoes then
-		BotEcho('Updating relative movement for key: '..key)
-		BotEcho('Relative Movement position: '..vTargetPos.x..' | '..vTargetPos.y..' at timestamp: '..nTS)
-		BotEcho('Relative lastPosition is this: '..vLastPos.x)
+	if bDebugEchoes then
+		BotEcho('Updating relative movement for key: '..sKey)
+		BotEcho('Relative Movement position: '..vecTargetPos.x..' | '..vecTargetPos.y..' at timestamp: '..nTS)
+		BotEcho('Relative lastPosition is this: '..vecLastPos.x)
 	end
 	
-	if timeDiff >= 90 and timeDiff <= 140 then -- 100 should be enough (every second cycle)
-		local relativeMov = vTargetPos-vLastPos
+	if nTimeDiff >= 90 and nTimeDiff <= 140 then -- 100 should be enough (every second cycle)
+		local vecRelativeMov = vecTargetPos-vecLastPos
 		
-		if vTargetPos.LengthSq > vLastPos.LengthSq
-		then relativeMov =  relativeMov*-1 end
-		
-		tRelativeMovements[key].vRelMov = relativeMov
-		tRelativeMovements[key].vLastPos = vTargetPos
-		tRelativeMovements[key].timestamp = gameTime
-		
-		
-		if debugEchoes then
-			BotEcho('Relative movement -- x: '..relativeMov.x..' y: '..relativeMov.y)
-			BotEcho('^r---------------Return new-'..tRelativeMovements[key].vRelMov.x)
+		if vecTargetPos.LengthSq > vecLastPos.LengthSq	then
+			vecRelativeMov =  vecRelativeMov*-1
 		end
 		
-		return relativeMov
-	elseif timeDiff >= 150 then
-		tRelativeMovements[key].vRelMov =  Vector3.Create(0,0)
-		tRelativeMovements[key].vLastPos = vTargetPos
-		tRelativeMovements[key].timestamp = gameTime
+		tRelativeMovements[sKey].vecRelMov = vecRelativeMov
+		tRelativeMovements[sKey].vecLastPos = vecTargetPos
+		tRelativeMovements[sKey].nTimestamp = nGameTime
+		
+		
+		if bDebugEchoes then
+			BotEcho('Relative movement -- x: '..vecRelativeMov.x..' y: '..vecRelativeMov.y)
+			BotEcho('^r---------------Return new-'..tRelativeMovements[sKey].vecRelMov.x)
+		end
+		
+		return vecRelativeMov
+	elseif nTimeDiff >= 150 then
+		tRelativeMovements[sKey].vecRelMov =  Vector3.Create(0,0)
+		tRelativeMovements[sKey].vecLastPos = vecTargetPos
+		tRelativeMovements[sKey].nTimestamp = nGameTime
 	end
 	
-	if debugEchoes then BotEcho('^g---------------Return old-'..tRelativeMovements[key].vRelMov.x) end
-	return tRelativeMovements[key].vRelMov
+	if bDebugEchoes then BotEcho('^g---------------Return old-'..tRelativeMovements[sKey].vecRelMov.x) end
+	return tRelativeMovements[sKey].vecRelMov
 end
 
 ---------------------------------------
@@ -421,7 +375,7 @@ end
 ---------------------------------------
 
 local function HarassHeroExecuteOverride(botBrain)
-	
+
 	local unitTarget = behaviorLib.heroTarget
 	if unitTarget == nil then
 		return object.harassExecuteOld(botBrain)
@@ -429,32 +383,51 @@ local function HarassHeroExecuteOverride(botBrain)
 
 	local unitSelf = core.unitSelf
 	local vecMyPosition = unitSelf:GetPosition()
-	
+
 	local vecTargetPosition = unitTarget:GetPosition()
 	local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
 	local bCanSeeTarget = core.CanSeeUnit(botBrain, unitTarget)
-	
-	local nWeedFieldDelay = 1100 -- nCastTime = 1000 --can we extract this from ability/affector? casttime="500" and castactiontime="100" and impactdelay="1000"
+	local bMagicImmune = unitTarget:isMagicImmune()
+
+	local nWeedFieldDelay = object.nWeedFieldDelay
 	local vecRelativeMov = relativeMovement("MyrmField", vecTargetPosition) * (nWeedFieldDelay / 100) --updating every 100ms
 
 	local nLastHarassUtility = behaviorLib.lastHarassUtil
 	local bActionTaken = false
-	
+
+
+	--Magic Carp
+	if not bMagicImmune then
+		local abilMagicCarp = skills.abilMagicCarp
+		if abilMagicCarp:CanActivate() and bCanSeeTarget then
+			local nRange = abilMagicCarp:GetRange()
+			if nTargetDistanceSq < (nRange * nRange) then
+				bActionTaken = core.OrderAbilityEntity(botBrain, abilMagicCarp, unitTarget)
+				if bActionTaken then
+					unitCarpTarget = unitTarget
+					bTrackingCarp = true
+				end
+			end
+		end
+	end
+
 	--Weed Field
 	--Currently trying to use Stolen's Ra prediction code.  Consider reworking and track all old hero positions?
 	if not bActionTaken then
-		local bDebugEchoes = false
 		local abilWeedField = skills.abilWeedField
-		if abilWeedField:CanActivate() and nLastHarassUtility > object.nWeedFieldThreshold then
+		local bDebugEchoes = false
+		if not bMagicImmune and abilWeedField:CanActivate() and nLastHarassUtility > object.nWeedFieldThreshold then
 			local nRange = abilWeedField:GetRange()
 			local vecTargetPredictPosition = vecTargetPosition + vecRelativeMov
 			if Vector3.Distance2DSq(vecMyPosition, vecTargetPredictPosition) < nRange * nRange then
 				local nCarpMovespeedSq = 600 * 600
 				if not bTrackingCarp then
-					bActionTaken = core.OrderAbilityPosition(botBrain, skills.abilWeedField, vecTargetPredictPosition)
-					if bDebugEchoes then BotEcho("Casting weed field!") end
+					bActionTaken = core.OrderAbilityPosition(botBrain, abilWeedField, vecTargetPredictPosition)
+					if bDebugEchoes then
+						BotEcho("Casting weed field!")
+					end
 				-- If carp homing on target, wait till it gets close?
-				elseif ((nWeedFieldDelay * nWeedFieldDelay) / (1000 * 1000)) < (Vector3.Distance2DSq(uCarpTarget:GetPosition(), vecTargetPredictPosition) / nCarpMovespeedSq) then --perfect time to cast weed field!
+				elseif ((nWeedFieldDelay * nWeedFieldDelay) / (1000 * 1000)) < (Vector3.Distance2DSq(unitCarpTarget:GetPosition(), vecTargetPredictPosition) / nCarpMovespeedSq) then --perfect time to cast weed field!
 					bActionTaken = core.OrderAbilityPosition(botBrain, skills.abilWeedField, vecTargetPredictPosition)
 				end
 			end
@@ -468,33 +441,18 @@ local function HarassHeroExecuteOverride(botBrain)
 		end
 	end
 
-	--Magic Carp
-	if not bActionTaken then
-		local abilMagicCarp = skills.abilMagicCarp
-		if abilMagicCarp:CanActivate() and bCanSeeTarget and nLastHarassUtility > object.nMagicCarpThreshold then
-			local nRange = abilMagicCarp:GetRange()
-			if nTargetDistanceSq < (nRange * nRange) then
-				bActionTaken = core.OrderAbilityEntity(botBrain, skills.abilMagicCarp, unitTarget)
-				if bActionTaken then
-					uCarpTarget = unitTarget
-					bTrackingCarp = true
-				end
-			end
-		end
-	end
-	
 	--Wave Form
 	if not bActionTaken then
-		local bDebugEchoes = true
+		local bDebugEchoes = false
 		local abilWaveForm = skills.abilWaveForm
 		if abilWaveForm:CanActivate() and nLastHarassUtility > object.nWaveFormThreshold then
 			local nRange = abilWaveForm:GetRange()
 			local nWaveOvershoot = 128 --try to get this many units past target to guarantee slow and position nicely to ult or block
 			local vecWaveFormTarget = vecTargetPosition + nWaveOvershoot * Vector3.Normalize(vecTargetPosition - vecMyPosition)
 			if Vector3.Distance2DSq(vecMyPosition, vecWaveFormTarget) < (nRange * nRange) then
-				bActionTaken = core.OrderAbilityPosition(botBrain, skills.abilWaveForm, vecWaveFormTarget)
+				bActionTaken = core.OrderAbilityPosition(botBrain, abilWaveForm, vecWaveFormTarget)
 			else
-				bActionTaken = core.OrderAbilityPosition(botBrain, skills.abilWaveForm, vecTargetPosition)
+				bActionTaken = core.OrderAbilityPosition(botBrain, abilWaveForm, vecTargetPosition)
 			end
 		end
 	
@@ -515,7 +473,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	if not bActionTaken and bCanSeeTarget then
 		local abilForcedEvolution = skills.abilForcedEvolution
 		if abilForcedEvolution:CanActivate() and nLastHarassUtility > object.nForcedEvolutionThreshold and nTargetDistanceSq < (200 * 200) then
-			bActionTaken = core.OrderAbility(botBrain, skills.abilForcedEvolution)
+			bActionTaken = core.OrderAbility(botBrain, abilForcedEvolution)
 		end
 	end
 	
@@ -529,62 +487,44 @@ end
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 
-local function positionOffset(pos, angle, distance) --this is used by minions to form a ring around people.
-		tmp = Vector3.Create(cos(angle) * distance, sin(angle) * distance)
-		return tmp + pos
-end
-local function waveFormToBase(botBrain)
-	local vecWellPos = core.allyWell and core.allyWell:GetPosition() or behaviorLib.PositionSelfBackUp()
-	local vecMyPos=core.unitSelf:GetPosition()
-	if (Vector3.Distance2DSq(vecMyPos, vecWellPos)>600*600)then
-		if (skills.abilWaveForm:CanActivate()) then --waveform
-			return core.OrderAbilityPosition(botBrain, skills.abilWaveForm, positionOffset(core.unitSelf:GetPosition(), atan2(vecWellPos.y-vecMyPos.y,vecWellPos.x-vecMyPos.x), skills.abilWaveForm:GetRange()))
-		end
-	end
-	return false
-end
+local function funcCustomRetreatFromThreatExecuteOverride(botBrain)
 
-------------------------------------------------------------------
---Retreat execute
-------------------------------------------------------------------
---  this is a great function to override with using retreating skills, such as blinks, travels, stuns or slows.
-function behaviorLib.CustomRetreatExecute(botBrain)
-	local unitSelf = core.unitSelf
 	local unitTarget = behaviorLib.heroTarget
-	local bActionTaken = false
-	
-	--Counting the enemies 	
-	local tEnemies = core.localUnits["EnemyHeroes"]
-	local nCount = 0
-	local bCanSeeUnit = unitTarget and core.CanSeeUnit(botBrain, unitTarget) 
-	for id, unitEnemy in pairs(tEnemies) do
-		if core.CanSeeUnit(botBrain, unitEnemy) then
+	if unitTarget and core.CanSeeUnit(botBrain, unitTarget) then
+
+		local unitSelf = core.unitSelf
+
+		--Counting the enemies
+		local tEnemies = core.localUnits["EnemyHeroes"]
+		local nCount = 0
+		for _, unitEnemy in pairs(tEnemies) do
 			nCount = nCount + 1
 		end
-	end
-	if (nCount > 1 or unitSelf:GetHealthPercent() < .4) and bCanSeeUnit then -- More enemies or low on life
-		local vecMyPosition = unitSelf:GetPosition()
-		local vecTargetPosition = unitTarget:GetPosition()
-		local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
-		local bTargetVuln = unitTarget:IsStunned() or unitTarget:IsImmobilized()
-	
-		--WeedField
-		local abilWeedField = skills.abilWeedField
-		if abilWeedField:CanActivate() then
-			local nRange = abilWeedField:GetRange()
-			if nTargetDistanceSq < (nRange * nRange) then
-				bActionTaken = core.OrderAbilityPosition(botBrain, abilWeedField, vecTargetPosition)
+
+		if (nCount > 1 or unitSelf:GetHealthPercent() < .4) then -- More enemies or low on life
+			local vecMyPosition = unitSelf:GetPosition()
+			local vecTargetPosition = unitTarget:GetPosition()
+			local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
+
+			--WeedField
+			local abilWeedField = skills.abilWeedField
+			if abilWeedField:CanActivate() then
+				local nRange = abilWeedField:GetRange()
+				if nTargetDistanceSq < (nRange * nRange) then
+					return core.OrderAbilityPosition(botBrain, abilWeedField, vecTargetPosition)
+				end
+			end
+
+			--Todo? Activate ult if HP < ??% and retreating
+
+			--waveform
+			if behaviorLib.lastRetreatUtil> object.nWaveFormRetreatThreshold and core.OrderBlinkAbilityToEscape(botBrain, skills.abilWaveForm) then 
+				return true 
 			end
 		end
-		
-		--wave form
-		if (not bActionTaken and behaviorLib.lastRetreatUtil> object.nWaveFormRetreatThreshold) then
-			bActionTaken = waveFormToBase(botBrain)
-		end
-		
 	end
-	return bActionTaken
 end
+behaviorLib.CustomRetreatExecute = funcCustomRetreatFromThreatExecuteOverride
 
 --------------------------------------------------
 --             HealAtWell Override              --
@@ -593,165 +533,45 @@ end
 --return to well more often. --2000 gold adds 8 to return utility, 0% mana also adds 8.
 --When returning to well, use skills and items.
 local function HealAtWellUtilityOverride(botBrain)
-	return object.HealAtWellUtilityOld(botBrain)*1.75+(botBrain:GetGold()*8/2000)+ 8-(core.unitSelf:GetManaPercent()*8) --courageously flee back to base.
+	return object.HealAtWellUtilityOld(botBrain)*1.75+(botBrain:GetGold()*8/2000)+ 8-(core.unitSelf:GetManaPercent()*8) --couragously flee back to base.
 end
 
-local function HealAtWellExecuteOverride(botBrain)
-	return waveFormToBase(botBrain) or object.HealAtWellExecuteOld(botBrain)
+local function CustomReturnToBase(botBrain)
+	return 	core.OrderBlinkAbilityToEscape(botBrain, skills.abilWaveForm)
 end
 
 object.HealAtWellUtilityOld = behaviorLib.HealAtWellBehavior["Utility"]
 behaviorLib.HealAtWellBehavior["Utility"] = HealAtWellUtilityOverride
-object.HealAtWellExecuteOld = behaviorLib.HealAtWellBehavior["Execute"]
-behaviorLib.HealAtWellBehavior["Execute"] = HealAtWellExecuteOverride
+behaviorLib.CustomReturnToWellExecute = CustomReturnToBase
 
 --------------------------------------------
 --          PushExecute Override          --
 --------------------------------------------
-
--- Filters a group to be within a given range. Modified from St0l3n_ID's Chronos bot
-local function filterGroupRange(tGroup, vecCenter, nRange)
-	if tGroup and vecCenter and nRange then
-		local tResult = {}
-		for _, unitTarget in pairs(tGroup) do
-			if Vector3.Distance2DSq(unitTarget:GetPosition(), vecCenter) <= (nRange * nRange) then
-				tinsert(tResult, unitTarget)
-			end
-		end	
-
-		if #tResult > 0 then
-			return tResult
-		end
-	end
-
-	return nil
-end
-
--- Find the angle in degrees between two targets. Modified from St0l3n_ID's AngToTarget code
-local function getAngToTarget(vecSelf, vecTarget)
-	local nDeltaY = vecTarget.y - vecSelf.y
-	local nDeltaX = vecTarget.x - vecSelf.x
-
-	return floor( atan2(nDeltaY, nDeltaX) * 57.2957795131) -- That number is 180 / pi
-end
-
-local function getBestWeedFieldCastDirection(tLocalUnits, nMinimumCount)
-	if nMinimumCount == nil then
-		nMinimumCount = 1
-	end
-	
-	if tLocalUnits and core.NumberElements(tLocalUnits) >= nMinimumCount then
-		local unitSelf = core.unitSelf
-		local vecMyPosition = unitSelf:GetPosition()
-		local tTargetsInRange = filterGroupRange(tLocalTargets, vecMyPosition, 1000)
-		if tTargetsInRange and #tTargetsInRange >= nMinimumCount then
-			local tAngleOfTargetsInRange = {}
-			for _, unitTarget in pairs(tTargetsInRange) do
-				local vecEnemyPosition = unitTarget:GetPosition()
-				local vecDirection = Vector3.Normalize(vecEnemyPosition - vecMyPosition)
-				vecDirection = core.RotateVec2DRad(vecDirection, pi / 2)
-
-				local nHighAngle = getAngToTarget(vecMyPosition, vecEnemyPosition + vecDirection * 50)
-				local nMidAngle = getAngToTarget(vecMyPosition, vecEnemyPosition)
-				local nLowAngle = getAngToTarget(vecMyPosition, vecEnemyPosition - vecDirection * 50)
-
-				tinsert(tAngleOfTargetsInRange, {nHighAngle, nMidAngle, nLowAngle})
-			end
-		
-			local tBestGroup = {}
-			local tCurrentGroup = {}
-			for _, tStartAngles in pairs(tAngleOfTargetsInRange) do
-				local nStartAngle = tStartAngles[2]
-				if nStartAngle <= -90 then
-					-- Avoid doing calculations near the break in numbers
-					nStartAngle = nStartAngle + 360
-				end
-
-				for _, tAngles in pairs(tAngleOfTargetsInRange) do
-					local nHighAngle = tAngles[1]
-					local nMidAngle = tAngles[2]
-					local nLowAngle = tAngles[3]
-					if nStartAngle > 90 and nStartAngle <= 270 then
-						if nHighAngle < 0 then
-							nHighAngle = nHighAngle + 360
-						end
-						
-						if nMidAngle < 0 then
-							nMidAngle = nMidAngle + 360
-						end
-							
-						if nLowAngle < 0 then
-							nLowAngle = nLowAngle + 360
-						end
-					end
-
-
-					if nHighAngle >= nStartAngle and nStartAngle >= nLowAngle then
-						tinsert(tCurrentGroup, nMidAngle)
-					end
-				end
-
-				if #tCurrentGroup > #tBestGroup then
-					tBestGroup = tCurrentGroup
-				end
-
-				tCurrentGroup = {}
-			end
-		
-			local nBestGroupSize = #tBestGroup
-			
-			if nBestGroupSize >= nMinimumCount then
-				tsort(tBestGroup)
-
-				local nAvgAngle = (tBestGroup[1] + tBestGroup[nBestGroupSize]) / 2 * 0.01745329251 -- That number is pi / 180
-
-				return Vector3.Create(cos(nAvgAngle), sin(nAvgAngle)) * 500
-			end
-		end
-	end
-	
-	return nil
-end
-
---TODO Change these to the new pushing when they are out
-local function AbilityPush(botBrain)
-	local bSuccess = false
-	local abilWeedField = skills.abilWeedField
-	local unitSelf = core.unitSelf
+local function CustomPushExecuteFnOverride(botBrain)
+	local bActionTaken = false
 	local nMinimumCreeps = 3
 
-	-- Stop the bot from trying to farm creeps if the creeps approach the spot where the bot died
-	if not unitSelf:IsAlive() then
-		return bSuccess
-	end
-
-	if abilWeedField:CanActivate() and unitSelf:GetManaPercent() > .4 then
-		local vecCastDirection = getBestWeedFieldCastDirection(core.localUnits["EnemyCreeps"], 3)
-		if vecCastDirection then 
-			bSuccess = core.OrderAbilityPosition(botBrain, abilWeedField, unitSelf:GetPosition() + vecCastDirection)
+	local abilWeedField = skills.abilWeedField
+	if abilWeedField:CanActivate() and core.unitSelf:GetManaPercent() > 0.4 then
+		local tCreeps = core.localUnits["EnemyCreeps"]
+		local nNumberCreeps =  core.NumberElements(tCreeps)
+		if nNumberCreeps >= nMinimumCreeps then
+			local vecTarget = core.GetGroupCenter(tCreeps)
+			bActionTaken = core.OrderAbilityPosition(botBrain, abilWeedField, vecTarget)
 		end
 	end
 
-	return bSuccess
+	return bActionTaken
 end
-
-local function PushExecuteOverride(botBrain)
-	if not AbilityPush(botBrain) then 
-		return object.PushExecuteOld(botBrain)
-	end
-end
-
-object.PushExecuteOld = behaviorLib.PushBehavior["Execute"]
-behaviorLib.PushBehavior["Execute"] = PushExecuteOverride
+behaviorLib.customPushExecute = CustomPushExecuteFnOverride
 
 local function TeamGroupBehaviorOverride(botBrain)
-	if not AbilityPush(botBrain) then 
+	if not CustomPushExecuteFnOverride(botBrain) then
 		return object.TeamGroupBehaviorOld(botBrain)
 	end
 end
 
 object.TeamGroupBehaviorOld = behaviorLib.TeamGroupBehavior["Execute"]
 behaviorLib.TeamGroupBehavior["Execute"] = TeamGroupBehaviorOverride
-
 
 BotEcho(object:GetName()..' finished loading myrmidon_main')
