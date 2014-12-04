@@ -1,13 +1,13 @@
 -----------------------------------------------------------------------------
 --	 _________                   __        _                 __  
---	/  _____  |                 |  |      | |               |  |  
---	| /     |_|                 |  |      | |               |  |   
+--	/   ____  |                 |  |      | |               |  |  
+--	|  /    |_|                 |  |      | |               |  |   
 --	| |          _   _   _      |  |___   | |   ____     ___|  |   ___
 --	| |    ____ | | | | | |___  |   _  \  | |  / _  \   /  _   |  / _ \
 --	|  \___\  / | \_/ | |  _  | |  |_|  | | | | /_|  \ |  |_|  | |  __/
 --	\________/   \___/  |_| |_|  \_____/  |_|  \___/\_\ \______/  \___|
 ------------------------------------------------------------------------------
---V 1.0
+--V 1.01
 --Coded By: ModernSaint
 --Basic Equations--
 local _G = getfenv(0)
@@ -130,33 +130,42 @@ object.nDemonicShieldUp = 6
 object.nGrapplingShotUp = 20
 object.nEnergizerUp = 6
 
+-- bonus agression points that are applied to the bot upon successfully using a skill/item
+object.nCripplingSlugsUse = 12
+object.nDemonicShieldUse = 12
+object.nGrapplingShotUse = 30
+object.nEnergizerUse = 13
+
+-- thresholds of aggression the bot must reach to use these abilities
+object.nCripplingSlugsThreshold = 24
+object.nDemonicShieldThreshold = 18
+object.nGrapplingShotThreshold =34
+object.nEnergizerThreshold = 22
+
+-- Additional Modifiers
+
+--weight overrides
+behaviorLib.nCreepPushbackMul = 1
+behaviorLib.nTargetPositioningMul = 1
+
 local function AbilitiesUpUtilityFn()
 	local val = 0
 	
 	if skills.CripplingSlugs:CanActivate() then
 		val = val + object.nCripplingSlugsUpBonus
 	end
-	
-		if skills.DemonicShield:CanActivate() then
+	if skills.DemonicShield:CanActivate() then
 		val = val + object.nDemonicShieldUpBonus
 	end
-	
 	if skills.GrapplingShot:CanActivate() then
 		val = val + object.nGrapplingShotUpBonus
 	end
-	
 	if core.itemEnergizer and core.itemEnergizer:CanActivate() then
 		val = val + object.nEnergizerUp
 	end
 	
 	return val
 end
-
--- bonus agression points that are applied to the bot upon successfully using a skill/item
-object.nCripplingSlugsUse = 24
-object.nDemonicShieldUse = 8
-object.nGrapplingShotUse = 40
-object.nEnergizerUse = 13
 
 function object:oncombateventOverride(EventData)
 	self:oncombateventOld(EventData)
@@ -192,18 +201,6 @@ end
 object.oncombateventOld = object.oncombatevent
 object.oncombatevent 	= object.oncombateventOverride
 
--- thresholds of aggression the bot must reach to use these abilities
-object.nCripplingSlugsThreshold = 20
-object.nDemonicShieldThreshold = 18
-object.nGrapplingShotThreshold = 24
-object.nEnergizerThreshold = 12
-
--- Additional Modifiers
-
---weight overrides
-behaviorLib.nCreepPushbackMul = 1
-behaviorLib.nTargetPositioningMul = 1
-
 ----------------------------------
 --	harass actions
 ----------------------------------
@@ -213,7 +210,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	
 	local unitTarget = behaviorLib.heroTarget
 	if unitTarget == nil or not unitTarget:IsValid() then
-		return false --can not execute, move on to the next behavior
+		return false --can not execute, move on to the next behaviour
 	end
 	
 	local unitSelf = core.unitSelf
@@ -234,11 +231,16 @@ local function HarassHeroExecuteOverride(botBrain)
 	local abilCripplingSlugs = skills.CripplingSlugs
 	local abilGrapplingShot = skills.GrapplingShot
 	
+	--Energizer
+	if core.itemEnergizer and core.itemEnergizer:CanActivate() and nHarassUtility > object.nEnergizerThreshold then
+		botBrain:OrderItem(core.itemEnergizer.object or core.itemEnergizer, false)
+	end
+	
 	--CripplingSlugs
 	if not bActionTaken and nLastHarassUtility > botBrain.nCripplingSlugsThreshold then
 		if abilCripplingSlugs:CanActivate() then
 			local nRange = abilCripplingSlugs:GetRange()
-			if nTargetDistanceSq < (nRange * nRange) and unitSelf:GetManaPercent() > .20 then
+			if nTargetDistanceSq < (nRange * nRange) and (unitSelf:GetManaPercent() > .20 or unitTarget:GetHealth() < 275) then --Reserves some mana, unless a kill is likely 
 				bActionTaken = core.OrderAbilityPosition(botBrain, abilCripplingSlugs, vecTargetPosition)
 			elseif nTargetDistanceSq < (nAttackRangeSq * .4) then --Use ability if an enemy is close
 				bActionTaken = core.OrderAbilityPosition(botBrain, CripplingSlugs, vecTargetPosition)		
@@ -259,16 +261,13 @@ local function HarassHeroExecuteOverride(botBrain)
 	
 	--GrapplingShot
 	if not bActionTaken and (nLastHarassUtility > botBrain.nGrapplingShotThreshold) and abilGrapplingShot:CanActivate() then
-			local nRange = abilGrapplingShot:GetRange()
+		local nRange = abilGrapplingShot:GetRange()
 		if nTargetDistanceSq < (nRange * nRange) then
 			bActionTaken = core.OrderAbilityEntity(botBrain, abilGrapplingShot, unitTarget)
 		elseif nTargetDistanceSq > (nRange * nRange) then --if not in range get closer. Speed items will be activated as well as DS b/c chances are he will take damage.
 			local posNeeded = unitTarget:GetPosition()				
 			if itemGhostMarchers and itemGhostMarchers:CanActivate() then
 				bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemGhostMarchers) --activate GM
-			end
-			if itemEnergizer and itemEnergizer:CanActivate() then
-				bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemEnergizer) --activate energizer
 			end
 			if abilDemonicShield:CanActivate() then --activate DemonicShield
 					bActionTaken = core.OrderAbility(botBrain, abilDemonicShield)
@@ -279,12 +278,6 @@ local function HarassHeroExecuteOverride(botBrain)
 				core.OrderMoveToPosClamp(botBrain, unitSelf, desiredPos, false) --Move order to close in
 				bActionTaken = true
 		end
-	end
-	
-	
-	--Energizer
-	if not bActionTaken and core.itemEnergizer and core.itemEnergizer:CanActivate() and nHarassUtility > object.nEnergizerThreshold then
-		botBrain:OrderItem(core.itemEnergizer.object or core.itemEnergizer, false)
 	end
 	
 	if not bActionTaken then
@@ -304,15 +297,10 @@ local function retreatFromThreatExecuteOverride(botBrain)
 	--Energizer use
 	if itemEnergizer and itemEnergizer:CanActivate() and behaviorLib.lastRetreatUtil >= object.nEnergizerThreshold then
 		botBrain:OrderItem(core.itemEnergizer.object or core.itemEnergizer, false)
-		object.nTimeEnergizered = HoN:GetGameTime()
 	end
 	--Use demonicSheild when fleeing
 	if (abilDemonicShield:CanActivate() and behaviorLib.lastRetreatUtil >= object.nDemonicShieldThreshold) then
 		core.OrderAbility(botBrain, abilDemonicShield, false, true)
-	end
-	--Activate GM when fleeing
-	if (core.itemGhostMarchers and core.itemGhostMarchers:CanActivate())then
-		botBrain:OrderItem(core.itemGhostMarchers.object or core.itemGhostMarchers, false)
 	end
 	   
 	return object.RetreatFromThreatExecuteOld(botBrain)
@@ -350,37 +338,26 @@ behaviorLib.RetreatFromThreatBehavior["Execute"] = retreatFromThreatExecuteOverr
 --  	   Heal At Well Override		  --
 ----------------------------------------------------
 
---return to well more often. --2000 gold adds 8 to return utility, 0 % mana also adds 8.
---When returning to well, use skills and items.
---Modifed from kairus101's BalphBot!
+--2000 gold adds 6 to return utility, slightly reduced need to return.
+--Modified from kairus101's BalphBot!
 local function HealAtWellUtilityOverride(botBrain)
 	local vecBackupPos = core.allyWell and core.allyWell:GetPosition() or behaviorLib.PositionSelfBackUp()
-	local nOldHealingMultiplier = 1.75
-	local nGoldSpendingDesire = 8 / 2000
-	local nManaRefillingDesire = 6 --0 if full, this if empty
+
+	local nGoldSpendingDesire = 6 / 2000
 	
 	if (Vector3.Distance2DSq(core.unitSelf:GetPosition(), vecBackupPos) < 400 * 400 and core.unitSelf:GetManaPercent() * 100 < 95) then
 		return 80
 	end
-	return object.HealAtWellUtilityOld(botBrain) * nOldHealingMultiplier + (botBrain:GetGold() * nGoldSpendingDesire) + 1-(core.unitSelf:GetManaPercent()) * nManaRefillingDesire --courageously flee back to base.
+	return object.HealAtWellUtilityOld(botBrain) + (botBrain:GetGold() * nGoldSpendingDesire) --courageously flee back to base.
 end
-local function HealAtWellExecuteOverride(botBrain)
-	local vecWellPos = (core.allyWell and core.allyWell:GetPosition()) or behaviorLib.PositionSelfBackUp()
+
+--When returning to well, use skills and items.
+function behaviorLib.CustomReturnToWellExecute(botBrain)
+	local bAction = false
 	local abilDemonicShield = skills.DemonicShield
-	
-	if (Vector3.Distance2DSq(core.unitSelf:GetPosition(), vecWellPos) > 600 * 600) then
-		if (core.itemEnergizer and core.itemEnergizer:CanActivate() and not unitSelf:HasState("State_Energizer_Buff"))then --when heading to base, use energizer
-			botBrain:OrderItem(core.itemEnergizer.object or core.itemEnergizer, false)
-			object.nTimeEnergizered = HoN:GetGameTime()
-		end
-		if (core.itemGhostMarchers and core.itemGhostMarchers:CanActivate())then --when heading to base, use boots
-			botBrain:OrderItem(core.itemGhostMarchers.object or core.itemGhostMarchers, false)
-		end
-		if abilDemonicShield:CanActivate() then --activate shield when heading back
-			core.OrderAbility(botBrain, abilDemonicShield)
-		end
+	if abilDemonicShield:CanActivate() then --activate shield when heading back
+		bAction = core.OrderAbility(botBrain, abilDemonicShield)
 	end
-	return object.HealAtWellExecuteOld(botBrain)
 end
 object.HealAtWellUtilityOld = behaviorLib.HealAtWellBehavior["Utility"]
 object.HealAtWellExecuteOld = behaviorLib.HealAtWellBehavior["Execute"]
