@@ -7,7 +7,7 @@
 --	|  \___\  / | \_/ | |  _  | |  |_|  | | | | /_|  \ |  |_|  | |  __/
 --	\________/   \___/  |_| |_|  \_____/  |_|  \___/\_\ \______/  \___|
 ------------------------------------------------------------------------------
---V 1.01
+--V 1.02
 --Coded By: ModernSaint
 --Basic Equations--
 local _G = getfenv(0)
@@ -23,9 +23,9 @@ object.bMoveCommands 	= true
 object.bAttackCommands 	= true
 object.bAbilityCommands = true
 object.bOtherCommands 	= true
-object.bReportBehavior = false
-object.bDebugUtility = false
-object.bDebugExecute = false
+object.bReportBehavior = true
+object.bDebugUtility = true
+object.bDebugExecute = true
 object.logger = {}
 object.logger.bWriteLog = false
 object.logger.bVerboseLog = false
@@ -125,22 +125,22 @@ end
 ----------------------------------
 
 -- bonus agression points if a skill/item is available for use
-object.nCripplingSlugsUp = 14
-object.nDemonicShieldUp = 6
-object.nGrapplingShotUp = 20
-object.nEnergizerUp = 6
+object.nCripplingSlugsUp = 20
+object.nDemonicShieldUp = 12
+object.nGrapplingShotUp = 22
+object.nEnergizerUp = 10
 
 -- bonus agression points that are applied to the bot upon successfully using a skill/item
-object.nCripplingSlugsUse = 12
-object.nDemonicShieldUse = 12
+object.nCripplingSlugsUse = 18
+object.nDemonicShieldUse = 14
 object.nGrapplingShotUse = 30
 object.nEnergizerUse = 13
 
 -- thresholds of aggression the bot must reach to use these abilities
 object.nCripplingSlugsThreshold = 24
 object.nDemonicShieldThreshold = 18
-object.nGrapplingShotThreshold =34
-object.nEnergizerThreshold = 22
+object.nGrapplingShotThreshold = 34
+object.nEnergizerThreshold = 12
 
 -- Additional Modifiers
 
@@ -218,10 +218,8 @@ local function HarassHeroExecuteOverride(botBrain)
 	local nAttackRange = core.GetAbsoluteAttackRangeToUnit(unitSelf, unitTarget)
 	local nAttackRangeSq = nAttackRange * nAttackRange
 
-	local nMyExtraRange = core.GetExtraRange(unitSelf)
 	local vecMyPosition = unitSelf:GetPosition()	
 	local vecTargetPosition = unitTarget:GetPosition()
-	local nTargetExtraRange = core.GetExtraRange(unitTarget)
 	local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
 	
 	local nLastHarassUtility = behaviorLib.lastHarassUtil
@@ -230,17 +228,39 @@ local function HarassHeroExecuteOverride(botBrain)
 	local abilDemonicShield = skills.DemonicShield
 	local abilCripplingSlugs = skills.CripplingSlugs
 	local abilGrapplingShot = skills.GrapplingShot
+	core.itemEnergizer = core.GetItem("Item_Energizer")
 	
 	--Energizer
-	if core.itemEnergizer and core.itemEnergizer:CanActivate() and nHarassUtility > object.nEnergizerThreshold then
+	if core.itemEnergizer and core.itemEnergizer:CanActivate() and (nLastHarassUtility > object.nEnergizerThreshold) then
 		botBrain:OrderItem(core.itemEnergizer.object or core.itemEnergizer, false)
+	end
+	
+	--GrapplingShot
+	if (nLastHarassUtility > botBrain.nGrapplingShotThreshold) and abilGrapplingShot:CanActivate() then
+		local nRange = abilGrapplingShot:GetRange()
+		if nTargetDistanceSq < (nRange * nRange) then
+			bActionTaken = core.OrderAbilityEntity(botBrain, abilGrapplingShot, unitTarget)
+		elseif nTargetDistanceSq > (nRange * nRange) then --if not in range get closer. Speed items will be activated as well as DS b/c chances are he will take damage.
+			local posNeeded = unitTarget:GetPosition()				
+			if itemGhostMarchers and itemGhostMarchers:CanActivate() then
+				bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemGhostMarchers) --activate GM
+			end
+			if abilDemonicShield:CanActivate() then --activate DemonicShield
+					bActionTaken = core.OrderAbility(botBrain, abilDemonicShield)
+			end
+			if not bActionTaken and behaviorLib.lastHarassUtil < behaviorLib.diveThreshold then --Check willingness to dive towers
+				desiredPos = core.AdjustMovementForTowerLogic(desiredPos)
+			end
+			core.OrderMoveToPosClamp(botBrain, unitSelf, desiredPos, false) --Move order to close in
+				bActionTaken = true
+		end
 	end
 	
 	--CripplingSlugs
 	if not bActionTaken and nLastHarassUtility > botBrain.nCripplingSlugsThreshold then
 		if abilCripplingSlugs:CanActivate() then
 			local nRange = abilCripplingSlugs:GetRange()
-			if nTargetDistanceSq < (nRange * nRange) and (unitSelf:GetManaPercent() > .20 or unitTarget:GetHealth() < 275) then --Reserves some mana, unless a kill is likely 
+			if nTargetDistanceSq < (nRange * nRange) and (unitSelf:GetManaPercent() > .15 or unitTarget:GetHealth() < 275) then --Reserves some mana, unless a kill is likely 
 				bActionTaken = core.OrderAbilityPosition(botBrain, abilCripplingSlugs, vecTargetPosition)
 			elseif nTargetDistanceSq < (nAttackRangeSq * .4) then --Use ability if an enemy is close
 				bActionTaken = core.OrderAbilityPosition(botBrain, CripplingSlugs, vecTargetPosition)		
@@ -259,30 +279,10 @@ local function HarassHeroExecuteOverride(botBrain)
 		end
 	end
 	
-	--GrapplingShot
-	if not bActionTaken and (nLastHarassUtility > botBrain.nGrapplingShotThreshold) and abilGrapplingShot:CanActivate() then
-		local nRange = abilGrapplingShot:GetRange()
-		if nTargetDistanceSq < (nRange * nRange) then
-			bActionTaken = core.OrderAbilityEntity(botBrain, abilGrapplingShot, unitTarget)
-		elseif nTargetDistanceSq > (nRange * nRange) then --if not in range get closer. Speed items will be activated as well as DS b/c chances are he will take damage.
-			local posNeeded = unitTarget:GetPosition()				
-			if itemGhostMarchers and itemGhostMarchers:CanActivate() then
-				bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemGhostMarchers) --activate GM
-			end
-			if abilDemonicShield:CanActivate() then --activate DemonicShield
-					bActionTaken = core.OrderAbility(botBrain, abilDemonicShield)
-			end
-			if not bActionTaken and behaviorLib.lastHarassUtil < behaviorLib.diveThreshold then --Check willingness to dive towers
-				desiredPos = core.AdjustMovementForTowerLogic(desiredPos)
-			end
-				core.OrderMoveToPosClamp(botBrain, unitSelf, desiredPos, false) --Move order to close in
-				bActionTaken = true
-		end
-	end
-	
 	if not bActionTaken then
-		if bDebugEchos then BotEcho("  No action yet, proceeding with normal harass execute.") end
-		return object.harassExecuteOld(botBrain)
+		if bDebugEchos then BotEcho("  No action yet, proceeding with normal harass execute.") 
+		end
+	return object.harassExecuteOld(botBrain)
 	end
 end
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
@@ -292,21 +292,20 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 --  	Retreat Behaviour   	  --
 ----------------------------------------
 
-local function retreatFromThreatExecuteOverride(botBrain)
-	local abilDemonicShield = skills.DemonicShield
+function behaviorLib.CustomRetreatExecute(botBrain)
+	
 	--Energizer use
 	if itemEnergizer and itemEnergizer:CanActivate() and behaviorLib.lastRetreatUtil >= object.nEnergizerThreshold then
 		botBrain:OrderItem(core.itemEnergizer.object or core.itemEnergizer, false)
 	end
 	--Use demonicSheild when fleeing
+	local abilDemonicShield = skills.DemonicShield
 	if (abilDemonicShield:CanActivate() and behaviorLib.lastRetreatUtil >= object.nDemonicShieldThreshold) then
 		core.OrderAbility(botBrain, abilDemonicShield, false, true)
 	end
-	   
-	return object.RetreatFromThreatExecuteOld(botBrain)
+	
+	return false
 end
-object.RetreatFromThreatExecuteOld = behaviorLib.RetreatFromThreatBehavior["Execute"]
-behaviorLib.RetreatFromThreatBehavior["Execute"] = retreatFromThreatExecuteOverride
 
 ----------------------------------------
 --- Extras
@@ -350,7 +349,6 @@ local function HealAtWellUtilityOverride(botBrain)
 	end
 	return object.HealAtWellUtilityOld(botBrain) + (botBrain:GetGold() * nGoldSpendingDesire) --courageously flee back to base.
 end
-
 --When returning to well, use skills and items.
 function behaviorLib.CustomReturnToWellExecute(botBrain)
 	local bAction = false
@@ -360,8 +358,6 @@ function behaviorLib.CustomReturnToWellExecute(botBrain)
 	end
 end
 object.HealAtWellUtilityOld = behaviorLib.HealAtWellBehavior["Utility"]
-object.HealAtWellExecuteOld = behaviorLib.HealAtWellBehavior["Execute"]
 behaviorLib.HealAtWellBehavior["Utility"] = HealAtWellUtilityOverride
-behaviorLib.HealAtWellBehavior["Execute"] = HealAtWellExecuteOverride
 
 BotEcho('finished loading Gunblade_main')
