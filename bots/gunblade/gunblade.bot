@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bot
 	name="gunbladebot"
-	description="A severely hostile Gunblade bot"
+	description="bot_description_gunblade"
 	rootlua="gunblade_main.lua"
 	heroname="Hero_Gunblade"
 	defaultplayername="GunbladeBot"

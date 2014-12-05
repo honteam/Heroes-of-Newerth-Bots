@@ -301,6 +301,42 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 	return false
 end
 
+----------------------------------------------------
+--  	   Heal At Well Override		  --
+----------------------------------------------------
+
+--2000 gold adds 6 to return utility, slightly reduced need to return.
+--Modified from kairus101's BalphBot!
+local function HealAtWellUtilityOverride(botBrain)
+	local vecBackupPos = core.allyWell and core.allyWell:GetPosition() or behaviorLib.PositionSelfBackUp()
+
+	local nGoldSpendingDesire = 6 / 2000
+	
+	if (Vector3.Distance2DSq(core.unitSelf:GetPosition(), vecBackupPos) < 400 * 400 and core.unitSelf:GetManaPercent() * 100 < 95) then
+		return 80
+	end
+	return object.HealAtWellUtilityOld(botBrain) + (botBrain:GetGold() * nGoldSpendingDesire) --courageously flee back to base.
+end
+
+--When returning to well, use skills and items.
+function behaviorLib.CustomReturnToWellExecute(botBrain)
+	local bAction = false
+	local abilDemonicShield = skills.DemonicShield
+	if abilDemonicShield:CanActivate() then --activate shield when heading back
+		bAction = core.OrderAbility(botBrain, abilDemonicShield)
+	end
+	if itemEnergizer and itemEnergizer:CanActivate() and behaviorLib.lastRetreatUtil >= object.nEnergizerThreshold then
+		botBrain:OrderItem(core.itemEnergizer.object or core.itemEnergizer, false)
+	end
+	return false
+end
+object.HealAtWellUtilityOld = behaviorLib.HealAtWellBehavior["Utility"]
+behaviorLib.HealAtWellBehavior["Utility"] = HealAtWellUtilityOverride
+
+BotEcho('finished loading Gunblade_main')
+
+
+
 ----------------------------------------
 --- Extras
 ----------------------------------------
@@ -326,36 +362,3 @@ end
 	fuchsia == magenta
 	invisible
 --]]
-
-----------------------------------------------------
---  	   Heal At Well Override		  --
-----------------------------------------------------
-
---2000 gold adds 6 to return utility, slightly reduced need to return.
---Modified from kairus101's BalphBot!
-local function HealAtWellUtilityOverride(botBrain)
-	local vecBackupPos = core.allyWell and core.allyWell:GetPosition() or behaviorLib.PositionSelfBackUp()
-
-	local nGoldSpendingDesire = 6 / 2000
-	
-	if (Vector3.Distance2DSq(core.unitSelf:GetPosition(), vecBackupPos) < 400 * 400 and core.unitSelf:GetManaPercent() * 100 < 95) then
-		return 80
-	end
-	return object.HealAtWellUtilityOld(botBrain) + (botBrain:GetGold() * nGoldSpendingDesire) --courageously flee back to base.
-end
-
---When returning to well, use skills and items.
-function behaviorLib.CustomReturnToWellExecute(botBrain)
-	local bAction = false
-	local abilDemonicShield = skills.DemonicShield
-	if abilDemonicShield:CanActivate() then --activate shield when heading back
-		bAction = core.OrderAbility(botBrain, abilDemonicShield)
-	end
-	elseif itemEnergizer and itemEnergizer:CanActivate() and behaviorLib.lastRetreatUtil >= object.nEnergizerThreshold then
-		botBrain:OrderItem(core.itemEnergizer.object or core.itemEnergizer, false)
-	end
-end
-object.HealAtWellUtilityOld = behaviorLib.HealAtWellBehavior["Utility"]
-behaviorLib.HealAtWellBehavior["Utility"] = HealAtWellUtilityOverride
-
-BotEcho('finished loading Gunblade_main')
