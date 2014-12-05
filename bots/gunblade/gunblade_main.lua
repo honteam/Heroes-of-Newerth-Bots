@@ -23,9 +23,9 @@ object.bMoveCommands 	= true
 object.bAttackCommands 	= true
 object.bAbilityCommands = true
 object.bOtherCommands 	= true
-object.bReportBehavior = true
-object.bDebugUtility = true
-object.bDebugExecute = true
+object.bReportBehavior = false
+object.bDebugUtility = false
+object.bDebugExecute = false
 object.logger = {}
 object.logger.bWriteLog = false
 object.logger.bVerboseLog = false
@@ -174,13 +174,13 @@ function object:oncombateventOverride(EventData)
 	
 	if EventData.Type == "Ability" then	
 		if EventData.InflictorName == "Ability_Gunblade1" then
-			addBonus = addBonus + object.nCripplingSlugsUseBonus
+			addBonus = addBonus + object.nCripplingSlugsUse
 		end
 		if EventData.InflictorName == "Ability_Gunblade2" then
-			addBonus = addBonus + object.nDemonicShieldUseBonus
+			addBonus = addBonus + object.nDemonicShieldUse
 		end
 		if EventData.InflictorName == "Ability_Gunblade4" then
-			addBonus = addBonus + object.nGrapplingShotUseBonus
+			addBonus = addBonus + object.nGrapplingShotUse
 		end
 	
 	elseif EventData.Type == "Item" then
@@ -236,19 +236,19 @@ local function HarassHeroExecuteOverride(botBrain)
 	end
 	
 	--GrapplingShot
-	if (nLastHarassUtility > botBrain.nGrapplingShotThreshold) and abilGrapplingShot:CanActivate() then
+	if (nLastHarassUtility > object.nGrapplingShotThreshold) and abilGrapplingShot:CanActivate() then
 		local nRange = abilGrapplingShot:GetRange()
 		if nTargetDistanceSq < (nRange * nRange) then
 			bActionTaken = core.OrderAbilityEntity(botBrain, abilGrapplingShot, unitTarget)
 		else  --if not in range get closer. Speed items will be activated as well as DS b/c chances are he will take damage.			
 			if itemGhostMarchers and itemGhostMarchers:CanActivate() then
-				core.OrderItemClamp(botBrain, unitSelf, itemGhostMarchers) --activate GM
+				core.OrderItemClamp(botBrain, itemGhostMarchers) --activate GM
 			end
 			if abilDemonicShield:CanActivate() then --activate DemonicShield
 				bActionTaken = core.OrderAbility(botBrain, abilDemonicShield)
 			end
 			if not bActionTaken and behaviorLib.lastHarassUtil < behaviorLib.diveThreshold then --Check willingness to dive towers
-				local desiredPos = core.AdjustMovementForTowerLogic(desiredPos)
+				local desiredPos = core.AdjustMovementForTowerLogic(vecTargetPosition)
 				core.OrderMoveToPosClamp(botBrain, unitSelf, desiredPos, false) --Move order to close in
 			end
 				bActionTaken = true
@@ -256,20 +256,20 @@ local function HarassHeroExecuteOverride(botBrain)
 	end
 	
 	--CripplingSlugs
-	if not bActionTaken and nLastHarassUtility > botBrain.nCripplingSlugsThreshold then
+	if not bActionTaken and nLastHarassUtility > object.nCripplingSlugsThreshold then
 		if abilCripplingSlugs:CanActivate() then
 			local nRange = abilCripplingSlugs:GetRange()
 			if nTargetDistanceSq < (nRange * nRange) and (unitSelf:GetManaPercent() > .15 or unitTarget:GetHealth() < 275) then --Reserves some mana, unless a kill is likely 
 				bActionTaken = core.OrderAbilityPosition(botBrain, abilCripplingSlugs, vecTargetPosition)
 			elseif nTargetDistanceSq < (nAttackRangeSq * .4) then --Use ability if an enemy is close
-				bActionTaken = core.OrderAbilityPosition(botBrain, CripplingSlugs, vecTargetPosition)		
+				bActionTaken = core.OrderAbilityPosition(botBrain, abilCripplingSlugs, vecTargetPosition)		
 			end
 		end
 	end
 	
 	--DemonicShield
 	if not bActionTaken and abilDemonicShield:CanActivate() then
-		if (nLastHarassUtility > botBrain.nDemonicShieldThreshold) or (core.NumberElements(tLocalEnemyHeroes) > 2) or (.45 > unitSelf:GetHealthPercent() and (core.NumberElements(tLocalEnemyHeroes) > 0)) then--activate on utility calc or if more than 2 hostiles nearby or lower than 45% health with an enemy nearby
+		if (nLastHarassUtility > object.nDemonicShieldThreshold) or (core.NumberElements(tLocalEnemyHeroes) > 2) or (.45 > unitSelf:GetHealthPercent() and (core.NumberElements(tLocalEnemyHeroes) > 0)) then--activate on utility calc or if more than 2 hostiles nearby or lower than 45% health with an enemy nearby
 			bActionTaken = core.OrderAbility(botBrain, abilDemonicShield)
 		end
 	end
@@ -295,7 +295,7 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 	--Use demonicSheild when fleeing
 	local abilDemonicShield = skills.DemonicShield
 	if (abilDemonicShield:CanActivate() and behaviorLib.lastRetreatUtil >= object.nDemonicShieldThreshold) then
-		core.OrderAbility(botBrain, abilDemonicShield, false, true)
+		core.OrderAbility(botBrain, abilDemonicShield)
 	end
 	
 	return false
