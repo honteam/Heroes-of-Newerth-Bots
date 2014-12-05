@@ -307,7 +307,7 @@ local function getStepDirection(botBrain, unitTarget)
 	
 	-- No prediction for easy mode bots
 	if core.nDifficulty ~= core.nEASY_DIFFCULTY and unitTarget.bIsMemoryUnit then
-		local vecTargetHeading = Vector3.Normalize(unitTarget.storedPosition - unitTarget.lastStoredPosition)
+		local vecTargetHeading = unitTarget:GetHeading() or Vector3.Create()
 		vecTargetPosition = vecTargetPosition + vecTargetHeading * 85
 	end
 
@@ -424,7 +424,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	local vecTargetPosition = unitTarget:GetPosition()
 	local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
 	local bCanSeeTarget = core.CanSeeUnit(botBrain, unitTarget)
-	local nTargetPhysicalEHP = nil
+	local nTargetPhysicalEHP = 9999
 	if bCanSeeTarget then
 		nTargetPhysicalEHP = unitTarget:GetHealth() / (1 - unitTarget:GetPhysicalResistance())
 	end

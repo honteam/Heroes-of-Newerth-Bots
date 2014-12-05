@@ -1,3 +1,4 @@
+-- By community member Anakonda
 
 local _G = getfenv(0)
 local object = _G.object
@@ -236,7 +237,7 @@ local function HarassHeroExecuteOverride(botBrain)
 		local itemSheepstick = core.GetItem("Item_Morph")
 		if itemSheepstick ~= nil and itemSheepstick:CanActivate() then
 			if nAggroValue > object.nSheepstickThreshold then
-				bActionTaken = core.OrderItemEntity(botBrain, unitSelf, itemSheepstick, unitTarget)
+				bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, itemSheepstick, unitTarget)
 			end
 		end
 	end
@@ -245,7 +246,8 @@ local function HarassHeroExecuteOverride(botBrain)
 	if not bActionTaken then
 		if bBombardmentUp and nAggroValue > object.nBombardmentThreshold then
 			if nDistanceSQ < skills.abilBombardment:GetRange() ^ 2 then
-				actionTaken = core.OrderAbilityPosition(botBrain, skills.abilBombardment, vecTargetPosition + 100 * unitTarget:GetHeading())
+				local vecTarget = vecTargetPosition + 100 * (unitTarget:GetHeading() or Vector3.Create())
+				actionTaken = core.OrderAbilityPosition(botBrain, skills.abilBombardment, vecTarget)
 			end
 		end
 	end
