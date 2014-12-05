@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="MyrmidonBot"
+	description="bot_description_myrmidon"
+	heroname="Hero_Hydromancer"
+	rootlua="myrmidon_main.lua"
+	defaultplayername="MyrmidonBot"
+	precachepath="/heroes/hydromancer/"
+/>
