@@ -1,13 +1,13 @@
 -----------------------------------------------------------------------------
 --	 _________                   __        _                 __  
---	/   ____  |                 |  |      | |               |  |  
+--	/   _____ |                 |  |      | |               |  |  
 --	|  /    |_|                 |  |      | |               |  |   
 --	| |          _   _   _      |  |___   | |   ____     ___|  |   ___
 --	| |    ____ | | | | | |___  |   _  \  | |  / _  \   /  _   |  / _ \
 --	|  \___\  / | \_/ | |  _  | |  |_|  | | | | /_|  \ |  |_|  | |  __/
 --	\________/   \___/  |_| |_|  \_____/  |_|  \___/\_\ \______/  \___|
 ------------------------------------------------------------------------------
---V 1.03
+--V 1.04
 --Coded By: ModernSaint
 --Basic Equations--
 local _G = getfenv(0)
@@ -64,11 +64,11 @@ object.heroName = 'Hero_Gunblade'
 ----------------------------------	
 
 behaviorLib.StartingItems = 
-  {"2 Item_RunesOfTheBlight", "Item_Soulscream"}
+  {"Item_RunesOfTheBlight", "Item_ManaPotion", "Item_HealthPotion", "Item_DuckBoots"}
 behaviorLib.LaneItems = 
-  {"Item_Marchers", "Item_EnhancedMarchers"}
+  {"Item_Marchers",  "Item_Soulscream", "Item_EnhancedMarchers"}
 behaviorLib.MidItems = 
-  { "Item_Energizer", "Item_Lightning2", "Item_Critical1 4", "Item_SolsBulwark"}
+  { "Item_Energizer", "Item_SolsBulwark", "Item_Lightning2", "Item_Critical1 4"}
 behaviorLib.LateItems = 
   { "Item_Evasion", "Item_DaemonicBreastplate", "Item_Weapon3"}
 
@@ -240,7 +240,7 @@ local function HarassHeroExecuteOverride(botBrain)
 		local nRange = abilGrapplingShot:GetRange()
 		if nTargetDistanceSq < (nRange * nRange) then
 			bActionTaken = core.OrderAbilityEntity(botBrain, abilGrapplingShot, unitTarget)
-		else then --if not in range get closer. Speed items will be activated as well as DS b/c chances are he will take damage.			
+		else  --if not in range get closer. Speed items will be activated as well as DS b/c chances are he will take damage.			
 			if itemGhostMarchers and itemGhostMarchers:CanActivate() then
 				core.OrderItemClamp(botBrain, unitSelf, itemGhostMarchers) --activate GM
 			end
@@ -269,7 +269,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	
 	--DemonicShield
 	if not bActionTaken and abilDemonicShield:CanActivate() then
-		if (nLastHarassUtility > botBrain.nDemonicShieldThreshold) or (core.NumberElements(tLocalEnemyHeroes) > 2) or (.45 > unitSelf:GetHealthPercent() and (core.NumberElements(tLocalEnemyHeroes) > 0))--activate on utility calc or if more than 2 hostiles nearby or lower than 45% health with an enemy nearby
+		if (nLastHarassUtility > botBrain.nDemonicShieldThreshold) or (core.NumberElements(tLocalEnemyHeroes) > 2) or (.45 > unitSelf:GetHealthPercent() and (core.NumberElements(tLocalEnemyHeroes) > 0)) then--activate on utility calc or if more than 2 hostiles nearby or lower than 45% health with an enemy nearby
 			bActionTaken = core.OrderAbility(botBrain, abilDemonicShield)
 		end
 	end
