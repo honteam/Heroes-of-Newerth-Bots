@@ -7,7 +7,7 @@
 --	|  \___\  / | \_/ | |  _  | |  |_|  | | | | /_|  \ |  |_|  | |  __/
 --	\________/   \___/  |_| |_|  \_____/  |_|  \___/\_\ \______/  \___|
 ------------------------------------------------------------------------------
---V 1.02
+--V 1.03
 --Coded By: ModernSaint
 --Basic Equations--
 local _G = getfenv(0)
@@ -240,18 +240,17 @@ local function HarassHeroExecuteOverride(botBrain)
 		local nRange = abilGrapplingShot:GetRange()
 		if nTargetDistanceSq < (nRange * nRange) then
 			bActionTaken = core.OrderAbilityEntity(botBrain, abilGrapplingShot, unitTarget)
-		elseif nTargetDistanceSq > (nRange * nRange) then --if not in range get closer. Speed items will be activated as well as DS b/c chances are he will take damage.
-			local posNeeded = unitTarget:GetPosition()				
+		else then --if not in range get closer. Speed items will be activated as well as DS b/c chances are he will take damage.			
 			if itemGhostMarchers and itemGhostMarchers:CanActivate() then
-				bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemGhostMarchers) --activate GM
+				core.OrderItemClamp(botBrain, unitSelf, itemGhostMarchers) --activate GM
 			end
 			if abilDemonicShield:CanActivate() then --activate DemonicShield
-					bActionTaken = core.OrderAbility(botBrain, abilDemonicShield)
+				bActionTaken = core.OrderAbility(botBrain, abilDemonicShield)
 			end
 			if not bActionTaken and behaviorLib.lastHarassUtil < behaviorLib.diveThreshold then --Check willingness to dive towers
-				desiredPos = core.AdjustMovementForTowerLogic(desiredPos)
+				local desiredPos = core.AdjustMovementForTowerLogic(desiredPos)
+				core.OrderMoveToPosClamp(botBrain, unitSelf, desiredPos, false) --Move order to close in
 			end
-			core.OrderMoveToPosClamp(botBrain, unitSelf, desiredPos, false) --Move order to close in
 				bActionTaken = true
 		end
 	end
@@ -270,19 +269,14 @@ local function HarassHeroExecuteOverride(botBrain)
 	
 	--DemonicShield
 	if not bActionTaken and abilDemonicShield:CanActivate() then
-		if nLastHarassUtility > botBrain.nDemonicShieldThreshold then --activate on utility calc
-			bActionTaken = core.OrderAbility(botBrain, abilDemonicShield)
-		elseif (core.NumberElements(tLocalEnemyHeroes) > 2) then --activate if more than 2 hostiles nearby
-			bActionTaken = core.OrderAbility(botBrain, abilDemonicShield)
-		elseif .45 > unitSelf:GetHealthPercent() and (core.NumberElements(tLocalEnemyHeroes) > 0) then --lower than 45% health with an enemy nearby
+		if (nLastHarassUtility > botBrain.nDemonicShieldThreshold) or (core.NumberElements(tLocalEnemyHeroes) > 2) or (.45 > unitSelf:GetHealthPercent() and (core.NumberElements(tLocalEnemyHeroes) > 0))--activate on utility calc or if more than 2 hostiles nearby or lower than 45% health with an enemy nearby
 			bActionTaken = core.OrderAbility(botBrain, abilDemonicShield)
 		end
 	end
 	
 	if not bActionTaken then
-		if bDebugEchos then BotEcho("  No action yet, proceeding with normal harass execute.") 
-		end
-	return object.harassExecuteOld(botBrain)
+		if bDebugEchos then BotEcho("  No action yet, proceeding with normal harass execute.")end
+		return object.harassExecuteOld(botBrain)
 	end
 end
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
@@ -349,12 +343,16 @@ local function HealAtWellUtilityOverride(botBrain)
 	end
 	return object.HealAtWellUtilityOld(botBrain) + (botBrain:GetGold() * nGoldSpendingDesire) --courageously flee back to base.
 end
+
 --When returning to well, use skills and items.
 function behaviorLib.CustomReturnToWellExecute(botBrain)
 	local bAction = false
 	local abilDemonicShield = skills.DemonicShield
 	if abilDemonicShield:CanActivate() then --activate shield when heading back
 		bAction = core.OrderAbility(botBrain, abilDemonicShield)
+	end
+	elseif itemEnergizer and itemEnergizer:CanActivate() and behaviorLib.lastRetreatUtil >= object.nEnergizerThreshold then
+		botBrain:OrderItem(core.itemEnergizer.object or core.itemEnergizer, false)
 	end
 end
 object.HealAtWellUtilityOld = behaviorLib.HealAtWellBehavior["Utility"]
