@@ -55,6 +55,17 @@ core.tLanePreferences = {Jungle = 0, Mid = 3, ShortSolo = 4, LongSolo = 3, Short
 
 object.heroName = 'Hero_Aluna'
 
+----------------------------------
+--	Aluna items
+----------------------------------
+--[[ list code:
+	"# Item" is "get # of these"
+	"Item #" is "get this level of the item" --]]
+behaviorLib.StartingItems = {"Item_Scarab", "2 Item_RunesOfTheBlight", "Item_ManaPotion"}
+behaviorLib.LaneItems = {"Item_Scarab", "Item_Steamboots", "Item_Silence"} --Item_Silence is hell flower
+behaviorLib.MidItems = {"Item_Lightning2", "Item_Dawnbringer", "Item_Weapon3" } --Item_Lightning2 is charged hammer, Item_Weapon3 is savage mace, Item_Critical1 is riftshards
+behaviorLib.LateItems = {"Item_Critical1 4", "Item_HarkonsBlade", "Item_Sasuke", "Item_Evasion"} --Item_Freeze is frostwolf, Item_Sasuke is Genjuro, Item_Evasion is wingbow
+
 --------------------------------
 -- Skills
 --------------------------------
@@ -73,7 +84,6 @@ function object:SkillBuild()
 		skills.abilPowerThrow = unitSelf:GetAbility(1)
 		skills.abilDejaVu = unitSelf:GetAbility(2)
 		skills.abilEmeraldRed = unitSelf:GetAbility(3)
-		skills.attributeBoost = unitSelf:GetAbility(4)
 	end
 	
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then
@@ -108,6 +118,15 @@ object.nEmeraldLightningThreshold = 40
 object.nPowerThrowThreshold = 35
 object.nDejaVuThreshold = 90
 object.nEmeraldRedThreshold = 80
+object.nDejaVuRetreatThreshold = 50
+
+-- Variables for sniping --
+object.nTimeSniped = 0
+object.bStillThrowing = false
+
+object.vecEstimatedSnipePosition = nil
+object.unitSnipeTarget = nil
+object.unitSnipeEstimatedTime = nil
 
 --Aluna abilities use gives bonus to harass util for a while
 function object:oncombateventOverride(EventData)
@@ -166,40 +185,40 @@ local function HarassHeroExecuteOverride(botBrain)
 	local bDebugEchos = false
 		
 	local unitSelf = core.unitSelf
-	local target = behaviorLib.heroTarget 
+	local unitTarget = behaviorLib.heroTarget 
 	
 	local bActionTaken = false
 	--since we are using an old pointer, ensure we can still see the target for entity targeting
-	if target ~= nil and core.CanSeeUnit(botBrain, target) then 
-		local nDistSq = Vector3.Distance2DSq(unitSelf:GetPosition(), target:GetPosition())
+	if unitTarget ~= nil then 
+		local nDistSq = Vector3.Distance2DSq(unitSelf:GetPosition(), unitTarget:GetPosition())
 		
 		--EmeraldLightning
-		local abilEmeraldLightning = skills.abilEmeraldLightning
-		if not bActionTaken then
+		if core.CanSeeUnit(botBrain, unitTarget) then
+			local abilEmeraldLightning = skills.abilEmeraldLightning
 			if abilEmeraldLightning:CanActivate() and behaviorLib.lastHarassUtil > object.nEmeraldLightningThreshold then
-				bActionTaken = core.OrderAbilityEntity(botBrain, abilEmeraldLightning, target)
+				bActionTaken = core.OrderAbilityEntity(botBrain, abilEmeraldLightning, unitTarget)
 			end
 		end
 		
 		--PowerThrow
-		local abilPowerThrow = skills.abilPowerThrow
 		if not bActionTaken then
+			local abilPowerThrow = skills.abilPowerThrow
 			if abilPowerThrow:CanActivate() and behaviorLib.lastHarassUtil > object.nPowerThrowThreshold then
-				bActionTaken = core.OrderAbilityPosition(botBrain, abilPowerThrow, target:GetPosition())
+				bActionTaken = core.OrderAbilityPosition(botBrain, abilPowerThrow, unitTarget:GetPosition())
 			end
 		end
 		
 		--DejaVu
-		local abilDejaVu = skills.abilDejaVu
 		if not bActionTaken then
+			local abilDejaVu = skills.abilDejaVu
 			if abilDejaVu:CanActivate() and behaviorLib.lastHarassUtil > object.nDejaVuThreshold then
 				bActionTaken = core.OrderAbility(botBrain, abilDejaVu)
 			end
 		end
 		
 		--EmeraldRed
-		local abilEmeraldRed = skills.abilEmeraldRed
 		if not bActionTaken then
+			local abilEmeraldRed = skills.abilEmeraldRed
 			if abilEmeraldRed:CanActivate() and behaviorLib.lastHarassUtil > object.nEmeraldRedThreshold and unitSelf:GetMana() > 200 then
 				bActionTaken = core.OrderAbility(botBrain, abilEmeraldRed)
 			end
@@ -218,12 +237,11 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 --Retreat execute
 ------------------------------------------------------------------
 --  this is a great function to override with using retreating skills, such as blinks, travels, stuns or slows.
-object.nDejaVuRetreatThreshold = 50
 function behaviorLib.CustomRetreatExecute(botBrain)
 	bActionTaken = false
 	--Activate DejaVu if we can
 	local abilDejaVu = skills.abilDejaVu
-	if not bActionTaken and abilDejaVu and abilDejaVu:CanActivate() and behaviorLib.lastRetreatUtil >= object.nDejaVuRetreatThreshold then
+	if abilDejaVu and abilDejaVu:CanActivate() and behaviorLib.lastRetreatUtil >= object.nDejaVuRetreatThreshold then
 		bActionTaken = core.OrderAbility(botBrain, abilDejaVu)
 	end
 
@@ -234,22 +252,21 @@ end
 --		  	  Snipe Behaviour	  	  --
 ----------------------------------------
 -- This is where things get interesting.
-object.vecEstimatedSnipePosition = nil
-object.unitSnipeTarget = nil
-object.unitSnipeEstimatedTime = nil
 local function snipeUtility(botBrain)
 	if (object.bStillThrowing) then
 		return 90
 	end
-	local unitSelf = core.unitSelf
-	local vecSelfPos = unitSelf:GetPosition()
+
 	local abilPowerThrow = skills.abilPowerThrow
-	local abilEmeraldRed = skills.abilEmeraldRed
 	
 	if not abilPowerThrow:CanActivate() then
 		return 0
 	end
-	
+
+	local unitSelf = core.unitSelf
+	local vecSelfPos = unitSelf:GetPosition()
+	local abilEmeraldRed = skills.abilEmeraldRed
+
 	local nDamage = 70 + abilPowerThrow:GetLevel() * 70
 	
 	for nUID,unitEnemy in pairs(HoN.GetHeroes(core.enemyTeam)) do
@@ -264,7 +281,7 @@ local function snipeUtility(botBrain)
 					local vecPosition = tEnemyHero.lastStoredPosition
 					--if we can kill them, and if they are close or (we can use our combo
 					if (nHealth + 40 < nDamage and vecPosition and (Vector3.Distance2DSq(vecSelfPos, vecPosition) < 1500 * 1500 or 
-						object.bStillThrowing or unitSelf:HasState("State_Aluna_Ability4") or (abilEmeraldRed:CanActivate() and unitSelf:GetMana() > 200))) then
+						unitSelf:HasState("State_Aluna_Ability4") or (abilEmeraldRed:CanActivate() and unitSelf:GetMana() > 200))) then
 						local nSpeed = tEnemyHero:GetMoveSpeed()
 						local nTimePassed = HoN:GetGameTime() - tEnemyHero.lastStoredTime
 						object.vecEstimatedSnipePosition, object.unitSnipeEstimatedTime = core.GetSnipeLocation(vecPosition, core.enemyWell:GetPosition(), nSpeed, nTimePassed + 800, vecSelfPos, 3000)
@@ -278,8 +295,6 @@ local function snipeUtility(botBrain)
 	return 0
 end
 
-object.nTimeSniped = 0
-object.bStillThrowing = false
 local function snipeExecute(botBrain)
 	local abilPowerThrow = skills.abilPowerThrow
 	if (not abilPowerThrow:CanActivate()) then
@@ -330,17 +345,6 @@ local function ProcessKillChatOverride(unitTarget, sTargetPlayerName)
 end
 object.funcProcessKillChatOld = core.ProcessKillChat
 core.ProcessKillChat = ProcessKillChatOverride
-
-----------------------------------
---	Aluna items
-----------------------------------
---[[ list code:
-	"# Item" is "get # of these"
-	"Item #" is "get this level of the item" --]]
-behaviorLib.StartingItems = {"Item_Scarab", "2 Item_RunesOfTheBlight", "Item_ManaPotion"}
-behaviorLib.LaneItems = {"Item_Steamboots", "Item_Silence"} --Item_Silence is hell flower
-behaviorLib.MidItems = {"Item_Lightning2", "Item_Weapon3", "Item_Critical1 4" } --Item_Lightning2 is charged hammer, Item_Weapon3 is savage mace, Item_Critical1 is riftshards
-behaviorLib.LateItems = {"Item_HarkonsBlade", "Item_Dawnbringer", "Item_Sasuke", "Item_Evasion"} --Item_Freeze is frostwolf, Item_Sasuke is Genjuro, Item_Evasion is wingbow
 
 BotEcho('finished loading aluna_main')
 
