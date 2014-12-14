@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="BushwackBot"
+	description="bot_description_bushwack"
+	heroname="Hero_Bushwack"
+	rootlua="bushwack_main.lua"
+	defaultplayername="BushwackBot"
+	precachepath="/heroes/bushwack"
+/>
