@@ -192,9 +192,10 @@ local function HarassHeroExecuteOverride(botBrain)
 				local vecAbilityTarget = unitTarget:GetPosition()
 				bAction = core.OrderAbilityPosition(botBrain, abilJump, vecAbilityTarget)
 			end		
-	elseif (core.NumberElements(tLocalAllyHeroes) > 2) or (core.NumberElements(tLocalEnemyHeroes) > 2) then
-		if nTargetDistanceSq < (nRange * nRange) then  --Dart if target is in range
-			bActionTaken = core.OrderAbilityEntity(botBrain, abilDart, unitTarget)
+		elseif (core.NumberElements(tLocalAllyHeroes) > 2) or (core.NumberElements(tLocalEnemyHeroes) > 2) then
+			if nTargetDistanceSq < (nRange * nRange) then  --Dart if target is in range
+				bActionTaken = core.OrderAbilityEntity(botBrain, abilDart, unitTarget)
+			end	
 		end
 	end
 		--Energizer
