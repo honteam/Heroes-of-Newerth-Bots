@@ -173,13 +173,13 @@ local function HarassHeroExecuteOverride(botBrain)
 	local abilDart = skills.abilDart
 	local abilJump = skills.abilJump
 	
-	--Jump
-		local nRange = abilJump:GetRange()
-		if abilJump:CanActivate() and nTargetDistanceSq < ((nRange * nRange) * 4) and  nLastHarassUtility > botBrain.nJumpThreshold then
+		--Jump
+	local nRange = abilJump:GetRange()
+	if abilJump:CanActivate() and nTargetDistanceSq < ((nRange * nRange) * 4) and  nLastHarassUtility > botBrain.nJumpThreshold then
 		 
-			local vecAbilityTarget = unitTarget:GetPosition()
-			bAction = core.OrderAbilityPosition(botBrain, abilJump, vecAbilityTarget)
-		end	
+		local vecAbilityTarget = unitTarget:GetPosition()
+		bAction = core.OrderAbilityPosition(botBrain, abilJump, vecAbilityTarget)
+	end	
 		
 		--Dart
 	if not bActionTaken and abilDart:CanActivate()then
@@ -194,14 +194,14 @@ local function HarassHeroExecuteOverride(botBrain)
 		end
 	end
 		--Energizer
-		if core.itemEnergizer and core.itemEnergizer:CanActivate() and (nLastHarassUtility > object.nEnergizerThreshold) then
-			botBrain:OrderItem(core.itemEnergizer.object or core.itemEnergizer, false)
-		end
-	
-		if not bActionTaken then
-			return object.harassExecuteOld(botBrain)
-		end	
+	if core.itemEnergizer and core.itemEnergizer:CanActivate() and (nLastHarassUtility > object.nEnergizerThreshold) then
+		botBrain:OrderItem(core.itemEnergizer.object or core.itemEnergizer, false)
 	end
+	
+	if not bActionTaken then
+		return object.harassExecuteOld(botBrain)
+	end	
+end
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 
