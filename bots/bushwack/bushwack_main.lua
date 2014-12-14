@@ -184,8 +184,8 @@ local function HarassHeroExecuteOverride(botBrain)
 		
 		--Dart
 	if not bActionTaken and abilDart:CanActivate()then
-			local nRange = abilDart:GetRange()
-			if ( nLastHarassUtility > botBrain.nDartThreshold and unitSelf:GetMana() > 0.80 ) or ( unitTarget:GetHealth() < 0.45 )  then
+		local nRange = abilDart:GetRange()
+		if ( nLastHarassUtility > botBrain.nDartThreshold and unitSelf:GetMana() > 0.80 ) or ( unitTarget:GetHealth() < 0.45 )  then
 			if nTargetDistanceSq < (nRange * nRange) then  --Dart if target is in range
 				bActionTaken = core.OrderAbilityEntity(botBrain, abilDart, unitTarget)
 			elseif abilJump:CanActivate() and nTargetDistanceSq > (nRange * nRange) then --Jump at target in range
