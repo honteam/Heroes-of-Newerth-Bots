@@ -124,15 +124,22 @@ core.FindItems = funcFindItemsOverride
 --------------------------------
 -- Skills
 --------------------------------
+local bSkillsValid = false
 function object:SkillBuild()
 	local unitSelf = self.core.unitSelf
 
-	if  skills.abilHammerThrow == nil then
+	if not bSkillsValid then
 		skills.abilHammerThrow = unitSelf:GetAbility(0)
 		skills.abilMightySwing = unitSelf:GetAbility(1)
 		skills.abilGalvanize = unitSelf:GetAbility(2)
 		skills.abilBruteStrength = unitSelf:GetAbility(3)
 		skills.abilAttributeBoost = unitSelf:GetAbility(4)
+		
+		if skills.abilHammerThrow and skills.abilMightySwing and skills.abilGalvanize and skills.abilBruteStrength and skills.abilAttributeBoost then
+			bSkillsValid = true
+		else
+			return
+		end		
 	end
 	
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then
@@ -286,7 +293,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	local bDebugEchos = false
 	
 	local unitTarget = behaviorLib.heroTarget
-	if unitTarget == nil then
+	if unitTarget == nil or not unitTarget:IsValid() then
 		return false --can not execute, move on to the next behavior
 	end
 	
@@ -400,6 +407,13 @@ end
 object.funcPushUtilityOld = behaviorLib.PushingStrengthUtility
 behaviorLib.PushingStrengthUtility = PushingStrengthUtilityOverride
 
+-----------------------
+-- Return to well
+-----------------------
+--this is a great function to override with using retreating skills, such as blinks, travels, stuns or slows.
+function behaviorLib.CustomReturnToWellExecute(botBrain)
+	return core.OrderBlinkItemToEscape(botBrain, core.unitSelf, core.itemPortalKey, true)
+end
 
 ----------------------------------
 --	Hammerstorm items

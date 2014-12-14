@@ -1,3 +1,17 @@
+local _G = getfenv(0)
+local object = _G.object
+
+local core, eventsLib, behaviorLib, metadata, skills = object.core, object.eventsLib, object.behaviorLib, object.metadata, object.skills
+
+local print, ipairs, pairs, string, table, next, type, tinsert, tremove, tsort, format, tostring, tonumber, strfind, strsub
+	 = _G.print, _G.ipairs, _G.pairs, _G.string, _G.table, _G.next, _G.type, _G.table.insert, _G.table.remove, _G.table.sort, _G.string.format, _G.tostring, _G.tonumber, _G.string.find, _G.string.sub
+local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, min, random
+	 = _G.math.ceil, _G.math.floor, _G.math.pi, _G.math.tan, _G.math.atan, _G.math.atan2, _G.math.abs, _G.math.cos, _G.math.sin, _G.math.acos, _G.math.max, _G.math.min, _G.math.random
+
+local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
+local Clamp = core.Clamp
+
+
 -- Sell all items
 if false then
 	behaviorLib.SellLowestItems(self, 12)
@@ -269,6 +283,7 @@ end
 	
 -- Auto-toggle test
 if false then 
+	if false then
 		behaviorLib.SellLowestItems(self, 12)
 	end
 	
@@ -369,5 +384,95 @@ if false then
 end
 
 
+--[[
+runfile "bots/miscTestCode.lua"
+function object:onthinkOverride(tGameVariables)
+	self:onthinkOld(tGameVariables)
+	
+	core.unitSelf:TeamShare()
+	
+	core.DrawXPosition(core.unitSelf:GetPosition(), "teal", 150)
 
+	if self.testDisplayAllNodes == nil then
+		Echo("derp")
+	else
+		self.testDisplayAllNodes()
+	end
+end
+object.onthinkOld = object.onthink
+object.onthink 	= object.onthinkOverride
+--]]
 
+-- Display all nodes
+function object.testDisplayAllNodes()
+	local tNodes = BotMetaData.GetAllNodes()
+	
+	if tNodes == nil then
+		return
+	end
+	
+	for nIndex, node in pairs(tNodes) do
+		
+		local nDistanceSq = Vector3.Distance2DSq(core.unitSelf:GetPosition(), node:GetPosition())
+		if (nDistanceSq < 1300*1300) then		
+			--function behaviorLib.PathLogic(botBrain, vecDesiredPosition)
+			local bDebugLines = true
+			local bMarkProperties = true
+
+			--Lines
+			if bDebugLines then
+				local nLineLen = 125
+				
+				local tTowerUIDs = {}
+				local vecNodePosition = node:GetPosition()
+				
+				if bMarkProperties then
+					local sZoneProperty  = node:GetProperty("zone")
+					local bTowerProperty = node:GetProperty("tower")
+					local bBaseProperty  = node:GetProperty("base")
+					local bUnzoned = false
+					
+					if sZoneProperty then
+						local sColor = ""
+						if sZoneProperty == "hellbourne" then
+							sColor = "red"
+						elseif sZoneProperty == "legion" then
+							sColor = "green"
+						elseif sZoneProperty == "river" then
+							sColor = "blue"
+						elseif sZoneProperty == "kongor" then
+							sColor = "brown"
+						else
+							bUnzoned = true
+						end
+						
+						core.DrawDebugLine(vecNodePosition, vecNodePosition + Vector3.Create(0, 1) * nLineLen, sColor)
+					end
+					
+					if bBaseProperty then
+						core.DrawDebugLine(vecNodePosition, vecNodePosition + Vector3.Create(1, 0) * nLineLen, "orange")
+					end
+					if bTowerProperty then
+						--check if the tower is there
+						local tBuildings = HoN.GetUnitsInRadius(node:GetPosition(), 1000, core.UNIT_MASK_ALIVE + core.UNIT_MASK_BUILDING)
+						
+						bTowerProperty = false
+						for _, unitBuilding in pairs(tBuildings) do
+							if unitBuilding:IsTower() and tTowerUIDs[unitBuilding:GetUniqueID()] == nil then
+								core.DrawDebugLine(vecNodePosition, vecNodePosition + Vector3.Create(-1, 0) * nLineLen, "yellow")
+								tTowerUIDs[unitBuilding:GetUniqueID()] = true
+								bTowerProperty = true
+							end
+						end
+					end
+					
+					--if bUnzoned and not bTowerProperty and not bBaseProperty then
+						core.DrawXPosition(node:GetPosition(), "white", 150)
+					--end
+				else
+					core.DrawXPosition(node:GetPosition(), "white", 150)
+				end
+			end
+		end
+	end
+end

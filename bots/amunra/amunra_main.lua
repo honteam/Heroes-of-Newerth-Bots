@@ -76,14 +76,21 @@ core.tLanePreferences = {Jungle = 0, Mid = 2, ShortSolo = 4, LongSolo = 3, Short
 --------------------------------
 -- Skills
 --------------------------------
+local bSkillsValid = false
 function object:SkillBuild()
 	local unitSelf = self.core.unitSelf
-	if  skills.abilMeteor == nil then
+	if not bSkillsValid then
 		skills.abilMeteor = unitSelf:GetAbility(0)
 		skills.abilIgnite = unitSelf:GetAbility(1)
 		skills.abilAshes = unitSelf:GetAbility(2)
 		skills.abilRebirth = unitSelf:GetAbility(3)
 		skills.abilAttributeBoost = unitSelf:GetAbility(4)
+		
+		if skills.abilMeteor and skills.abilIgnite and skills.abilAshes and skills.abilRebirth and skills.abilAttributeBoost then
+			bSkillsValid = true
+		else
+			return
+		end		
 	end
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then
 		return
@@ -400,7 +407,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	
 	-- moved unitTarget definition here, as its better for cpu if he isnt nil
 	local unitTarget = behaviorLib.heroTarget
-	if unitTarget == nil then
+	if unitTarget == nil or not unitTarget:IsValid() then
 		return false --can not execute, move on to the next behavior
 	end
 	
@@ -589,8 +596,8 @@ local function abilityPush(botBrain, unitSelf)
 	return false
 end
 
-
-function object.CreepPush(botBrain)
+--this is a good function to override to help push
+function behaviorLib.customPushExecute(botBrain)
 	local debugPushLines = false
 	if debugPushLines then BotEcho('^yGotta execute em *greedy*') end
 	
@@ -612,23 +619,6 @@ function object.CreepPush(botBrain)
 	
 	return bSuccess
 end
-
--- both functions below call for the creep push, however 
-function object.PushExecuteOverride(botBrain)
-	if not object.CreepPush(botBrain) then 
-		object.PushExecuteOld(botBrain)
-	end
-end
-object.PushExecuteOld = behaviorLib.PushBehavior["Execute"]
-behaviorLib.PushBehavior["Execute"] = object.PushExecuteOverride
-
-
-local function TeamGroupBehaviorOverride(botBrain)
-	object.TeamGroupBehaviorOld(botBrain)
-	object.CreepPush(botBrain)
-end
-object.TeamGroupBehaviorOld = behaviorLib.TeamGroupBehavior["Execute"]
-behaviorLib.TeamGroupBehavior["Execute"] = TeamGroupBehaviorOverride
 
 
 

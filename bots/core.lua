@@ -26,8 +26,8 @@ end
 
 local print, ipairs, pairs, string, table, next, type, tinsert, tremove, tsort, format, tostring, tonumber, strfind, strsub
 	= _G.print, _G.ipairs, _G.pairs, _G.string, _G.table, _G.next, _G.type, _G.table.insert, _G.table.remove, _G.table.sort, _G.string.format, _G.tostring, _G.tonumber, _G.string.find, _G.string.sub
-local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, min, max, random
-	= _G.math.ceil, _G.math.floor, _G.math.pi, _G.math.tan, _G.math.atan, _G.math.atan2, _G.math.abs, _G.math.cos, _G.math.sin, _G.math.acos, _G.math.min, _G.math.max, _G.math.random
+local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, asin, min, max, random
+	= _G.math.ceil, _G.math.floor, _G.math.pi, _G.math.tan, _G.math.atan, _G.math.atan2, _G.math.abs, _G.math.cos, _G.math.sin, _G.math.acos, _G.math.asin, _G.math.min, _G.math.max, _G.math.random
 
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 	
@@ -680,7 +680,7 @@ function core.GetAbsoluteAttackRangeToUnit(unit, unitTarget, bSquared)
 		end
 		nRange = nRange + core.GetExtraRange(unit)
 	end
-	if unitTarget then
+	if unitTarget and unitTarget:IsValid() then
 		nRange = nRange + core.GetExtraRange(unitTarget)
 	end
 	
@@ -788,10 +788,12 @@ function core.AdjustMovementForTowerLogic(vecDesiredPos, bCanEnterRange)
 	
 	--Anti-Towerdive
 	local unitWellAttacker = core.enemyWellAttacker 
-	local nWellAttackerID = unitWellAttacker:GetUniqueID()
+	local nWellAttackerID = unitWellAttacker ~= nil and unitWellAttacker:GetUniqueID() or -1
 
 	local tTowers = core.CopyTable(core.localUnits["EnemyTowers"])
-	tTowers[nWellAttackerID] = unitWellAttacker
+	if unitWellAttacker ~= nil then
+		tTowers[nWellAttackerID] = unitWellAttacker
+	end
 
 	--[[
 	local nMoveStep = 200
@@ -803,7 +805,7 @@ function core.AdjustMovementForTowerLogic(vecDesiredPos, bCanEnterRange)
 	--]]
 
 	for id, localTower in pairs(tTowers) do
-		if localTower:IsAlive() then		
+		if localTower ~= nil and localTower:IsAlive() then		
 			local nTowerDistanceSq = Vector3.Distance2DSq(vecMyPos, localTower:GetPosition())		
 			local nTowerBuffer = core.towerBuffer
 			local nTowerRange = core.GetAbsoluteAttackRangeToUnit(localTower, core.unitSelf)
@@ -1044,9 +1046,9 @@ function core.GetFurthestCreepWavePos(tLane, bTraverseForward)
 		return nil
 	end
 		
-	vecReturn = tbotTeam:GetFrontOfCreepWavePosition(tLane.sLaneName)
+	vecReturn = tbotTeam:GetFrontOfCreepWavePosition(tLane.sLaneKey)
 	
-	if bDebugEchos then BotEcho("Front of "..tLane.sLaneName..":"..tostring(vecReturn)) end	
+	if bDebugEchos then BotEcho("Front of "..tLane.sLaneKey..":"..tostring(vecReturn)) end	
 	if bDebugLines and vecReturn then
 		core.DrawXPosition(vecReturn, 'red')
 	end
@@ -1131,6 +1133,81 @@ function core.AssessLaneDirection(position, tPath, bTraverseForward)
 	return vLaneForward, vLaneForwardOrtho
 end
 
+-- Given a start and an angle, move in that direction a certain distance.
+function core.positionOffset(pos, angle, distance)
+	local tmp = Vector3.Create(cos(angle) * distance, sin(angle) * distance)
+	return tmp + pos
+end
+
+-- Given two points, move from 1 to 2 by a certain distance
+function core.positionTowards(pos, pos2, distance)
+	local angle = atan2(pos2.y - pos.y, pos2.x - pos.x)
+	return core.positionOffset(pos, angle, distance)
+end
+
+-- Given a last known position, probable destination, move speed and the time since they were at the last known position, guess their current position.
+function core.GetEstimatedLocation(vecPosition, vecDestination, nSpeed, nTimeElapsed)
+	local nDistance = nSpeed * nTimeElapsed / 1000
+	local tPath = BotMetaData.FindPath(vecPosition, vecDestination)
+	if tPath and #tPath > 0 then
+		local nIndex = 1
+		local vecPreviousNodePosition = vecPosition
+		local vecNodePosition = nil
+		local nDistanceFromLastNode = nDistance
+		while nIndex < #tPath do
+			vecNodePosition = nIndex == 1 and vecPosition or tPath[nIndex]:GetPosition()
+			nDistanceFromLastNode = nDistanceFromLastNode - Vector3.Distance2D(vecPreviousNodePosition, vecNodePosition)
+			if nDistanceFromLastNode <= 0 then
+				if nIndex == 1 then
+					return vecNodePosition
+				else
+					return core.positionTowards(vecNodePosition, vecPreviousNodePosition, -nDistanceFromLastNode)
+				end
+				break
+			end
+			vecPreviousNodePosition = vecNodePosition
+			nIndex = nIndex + 1
+		end
+	end
+	return nil -- We have no path.. how can we do anything?
+end
+
+-- Given a last known position, probable destination, move speed the time since they were at the last known position,
+-- Your position, and the projectile speed of your global snipe, guess the point and time of impact.
+function core.GetSnipeLocation(vecPosition, vecDestination, nSpeed, nTimeElapsed, myPosition, projectileSpeed)
+	vecPosition = core.GetEstimatedLocation(vecPosition, vecDestination, nSpeed, nTimeElapsed)
+	-- Get a path from current position back to well
+	local tPath = BotMetaData.FindPath(vecPosition, vecDestination)
+	if tPath and #tPath > 0 then
+		local nIndex = 1
+		local vecPreviousNodePosition = vecPosition
+		local vecNodePosition = nil
+		local nTimeUntilImpact = 0 -- this is in seconds
+		local nTimeDifference = 0 -- in seconds, amount of time our projectile will reach the node before them.
+		while nIndex < #tPath do
+			vecNodePosition = nIndex == 1 and vecPosition or tPath[nIndex]:GetPosition()
+			-- where the projectile would be at this time
+			local vecProjectilePosition = core.positionTowards(myPosition, vecNodePosition, nTimeUntilImpact * projectileSpeed)
+			--core.DrawDebugArrow(vecProjectilePosition, vecNodePosition, 'lime')
+			--core.DrawDebugArrow(vecPreviousNodePosition, vecNodePosition, 'white')
+			local nTheirDistance = Vector3.Distance2D(vecPreviousNodePosition, vecNodePosition)
+			local nMyDistance = Vector3.Distance2D(vecProjectilePosition, vecNodePosition)
+			-- can our projectile make it before them?
+			if nTheirDistance/nSpeed > nMyDistance/projectileSpeed then
+				nTimeDifference = nTheirDistance/nSpeed - nMyDistance/projectileSpeed
+				break
+			end
+			nTimeUntilImpact = nTimeUntilImpact + nTheirDistance/nSpeed
+			vecPreviousNodePosition = vecNodePosition
+			nIndex = nIndex + 1
+		end
+		-- We think they're gonna be between these two nodes, lets get an exact spot!
+		--core.DrawXPosition(core.positionTowards(vecNodePosition, vecPreviousNodePosition, nTimeDifference * nSpeed), 'red')
+		return core.positionTowards(vecNodePosition, vecPreviousNodePosition, nTimeDifference * nSpeed), HoN:GetGameTime() + (nTimeUntilImpact - nTimeDifference) * 1000
+	end
+	return nil -- We have no path.. how can we do anything?
+end
+
 function core.GetClosestTeleportBuilding(position)
 	local closestDistSq = 99999999
 	local closestBuilding = nil
@@ -1183,12 +1260,19 @@ end
 
 core.tFoundItems = {}
 core.tsearchTimes = {}
+core.nSearchFrequency = 2000
 --Finds an item on your hero.
 function core.GetItem(val, bIncludeStash)
 	if core.tFoundItems[val] then -- We have checked the item before. Validate it.
 		core.ValidateItem(core.tFoundItems[val])
 		if core.tFoundItems[val] and core.tFoundItems[val]:IsValid() then -- still valid, return it
-			return core.tFoundItems[val]
+			--check for access
+			if core.unitSelf:CanAccess(core.tFoundItems[val].object) or bIncludeStash then 
+				return core.tFoundItems[val]
+			else
+				--we still have this item in our reference, but it is in stash or courier
+				return
+			end
 		else
 			core.tFoundItems[val] = nil
 		end
@@ -1196,7 +1280,7 @@ function core.GetItem(val, bIncludeStash)
 	--First time seeing the item, or it was invalidated.
 	if not core.tFoundItems[val] then
 		local nLastSearchTime = core.tsearchTimes[val] or 0
-		if nLastSearchTime + 500 <= HoN:GetGameTime() then --only look at max 2 times a second
+		if nLastSearchTime + core.nSearchFrequency <= HoN:GetGameTime() then -- Only look at every x seconds
 			core.tsearchTimes[val] = HoN:GetGameTime()
 			inventory = core.unitSelf:GetInventory()
 			if bIncludeStash == nil then
@@ -1214,7 +1298,7 @@ function core.GetItem(val, bIncludeStash)
 			end
 		end
 	end
-    return nil
+	return nil
 end
 
 function core.IsLaneCreep(unit)
@@ -2093,3 +2177,37 @@ end
 if unitMetatable.GetStashAccess ~= nil and unitMetatable.CanAccessStash == nil then
 	unitMetatable.CanAccessStash = unitMetatable.GetStashAccess
 end
+
+if unitMetatable.isMagicImmune == nil then
+	unitMetatable.isMagicImmune = function (unit)
+		local tStates = { "State_Item3E", "State_Predator_Ability2", "State_Jereziah_Ability2", "State_Rampage_Ability1_Self", "State_Rhapsody_Ability4_Buff", "State_Hiro_Ability1" }
+		for _, sState in ipairs(tStates) do
+			if unit:HasState(sState) then
+				return true
+			end
+		end
+		return false
+	end
+end
+
+--[[ colors:
+	red
+	aqua == cyan
+	gray
+	navy
+	teal
+	blue
+	lime
+	black
+	brown
+	green
+	olive
+	white
+	silver
+	purple
+	maroon
+	yellow
+	orange
+	fuchsia == magenta
+	invisible
+--]]

@@ -2,9 +2,9 @@
 ----------------------------------------------------------------------
 --   ____    _	     _____   _____   _____     ____    ________  -----
 --  |    \  | |	    /	  \ /     \ |	  \   /	   \  |  _  _  | -----
---  | Ѻ _|  | |___  |  Ѻ  | |  Ѻ  | |  ѻ__/  |   _  | |__    __| -----
---  |   \   |  _  \ |  _  | |  ___/ 3      \ |  (Ѻ) |    |  |    -----
---  | |\ \  | |	| | | | | | | |     |  Ѻ   | |	 ¯  |    |  |	 -----
+--  | O _|  | |___  |  O  | |  O  | |  o__/  |   _  | |__    __| -----
+--  |   \   |  _  \ |  _  | |  ___/ 3      \ |  (O) |    |  |    -----
+--  | |\ \  | |	| | | | | | | |     |  O   | |	 �  |    |  |	 -----
 --  |_| \_\ |_| |_| |_| |_| |_,     |______,  \____,     |__|	 -----
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
@@ -156,15 +156,21 @@ object.nRetreatStunThreshold = 43		--used for the defensive stunning
 ------------------------------
 --     skills               --
 ------------------------------
-
+local bSkillsValid = false
 function object:SkillBuild()
 	local unitSelf = self.core.unitSelf
-	if  skills.abilStaccato == nil then
-		skills.abilStaccato = unitSelf:GetAbility(0)
-		skills.abilDanceInferno = unitSelf:GetAbility(1)
-		skills.abilHymn = unitSelf:GetAbility(2)
-		skills.abilProtectiveMelody = unitSelf:GetAbility(3)
-		skills.abilAttributeBoost = unitSelf:GetAbility(4)
+	if not bSkillsValid then
+		skills.abilStaccato			= unitSelf:GetAbility(0)
+		skills.abilDanceInferno		= unitSelf:GetAbility(1)
+		skills.abilHymn				= unitSelf:GetAbility(2)
+		skills.abilProtectiveMelody	= unitSelf:GetAbility(3)
+		skills.abilAttributeBoost	= unitSelf:GetAbility(4)
+		
+		if skills.abilStaccato and skills.abilDanceInferno and skills.abilHymn and skills.abilProtectiveMelody and skills.abilAttributeBoost then
+			bSkillsValid = true
+		else
+			return
+		end
 	end
 	
 	local nPoints = unitSelf:GetAbilityPointsAvailable()
@@ -210,16 +216,18 @@ object.oncombatevent    = object.oncombateventOverride
 -- change utility according to usable spells here   --
 ------------------------------------------------------
 local function CustomHarassUtilityFnOverride(hero)
-   local nUtility = 0
+	local nUtility = 0
+	
+	if bSkillsValid then
+		if skills.abilStaccato:CanActivate() then
+			nUtility = nUtility + object.nStaccatoUp
+		end
 	 
-	if skills.abilStaccato:CanActivate() then
-		nUtility = nUtility + object.nStaccatoUp
+		if skills.abilDanceInferno:CanActivate() then
+			nUtility = nUtility + object.nDanceInfernoUp
+		end
 	end
  
-	if skills.abilDanceInferno:CanActivate() then
-		nUtility = nUtility + object.nDanceInfernoUp
-	end
- --BotEcho(nUtil..' nutil')
 	return nUtility
 end
 -- assisgn custom Harrass function to the behaviourLib object
@@ -232,7 +240,7 @@ behaviorLib.CustomHarassUtility = CustomHarassUtilityFnOverride
 local function HarassHeroExecuteOverride(botBrain)
 	
 	local unitTarget = behaviorLib.heroTarget
-	if unitTarget == nil then
+	if unitTarget == nil or not unitTarget:IsValid() then
 		return false --Target is invalid, move on to the next behavior
 	end
 	
@@ -264,7 +272,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	----------------------------------------------------- Staccato / Stun
 	if core.CanSeeUnit(botBrain, unitTarget) then
 		if not bActionTaken then
-			if abilStun:CanActivate() and nLastHarassUtility > botBrain.nStaccatoThreshold and not unitSelf:HasState("State_Rhapsody_Ability1_Self") then
+			if abilStun ~= nil and abilStun:CanActivate() and nLastHarassUtility > botBrain.nStaccatoThreshold and not unitSelf:HasState("State_Rhapsody_Ability1_Self") then
 				-- state_rhapsody_ability1_self means that rhapsody has staccato charges
 				local nRange = abilStun:GetRange()								
 				if nTargetDistanceSq < (nRange * nRange) then
@@ -278,7 +286,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	end 
 	----------------------------------------------------- Dance dance 
 	if not bActionTaken then
-		if abilDance:CanActivate() and unitTarget:GetHealthPercent() > 0.1 then --not gonna use this on a sure kill, won't waste
+		if abilDance ~= nil and abilDance:CanActivate() and unitTarget:GetHealthPercent() > 0.1 then --not gonna use this on a sure kill, won't waste
 			if nLastHarassUtility > botBrain.nDanceInfernoThreshold or bTargetVuln then --hey malloc would this if statement just override the dance threshold if i add bTargetVuln ?
 				local nRange = abilDance:GetRange()										--just delete if you deem necesarry, same with this comment
 				if nTargetDistanceSq < (nRange * nRange) then
@@ -306,34 +314,6 @@ end
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 
-
---------------------------------------------------------------
---                    FindItems Override                    --
---------------------------------------------------------------
-local function funcFindItemsOverride(botBrain)
-	object.FindItemsOld(botBrain)
-
-	core.ValidateItem(core.itemShrunkenHead)
-	--core.ValidateItem(core.itemWardOfSight)
-	
-	if --[[core.itemWardOfSight and --]] core.itemShrunkenHead then
-		return
-	end
-
-	local inventory = core.unitSelf:GetInventory(false)
-	for slot = 1, 6, 1 do
-		local curItem = inventory[slot]
-		if curItem and not curItem:IsRecipe() then
-			if core.itemShrunkenHead == nil and curItem:GetName() == "Item_Immunity" then
-				core.itemShrunkenHead = core.WrapInTable(curItem)
-			end
-		end
-	end
-end
-object.FindItemsOld = core.FindItems
-core.FindItems = funcFindItemsOverride
-
-
 --------------------------------------------------------------
 --                RetreatFromThreat Override                --
 --               --Use staccato defensively--               --
@@ -349,7 +329,7 @@ function funcRetreatFromThreatExecuteOverride(botBrain)
 	--BotEcho("Checkin defensive Stun")
 	if not bActionTaken then
 		--Stun use		
-		if abilStun:CanActivate() and not unitSelf:HasState("State_Rhapsody_Ability1_Self") then
+		if abilStun ~= nil and abilStun:CanActivate() and not unitSelf:HasState("State_Rhapsody_Ability1_Self") then
 			--BotEcho("CanActivate!  nRetreatUtil: "..behaviorLib.lastRetreatUtil.."  thresh: "..object.nRetreatStunThreshold)
 			local tTargets = core.localUnits["EnemyHeroes"]
 			if behaviorLib.lastRetreatUtil >= object.nRetreatStunThreshold and tTargets then
@@ -390,10 +370,10 @@ behaviorLib.RetreatFromThreatBehavior["Execute"] = funcRetreatFromThreatExecuteO
 
 
 --------------------------------------------------------------
---                   PushExecute Override                   --
+--                   		Pushing		                    --
 --    needed to make rhapbot use dance inferno on pushes    --
 --------------------------------------------------------------
-function AbilityPush(botBrain)
+function behaviorLib.customPushExecute(botBrain)
 	local bSuccess = false
 	local abilDance = skills.abilDanceInferno
 	local unitSelf = core.unitSelf
@@ -412,23 +392,6 @@ function AbilityPush(botBrain)
 	
 	return bSuccess
 end
-
-local function PushExecuteOverride(botBrain)
-	if not AbilityPush(botBrain) then 
-		return object.PushExecuteOld(botBrain)
-	end
-end
-object.PushExecuteOld = behaviorLib.PushBehavior["Execute"]
-behaviorLib.PushBehavior["Execute"] = PushExecuteOverride
-
-
-local function TeamGroupBehaviorOverride(botBrain)
-	if not AbilityPush(botBrain) then 
-		return object.TeamGroupBehaviorOld(botBrain)
-	end
-end
-object.TeamGroupBehaviorOld = behaviorLib.TeamGroupBehavior["Execute"]
-behaviorLib.TeamGroupBehavior["Execute"] = TeamGroupBehaviorOverride
 
 
 --####################################################################
@@ -468,10 +431,12 @@ function ProtectiveMelodyExecute(botBrain)
 		local nRadius = abilUlt:GetTargetRadius()
 		local nHalfRadiusSq = nRadius * nRadius * 0.25
 		if nTargetDistanceSq <= nHalfRadiusSq then
-			local itemShrunkenHead = core.itemShrunkenHead
+			local itemShrunkenHead = core.GetItem("Item_Immunity")
 			if itemShrunkenHead and itemShrunkenHead:CanActivate() then		--see if Shrunken can pop, then pop it
-				core.OrderItemClamp(botBrain, unitSelf, itemShrunkenHead)
-				return
+				local bSuccess = core.OrderItemClamp(botBrain, unitSelf, itemShrunkenHead)
+				if bSuccess then
+					return
+				end
 			end
 			core.OrderAbility(botBrain, abilUlt)		
 		else 
@@ -481,6 +446,7 @@ function ProtectiveMelodyExecute(botBrain)
 		return false
 	end
 end
+tinsert(behaviorLib.tDontUseDefaultItemBehavior, "Item_Immunity")
 
 
 function object.GetUltimateTimeToLiveThreshold () 
@@ -564,7 +530,7 @@ function behaviorLib.HealUtility(botBrain)
 	local nTargetTimeToLive = nil
 	local sAbilName = ""
 	
-	if abilMelody:CanActivate() then
+	if abilMelody ~= nil and abilMelody:CanActivate() then
 		local tTargets = core.CopyTable(core.localUnits["AllyHeroes"])
 		tTargets[unitSelf:GetUniqueID()] = unitSelf --I am also a target
 		local nMyID = unitSelf:GetUniqueID()
@@ -630,7 +596,7 @@ function behaviorLib.HealExecute(botBrain) -- this is used for Ultimate triggeri
 	end
 	
 	--Priority order is Ultimate
-	if unitHealTarget then 
+	if abilMelody ~= nil and unitHealTarget then 
 		if nHealTimeToLive <= nUltimateTTL and abilMelody:CanActivate() and unitHealTarget ~= unitSelf  then  --only attempt ult for other players (not for self, lol)
 			ProtectiveMelodyExecute(botBrain)
 		else 

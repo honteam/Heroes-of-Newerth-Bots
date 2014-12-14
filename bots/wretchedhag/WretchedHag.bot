@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bot
 	name="WretchedHagBot"
-	description="Community Built Bot by DarkFire"
+	description="bot_description_wretched_hag"
 	heroname="Hero_BabaYaga"
 	rootlua="WretchedHag_main.lua"
 	defaultplayername="WretchedHagBot"

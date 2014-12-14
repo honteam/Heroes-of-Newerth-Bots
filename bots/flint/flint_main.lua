@@ -62,15 +62,22 @@ object.heroName = 'Hero_FlintBeastwood'
 --------------------------------
 -- Skills
 --------------------------------
+local bSkillsValid = false
 function object:SkillBuild()	
 	local unitSelf = self.core.unitSelf
 
-	if skills.flare == nil then
+	if not bSkillsValid then
 		skills.flare		= unitSelf:GetAbility(0)
 		skills.hollowpoint	= unitSelf:GetAbility(1)
 		skills.deadeye		= unitSelf:GetAbility(2)
 		skills.moneyshot	= unitSelf:GetAbility(3)
 		skills.attributeBoost = unitSelf:GetAbility(4)
+		
+		if skills.flare and skills.hollowpoint and skills.deadeye and skills.moneyshot and skills.attributeBoost then
+			bSkillsValid = true
+		else
+			return
+		end
 	end	
 	
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then
@@ -270,12 +277,12 @@ behaviorLib.HitBuildingBehavior["Execute"] = HitBuildingExecuteOverride
 --	Flint harass actions
 ----------------------------------
 local function HarassHeroExecuteOverride(botBrain)
-	local unitTarget = behaviorLib.heroTarget 
-	local vecTargetPos = unitTarget and unitTarget:GetPosition()
-	
-	if unitTarget == nil or vecTargetPos == nil then
+	local unitTarget = behaviorLib.heroTarget
+	if unitTarget == nil or not unitTarget:IsValid() then
 		return false -- we can't procede, reassess behaviors
 	end
+	
+	local vecTargetPos = unitTarget:GetPosition()
 	
 	local unitSelf = core.unitSelf
 	local bCanSee = core.CanSeeUnit(botBrain, unitTarget)

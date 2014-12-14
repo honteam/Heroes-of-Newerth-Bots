@@ -107,6 +107,19 @@ object.runes = {
 }
 local tRuneNames = {"Powerup_Damage", "Powerup_Illusion", "Powerup_Stealth", "Powerup_Refresh", "Powerup_Regen", "Powerup_MoveSpeed", "Powerup_Super"}
 
+
+local tMapLanes = {}
+
+local function getMapLanes()
+	if core.tGameVariables.sMapName == 'tutorial_laning' or core.tGameVariables.sMapName == 'midwars' then
+		tMapLanes = {"mid"}
+	elseif core.tGameVariables.sMapName == 'grimmscrossing' or core.tGameVariables.sMapName == 'riftwars' then
+		tMapLanes = {"bot", "mid"}-- these are un-tested, and for possible future development
+	elseif core.tGameVariables.sMapName == 'caldavar' then
+		tMapLanes = {"bot", "mid", "top", "jungle"}
+	end
+end
+
 --Called every frame the engine gives us during the actual match
 function object:onthink(tGameVariables)
 	StartProfile('onthink')
@@ -118,7 +131,7 @@ function object:onthink(tGameVariables)
 		self:TeamBotBrainInitialize()
 	end
 	if metadata.bInitialized ~= true then
-		metadata.Initialize()
+		metadata.Initialize(tGameVariables.sMapName)
 	end	
 	
 	if core.tGameVariables == nil then
@@ -126,11 +139,12 @@ function object:onthink(tGameVariables)
 			BotEcho("TGAMEVARIABLES IS NIL OH GOD OH GOD WHYYYYYYYY!??!?!!?")
 		else
 			core.tGameVariables = tGameVariables
-			core.bIsTutorial = core.tGameVariables.sMapName == 'tutorial'
+			getMapLanes()
+			core.bIsTutorial = core.tGameVariables.sMapName == 'tutorial' or core.tGameVariables.sMapName == 'tutorial_laning'
 			core.nDifficulty = core.tGameVariables.nDifficulty or core.nEASY_DIFFICULTY
 			
 			--[Tutorial] Hellbourne heroes don't group up to push and Legion waits longer to push
-			if core.bIsTutorial then
+			if core.bIsTutorial or #tMapLanes == 1 then
 				if core.myTeam == HoN.GetHellbourneTeam() then
 					object.bGroupAndPush = false
 				else
@@ -157,6 +171,10 @@ function object:onthink(tGameVariables)
 	end
 
 	if self.bRunLogic == false then 
+		return
+	end
+	
+	if self.tAllyHeroes == nil or core.NumberElements(self.tAllyHeroes) < 1 then
 		return
 	end
 	
@@ -214,7 +232,7 @@ function object:onthink(tGameVariables)
 		jungleLib.assess(self)
 	StopProfile()
 
-	time = HoN.GetMatchTime()
+	local time = HoN.GetMatchTime()
 	if time and time > object.nRuneNextSpawnCheck then
 		object.nRuneNextSpawnCheck = object.nRuneNextSpawnCheck + 120000
 
@@ -235,7 +253,7 @@ end
 function object.CheckRunes()
 	for _,rune in pairs(object.runes) do
 		if HoN.CanSeePosition(rune.vecLocation) then
-			units = HoN.GetUnitsInRadius(rune.vecLocation, 50, core.UNIT_MASK_POWERUP + core.UNIT_MASK_ALIVE)
+			local units = HoN.GetUnitsInRadius(rune.vecLocation, 50, core.UNIT_MASK_POWERUP + core.UNIT_MASK_ALIVE)
 			local bRuneFound = false
 			for _,unit in pairs(units) do
 				local typeName = unit:GetTypeName()
@@ -331,6 +349,10 @@ end
 
 ---- Memory units ----
 object.tMemoryUnits = {}
+
+function object:GetMemoryUnit(unit)
+	return self.tMemoryUnits[unit:GetUniqueID()]
+end
 
 object.nMemoryUnitHealthIntervalMS = 3000
 function object:CreateMemoryUnit(unit)	
@@ -813,7 +835,7 @@ end
 
 
 function object:GetThreat(unitHero)
-	return self.tStoredThreats[unitHero:GetUniqueID()] or 0
+	return self.tStoredThreats[unitHero:GetUniqueID()] or self.CalculateThreat(unitHero)
 end
 
 function object:GetTotalThreat(tUnits)
@@ -827,7 +849,7 @@ function object:GetTotalThreat(tUnits)
 end
 
 function object:GetDefense(unitHero)
-	return self.tStoredDefenses[unitHero:GetUniqueID()] or 0
+	return self.tStoredDefenses[unitHero:GetUniqueID()] or object.CalculateDefense(unitHero)
 end
 
 function object:GetTotalDefense(tUnits)
@@ -1105,6 +1127,9 @@ local tPreferenceValueMap = { -3, -1, 1, 2, 3, 5, 5}
 
 local function ValidateLanes(tNewCurrentLanes)	
 	--core.printTable(tNewCurrentLanes) --uncomment to see lane checking in progress
+	if #tMapLanes == 1 then
+		return true -- there is only one lane.. of course it's valid.
+	end
 	local nLong = 0
 	local nMid = 0
 	local nShort = 0
@@ -1155,9 +1180,14 @@ local function ValidateLanes(tNewCurrentLanes)
 end
 
 local nHighestCombo = -9999
+local sDefaultLane
 -- Recurrsive function to Loop through all possible bot combinations and add the sums
 local function SumPreferences(tPossibleLanes, nIndex, nSum, tCurrentLanes)
 	local nOrigSum = nSum
+	-- Make bots use default lane if there is no-where else to go.
+	if #tPossibleLanes == 0 then
+		tPossibleLanes = {sDefaultLane}
+	end
 	-- Iterate over the remaining lanes
 	for i = 1, #tPossibleLanes do 
 		if nIndex == core.NumberElements(object.tBotsLeft) + 1 then 
@@ -1294,6 +1324,12 @@ function GuessLanePreference(unitHero)
 	return tPreferences
 end
 
+local function insertAll(myTable, ...)
+	for k, v in pairs({...}) do
+		tinsert(myTable,v)
+	end
+end
+
 function object:BuildLanes()
 	local bDebugEchos = false
 
@@ -1302,7 +1338,29 @@ function object:BuildLanes()
 	local tBottomLane = {}
 	local tJungle = {}
 	
-	local tPossibleLanes = {"Mid", "ShortSolo", "LongSolo", "ShortSupport", "LongSupport", "ShortCarry", "LongCarry", "Jungle"}
+	local tPossibleLanes = {}
+	
+	if core.tableContains(tMapLanes, "mid") > 0 then
+		insertAll(tPossibleLanes, "Mid")
+	end
+	if core.tableContains(tMapLanes, "bot") > 0 then
+		if core.myTeam == HoN.GetLegionTeam() then
+			insertAll(tPossibleLanes, "ShortSolo", "ShortSupport", "ShortCarry")
+		else
+			insertAll(tPossibleLanes, "LongSolo", "LongSupport", "LongCarry")
+		end
+	end
+	if core.tableContains(tMapLanes, "top") > 0 then
+		if core.myTeam == HoN.GetLegionTeam() then
+			insertAll(tPossibleLanes, "LongSolo", "LongSupport", "LongCarry")
+		else
+			insertAll(tPossibleLanes, "ShortSolo", "ShortSupport", "ShortCarry")
+		end
+	end
+	if core.tableContains(tMapLanes, "jungle") > 0 then
+		insertAll(tPossibleLanes, "Jungle")
+	end
+	sDefaultLane = tPossibleLanes[1] -- this will be mid if the map supports it.
 
 	-- Check for players already in lane
 	for nID, unitHero in pairs(self.tAllyHumanHeroes) do
@@ -1331,7 +1389,7 @@ function object:BuildLanes()
 	object.tBotsLeft = core.CopyTable(self.tAllyBotHeroes)
 
 	-- Tutorial
-	if core.bIsTutorial and core.myTeam == HoN.GetLegionTeam() then
+	if core.tGameVariables.sMapName == 'tutorial' and core.myTeam == HoN.GetLegionTeam() then
 		if bDebugEchos then BotEcho("BuildLanes - Tutorial!") end
 		local unitSpecialBot = nil
 		local tPlayerLane = nil
@@ -1418,6 +1476,10 @@ function object:BuildLanes()
 	
 	
 	--Assign bots to lane.
+	if object.tCombinations[1] == nil then
+		return
+	end
+	
 	for key, value in pairs(object.tCombinations[1]) do
 		local hero = object.tLanePreferences[key].hero
 		--BotEcho(hero:GetTypeName().."("..hero:GetUniqueID()..")'s role is "..value)
@@ -2066,7 +2128,55 @@ function object:GetDefenseTarget(unitAsking)
 	end
 	return nil
 end
+object.tItemReservations = {
+	--AbyssalSkull
+	Item_LifeSteal5 = false,
+	--Nomes Wisdom
+	Item_NomesWisdom = false,
+	--Sols Bulwark
+	Item_SolsBulwark = false,
+	--Daemonic Breastplate
+	Item_DaemonicBreastplate = false,
+	--Barrier Idol
+	Item_BarrierIdol = false,
+	--Astrolabe
+	Item_Astrolabe = false,
+	--Mock of Brilliance
+		Item_Damage10 = false
+}
 
+function object.ReserveItem(itemName)
+	local debugTeamBotBrain = false
+	if not itemName then return false end
+	--check if reserved
+	local tReservationTable = object.tItemReservations
+	local bReserved = tReservationTable[itemName]
+	if debugTeamBotBrain then BotEcho(itemName.." was found in reservation table: "..tostring(bReserved)) end
+	--if item is not reserved or not tracked, you can buy it 
+	if  bReserved ~= false then
+		return not bReserved
+	end
+	--item is not reserved... need further checks
+	local bFoundItem = false
+	--check if an instance of the item is in the inventory of not supported heroes (without this lib or human players)
+	local tAllyHeroes= object.tAllyHeroes
+	for index, hero in pairs(tAllyHeroes) do
+		--we can only check the inventory... :(
+		local inventory = hero:GetInventory (false)
+		bFoundItem = core.InventoryContains(inventory, itemName, false, false)
+		if #bFoundItem > 0 then
+			if debugTeamBotBrain then BotEcho(itemName.." was found in an allies inventory: ") end
+			bFoundItem = true
+			break
+		else
+			bFoundItem = false
+		end
+	end
+	--Reserve item 
+	tReservationTable[itemName] = true
+	--if item was not found, we can buy it
+	return not bFoundItem
+end
 
 --[[ colors:
 	red

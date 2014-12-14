@@ -104,17 +104,23 @@ At Level 2 he puts a pint into his Toss.
 Afterwards maxing his Corpse Explosion before finishing his Toss.
 Skills ZombieAcopalypse whenever possible.
 --]]
+local bSkillsValid = false
 function object:SkillBuild()
-
 	local unitSelf = self.core.unitSelf
 
-	if  skills.abilCorpseToss == nil then
+	if not bSkillsValid then
 		skills.abilCorpseToss		= unitSelf:GetAbility(0)
 		skills.abilCorpseExplosion  = unitSelf:GetAbility(1)
 		skills.abilDefilingTouch	= unitSelf:GetAbility(2)
 		skills.abilZombieApocalypse	= unitSelf:GetAbility(3)
 		skills.abilAttributeBoost	= unitSelf:GetAbility(4)
 		skills.abilTaunt			= unitSelf:GetAbility(8)
+		
+		if skills.abilCorpseToss and skills.abilCorpseExplosion and skills.abilDefilingTouch and skills.abilZombieApocalypse and skills.abilAttributeBoost and skills.abilTaunt then
+			bSkillsValid = true
+		else
+			return
+		end
 	end
 
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then
@@ -375,7 +381,7 @@ behaviorLib.CustomHarassUtility = CustomHarassUtilityFnOverride
 local function HarassHeroExecuteOverride(botBrain)
 
 	local unitTarget = behaviorLib.heroTarget
-	if not unitTarget then
+	if not unitTarget or not unitTarget:IsValid() then
 		return false --can not execute, move on to the next behavior
 	end
 
@@ -894,42 +900,9 @@ behaviorLib.HealAtWellBehavior["Utility"] = CustomHealAtWellUtilityFnOverride
 ------------------------------------------------------------------
 --Heal at well execute
 ------------------------------------------------------------------
-local function HealAtWellExecuteFnOverride(botBrain)
-	--BotEcho("Returning to well!")
-	local vecWellPos = core.allyWell and core.allyWell:GetPosition() or behaviorLib.PositionSelfBackUp()
-	local nDistanceWellSq =  Vector3.Distance2DSq(core.unitSelf:GetPosition(), vecWellPos)
-
-	--Activate ghost marchers if we can
-	local itemGhostMarchers = core.itemGhostMarchers
-	if itemGhostMarchers and itemGhostMarchers:CanActivate() and nDistanceWellSq > (500 * 500) then
-		core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
-		return
-	end
-
-	--Just use Tablet
-	local itemTablet = core.itemTablet
-	if itemTablet then
-		if itemTablet:CanActivate() and nDistanceWellSq > (500 * 500) then		
-			--TODO: GetHeading math to ensure we're actually going in the right direction
-			core.OrderItemEntityClamp(botBrain, core.unitSelf, itemTablet, core.unitSelf)
-			return
-		end
-	end
-
-	--Portal Key: Port away
-	local itemPortalKey = core.itemPortalKey
-	if itemPortalKey then
-		if itemPortalKey:CanActivate() and nDistanceWellSq > (1000 * 1000) then
-			core.OrderItemPosition(botBrain, unitSelf, itemPortalKey, vecWellPos)
-			return
-		end
-	end
-
-	core.OrderMoveToPosAndHoldClamp(botBrain, core.unitSelf, vecWellPos, false)
+function behaviorLib.CustomReturnToWellExecute(botBrain)
+	return core.OrderBlinkItemToEscape(botBrain, core.unitSelf, core.itemPortalKey, true)
 end
-object.HealAtWellExecuteOld = behaviorLib.HealAtWellExecute
-behaviorLib.HealAtWellBehavior["Execute"] = HealAtWellExecuteFnOverride
-
 
 --Function removes any item that is not valid
 local function funcRemoveInvalidItems()

@@ -59,15 +59,22 @@ object.heroName = 'Hero_ForsakenArcher'
 --------------------------------
 -- Skills
 --------------------------------
+local bSkillsValid = false
 function object:SkillBuild()
 	local unitSelf = self.core.unitSelf	
 	
-	if  skills.abilCripplingVolley == nil then
+	if not bSkillsValid then
 		skills.abilCripplingVolley	= unitSelf:GetAbility(0)
 		skills.abilSplitFire		= unitSelf:GetAbility(1)
 		skills.abilCallOfTheDamned	= unitSelf:GetAbility(2)
 		skills.abilPiercingArrows	= unitSelf:GetAbility(3)
 		skills.abilAttributeBoost	= unitSelf:GetAbility(4)
+		
+		if skills.abilCripplingVolley and skills.abilSplitFire and skills.abilCallOfTheDamned and skills.abilPiercingArrows and skills.abilAttributeBoost then
+			bSkillsValid = true
+		else
+			return
+		end
 	end
 	
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then
@@ -211,7 +218,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	local bDebugEchos = false
 	
 	local unitTarget = behaviorLib.heroTarget
-	if unitTarget == nil then
+	if unitTarget == nil or not unitTarget:IsValid() then
 		return false --can not execute, move on to the next behavior
 	end
 	
@@ -299,9 +306,13 @@ local function HarassHeroExecuteOverride(botBrain)
 			end
 
 			if itemGhostMarchers and itemGhostMarchers:CanActivate() then
-				core.OrderItemClamp(botBrain, unitSelf, itemGhostMarchers)
-				return
-			elseif behaviorLib.lastHarassUtil < behaviorLib.diveThreshold then
+				local bSuccess = core.OrderItemClamp(botBrain, unitSelf, itemGhostMarchers)
+				if bSuccess then
+					return
+				end
+			end
+			
+			if behaviorLib.lastHarassUtil < behaviorLib.diveThreshold then
 				if bDebugEchos then BotEcho("DON'T DIVE!") end
 				local bChanged = false
 				desiredPos, bChanged = core.AdjustMovementForTowerLogic(desiredPos)

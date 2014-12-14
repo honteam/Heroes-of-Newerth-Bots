@@ -60,16 +60,23 @@ core.tLanePreferences = {Jungle = 0, Mid = 5, ShortSolo = 4, LongSolo = 3, Short
 --------------------------------
 -- Skills
 --------------------------------
+local bSkillsValid = false
 function object:SkillBuild()
 --Arachna specific
 	local unitSelf = self.core.unitSelf
 
-	if skills.webbedShot == nil then
+	if not bSkillsValid then
 		skills.webbedShot = unitSelf:GetAbility(0)
 		skills.hardenCarapace = unitSelf:GetAbility(1)
 		skills.precision = unitSelf:GetAbility(2)
 		skills.spiderSting = unitSelf:GetAbility(3)
 		skills.attributeBoost = unitSelf:GetAbility(4)
+		
+		if skills.webbedShot and skills.hardenCarapace and skills.precision and skills.spiderSting and skills.attributeBoost then
+			bSkillsValid = true
+		else
+			return
+		end
 	end
 		
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then
@@ -185,13 +192,17 @@ behaviorLib.PushingStrengthUtilFn = PushingStrengthUtilOverride
 --	Arachna harass actions
 ----------------------------------
 local function HarassHeroExecuteOverride(botBrain)
+	local unitTarget = behaviorLib.heroTarget
+	if unitTarget == nil or not unitTarget:IsValid() then
+		return false --can not execute, move on to the next behavior
+	end
+	
 	local unitSelf = core.unitSelf
-	local unitTarget = behaviorLib.heroTarget 
 	
 	local bActionTaken = false
 	
 	--since we are using an old pointer, ensure we can still see the target for entity targeting
-	if unitTarget ~= nil and core.CanSeeUnit(botBrain, unitTarget) then
+	if core.CanSeeUnit(botBrain, unitTarget) then
 		local dist = Vector3.Distance2D(unitSelf:GetPosition(), unitTarget:GetPosition())
 		local attkRange = core.GetAbsoluteAttackRangeToUnit(unitSelf, unitTarget);
 		
@@ -215,9 +226,10 @@ local function HarassHeroExecuteOverride(botBrain)
 			local desiredPos = unitTarget:GetPosition()
 			
 			if itemGhostMarchers and itemGhostMarchers:CanActivate() then
-				core.OrderItemClamp(botBrain, unitSelf, itemGhostMarchers)
-				return
-			elseif behaviorLib.lastHarassUtil < behaviorLib.diveThreshold then
+				bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemGhostMarchers)
+			end
+			
+			if not bActionTaken and behaviorLib.lastHarassUtil < behaviorLib.diveThreshold then
 				desiredPos = core.AdjustMovementForTowerLogic(desiredPos)
 			end
 			core.OrderMoveToPosClamp(botBrain, unitSelf, desiredPos, false)

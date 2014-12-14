@@ -7,10 +7,11 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
 
---this is so that developers can tell this code to ignore certain items they have written bot-specific code for.
+--This table is so that developers can tell this code to ignore certain items they have written bot-specific code for.
+--  Add the item's entity name string to the table to not add that item's default behavior.
 behaviorLib.tDontUseDefaultItemBehavior = {}
 
-function behaviorLib.addCurrentItemBehaviors()  --run on initialization, too add current item behaviors.
+function behaviorLib.addCurrentItemBehaviors()  --run on initialization, to add current item behaviors.
 	local inventory = core.unitSelf:GetInventory(false)
 	for slot = 1, 6 do
 		local curItem = inventory[slot]
@@ -22,12 +23,13 @@ end
 
 behaviorLib.tItemBehaviors = {}
 --[[
-	Item list:
+	Items currently supported:
 		Ring Of Sorcery
 		Mana Pot
 		Bottle
 		Health Pot
 		Runes Of The Blight
+		Potion Of Blight
 		Battery Supply
 		Astrolabe
 		Sacrificial Stone
@@ -44,8 +46,13 @@ behaviorLib.tItemBehaviors = {}
 		Symbol Of Rage
 ]]
 
-function behaviorLib.addItemBehavior(itemName, remove)
-	local bDebugEchos = false
+-- These are needed to keep track of consumables which may be on their way to us via courier.
+local usedHealthPotion = false
+local usedManaPotion = false
+local usedRunes = false
+
+local bDebugEchos = false
+function behaviorLib.addItemBehavior(itemName)
 	
 	-- Ignore items on our ignore list
 	if core.tableContains(behaviorLib.tDontUseDefaultItemBehavior, itemName) > 0 then
@@ -53,21 +60,23 @@ function behaviorLib.addItemBehavior(itemName, remove)
 		return
 	end
 	
-	remove = (remove == nil and false) or remove
 	behaviorLib.behaviorToModify = behaviorLib.tItemBehaviors[itemName]
 	
 	if behaviorLib.behaviorToModify ~= nil then
-		if remove then
-			if core.RemoveByValue(behaviorLib.tBehaviors, behaviorLib.behaviorToModify) then
-				if bDebugEchos then BotEcho("^rRemoved "..itemName) end
-			else
-				BotEcho("^rFailed to remove "..itemName.." from behaviours!?") --this is an error we should know about.
-			end
-		elseif core.tableContains(behaviorLib.tBehaviors, behaviorLib.behaviorToModify) == 0 then
+		if core.tableContains(behaviorLib.tBehaviors, behaviorLib.behaviorToModify) == 0 then
 			tinsert(behaviorLib.tBehaviors, behaviorLib.behaviorToModify)
 			if bDebugEchos then BotEcho("^gadded "..itemName) end
 			
 			-- item-specific add code
+			if itemName == 'Item_ManaPotion' then
+				usedManaPotion = false
+			end
+			if itemName == 'Item_HealthPotion' then
+				usedHealthPotion = false
+			end
+			if itemName == 'Item_RunesOfTheBlight' then
+				usedRunes = false
+			end
 			
 			--AlchemistBones
 			core.AddJunglePreferences("AlchemistBones", {
@@ -92,6 +101,22 @@ function behaviorLib.addItemBehavior(itemName, remove)
 	end
 end
 
+function behaviorLib.removeItemBehavior(itemName)
+	-- Ignore items on our ignore list
+	if core.tableContains(behaviorLib.tDontUseDefaultItemBehavior, itemName) > 0 then
+		if bDebugEchos then BotEcho("^rDisabled "..itemName) end
+		return
+	end
+	
+	behaviorLib.behaviorToModify = behaviorLib.tItemBehaviors[itemName]
+	if behaviorLib.behaviorToModify ~= nil then
+		if core.RemoveByValue(behaviorLib.tBehaviors, behaviorLib.behaviorToModify) then
+			if bDebugEchos then BotEcho("^rRemoved "..itemName) end
+		else
+			--BotEcho("^rFailed to remove "..itemName.." from behaviours!?") --this is an error we should know about.
+		end
+	end
+end
 
 ----------------------------------
 --  Behaviors start below!
@@ -208,8 +233,8 @@ function behaviorLib.UseManaPotUtility(botBrain)
 		local vecOrigin = Vector3.Create(-100, -45)
 		
 		return core.ATanFn(nManaMissing, vecPoint, vecOrigin, 100)
-	elseif not behaviorLib.itemManaPot then
-		behaviorLib.addItemBehavior("Item_ManaPotion", true)
+	elseif not behaviorLib.itemManaPot and usedManaPotion then
+		behaviorLib.removeItemBehavior("Item_ManaPotion")
 	end
 	
 	return 0
@@ -227,6 +252,9 @@ function behaviorLib.UseManaPotExecute(botBrain)
 			bActionTaken = core.OrderMoveToPosClamp(botBrain, unitSelf, vecSelfPos + vecRetreatDirection * core.moveVecMultiplier, false)
 		else
 			bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, behaviorLib.itemManaPot, unitSelf)
+			if bActionTaken then
+				usedManaPotion = true
+			end
 		end
 	end
 		
@@ -301,16 +329,15 @@ function behaviorLib.UseBottleExecute(botBrain)
 	local bActionTaken = false
 	local unitSelf = core.unitSelf
 
-	if not core.IsTableEmpty(tItemBottle) then
-		local vecRetreatDirection = behaviorLib.GetSafeDrinkDirection()
-		-- Check if it is safe to drink
-		if vecRetreatDirection then
-			bActionTaken = core.OrderMoveToPosClamp(botBrain, unitSelf, vecSelfPos + vecRetreatDirection * core.moveVecMultiplier, false)
-		else
-			bActionTaken = core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemBottle)
-		end
+
+	local vecRetreatDirection = behaviorLib.GetSafeDrinkDirection()
+	-- Check if it is safe to drink
+	if vecRetreatDirection then
+		bActionTaken = core.OrderMoveToPosClamp(botBrain, unitSelf, vecSelfPos + vecRetreatDirection * core.moveVecMultiplier, false)
+	else
+		bActionTaken = core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemBottle)
 	end
-	
+
 	return bActionTaken
 end
 
@@ -339,8 +366,8 @@ function behaviorLib.UseHealthPotUtility(botBrain)
 		local vecPoint = Vector3.Create(nHealAmount, nUtilityThreshold)
 		local vecOrigin = Vector3.Create(200, -40)
 		return core.ATanFn(nHealthMissing, vecPoint, vecOrigin, 100)
-	elseif not behaviorLib.itemHealthPot then
-		behaviorLib.addItemBehavior("Item_HealthPotion", true)
+	elseif not behaviorLib.itemHealthPot and usedHealthPotion then
+		behaviorLib.removeItemBehavior("Item_HealthPotion")
 	end
 	return 0
 end
@@ -357,6 +384,9 @@ function behaviorLib.UseHealthPotExecute(botBrain)
 			bActionTaken = core.OrderMoveToPosClamp(botBrain, unitSelf, vecSelfPos + vecRetreatDirection * core.moveVecMultiplier, false)
 		else
 			bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, behaviorLib.itemHealthPot, unitSelf)
+			if bActionTaken then
+				usedHealthPotion = true
+			end
 		end
 	end
 	return bActionTaken
@@ -391,8 +421,8 @@ function behaviorLib.UseRunesOfTheBlightUtility(botBrain)
 		local vecOrigin = Vector3.Create(-1000, -20)
 		
 		return core.ATanFn(nHealthMissing, vecPoint, vecOrigin, 100)
-	elseif not behaviorLib.itemBlights then
-		behaviorLib.addItemBehavior("Item_RunesOfTheBlight", true)
+	elseif not behaviorLib.itemBlights and usedRunes then
+		behaviorLib.removeItemBehavior("Item_RunesOfTheBlight")
 	end
 	
 	return 0
@@ -428,6 +458,9 @@ function behaviorLib.UseRunesOfTheBlightExecute(botBrain)
 	end
 	if unitClosestTree ~= nil then
 		bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf,  behaviorLib.itemBlights, unitClosestTree)
+		if bActionTaken then
+			usedRunes = true
+		end
 	end
 		
 	return bActionTaken
@@ -436,6 +469,46 @@ behaviorLib.tItemBehaviors["Item_RunesOfTheBlight"] = {}
 behaviorLib.tItemBehaviors["Item_RunesOfTheBlight"]["Utility"] = behaviorLib.UseRunesOfTheBlightUtility
 behaviorLib.tItemBehaviors["Item_RunesOfTheBlight"]["Execute"] = behaviorLib.UseRunesOfTheBlightExecute
 behaviorLib.tItemBehaviors["Item_RunesOfTheBlight"]["Name"] = "UseRunesOfTheBlight"
+
+
+------------------------------------
+--  	 Potion of Blight 	  --
+------------------------------------
+function behaviorLib.UsePotionOfBlightUtility(botBrain)
+	-- Roughly 20 + when we are missing 115 hp
+	-- Function which crosses 20 at x = 115 and is 30 at roughly x = 600, convex down
+
+	local unitSelf = core.unitSelf
+	local tInventory = unitSelf:GetInventory()
+	behaviorLib.itemBlightPotion = core.GetItem("Item_PotionOfBlight")
+	
+	if behaviorLib.itemBlightPotion and not unitSelf:HasState("State_PotionOfBlight") then
+		local unitSelf = core.unitSelf
+		local nHealthMissing = unitSelf:GetMaxHealth() - unitSelf:GetHealth()
+		local nHealthRegen = unitSelf:GetHealthRegen()
+		local nHealAmount = 115
+		local nHealBuffer = nHealthRegen * 16
+		local nUtilityThreshold = 20
+			
+		local vecPoint = Vector3.Create(nHealAmount + nHealBuffer, nUtilityThreshold)
+		local vecOrigin = Vector3.Create(-1000, -20)
+		
+		return core.ATanFn(nHealthMissing, vecPoint, vecOrigin, 100)
+	elseif not behaviorLib.itemBlightPotion then
+		behaviorLib.removeItemBehavior("Item_PotionOfBlight")
+	end
+	
+	return 0
+end
+
+function behaviorLib.UsePotionOfBlightExecute(botBrain)
+	return core.OrderItemClamp(botBrain, core.unitSelf, behaviorLib.itemBlightPotion)
+end
+behaviorLib.tItemBehaviors["Item_PotionOfBlight"] = {}
+behaviorLib.tItemBehaviors["Item_PotionOfBlight"]["Utility"] = behaviorLib.UsePotionOfBlightUtility
+behaviorLib.tItemBehaviors["Item_PotionOfBlight"]["Execute"] = behaviorLib.UsePotionOfBlightExecute
+behaviorLib.tItemBehaviors["Item_PotionOfBlight"]["Name"] = "UsePotionOfBlight"
+
 
 ------------------------------------
 --   Mana Battery/PowerSupply     --
@@ -641,15 +714,13 @@ function behaviorLib.AstrolabeExecute(botBrain)
 		local vecTargetPosition = unitHealTarget:GetPosition()
 		local nDistance = Vector3.Distance2DSq(unitSelf:GetPosition(), vecTargetPosition)
 		if nDistance < 500 * 500 then
-			core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemAstrolabe)
+			return core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemAstrolabe)
 		else
-			core.OrderMoveToUnitClamp(botBrain, unitSelf, unitHealTarget)
+			return core.OrderMoveToUnitClamp(botBrain, unitSelf, unitHealTarget)
 		end
-	else
-		return false
 	end
 	
-	return true
+	return false
 end
 
 behaviorLib.tItemBehaviors["Item_Astrolabe"] = {}
@@ -928,10 +999,10 @@ local vecAlchBonesCampPos
 local nAlchBonesTimeUsed=0
 function behaviorLib.AlchemistBonesUtility(botBrain)
 	behaviorLib.itemAlchemistBones = core.GetItem("Item_Gloves3")
-	if (not behaviorLib.itemAlchemistBones or behaviorLib.itemAlchemistBones:GetCharges()==0 or not behaviorLib.itemAlchemistBones:CanActivate() )then 
+	if (not behaviorLib.itemAlchemistBones or behaviorLib.itemAlchemistBones:GetCharges() == 0 or not behaviorLib.itemAlchemistBones:CanActivate()) then 
 		return 0
 	end
-	if nAlchBonesTimeUsed+550 > HoN:GetGameTime() then --continue if we are
+	if nAlchBonesTimeUsed + 550 > HoN:GetGameTime() then --continue if we are
 		return 25
 	end
 	
@@ -954,12 +1025,12 @@ function behaviorLib.AlchemistBonesExecute(botBrain)
 	local unitSelf = core.unitSelf
 	local vecMyPos=core.unitSelf:GetPosition()
 	
-	if nAlchBonesTimeUsed+550 > HoN:GetGameTime() then --continue if we are
+	if nAlchBonesTimeUsed + 550 > HoN:GetGameTime() then --continue if we are
 		return true
 	end
 	
 	--walk to target camp
-	if ( Vector3.Distance2DSq(vecMyPos, vecAlchBonesCampPos)>400*400 ) then
+	if ( Vector3.Distance2DSq(vecMyPos, vecAlchBonesCampPos) > 400 * 400 ) then
 		return core.OrderMoveToPosAndHoldClamp(botBrain, unitSelf, vecAlchBonesCampPos, false)
 	else--we are finally at a good camp!
 		local tUnits = HoN.GetUnitsInRadius(vecMyPos, 500, core.UNIT_MASK_ALIVE + core.UNIT_MASK_UNIT)
