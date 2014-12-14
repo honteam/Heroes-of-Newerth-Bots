@@ -272,7 +272,6 @@ local function HarassHeroExecuteOverride(botBrain)
 	local nMyExtraRange = core.GetExtraRange(unitSelf)
 	
 	local vecTargetPosition = unitTarget:GetPosition()
-	local nTargetExtraRange = core.GetExtraRange(unitTarget)
 	local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
 	local targetMagicImmune = unitTarget:isMagicImmune()
 	
@@ -344,13 +343,6 @@ local function HarassHeroExecuteOverride(botBrain)
 			if not bActionTaken and nLastHarassUtility > object.heartacheThreshold and skills.heartache:CanActivate() then
 				bActionTaken = core.OrderAbilityEntity(botBrain, skills.heartache, unitTarget)
 			end
-		end
-	end
-	
-	for _,unit in pairs(core.tControllableUnits["AllUnits"]) do
-		local typeName = unit:GetTypeName()
-		if typeName ~= "Pet_GroundFamiliar" and typeName ~= "Pet_FlyngCourier" then
-			core.OrderAttack(botBrain, unit, unitTarget)
 		end
 	end
 
@@ -557,7 +549,7 @@ behaviorLib.PickRuneBehavior["Execute"] = behaviorLib.newPickRuneExecute
 function bottle.getCharges()
 	local itemBottle = core.GetItem("Item_Bottle")
 	if itemBottle == nil then
-		return nil
+		return 0
 	end
 
 	local charges = nil
