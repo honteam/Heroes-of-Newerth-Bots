@@ -7,7 +7,7 @@
 --	|  \___\  / | \_/ | |  _  | |  |_|  | | | | /_|  \ |  |_|  | |  __/
 --	\________/   \___/  |_| |_|  \_____/  |_|  \___/\_\ \______/  \___|
 ------------------------------------------------------------------------------
---V 1.04
+--V 1.05
 --Coded By: ModernSaint
 --Basic Equations--
 local _G = getfenv(0)
@@ -68,7 +68,7 @@ behaviorLib.StartingItems =
 behaviorLib.LaneItems = 
   {"Item_Marchers",  "Item_Soulscream", "Item_EnhancedMarchers"}
 behaviorLib.MidItems = 
-  { "Item_Energizer", "Item_SolsBulwark", "Item_Lightning2", "Item_Critical1 4"}
+  { "Item_Energizer", "Item_Lightning2", "Item_Critical1 4", "Item_SolsBulwark"}
 behaviorLib.LateItems = 
   { "Item_Evasion", "Item_DaemonicBreastplate", "Item_Weapon3"}
 
@@ -258,10 +258,10 @@ local function HarassHeroExecuteOverride(botBrain)
 	--CripplingSlugs
 	if not bActionTaken and nLastHarassUtility > botBrain.nCripplingSlugsThreshold then
 		if abilCripplingSlugs:CanActivate() then
-			local nRange = abilCripplingSlugs:GetRange()
-			if nTargetDistanceSq < (nRange * nRange) and (unitSelf:GetManaPercent() > .15 or unitTarget:GetHealth() < 275) then --Reserves some mana, unless a kill is likely 
+			local nRange = (abilCripplingSlugs:GetRange()*.80)
+			if nTargetDistanceSq < (nRange * nRange) and (unitSelf:GetManaPercent() > .55 or unitTarget:GetHealth() < .40) then --Reserves some mana, unless a kill is likely 
 				bActionTaken = core.OrderAbilityPosition(botBrain, abilCripplingSlugs, vecTargetPosition)
-			elseif nTargetDistanceSq < (nAttackRangeSq * .4) then --Use ability if an enemy is close
+			elseif nTargetDistanceSq < (nAttackRangeSq * .20) then --Use ability if an enemy is close
 				bActionTaken = core.OrderAbilityPosition(botBrain, CripplingSlugs, vecTargetPosition)		
 			end
 		end
@@ -269,7 +269,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	
 	--DemonicShield
 	if not bActionTaken and abilDemonicShield:CanActivate() then
-		if (nLastHarassUtility > botBrain.nDemonicShieldThreshold) or (core.NumberElements(tLocalEnemyHeroes) > 2) or (.45 > unitSelf:GetHealthPercent() and (core.NumberElements(tLocalEnemyHeroes) > 0)) then--activate on utility calc or if more than 2 hostiles nearby or lower than 45% health with an enemy nearby
+		if (nLastHarassUtility > botBrain.nDemonicShieldThreshold) and ((core.NumberElements(tLocalEnemyHeroes) > 2) or (.45 > unitSelf:GetHealthPercent() and (core.NumberElements(tLocalEnemyHeroes) > 0))) then--activate on utility calc or if more than 2 hostiles nearby or lower than 45% health with an enemy nearby
 			bActionTaken = core.OrderAbility(botBrain, abilDemonicShield)
 		end
 	end
