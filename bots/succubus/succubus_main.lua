@@ -45,6 +45,7 @@ local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
 
 local bottle = {}
+local illusionLib = object.illusionLib
 
 BotEcho(object:GetName()..' loading succubus_main...')
 
@@ -62,10 +63,6 @@ behaviorLib.LateItems  = {"Item_Intelligence7", "Item_GrimoireOfPower"}
 --item_summon is puzzlebox; Item_Intelligence7 is master staff
 
 core.tLanePreferences = {Jungle = 0, Mid = 5, ShortSolo = 4, LongSolo = 4, ShortSupport = 3, LongSupport = 3, ShortCarry = 0, LongCarry = 0}
-
--- We have our own that also runs puzzlebox minions
-local illusionLib = object.illusionLib or {}
-illusionLib.bRunBehaviors = false
 
 -- Constants for skill usage
 
@@ -114,36 +111,22 @@ function object:SkillBuild()
 	end
 end
 
---------------------------------
---		onthink override	  --
---------------------------------
+---------------------------------------------
+--	This adds puzzle box to the illusions  --
+---------------------------------------------
 
-function object:onthinkOverride(tGameVariables)
-	self:onthinkOld(tGameVariables)
-
-	local unitSelf = core.unitSelf
-	local mypos = unitSelf:GetPosition()
-
-	if core.tControllableUnits ~=nil then
-		local currentBehavior = core.GetLastBehaviorName(self)
-		if currentBehavior ~= "HarassHero" and currentBehavior ~= "DontBreakChannel" then
-			if illusionLib.nNextBehaviorTime <= HoN.GetGameTime() then
-				for _, unit in pairs(core.tControllableUnits["AllUnits"]) do
-					local typeName = unit:GetTypeName()
-					if typeName ~= "Pet_GroundFamiliar" and typeName ~= "Pet_FlyngCourier" then
-						if Vector3.Distance2DSq(mypos, unit:GetPosition()) > 400*400 then
-							core.OrderMoveToPos(self, unit, mypos)
-						end
-					end
-				end
-				illusionLib.nNextBehaviorTime = HoN.GetGameTime() + illusionLib.nBehaviorAssessInterval
+function illusionLib.updateIllusions(botBrain)
+	illusionLib.tIllusions = {}
+	local tPossibleIllusions = core.tControllableUnits["AllUnits"]
+	if tPossibleIllusions ~= nil then
+		for nUID, unit in pairs(tPossibleIllusions) do
+			local sTypeName = unit:GetTypeName()
+			if sTypeName ~= "Pet_GroundFamiliar" and sTypeName ~= "Pet_FlyngCourier" then
+				tinsert(illusionLib.tIllusions, unit)
 			end
 		end
 	end
 end
-
-object.onthinkOld = object.onthink
-object.onthink 	= object.onthinkOverride
 
 object.retreatCastThreshold = 55
 function behaviorLib.CustomRetreatExecute(botBrain)
@@ -160,22 +143,43 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 	local heartacheCanActivate = skills.heartache:CanActivate()
 	local bActionTaken = false
 
-	if lastRetreatUtil > object.retreatCastThreshold then
-		for _, hero in pairs(core.localUnits["EnemyHeroes"]) do
-			if not IsMagicImmune(hero) then
-				distanceSq = Vector3.Distance2DSq(mypos, hero:GetPosition())
-				if heartacheCanActivate and distanceSq < heartacheRange*heartacheRange and missingHP > 300 and not hero:HasState("State_Succubis_Ability3") then
-					bActionTaken = core.OrderAbilityEntity(botBrain, skills.heartache, hero)
-					break
-				elseif mesmeCanActivate and distanceSq < mesmeRange*mesmeRange then
-					bActionTaken = core.OrderAbilityEntity(botBrain, skills.mesme, hero)
-					break
+	local itemPortalKey = core.GetItem("Item_PortalKey")
+	if lastRetreatUtil > object.retreatCastThreshold and itemPortalKey ~= nil then
+		if itemPortalKey:CanActivate() then
+			botBrain:OrderItemPosition(itemPortalKey.object, behaviorLib.GetSafeBlinkPosition(core.allyWell:GetPosition(), 1200))
+			bActionTaken = true
+		end
+	end
+
+	if not bActionTaken then
+		if lastRetreatUtil > object.retreatCastThreshold then
+			for _, hero in pairs(core.localUnits["EnemyHeroes"]) do
+				if not hero:isMagicImmune() then
+					distanceSq = Vector3.Distance2DSq(mypos, hero:GetPosition())
+					if heartacheCanActivate and distanceSq < heartacheRange * heartacheRange and missingHP > 300 and not hero:HasState("State_Succubis_Ability3") then
+						bActionTaken = core.OrderAbilityEntity(botBrain, skills.heartache, hero)
+						break
+					end
+					if mesmeCanActivate and distanceSq < mesmeRange * mesmeRange then
+						bActionTaken = core.OrderAbilityEntity(botBrain, skills.mesme, hero)
+						break
+					end
 				end
 			end
 		end
 	end
 
-	--Todo: do pk when we have GetBestBlinkRetreatLocation()
+	return bActionTaken
+end
+
+function behaviorLib.CustomReturnToWellExecute(botBrain)
+	local itemPortalKey = core.GetItem("Item_PortalKey")
+	if itemPortalKey ~= nil then
+		if itemPortalKey:CanActivate() then
+			botBrain:OrderItemPosition(itemPortalKey.object, behaviorLib.GetSafeBlinkPosition(core.allyWell:GetPosition(), 1200))
+			bActionTaken = true
+		end
+	end
 
 	return bActionTaken
 end
@@ -270,7 +274,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	local vecTargetPosition = unitTarget:GetPosition()
 	local nTargetExtraRange = core.GetExtraRange(unitTarget)
 	local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
-	local targetMagicImmune = IsMagicImmune(unitTarget)
+	local targetMagicImmune = unitTarget:isMagicImmune()
 	
 	local nLastHarassUtility = behaviorLib.lastHarassUtil
 	local bCanSee = core.CanSeeUnit(botBrain, unitTarget)	
@@ -309,7 +313,7 @@ local function HarassHeroExecuteOverride(botBrain)
 		if nLastHarassUtility > object.mesmeThreshold then
 			for _,hero in pairs(core.localUnits["EnemyHeroes"]) do
 				if hero ~= unitTarget then
-					if not hero:HasState("State_Succubis_Ability3") and not hero:HasState("State_Succubis_Ability1") and not IsMagicImmune(hero) then
+					if not hero:HasState("State_Succubis_Ability3") and not hero:HasState("State_Succubis_Ability1") and not hero:isMagicImmune() then
 						distanceSq = Vector3.Distance2DSq(vecMyPosition, hero:GetPosition())
 						if mesmeCanActivate and distanceSq < mesmeRange*mesmeRange then
 							bActionTaken = core.OrderAbilityEntity(botBrain, skills.mesme, hero)
@@ -357,7 +361,7 @@ end
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 
-function behaviorLib.newDontBreakChannelExecute(botBrain)
+function minionsDuringUlt(botBrain)
 	local unitTarget = nil
 	for _,hero in pairs(core.localUnits.EnemyHeroes) do
 		if hero:HasState("State_Succubis_Ability4") then
@@ -365,15 +369,10 @@ function behaviorLib.newDontBreakChannelExecute(botBrain)
 		end
 	end
 	if unitTarget then
-		for _,unit in pairs(core.tControllableUnits["AllUnits"]) do
-			local typeName = unit:GetTypeName()
-			if typeName ~= "Pet_GroundFamiliar" and typeName ~= "Pet_FlyngCourier" then
-				core.OrderAttack(botBrain, unit, core.localUnits.EnemyHeroes)
-			end
-		end
+		return illusionLib.OrderIllusionsAttack(botBrain, unitTarget)
 	end
 end
-behaviorLib.DontBreakChannelBehavior["Execute"] = behaviorLib.newDontBreakChannelExecute
+illusionLib.tIllusionBehaviors["DontBreakChannel"] = minionsDuringUlt
 
 ----------------------
 -- Healing behavior --
@@ -408,7 +407,7 @@ function behaviorLib.healHeartacheExecute(botBrain)
 		local heartacheRange = skills.heartache:GetRange()
 		if core.NumberElements(core.localUnits["EnemyHeroes"]) > 0 then
 			local closestHero = nil
-			local closestDistance = 99999999
+			local closestDistance = 650 * 650 -- Only units closer than 650 are valid
 			for _, hero in pairs(core.localUnits["EnemyHeroes"]) do
 				local distance = Vector3.Distance2DSq(hero:GetPosition(), mypos)
 				if distance < closestDistance then
@@ -426,7 +425,7 @@ function behaviorLib.healHeartacheExecute(botBrain)
 			if core.NumberElements(core.localUnits["EnemyCreeps"]) then
 				--just find creep in range or closest
 				local closestCreep = nil
-				local closestDistance = 99999999
+				local closestDistance = 650 * 650 -- Only units closer than 650 are valid
 				for _, creep in pairs(core.localUnits["EnemyCreeps"]) do
 					local distance = Vector3.Distance2DSq(creep:GetPosition(), mypos)
 					if distance < closestDistance then
@@ -489,11 +488,10 @@ end
 behaviorLib.oldattackEnemyMinionsUtility = behaviorLib.attackEnemyMinionsBehavior["Utility"]
 behaviorLib.attackEnemyMinionsBehavior["Utility"] = behaviorLib.newattackEnemyMinionsUtility
 
----------------
--- Pick Rune --
----------------
-behaviorLib.runeToPick = nil
-function behaviorLib.PickRuneUtility(botBrain)
+---------------------------
+-- Override rune picking --
+---------------------------
+function behaviorLib.newPickRuneUtility(botBrain)
 	local rune = core.teamBotBrain.GetNearestRune(core.unitSelf:GetPosition())
 	if rune == nil then
 		return 0
@@ -513,41 +511,44 @@ function behaviorLib.PickRuneUtility(botBrain)
 
 	return utility - Vector3.Distance2DSq(rune.vecLocation, core.unitSelf:GetPosition())/(2000*2000)
 end
+behaviorLib.PickRuneBehavior["Utility"] = behaviorLib.newPickRuneUtility
 
-function behaviorLib.PickRuneExecute(botBrain)
+function behaviorLib.newPickRuneExecute(botBrain)
+	bActionTaken = false
 	if core.NumberElements(core.localUnits["EnemyHeroes"]) > 0 then
 		local mesmeRange = skills.mesme:GetRange()
 		local mypos = core.unitSelf:GetPosition()
 		if skills.mesme:CanActivate() then
 			for _,hero in pairs(core.localUnits["EnemyHeroes"]) do
 				if Vector3.Distance2DSq(mypos, hero:GetPosition()) <= mesmeRange * mesmeRange then
-					return core.OrderAbilityEntity(botBrain, skills.mesme, hero)
+					bActionTaken = core.OrderAbilityEntity(botBrain, skills.mesme, hero)
 				end
 			end
 		end
 	end
-	return behaviorLib.pickRune(botBrain, behaviorLib.runeToPick)
+	if bottle.getCharges() > 0 and behaviorLib.newUseBottleBehaviorUtility(botBrain) > 0 then
+		botBrain:OrderItem(core.GetItem("Item_Bottle").object)
+	end
+
+	if not bActionTaken then
+		itemPortalKey = core.GetItem("Item_PortalKey")
+		if itemPortalKey ~= nil and itemPortalKey:CanActivate() then
+			botBrain:OrderItemPosition(itemPortalKey.object, behaviorLib.GetSafeBlinkPosition(behaviorLib.runeToPick.vecLocation, 1200))
+			bActionTaken = true
+		end
+	end
+
+	if not bActionTaken then
+		bActionTaken = behaviorLib.pickRune(botBrain, behaviorLib.runeToPick)
+	end
+	return bActionTaken
 end
 
-behaviorLib.PickRuneBehavior = {}
-behaviorLib.PickRuneBehavior["Utility"] = behaviorLib.PickRuneUtility
-behaviorLib.PickRuneBehavior["Execute"] = behaviorLib.PickRuneExecute
-behaviorLib.PickRuneBehavior["Name"] = "Pick Rune"
-tinsert(behaviorLib.tBehaviors, behaviorLib.PickRuneBehavior)
+behaviorLib.PickRuneBehavior["Execute"] = behaviorLib.newPickRuneExecute
 
 ----------------
 --    Misc    --
 ----------------
-
-function IsMagicImmune(unit)
-	local states = { "State_Item3E", "State_Predator_Ability2", "State_Jereziah_Ability2", "State_Rampage_Ability1_Self", "State_Rhapsody_Ability4_Buff", "State_Hiro_Ability1" }
-	for _, state in ipairs(states) do
-		if unit:HasState(state) then
-			return true
-		end
-	end
-	return false
-end
 
 ------------------------
 -- helpers for bottle --
