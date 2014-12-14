@@ -103,9 +103,9 @@ object.nDartUse = 10
 object.nJumpUse = 10
 object.nEnergizerUse = 10
 --thresholds of aggression the bot must reach to use these abilities
-object.nDartThreshold = 0
-object.nJumpThreshold = 0
-object.nEnergizerThreshold = 0
+object.nDartThreshold = 20
+object.nJumpThreshold = 20
+object.nEnergizerThreshold = 18
 ----------------------------------------------
 --  		  oncombatevent override		--
 ----------------------------------------------
