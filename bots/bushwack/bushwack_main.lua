@@ -172,7 +172,9 @@ local function HarassHeroExecuteOverride(botBrain)
 	local bActionTaken = false
 	local abilDart = skills.abilDart
 	local abilJump = skills.abilJump
-	
+	local tLocalEnemyHeroes = core.localUnits["EnemyHeroes"]
+	local tLocalAllyHeroes = core.localUnits["AllyHeroes"]
+	 
 		--Jump
 	local nRange = abilJump:GetRange()
 	if abilJump:CanActivate() and nTargetDistanceSq < ((nRange * nRange) * 4) and  nLastHarassUtility > botBrain.nJumpThreshold then
@@ -190,6 +192,9 @@ local function HarassHeroExecuteOverride(botBrain)
 				local vecAbilityTarget = unitTarget:GetPosition()
 				bAction = core.OrderAbilityPosition(botBrain, abilJump, vecAbilityTarget)
 			end		
+	elseif (core.NumberElements(tLocalAllyHeroes) > 2) or (core.NumberElements(tLocalEnemyHeroes) > 2) then
+		if nTargetDistanceSq < (nRange * nRange) then  --Dart if target is in range
+			bActionTaken = core.OrderAbilityEntity(botBrain, abilDart, unitTarget)
 		end
 	end
 		--Energizer
