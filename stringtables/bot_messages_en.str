@@ -70,11 +70,11 @@ stolenid_ra_respawn4		What!? My ultimate was down?!?
 //Mellow_Ink's Ellonia bot custom messages
 
 mellow_ink_ellonia_kill1		Outta my way, tomboy!
-mellow_ink_ellonia_kill2		NOT THIS TIME!
+mellow_ink_ellonia_kill2		NOT THIS TIME! HAHAHAH!
 mellow_ink_ellonia_kill3		This was so much easier than I thought it would be!
 
-mellow_ink_ellonia_death1		Totally ice-blocking my game!
-mellow_ink_ellonia_death2		My magic tiara...my powers!
+mellow_ink_ellonia_death1		You're totally ice-blocking my game!
+mellow_ink_ellonia_death2		My magic tiara... my powers!
 mellow_ink_ellonia_death3		My powers! Foul and noisome whelp! You've not seen the last of my wintery fangs!
 
 /////////////////////////////////////////
@@ -109,7 +109,7 @@ viper_engineer_kill2	I think you forget, I am good with calculation.
 viper_engineer_kill3	Heimerdinger has got nothing on me.
 viper_engineer_kill4	That was easier than computing quadratic air resistance.
 viper_engineer_kill5	Something more challenging please, it's like I am proving the uncertainty principle.
-viper_engineer_kill6	That was about as simple as understanding the time-dependent Schrödinger equation.
+viper_engineer_kill6	That was about as simple as understanding the time-dependent SchrÃ¶dinger equation.
 
 /////////////////////////////////////////
 //Schnarchnase's Gravekeeper bot custom messages
@@ -146,12 +146,8 @@ anakonda_moonqueen_respawn2		Moonlight guide me.
 
 anakonda_moonqueen_death1		Carried away by a moonlight shadow.
 
-anakonda_moonqueen_night1		Oh full moon tonight
-anakonda_moonqueen_night2		Blue moon rises
-anakonda_moonqueen_night3		Under the moon.
-
 /////////////////////////////////////////
-//Kairus101's Balphegore bot custom messages
+//Kairus101's Balphagore bot custom messages
 
 kairus101_balphagore_kill1		 * Spews all over keyboard * 
 kairus101_balphagore_kill2		Get trashed kid.
@@ -167,6 +163,21 @@ kairus101_balphagore_death5		Team? TEAM??
 kairus101_balphagore_death6		Hey, you used a cheat code!
 kairus101_balphagore_death7		Go my minions!
 
+/////////////////////////////////////////
+// Rinestone's Revnant bot custom messages
 
+rinestone_revenant_kill1		BOO!
+rinestone_revenant_kill2		Scream more for me!
+rinestone_revenant_kill3		You can't kill what is already dead!
+rinestone_revenant_kill4		Death consumes you!
+rinestone_revenant_kill5		Defiled!
+rinestone_revenant_kill6		May the Afterlife consume you.
+
+rinestone_revenant_death1		I thought I was dead already...
+rinestone_revenant_death2		I haven't reached my scare quota yet..
+rinestone_revenant_death3		I'll be back! Don't you worry...
+rinestone_revenant_death4		Back to the grave...
+rinestone_revenant_death5		I dissipate....
+rinestone_revenant_death6		Cast to the winds....
 
 // End - do not delete this line
