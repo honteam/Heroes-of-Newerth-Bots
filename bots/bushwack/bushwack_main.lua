@@ -249,7 +249,7 @@ behaviorLib.LaneItems =
 behaviorLib.MidItems = 
 	{"Item_Energizer", "Item_ElderParasite", "item_Lighting1", "Item_DawnBringer"} 
 behaviorLib.LateItems = 
-	{"Item_Weapon3", "Item_Evasion", "item_Immunity", "item_lighting2"} 
+	{"Item_Weapon3", "item_lighting2", "Item_Evasion", "item_Immunity"} 
 
 --[[ colors:
 	red
