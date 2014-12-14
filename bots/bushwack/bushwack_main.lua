@@ -176,7 +176,6 @@ local function HarassHeroExecuteOverride(botBrain)
 		--Jump
 	local nRange = abilJump:GetRange()
 	if abilJump:CanActivate() and nTargetDistanceSq < ((nRange * nRange) * 4) and  nLastHarassUtility > botBrain.nJumpThreshold then
-		 
 		local vecAbilityTarget = unitTarget:GetPosition()
 		bAction = core.OrderAbilityPosition(botBrain, abilJump, vecAbilityTarget)
 	end	
