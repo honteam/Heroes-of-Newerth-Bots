@@ -138,7 +138,7 @@ object.nEnergizerUse = 13
 
 -- thresholds of aggression the bot must reach to use these abilities
 object.nCripplingSlugsThreshold = 24
-object.nDemonicShieldThreshold = 18
+object.nDemonicShieldThreshold = 22
 object.nGrapplingShotThreshold = 34
 object.nEnergizerThreshold = 12
 
@@ -258,10 +258,10 @@ local function HarassHeroExecuteOverride(botBrain)
 	--CripplingSlugs
 	if not bActionTaken and nLastHarassUtility > botBrain.nCripplingSlugsThreshold then
 		if abilCripplingSlugs:CanActivate() then
-			local nRange = (abilCripplingSlugs:GetRange()*.80)
-			if nTargetDistanceSq < (nRange * nRange) and (unitSelf:GetManaPercent() > .55 or unitTarget:GetHealth() < .40) then --Reserves some mana, unless a kill is likely 
+			local nRange = abilCripplingSlugs:GetRange()
+			if nTargetDistanceSq < ((nRange * nRange) * .80) and (unitSelf:GetManaPercent() > .45 or unitTarget:GetHealth() < .60) then --Reserves some mana, unless a kill is likely 
 				bActionTaken = core.OrderAbilityPosition(botBrain, abilCripplingSlugs, vecTargetPosition)
-			elseif nTargetDistanceSq < (nAttackRangeSq * .20) then --Use ability if an enemy is close
+			elseif nTargetDistanceSq < (nAttackRangeSq * .30) then --Use ability if an enemy is close
 				bActionTaken = core.OrderAbilityPosition(botBrain, CripplingSlugs, vecTargetPosition)		
 			end
 		end
@@ -269,7 +269,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	
 	--DemonicShield
 	if not bActionTaken and abilDemonicShield:CanActivate() then
-		if (nLastHarassUtility > botBrain.nDemonicShieldThreshold) and ((core.NumberElements(tLocalEnemyHeroes) > 2) or (.45 > unitSelf:GetHealthPercent() and (core.NumberElements(tLocalEnemyHeroes) > 0))) then--activate on utility calc or if more than 2 hostiles nearby or lower than 45% health with an enemy nearby
+		if (nLastHarassUtility > botBrain.nDemonicShieldThreshold and (.45 > unitSelf:GetHealthPercent() or core.NumberElements(tLocalEnemyHeroes)) > 0) or (core.NumberElements(tLocalEnemyHeroes) > 2) then--activate on utility calc or if more than 2 hostiles nearby or lower than 45% health with an enemy nearby
 			bActionTaken = core.OrderAbility(botBrain, abilDemonicShield)
 		end
 	end
