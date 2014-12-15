@@ -64,6 +64,17 @@ object.tSkills = {
     4, 4, 4, 4, 4,
 }
 
+----------------------------------
+--	Bushwack items
+----------------------------------
+behaviorLib.StartingItems = {"2 Item_DuckBoots", "2 Item_MinorTotem", "Item_HealthPotion", "Item_RunesOfTheBlight"}
+behaviorLib.LaneItems = 
+	{"Item_Marchers", "Item_Soulscream", "Item_Steamboots"}
+behaviorLib.MidItems = 
+	{"Item_Energizer", "Item_ElderParasite", "item_Lighting1", "Item_DawnBringer"} 
+behaviorLib.LateItems = 
+	{"Item_Weapon3", "item_lighting2", "Item_Evasion", "item_Immunity"}
+
 --------------------------------
 -- Skills
 --------------------------------
@@ -77,7 +88,6 @@ function object:SkillBuild()
         skills.abilSplit = core.WrapInTable(unitSelf:GetAbility(2))
         skills.abilSplit.nLastCastTime = 0
         skills.abilToxin = unitSelf:GetAbility(3)
-        skills.abilAttributeBoost = unitSelf:GetAbility(4)
     end
     if unitSelf:GetAbilityPointsAvailable() <= 0 then
         return
@@ -96,17 +106,17 @@ end
 ---------------------------------------------------
 
 -- bonus aggression points if a skill/item is available for use
-object.nDartUp = 10
-object.nJumpUp = 10
-object.nEnergizerUp = 8
+object.nDartUp = 15
+object.nJumpUp = 15
+object.nEnergizerUp = 12
 -- bonus aggression points that are applied to the bot upon successfully using a skill/item
-object.nDartUse = 12
-object.nJumpUse = 10
-object.nEnergizerUse = 10
+object.nDartUse = 15
+object.nJumpUse = 19
+object.nEnergizerUse = 20
 --thresholds of aggression the bot must reach to use these abilities
-object.nDartThreshold = 22
-object.nJumpThreshold = 20
-object.nEnergizerThreshold = 18
+object.nDartThreshold = 34
+object.nJumpThreshold = 30
+object.nEnergizerThreshold = 32
 ----------------------------------------------
 --  		  oncombatevent override		--
 ----------------------------------------------
@@ -180,7 +190,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	local nRange = abilJump:GetRange()
 	if abilJump:CanActivate() and nTargetDistanceSq < ((nRange * nRange) * 4) and  nLastHarassUtility > botBrain.nJumpThreshold then
 		local vecAbilityTarget = unitTarget:GetPosition()
-		bAction = core.OrderAbilityPosition(botBrain, abilJump, vecAbilityTarget)
+		bActionTaken = core.OrderAbilityPosition(botBrain, abilJump, vecAbilityTarget)
 	end	
 		
 		--Dart
@@ -191,7 +201,7 @@ local function HarassHeroExecuteOverride(botBrain)
 				bActionTaken = core.OrderAbilityEntity(botBrain, abilDart, unitTarget)
 			elseif abilJump:CanActivate() and nTargetDistanceSq > (nRange * nRange) then --Jump at target in range
 				local vecAbilityTarget = unitTarget:GetPosition()
-				bAction = core.OrderAbilityPosition(botBrain, abilJump, vecAbilityTarget)
+				bActionTaken = core.OrderAbilityPosition(botBrain, abilJump, vecAbilityTarget)
 			end		
 		elseif (core.NumberElements(tLocalAllyHeroes) > 2) or (core.NumberElements(tLocalEnemyHeroes) > 2) then
 			if nTargetDistanceSq < ((nRange * nRange) * 1.5) then  --Dart if target is in range
@@ -240,17 +250,6 @@ function behaviorLib.CustomReturnToWellExecute(botBrain)
 end
 object.HealAtWellUtilityOld = behaviorLib.HealAtWellBehavior["Utility"]
 behaviorLib.HealAtWellBehavior["Utility"] = HealAtWellUtilityOverride
-
-----------------------------------
---	Bushwack items
-----------------------------------
-behaviorLib.StartingItems = {"2 Item_DuckBoots", "2 Item_MinorTotem", "Item_HealthPotion", "Item_RunesOfTheBlight"}
-behaviorLib.LaneItems = 
-	{"Item_Marchers", "Item_Soulscream", "Item_Steamboots"}
-behaviorLib.MidItems = 
-	{"Item_Energizer", "Item_ElderParasite", "item_Lighting1", "Item_DawnBringer"} 
-behaviorLib.LateItems = 
-	{"Item_Weapon3", "item_lighting2", "Item_Evasion", "item_Immunity"} 
 
 --[[ colors:
 	red
