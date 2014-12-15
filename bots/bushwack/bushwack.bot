@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bot
 	name="BushwackBot"
-	description="bot_description_bushwack"
+	description="bot_description_bushwack Bushwack Bot is a highly mobile, short ranged carry who excels in kiting his enemies"
 	heroname="Hero_Bushwack"
 	rootlua="bushwack_main.lua"
 	defaultplayername="BushwackBot"
