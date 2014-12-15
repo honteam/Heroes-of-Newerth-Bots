@@ -56,38 +56,39 @@ core.tLanePreferences = {Jungle = 0, Mid = 5, ShortSolo = 3, LongSolo = 1, Short
 
 object.heroName = 'Hero_Bushwack'
 
+object.tSkills = {
+    0, 1, 0, 2, 0,
+    3, 0, 1, 1, 1, 
+    3, 2, 2, 2, 4,
+    3, 4, 4, 4, 4,
+    4, 4, 4, 4, 4,
+}
+
 --------------------------------
 -- Skills
 --------------------------------
 function object:SkillBuild()
 
 	local unitSelf = self.core.unitSelf
-
-	if skills.abilDart	== nil then
-		skills.abilDart = unitSelf:GetAbility(0)
-		skills.abilJump = unitSelf:GetAbility(1)
-		skills.abilSplit = unitSelf:GetAbility(2)
-		skills.abilToxin = unitSelf:GetAbility(3)
-		skills.attributeBoost = unitSelf:GetAbility(4)
-	end
-	
-	if unitSelf:GetAbilityPointsAvailable() <= 0 then
-		return
-	end
-	
-	if skills.abilToxin:CanLevelUp() then
-		skills.abilToxin:LevelUp()		
-	elseif skills.abilDart:CanLevelUp() then
-		skills.abilDart:LevelUp()
-	elseif skills.abilJump:GetLevel() < 1 then
-		skills.abilJump:LevelUp()
-	elseif skills.abilSplit:CanLevelUp() then
-		skills.abilSplit:LevelUp()	
-	elseif skills.abilJump:CanLevelUp() then
-		skills.abilJump:LevelUp()
-	else
-		skills.attributeBoost:LevelUp()
-	end	
+    if  skills.abilDart == nil then
+	skills.abilDart = core.WrapInTable(unitSelf:GetAbility(0))
+        skills.abilDart.nLastCastTime = 0
+        skills.abilJump = unitSelf:GetAbility(1)
+        skills.abilSplit = core.WrapInTable(unitSelf:GetAbility(2))
+        skills.abilSplit.nLastCastTime = 0
+        skills.abilToxin = unitSelf:GetAbility(3)
+        skills.abilAttributeBoost = unitSelf:GetAbility(4)
+    end
+    if unitSelf:GetAbilityPointsAvailable() <= 0 then
+        return
+    end
+    
+   
+    local nlev = unitSelf:GetLevel()
+    local nlevpts = unitSelf:GetAbilityPointsAvailable()
+    for i = nlev, nlev+nlevpts do
+        unitSelf:GetAbility( object.tSkills[i] ):LevelUp()
+    end
 end
 
 ---------------------------------------------------
@@ -99,11 +100,11 @@ object.nDartUp = 10
 object.nJumpUp = 10
 object.nEnergizerUp = 8
 -- bonus aggression points that are applied to the bot upon successfully using a skill/item
-object.nDartUse = 10
+object.nDartUse = 12
 object.nJumpUse = 10
 object.nEnergizerUse = 10
 --thresholds of aggression the bot must reach to use these abilities
-object.nDartThreshold = 20
+object.nDartThreshold = 22
 object.nJumpThreshold = 20
 object.nEnergizerThreshold = 18
 ----------------------------------------------
@@ -183,7 +184,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	end	
 		
 		--Dart
-	if not bActionTaken and abilDart:CanActivate()then
+	if not bActionTaken and abilDart:CanActivate() and core.CanSeeUnit(botBrain, unitTarget)
 		local nRange = abilDart:GetRange()
 		if ( nLastHarassUtility > botBrain.nDartThreshold and unitSelf:GetMana() > 0.80 ) or ( unitTarget:GetHealth() < 0.45 )  then
 			if nTargetDistanceSq < (nRange * nRange) then  --Dart if target is in range
