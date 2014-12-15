@@ -17,9 +17,9 @@ object.bAttackCommands 	= true
 object.bAbilityCommands = true
 object.bOtherCommands 	= true
 
-object.bReportBehavior = true
-object.bDebugUtility = true
-object.bDebugExecute = true
+object.bReportBehavior = false
+object.bDebugUtility = false
+object.bDebugExecute = false
 
 object.logger = {}
 object.logger.bWriteLog = false
@@ -194,7 +194,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	end	
 		
 		--Dart
-	if not bActionTaken and abilDart:CanActivate() and core.CanSeeUnit(botBrain, unitTarget)
+	if not bActionTaken and abilDart:CanActivate() and core.CanSeeUnit(botBrain, unitTarget) then
 		local nRange = abilDart:GetRange()
 		if ( nLastHarassUtility > botBrain.nDartThreshold and unitSelf:GetMana() > 0.80 ) or ( unitTarget:GetHealth() < 0.45 )  then
 			if nTargetDistanceSq < (nRange * nRange) then  --Dart if target is in range
