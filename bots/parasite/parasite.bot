@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bot
 	name="Parasite"
-	description="My Parasite Bot"
+	description="bot_description_parasite"
 	heroname="Hero_Parasite"
 	rootlua="parasite_main.lua"
 	defaultplayername="ParasiteBot"
