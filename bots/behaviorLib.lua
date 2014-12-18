@@ -2686,7 +2686,7 @@ function behaviorLib.RetreatFromThreatExecute(botBrain)
 			-- closest node from a position which is 500 units closer to well than yourself
 			BotMetaData.SetActiveLayer('/bots/getAwayPoints.botmetadata')
 			local vecNodePos = BotMetaData.GetClosestNode(vecMyPos + Vector3.Normalize(vecWell - vecMyPos) * 300):GetPosition()
-			BotMetaData.SetActiveLayer('/bots/test.botmetadata')
+			BotMetaData.SetActiveLayer(metadata.MapMetadataFile)
 		       
 			if bDebugLines then
 				core.DrawDebugArrow(vecMyPos, vecMyPos + Vector3.Normalize(vecWell - vecMyPos) * 300, 'green')
