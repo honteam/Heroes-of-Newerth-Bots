@@ -59,20 +59,21 @@ BotEcho('loading nymphora_main...')
 ---------------
 core.tLanePreferences = {Jungle = 0, Mid = 1, ShortSolo = 1, LongSolo = 1, ShortSupport = 5, LongSupport = 5, ShortCarry = 1, LongCarry = 1}
 
-behaviorLib.StartingItems = 
+behaviorLib.StartingItems =
 	{"Item_TrinketOfRestoration", "Item_MinorTotem", "Item_ManaPotion", "Item_CrushingClaws"}
-behaviorLib.LaneItems = 
+behaviorLib.LaneItems =
 	{"Item_Marchers", "Item_MysticPotpourri", "Item_EnhancedMarchers"}
-behaviorLib.MidItems = 
+behaviorLib.MidItems =
 	{"Item_Astrolabe", "Item_Morph", "Item_FrostfieldPlate"}
-behaviorLib.LateItems = 
+behaviorLib.LateItems =
 	{"Item_Intelligence7", "Item_Summon"} --Intelligence7 is Staff of the Master
 
 
 ----------------
 -- Thresholds --
 ----------------
-object.stunThreshold = 35
+object.nStunThreshold = 35
+object.nHealThreshold = 35
 
 
 
@@ -117,10 +118,12 @@ function object:SkillBuild()
 					skills.heal:LevelUp()
 					bAbilityLeveled = true
 					self.healNeeded = self.healNeeded - 1
+					--self.healNeeded = 0
 				else
 					skills.mana:LevelUp()
 					bAbilityLeveled = true
 					self.manaNeeded = self.manaNeeded - 1
+					--self.manaNeeded = 0
 				end
 			elseif skills.stun:CanLevelUp() then
 				skills.stun:LevelUp()
@@ -163,7 +166,7 @@ function behaviorLib.SupportUtility(botBrain)
 
 	for _, hero in pairs(allyHeroes) do
 		local mana = hero:GetManaPercent()
-		object.manaNeeded = object.manaNeeded + (1 - mana) / 200
+		object.manaNeeded = object.manaNeeded + (1 - mana) / 150
 		local newUtility = 10 + (1 - mana) * 100 / 2
 		if canGiveMana and newUtility > nUtility then
 			nUtility = newUtility
@@ -172,7 +175,7 @@ function behaviorLib.SupportUtility(botBrain)
 		end
 
 		local hp = hero:GetHealthPercent()
-		object.healNeeded = object.healNeeded + (1 - hp) / 200
+		object.healNeeded = object.healNeeded + (1 - hp) / 140
 		local newUtility = 10 + (1 - hp) * 100 / 2
 		if canHeal and newUtility > nUtility then
 			nUtility = newUtility
@@ -212,16 +215,16 @@ function HarassHeroExecuteOverride(botBrain)
 	if unitTarget == nil or not unitTarget:IsValid() then
 		return false --can not execute, move on to the next behavior
 	end
-	
+
 	local unitSelf = core.unitSelf
 	local vecMyPosition = unitSelf:GetPosition()
 	local nMyExtraRange = core.GetExtraRange(unitSelf)
-	
+
 	local vecTargetPosition = unitTarget:GetPosition()
 	local nTargetExtraRange = core.GetExtraRange(unitTarget)
 	local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
 	local bTargetRooted = unitTarget:IsStunned() or unitTarget:IsImmobilized() or unitTarget:GetMoveSpeed() < 200
-	
+
 	local nLastHarassUtil = behaviorLib.lastHarassUtil
 	local bCanSee = core.CanSeeUnit(botBrain, unitTarget)
 
@@ -232,12 +235,17 @@ function HarassHeroExecuteOverride(botBrain)
 
 	local bActionTaken = false
 
-	if nLastHarassUtil > object.stunThreshold and skills.stun:CanActivate() then
-		bActionTaken = core.OrderAbilityPosition(botBrain, skills.stun, vecPosInHalfSec)
+
+	if nLastHarassUtil > object.nStunThreshold and skills.stun:CanActivate() then
+		if nTargetDistanceSq < 900 * 900 then
+			bActionTaken = core.OrderAbilityPosition(botBrain, skills.stun, vecPosInHalfSec)
+		end
 	end
 	if not bActionTaken then
-		if skills.heal:CanActivate() then
-			bActionTaken = useHeal(botBrain, vecPosInHalfSec)
+		if nLastHarassUtil > object.nHealThreshold and skills.heal:CanActivate() then
+			if nTargetDistanceSq < 750 * 750 then
+				bActionTaken = useHeal(botBrain, vecPosInHalfSec)
+			end
 		end
 	end
 
@@ -257,7 +265,7 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 
 	local bActionTaken = false
 
-	if behaviorLib.lastRetreatUtil > object.stunThreshold and skills.stun:CanActivate() then
+	if behaviorLib.lastRetreatUtil > object.nStunThreshold and skills.stun:CanActivate() then
 		if core.NumberElements(core.localUnits.EnemyHeroes) > 0 then
 			local unitTarget = nil
 			local closestDistance = 999999999
@@ -278,7 +286,7 @@ end
 
 function behaviorLib.customPushExecute(botBrain)
 	local unitSelf = core.unitSelf
-	
+
 	bActionTaken = false
 
 	if unitSelf:GetManaPercent() > 0.7 then
@@ -315,7 +323,112 @@ function behaviorLib.getHealedExecute(botBrain)
 	return core.OrderMoveToPos(botBrain, core.unitSelf, object.healPos)
 end
 
+behaviorLib.getHealedBehavior = {}
 behaviorLib.getHealedBehavior["Utility"] = behaviorLib.getHealedUtility
 behaviorLib.getHealedBehavior["Execute"] = behaviorLib.getHealedExecute
 behaviorLib.getHealedBehavior["Name"] = "Nymphora get healed"
 tinsert(behaviorLib.tBehaviors, behaviorLib.getHealedBehavior)
+
+
+-----------------
+-- Override TP --
+-----------------
+function behaviorLib.newShouldPort(botBrain, vecDesiredPosition)
+	if skills.teleport:CanActivate() then
+		--[[
+			Try to find safe TP spot:
+			If there is no enemy heroes its safe
+			If there are enemy heroes tp 800+ units away.
+		]]--
+		local vecTPPos = nil
+		local unitSelf = core.unitSelf
+		local vecMyPosition = unitSelf:GetPosition()
+
+		local myTeam = core.myTeam
+
+		local unitList = HoN.GetUnitsInRadius(vecDesiredPosition, 1000, core.UNIT_MASK_ALIVE + core.UNIT_MASK_HERO)
+		local bEnemyHeroesPresent = false
+		for _, hero in pairs(unitList) do
+			if hero:GetTeam() ~= myTeam then
+				bEnemyHeroesPresent = true
+			end
+		end
+		if not bEnemyHeroesPresent then
+			vecTPPos = vecDesiredPosition
+		else
+			local tPath = BotMetaData.FindPath(vecDesiredPosition, core.allyWell:GetPosition())
+			if tPath ~=nil then
+				local nDistance = 800
+
+				for i = 1, #tPath - 1, 1 do
+					nNodeDistance = Vector3.Distance2D(tPath[i]:GetPosition(), tPath[i + 1]:GetPosition())
+					nDistance = nDistance - nNodeDistance
+					if nDistance < 0 then
+						vecTPPos = tPath[i+1]:GetPosition()
+						break
+					end
+				end
+			end
+		end
+
+		if core.TimeToPosition(vecTPPos, vecMyPosition, unitSelf:GetMoveSpeed(), core.itemGhostMarchers) > 5000 then
+			return true, vecTPPos, skills.teleport
+		end
+	end
+
+	return false, nil, nil
+	--local bShouldPort, unitTarget, itemPort = behaviorLib.oldShouldPort(botBrain, vecDesiredPosition)
+	--return bShouldPort, unitTarget, itemPort
+end
+
+behaviorLib.oldShouldPort = behaviorLib.ShouldPort
+behaviorLib.ShouldPort = behaviorLib.newShouldPort
+
+function behaviorLib.PortLogic(botBrain, vecDesiredPosition)
+	local bDebugEchos = false
+
+	local unitSelf = core.unitSelf
+	if not unitSelf:IsChanneling() then
+		-- Port didn't go off, try again
+		behaviorLib.bCheckPorting = true
+	end
+
+
+	if behaviorLib.bCheckPorting then
+		behaviorLib.bCheckPorting = false
+		local nDesiredDistanceSq = Vector3.Distance2DSq(vecDesiredPosition, unitSelf:GetPosition())
+		local bSuccess = false
+		if nDesiredDistanceSq > (2000 * 2000) then
+			local bShouldPort, unitTarget, itemPort = behaviorLib.ShouldPort(botBrain, vecDesiredPosition)
+			if bShouldPort and unitTarget and itemPort then
+				if itemPort:GetTypeName() == "Item_HomecomingStone" then
+					-- Add noise to the position to prevent clustering on mass ports
+					local nX = core.RandomReal(-1, 1)
+					local nY = core.RandomReal(-1, 1)
+					local vecDirection = Vector3.Normalize(Vector3.Create(nX, nY))
+					local nDistance = random(100, 400)
+					local vecTarget = unitTarget:GetPosition() + vecDirection * nDistance
+
+					bSuccess = core.OrderItemPosition(botBrain, unitSelf, itemPort, vecTarget)
+				elseif itemPort:GetTypeName() == "Item_PostHaste" then
+					bSuccess = core.OrderItemEntityClamp(botBrain, unitSelf, itemPort, unitTarget)
+				elseif itemPort:GetTypeName() == "Ability_Fairy4" then
+					core.AllChat("Using ult ".. tostring(unitTarget))
+					bSuccess = core.OrderAbilityPosition(botBrain, skills.teleport, unitTarget)
+				end
+
+				if bSuccess then
+					core.nextOrderTime = HoN.GetGameTime() + core.timeBetweenOrders --seed some extra time in there
+				end
+			end
+		end
+
+		if bDebugEchos then
+			BotEcho("PortLogic, ran logic. Ported: "..tostring(bSuccess))
+		end
+
+		behaviorLib.bLastPortResult = bSuccess
+	end
+
+	return behaviorLib.bLastPortResult
+end
