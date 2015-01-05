@@ -1133,6 +1133,81 @@ function core.AssessLaneDirection(position, tPath, bTraverseForward)
 	return vLaneForward, vLaneForwardOrtho
 end
 
+-- Given a start and an angle, move in that direction a certain distance.
+function core.positionOffset(pos, angle, distance)
+	local tmp = Vector3.Create(cos(angle) * distance, sin(angle) * distance)
+	return tmp + pos
+end
+
+-- Given two points, move from 1 to 2 by a certain distance
+function core.positionTowards(pos, pos2, distance)
+	local angle = atan2(pos2.y - pos.y, pos2.x - pos.x)
+	return core.positionOffset(pos, angle, distance)
+end
+
+-- Given a last known position, probable destination, move speed and the time since they were at the last known position, guess their current position.
+function core.GetEstimatedLocation(vecPosition, vecDestination, nSpeed, nTimeElapsed)
+	local nDistance = nSpeed * nTimeElapsed / 1000
+	local tPath = BotMetaData.FindPath(vecPosition, vecDestination)
+	if tPath and #tPath > 0 then
+		local nIndex = 1
+		local vecPreviousNodePosition = vecPosition
+		local vecNodePosition = nil
+		local nDistanceFromLastNode = nDistance
+		while nIndex < #tPath do
+			vecNodePosition = nIndex == 1 and vecPosition or tPath[nIndex]:GetPosition()
+			nDistanceFromLastNode = nDistanceFromLastNode - Vector3.Distance2D(vecPreviousNodePosition, vecNodePosition)
+			if nDistanceFromLastNode <= 0 then
+				if nIndex == 1 then
+					return vecNodePosition
+				else
+					return core.positionTowards(vecNodePosition, vecPreviousNodePosition, -nDistanceFromLastNode)
+				end
+				break
+			end
+			vecPreviousNodePosition = vecNodePosition
+			nIndex = nIndex + 1
+		end
+	end
+	return nil -- We have no path.. how can we do anything?
+end
+
+-- Given a last known position, probable destination, move speed the time since they were at the last known position,
+-- Your position, and the projectile speed of your global snipe, guess the point and time of impact.
+function core.GetSnipeLocation(vecPosition, vecDestination, nSpeed, nTimeElapsed, myPosition, projectileSpeed)
+	vecPosition = core.GetEstimatedLocation(vecPosition, vecDestination, nSpeed, nTimeElapsed)
+	-- Get a path from current position back to well
+	local tPath = BotMetaData.FindPath(vecPosition, vecDestination)
+	if tPath and #tPath > 0 then
+		local nIndex = 1
+		local vecPreviousNodePosition = vecPosition
+		local vecNodePosition = nil
+		local nTimeUntilImpact = 0 -- this is in seconds
+		local nTimeDifference = 0 -- in seconds, amount of time our projectile will reach the node before them.
+		while nIndex < #tPath do
+			vecNodePosition = nIndex == 1 and vecPosition or tPath[nIndex]:GetPosition()
+			-- where the projectile would be at this time
+			local vecProjectilePosition = core.positionTowards(myPosition, vecNodePosition, nTimeUntilImpact * projectileSpeed)
+			--core.DrawDebugArrow(vecProjectilePosition, vecNodePosition, 'lime')
+			--core.DrawDebugArrow(vecPreviousNodePosition, vecNodePosition, 'white')
+			local nTheirDistance = Vector3.Distance2D(vecPreviousNodePosition, vecNodePosition)
+			local nMyDistance = Vector3.Distance2D(vecProjectilePosition, vecNodePosition)
+			-- can our projectile make it before them?
+			if nTheirDistance/nSpeed > nMyDistance/projectileSpeed then
+				nTimeDifference = nTheirDistance/nSpeed - nMyDistance/projectileSpeed
+				break
+			end
+			nTimeUntilImpact = nTimeUntilImpact + nTheirDistance/nSpeed
+			vecPreviousNodePosition = vecNodePosition
+			nIndex = nIndex + 1
+		end
+		-- We think they're gonna be between these two nodes, lets get an exact spot!
+		--core.DrawXPosition(core.positionTowards(vecNodePosition, vecPreviousNodePosition, nTimeDifference * nSpeed), 'red')
+		return core.positionTowards(vecNodePosition, vecPreviousNodePosition, nTimeDifference * nSpeed), HoN:GetGameTime() + (nTimeUntilImpact - nTimeDifference) * 1000
+	end
+	return nil -- We have no path.. how can we do anything?
+end
+
 function core.GetClosestTeleportBuilding(position)
 	local closestDistSq = 99999999
 	local closestBuilding = nil

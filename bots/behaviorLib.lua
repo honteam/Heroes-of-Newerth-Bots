@@ -814,7 +814,7 @@ function behaviorLib.PathLogic(botBrain, vecDesiredPosition)
 
 		--double check the first node since we have a really sparse graph
 		local tPath = behaviorLib.tPath
-		if #tPath > 1 then
+		if tPath and #tPath > 1 then
 			local vecMeToFirst = tPath[1]:GetPosition() - vecMyPosition
 			local vecFirstToSecond = tPath[2]:GetPosition() - tPath[1]:GetPosition()
 			if Vector3.Dot(vecMeToFirst, vecFirstToSecond) < 0 then
@@ -2686,7 +2686,7 @@ function behaviorLib.RetreatFromThreatExecute(botBrain)
 			-- closest node from a position which is 500 units closer to well than yourself
 			BotMetaData.SetActiveLayer('/bots/getAwayPoints.botmetadata')
 			local vecNodePos = BotMetaData.GetClosestNode(vecMyPos + Vector3.Normalize(vecWell - vecMyPos) * 300):GetPosition()
-			BotMetaData.SetActiveLayer('/bots/test.botmetadata')
+			BotMetaData.SetActiveLayer(metadata.MapMetadataFile)
 		       
 			if bDebugLines then
 				core.DrawDebugArrow(vecMyPos, vecMyPos + Vector3.Normalize(vecWell - vecMyPos) * 300, 'green')
@@ -2803,7 +2803,7 @@ function behaviorLib.HealAtWellExecute(botBrain)
 	local bActionTaken = behaviorLib.CustomHealAtWellExecute(botBrain)
 	if not bActionTaken and Vector3.Distance2DSq(core.unitSelf:GetPosition(), wellPos) > 1200 * 1200 then
 		itemGhostMarchers = core.GetItem("Item_EnhancedMarchers")
-		if itemGhostMarchers ~= nil then
+		if itemGhostMarchers ~= nil and itemGhostMarchers:CanActivate() then
 			botBrain:OrderItem(itemGhostMarchers.object or itemGhostMarchers, false)
 		end
 		bActionTaken = behaviorLib.CustomReturnToWellExecute(botBrain)

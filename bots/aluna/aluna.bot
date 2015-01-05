@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="AlunaBot"
+	description="bot_description_aluna"
+	heroname="Hero_Aluna"
+	rootlua="aluna_main.lua"
+	defaultplayername="AlunaBot"
+	precachepath="/heroes/aluna"
+/>
