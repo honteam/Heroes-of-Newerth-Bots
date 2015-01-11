@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="LegoBot"
+	description="bot_description_legionnaire"
+	heroname="Hero_Legionnaire"
+	rootlua="legionnaire_main.lua"
+	defaultplayername="LegionnaireBot"
+	precachepath="/heroes/legionnaire/"
+/>
