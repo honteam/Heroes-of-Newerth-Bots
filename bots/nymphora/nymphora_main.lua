@@ -46,6 +46,8 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
 
+local illusionLib = object.illusionLib
+
 local sqrtTwo = math.sqrt(2)
 
 BotEcho('loading nymphora_main...')
@@ -69,27 +71,90 @@ behaviorLib.LateItems =
 	{"Item_Intelligence7", "Item_Summon"} --Intelligence7 is Staff of the Master
 
 
-----------------
 -- Thresholds --
-----------------
 object.nStunThreshold = 35
 object.nHealThreshold = 35
 
+object.nSheepstickThreshold = 30
+object.nFrostfieldThreshold = 40
+object.nPuzzleThreshold = 30
 
+-- Ability up bonuses --
+object.nStunUp = 10
+object.nHealUp = 5
 
-
+object.nSheepstickUp = 15
+object.nFrostfieldUp = 5
 
 --------------------
 -- For skillbuild --
 --------------------
-object.manaNeeded = 0
-object.healNeeded = 0
+object.nManaNeeded = 0
+object.nHealNeeded = 0
 
 --------------
 -- For heal --
 --------------
 object.healPos = nil
 object.healLastCastTime = -20000
+
+
+local function AbilitiesUpUtility(hero)
+	local nUtility = 0
+	
+	if skills.heal:CanActivate() then
+		nUtility = nUtility + object.nHealUp
+	end
+	
+	if skills.stun:CanActivate() then
+		nUtility = nUtility + object.nStunUp
+	end
+	
+	local itemSheepstick = core.GetItem("Item_Morph")
+	if itemSheepstick ~= nil and itemSheepstick:CanActivate() then
+		nUtility = nUtility + object.nSheepstickUp
+	end
+
+	local itemFrostfieldPlate = core.GetItem("Item_FrostfieldPlate")
+	if itemFrostfieldPlate ~= nil and itemFrostfieldPlate:CanActivate() then
+		nUtility = nUtility + object.nFrostfieldUp
+	end
+	
+	return nUtility
+end
+
+function object:oncombateventOverride(EventData)
+	self:oncombateventOld(EventData)
+
+	local nAddBonus = 0
+	
+	if EventData.Type == "Ability" then
+		-- No use bonuses. Add up bonuses to not drop aggro as skills are no longer 'up'
+		if EventData.InflictorName == "Ability_Fairy1" then
+			nAddBonus = nAddBonus + object.nHealUp
+			object.nGraveyardUseTime = EventData.TimeStamp
+		elseif EventData.InflictorName == "Ability_Fairy3" then
+			nAddBonus = nAddBonus + object.nHealUp
+		end
+	elseif EventData.Type == "Item" then
+		if EventData.SourceUnit == core.unitSelf:GetUniqueID() then
+			if EventData.InflictorName == "Item_Morph" then
+				nAddBonus = nAddBonus + object.nSheepstickUp
+			elseif EventData.InflictorName == "Item_FrostfieldPlate" then
+				nAddBonus = nAddBonus + object.nFrostfieldUp
+			end
+		end
+	end
+	
+	if nAddBonus > 0 then
+		--decay before we add
+		core.DecayBonus(self)
+	
+		core.nHarassBonus = core.nHarassBonus + nAddBonus
+	end
+end
+object.oncombateventOld = object.oncombatevent
+object.oncombatevent 	= object.oncombateventOverride
 
 function object:SkillBuild()
 	local unitSelf = self.core.unitSelf
@@ -108,22 +173,21 @@ function object:SkillBuild()
 
 	for i = 0, unitSelf:GetAbilityPointsAvailable(), 1 do
 		bAbilityLeveled = false
-		core.AllChat(self.healNeeded .. " " .. self.manaNeeded)
 		if skills.teleport:CanLevelUp() then
 			skills.teleport:LevelUp()
 		else
-			if (self.healNeeded > 1 and skills.heal:CanLevelUp()) or (self.manaNeeded > 1 and skills.mana:CanLevelUp()) or
+			if (self.nHealNeeded > 1 and skills.heal:CanLevelUp()) or (self.nManaNeeded > 1 and skills.mana:CanLevelUp()) or
 				(not skills.stun:CanLevelUp() and (skills.heal:CanLevelUp() or skills.mana:CanLevelUp())) then
-				if self.healNeeded > self.manaNeeded and skills.heal:CanLevelUp() then
+				if self.nHealNeeded > self.nManaNeeded and skills.heal:CanLevelUp() then
 					skills.heal:LevelUp()
 					bAbilityLeveled = true
-					self.healNeeded = self.healNeeded - 1
-					--self.healNeeded = 0
+					self.nHealNeeded = self.nHealNeeded - 1
+					--self.nHealNeeded = 0
 				else
 					skills.mana:LevelUp()
 					bAbilityLeveled = true
-					self.manaNeeded = self.manaNeeded - 1
-					--self.manaNeeded = 0
+					self.nManaNeeded = self.nManaNeeded - 1
+					--self.nManaNeeded = 0
 				end
 			elseif skills.stun:CanLevelUp() then
 				skills.stun:LevelUp()
@@ -136,14 +200,11 @@ function object:SkillBuild()
 	end
 end
 
-
 function useHeal(botBrain, pos)
 	object.healLastCastTime = HoN.GetGameTime()
 	object.healPos = pos
 	return core.OrderAbilityPosition(botBrain, skills.heal, pos)
 end
-
-
 
 behaviorLib.SupportBehavior = {}
 
@@ -166,7 +227,7 @@ function behaviorLib.SupportUtility(botBrain)
 
 	for _, hero in pairs(allyHeroes) do
 		local mana = hero:GetManaPercent()
-		object.manaNeeded = object.manaNeeded + (1 - mana) / 150
+		object.nManaNeeded = object.nManaNeeded + (1 - mana) / 150
 		local newUtility = 10 + (1 - mana) * 100 / 2
 		if canGiveMana and newUtility > nUtility then
 			nUtility = newUtility
@@ -175,7 +236,7 @@ function behaviorLib.SupportUtility(botBrain)
 		end
 
 		local hp = hero:GetHealthPercent()
-		object.healNeeded = object.healNeeded + (1 - hp) / 140
+		object.nHealNeeded = object.nHealNeeded + (1 - hp) / 140
 		local newUtility = 10 + (1 - hp) * 100 / 2
 		if canHeal and newUtility > nUtility then
 			nUtility = newUtility
@@ -186,7 +247,6 @@ function behaviorLib.SupportUtility(botBrain)
 	behaviorLib.SupportBehavior.sType = sType
 	behaviorLib.SupportBehavior.target = unitTarget
 	return nUtility
-
 end
 
 function behaviorLib.SupportExecute(botBrain)
@@ -235,7 +295,6 @@ function HarassHeroExecuteOverride(botBrain)
 
 	local bActionTaken = false
 
-
 	if nLastHarassUtil > object.nStunThreshold and skills.stun:CanActivate() then
 		if nTargetDistanceSq < 900 * 900 then
 			bActionTaken = core.OrderAbilityPosition(botBrain, skills.stun, vecPosInHalfSec)
@@ -245,6 +304,40 @@ function HarassHeroExecuteOverride(botBrain)
 		if nLastHarassUtil > object.nHealThreshold and skills.heal:CanActivate() then
 			if nTargetDistanceSq < 750 * 750 then
 				bActionTaken = useHeal(botBrain, vecPosInHalfSec)
+			end
+		end
+	end
+	if not bActionTaken then
+		if bCanSee then
+			local itemSheepstick = core.GetItem("Item_Morph")
+			if itemSheepstick then
+				local nRange = itemSheepstick:GetRange()
+				if itemSheepstick:CanActivate() and nLastHarassUtil > object.nSheepstickThreshold then
+					if nTargetDistanceSq < (nRange * nRange) then
+						bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, itemSheepstick, unitTarget)
+					end
+				end
+			end
+		end
+	end
+	if not bActionTaken then
+		local itemFrostfieldPlate = core.GetItem("Item_FrostfieldPlate")
+		if itemFrostfieldPlate ~= nil and itemFrostfieldPlate:CanActivate() then
+			if nLastHarassUtil > object.nFrostfieldThreshold then
+				local nRangeSQ = 700 * 700
+				if nRangeSQ > nTargetDistanceSq then
+					botBrain:OrderItem(itemFrostfieldPlate.object, "None")
+					bActionTaken = true
+				end
+			end
+		end
+	end
+	if not bActionTaken then
+		local itemPuzzleBox = core.GetItem("Item_Summon")
+		if itemPuzzleBox and itemPuzzleBox:CanActivate() then
+			if nLastHarassUtil > object.nPuzzleThreshold then
+				botBrain:OrderItem(itemPuzzleBox.object, "None")
+				bActionTaken = true
 			end
 		end
 	end
@@ -284,19 +377,28 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 	return bActionTaken
 end
 
+----------
+-- Push --
+----------
 function behaviorLib.customPushExecute(botBrain)
 	local unitSelf = core.unitSelf
 
 	bActionTaken = false
 
 	if unitSelf:GetManaPercent() > 0.7 then
-		local centerOfCreeps = core.AoETargeting(unitSelf, skills.heal:GetRange(), 300, true, nil, nil, nil)
-		if skills.heal:CanActivate() then
-			bActionTaken = useHeal(botBrain, centerOfCreeps)
-		end
-		if not bActionTaken then
-			if skills.stun:CanActivate() then
-				bActionTaken = core.OrderAbilityPosition(botBrain, skills.stun, centerOfCreeps)
+		local creeps = core.localUnits["EnemyCreeps"]
+		core.InsertToTable(creeps, core.localUnits["AllyCreeps"])
+
+		local vecCenterOfCreeps, nCreeps = core.GetGroupCenter(creeps)
+		--local centerOfCreeps = core.AoETargeting(unitSelf, skills.heal:GetRange(), 300, true, nil, nil, nil)
+		if nCreeps > 4 and vecCenterOfCreeps ~= nil then
+			if skills.heal:CanActivate() then
+				bActionTaken = useHeal(botBrain, vecCenterOfCreeps)
+			end
+			if not bActionTaken then
+				if skills.stun:CanActivate() then
+					bActionTaken = core.OrderAbilityPosition(botBrain, skills.stun, vecCenterOfCreeps)
+				end
 			end
 		end
 	end
@@ -329,6 +431,48 @@ behaviorLib.getHealedBehavior["Execute"] = behaviorLib.getHealedExecute
 behaviorLib.getHealedBehavior["Name"] = "Nymphora get healed"
 tinsert(behaviorLib.tBehaviors, behaviorLib.getHealedBehavior)
 
+
+----------------
+-- Use recall --
+----------------
+behaviorLib.heroRecallTarget = nil
+function behaviorLib.recallAllyUtility(botBrain)
+	if skills.recall:CanActivate() then
+		if core.NumberElements(core.localUnits["EnemyHeroes"]) == 0 and behaviorLib.lastRetreatUtil < 30 then
+			local vecMyPosition = core.unitSelf:GetPosition()
+			for _, hero in pairs(core.teamBotBrain.tAllyHeroes) do
+				if 2000 * 2000 < Vector3.Distance2DSq(vecMyPosition, hero:GetPosition()) then
+					if hero:GetHealthPercent() < 0.35 then
+						local unitList = HoN.GetUnitsInRadius(hero:GetPosition(), 1000, core.UNIT_MASK_ALIVE + core.UNIT_MASK_HERO)
+						local bEnemyHeroesPresent = false
+						local myTeam = core.myTeam
+						for _, hero in pairs(unitList) do
+							if hero:GetTeam() ~= myTeam then
+								bEnemyHeroesPresent = true
+								break
+							end
+						end
+						if bEnemyHeroesPresent then
+							behaviorLib.heroRecallTarget = hero
+							return 50
+						end
+					end
+				end
+			end
+		end
+	end
+	return 0
+end
+
+function behaviorLib.recallAllyExecute(botBrain)
+	core.OrderAbilityEntity(botBrain, skills.recall, behaviorLib.heroRecallTarget)
+end
+
+behaviorLib.recallAllyBehaviour = {}
+behaviorLib.recallAllyBehaviour["Utility"] = behaviorLib.recallAllyUtility
+behaviorLib.recallAllyBehaviour["Execute"] = behaviorLib.recallAllyExecute
+behaviorLib.recallAllyBehaviour["Name"] = "Nymphora recall ally"
+tinsert(behaviorLib.tBehaviors, behaviorLib.recallAllyBehaviour)
 
 -----------------
 -- Override TP --
@@ -431,4 +575,22 @@ function behaviorLib.PortLogic(botBrain, vecDesiredPosition)
 	end
 
 	return behaviorLib.bLastPortResult
+end
+
+---------------
+-- PuzzleBox --
+---------------
+
+-- IllusionLib orders it to attack and move around
+function illusionLib.updateIllusions(botBrain)
+	illusionLib.tIllusions = {}
+	local tPossibleIllusions = core.tControllableUnits["AllUnits"]
+	if tPossibleIllusions ~= nil then
+		for nUID, unit in pairs(tPossibleIllusions) do
+			local sTypeName = unit:GetTypeName()
+			if sTypeName ~= "Pet_GroundFamiliar" and sTypeName ~= "Pet_FlyngCourier" then
+				tinsert(illusionLib.tIllusions, unit)
+			end
+		end
+	end
 end
