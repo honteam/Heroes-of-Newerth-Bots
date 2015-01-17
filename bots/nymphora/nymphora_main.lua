@@ -95,8 +95,8 @@ object.nHealNeeded = 0
 --------------
 -- For heal --
 --------------
-object.healPos = nil
-object.healLastCastTime = -20000
+object.vecHealPos = nil
+object.nHealLastCastTime = -20000
 
 
 local function AbilitiesUpUtility(hero)
@@ -201,8 +201,8 @@ function object:SkillBuild()
 end
 
 function useHeal(botBrain, pos)
-	object.healLastCastTime = HoN.GetGameTime()
-	object.healPos = pos
+	object.nHealLastCastTime = HoN.GetGameTime()
+	object.vecHealPos = pos
 	return core.OrderAbilityPosition(botBrain, skills.heal, pos)
 end
 
@@ -409,11 +409,11 @@ end
 -- Walk to own heal
 function behaviorLib.getHealedUtility(botBrain)
 	local time = HoN.GetGameTime()
-	if time - 1100 < object.healLastCastTime then
+	if time - 1100 < object.nHealLastCastTime then
 		local unitSelf = core.unitSelf
 		if unitSelf:GetHealthPercent() < 0.95 then
-			local distance = Vector3.Distance2D(unitSelf:GetPosition(), object.healPos) - 300
-			if distance < unitSelf:GetMoveSpeed() * (time - object.healLastCastTime) / 1000 then
+			local distance = Vector3.Distance2D(unitSelf:GetPosition(), object.vecHealPos) - 300
+			if distance < unitSelf:GetMoveSpeed() * (time - object.nHealLastCastTime) / 1000 then
 				return 40
 			end
 		end
@@ -422,7 +422,7 @@ function behaviorLib.getHealedUtility(botBrain)
 end
 
 function behaviorLib.getHealedExecute(botBrain)
-	return core.OrderMoveToPos(botBrain, core.unitSelf, object.healPos)
+	return core.OrderMoveToPos(botBrain, core.unitSelf, object.vecHealPos)
 end
 
 behaviorLib.getHealedBehavior = {}
@@ -515,14 +515,27 @@ function behaviorLib.newShouldPort(botBrain, vecDesiredPosition)
 			end
 		end
 
+		-- Can't TP to enemy base
+
+		local sEnemyZone = "hellbourne"
+		if core.myTeam == HoN.GetHellbourneTeam() then
+			sEnemyZone = "legion"
+		end
+
+		local vecWellPos = core.allyWell:GetPosition()
+		while BotMetaData.GetClosestNode(vecTPPos):GetProperty("base") and BotMetaData.GetClosestNode(vecTPPos):GetProperty("zone") == sEnemyZone do
+			local vecTemp = vecTPPos - vecWellPos
+			vecTPPos = vecTPPos - Vector3.Normalize(vecTemp) * 100
+		end
+
 		if core.TimeToPosition(vecTPPos, vecMyPosition, unitSelf:GetMoveSpeed(), core.itemGhostMarchers) > 5000 then
 			return true, vecTPPos, skills.teleport
 		end
 	end
 
-	return false, nil, nil
-	--local bShouldPort, unitTarget, itemPort = behaviorLib.oldShouldPort(botBrain, vecDesiredPosition)
-	--return bShouldPort, unitTarget, itemPort
+	--return false, nil, nil
+	local bShouldPort, unitTarget, itemPort = behaviorLib.oldShouldPort(botBrain, vecDesiredPosition)
+	return bShouldPort, unitTarget, itemPort
 end
 
 behaviorLib.oldShouldPort = behaviorLib.ShouldPort
@@ -557,7 +570,11 @@ function behaviorLib.PortLogic(botBrain, vecDesiredPosition)
 				elseif itemPort:GetTypeName() == "Item_PostHaste" then
 					bSuccess = core.OrderItemEntityClamp(botBrain, unitSelf, itemPort, unitTarget)
 				elseif itemPort:GetTypeName() == "Ability_Fairy4" then
-					core.AllChat("Using ult ".. tostring(unitTarget))
+					local teamBotBrain = core.teamBotBrain
+					local tTeleportData = teamBotBrain.tNymphoraTPData
+					tTeleportData.vecStartPos = unitSelf:GetPosition()
+					tTeleportData.VecDestPos = unitTarget
+					tTeleportData.nChannelEndTime = HoN.GetGameTime() + 4300
 					bSuccess = core.OrderAbilityPosition(botBrain, skills.teleport, unitTarget)
 				end
 
