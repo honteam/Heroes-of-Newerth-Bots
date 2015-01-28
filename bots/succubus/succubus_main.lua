@@ -66,18 +66,18 @@ core.tLanePreferences = {Jungle = 0, Mid = 5, ShortSolo = 4, LongSolo = 4, Short
 
 -- Constants for skill usage
 
-object.mesmeUseBonus = 5
-object.holdUseBonus = 35
-object.heartacheUseBonus = 15
+object.nMesmeUseBonus = 5
+object.nHoldUseBonus = 35
+object.nHeartacheUseBonus = 15
 
-object.mesmeUpBonus = 5
-object.holdUpBonus = 20
-object.heartacheUpBonus = 10
+object.nMesmeUpBonus = 5
+object.nHoldUpBonus = 20
+object.nHeartacheUpBonus = 10
 
-object.holdThreshold = 60
-object.heartacheThreshold = 40
-object.mesmeThreshold = 50
-object.pkThreshold = 45
+object.nHoldThreshold = 60
+object.nHeartacheThreshold = 40
+object.nMesmeThreshold = 50
+object.nPKThreshold = 45
 
 ------------------------------
 --	 skills			   --
@@ -188,11 +188,11 @@ function object:oncombateventOverride(EventData)
 		if EventData.InflictorName == "Ability_Succubis1" then
 
 		elseif EventData.InflictorName == "Ability_Succubis2" then
-			nAddBonus = nAddBonus + object.heartacheUseBonus
+			nAddBonus = nAddBonus + object.nHeartacheUseBonus
 		elseif EventData.InflictorName == "Ability_Succubis3" then
-			nAddBonus = nAddBonus + object.mesmeUseBonus
+			nAddBonus = nAddBonus + object.nMesmeUseBonus
 		elseif EventData.InflictorName == "Ability_Succubis4" then
-			nAddBonus = nAddBonus + object.holdUseBonus
+			nAddBonus = nAddBonus + object.nHoldUseBonus
 			object.ultTime = HoN.GetGameTime()
 		end
 	end
@@ -210,29 +210,29 @@ local function CustomHarassUtilityFnOverride(hero)
 		return -100
 	end
 
-	local val = 0
+	local nVal = 0
 	
 	if skills.mesme:CanActivate() then
-		val = val + object.mesmeUpBonus
+		nVal = nVal + object.nMesmeUpBonus
 	end
 	
 	if skills.hold:CanActivate() then
-		val = val + object.holdUpBonus
+		nVal = nVal + object.nHoldUpBonus
 	end
 
 	if skills.heartache:CanActivate() then
-		val = val + object.heartacheUpBonus
+		nVal = nVal + object.nHeartacheUpBonus
 	end
 
 	local unitSelf = core.unitSelf
 
 	if unitSelf:HasState("State_PowerupStealth") or unitSelf:HasState("State_PowerupMoveSpeed") then
-		val = val + 20
+		nVal = nVal + 20
 	end
 
 	-- Less mana less aggression
-	val = val + (unitSelf:GetManaPercent() - 0.80) * 45
-	return val
+	nVal = nVal + (unitSelf:GetManaPercent() - 0.80) * 45
+	return nVal
 
 end
 behaviorLib.CustomHarassUtility = CustomHarassUtilityFnOverride  
@@ -282,7 +282,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	end
 
 	--pk suprise
-	if bCanSee and itemPortalKey and itemPortalKey:CanActivate() and object.pkThreshold < nLastHarassUtility then
+	if bCanSee and itemPortalKey and itemPortalKey:CanActivate() and object.nPKThreshold < nLastHarassUtility then
 		if nTargetnDistanceSQ > 800 * 800 then
 			if nLastHarassUtility > behaviorLib.diveThreshold or core.NumberElements(core.GetTowersThreateningPosition(vecTargetPosition, nMyExtraRange, core.myTeam)) == 0 then
 				local _, sortedTable = HoN.GetUnitsInRadius(vecTargetPosition, 1000, core.UNIT_MASK_HERO + core.UNIT_MASK_ALIVE, true)
@@ -301,7 +301,7 @@ local function HarassHeroExecuteOverride(botBrain)
 
 	--teamfight
 	if not bActionTaken then
-		if nLastHarassUtility > object.mesmeThreshold then
+		if nLastHarassUtility > object.nMesmeThreshold then
 			for _,hero in pairs(core.localUnits["EnemyHeroes"]) do
 				if hero ~= unitTarget then
 					if not hero:HasState("State_Succubis_Ability3") and not hero:HasState("State_Succubis_Ability1") and not hero:isMagicImmune() then
@@ -321,7 +321,7 @@ local function HarassHeroExecuteOverride(botBrain)
 
 	if not bActionTaken and bCanSee then
 		if not targetMagicImmune then
-			if nLastHarassUtility > object.holdThreshold and skills.hold:CanActivate() then
+			if nLastHarassUtility > object.nHoldThreshold and skills.hold:CanActivate() then
 				if itemPuzzleBox and itemPuzzleBox:CanActivate() then
 					bActionTaken = true
 					botBrain:OrderItem(itemPuzzleBox.object)
@@ -332,7 +332,7 @@ local function HarassHeroExecuteOverride(botBrain)
 					bActionTaken = core.OrderAbilityEntity(botBrain, skills.hold, unitTarget)
 				end
 			end
-			if not bActionTaken and nLastHarassUtility > object.heartacheThreshold and skills.heartache:CanActivate() then
+			if not bActionTaken and nLastHarassUtility > object.nHeartacheThreshold and skills.heartache:CanActivate() then
 				bActionTaken = core.OrderAbilityEntity(botBrain, skills.heartache, unitTarget)
 			end
 		end
