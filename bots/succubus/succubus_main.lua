@@ -44,7 +44,7 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
 
-local bottle = {}
+local tBottle = {}
 local illusionLib = object.illusionLib
 
 BotEcho(object:GetName()..' loading succubus_main...')
@@ -133,34 +133,34 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 	local unitSelf = core.unitSelf
 	local mypos = unitSelf:GetPosition()
 
-	local lastRetreatUtil = behaviorLib.lastRetreatUtil
+	local nLastRetreatUtil = behaviorLib.lastRetreatUtil
 
-	local missingHP = unitSelf:GetMaxHealth() - unitSelf:GetHealth()
+	local nMissingHP = unitSelf:GetMaxHealth() - unitSelf:GetHealth()
 
-	local mesmeRange = skills.mesme:GetRange()
-	local heartacheRange = skills.heartache:GetRange()
-	local mesmeCanActivate = skills.mesme:CanActivate()
-	local heartacheCanActivate = skills.heartache:CanActivate()
 	local bActionTaken = false
 
 	local itemPortalKey = core.GetItem("Item_PortalKey")
-	if lastRetreatUtil > object.retreatCastThreshold and itemPortalKey ~= nil then
+	if nLastRetreatUtil > object.retreatCastThreshold and itemPortalKey ~= nil then
 		if itemPortalKey:CanActivate() then
-			botBrain:OrderItemPosition(itemPortalKey.object, behaviorLib.GetSafeBlinkPosition(core.allyWell:GetPosition(), 1200))
-			bActionTaken = true
+			bActionTaken = core.OrderBlinkItemToEscape(botBrain, unitSelf, itemPortalKey)
 		end
 	end
 
+	local nMesmeRange = skills.mesme:GetRange()
+	local nHeartacheRange = skills.heartache:GetRange()
+	local bMesmeCanActivate = skills.mesme:CanActivate()
+	local bHeartacheCanActivate = skills.heartache:CanActivate()
+
 	if not bActionTaken then
-		if lastRetreatUtil > object.retreatCastThreshold then
+		if nLastRetreatUtil > object.retreatCastThreshold then
 			for _, hero in pairs(core.localUnits["EnemyHeroes"]) do
 				if not hero:isMagicImmune() then
-					distanceSq = Vector3.Distance2DSq(mypos, hero:GetPosition())
-					if heartacheCanActivate and distanceSq < heartacheRange * heartacheRange and missingHP > 300 and not hero:HasState("State_Succubis_Ability3") then
+					local nDistanceSQ = Vector3.Distance2DSq(mypos, hero:GetPosition())
+					if bHeartacheCanActivate and nDistanceSQ < nHeartacheRange * nHeartacheRange and nMissingHP > 300 and not hero:HasState("State_Succubis_Ability3") then
 						bActionTaken = core.OrderAbilityEntity(botBrain, skills.heartache, hero)
 						break
 					end
-					if mesmeCanActivate and distanceSq < mesmeRange * mesmeRange then
+					if bMesmeCanActivate and nDistanceSQ < nMesmeRange * nMesmeRange then
 						bActionTaken = core.OrderAbilityEntity(botBrain, skills.mesme, hero)
 						break
 					end
@@ -173,15 +173,7 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 end
 
 function behaviorLib.CustomReturnToWellExecute(botBrain)
-	local itemPortalKey = core.GetItem("Item_PortalKey")
-	if itemPortalKey ~= nil then
-		if itemPortalKey:CanActivate() then
-			botBrain:OrderItemPosition(itemPortalKey.object, behaviorLib.GetSafeBlinkPosition(core.allyWell:GetPosition(), 1200))
-			bActionTaken = true
-		end
-	end
-
-	return bActionTaken
+	return core.OrderBlinkItemToEscape(botBrain, core.unitSelf, core.GetItem("Item_PortalKey"), true)
 end
 
 ------------------------------------------
@@ -190,28 +182,28 @@ end
 function object:oncombateventOverride(EventData)
 	self:oncombateventOld(EventData)
 
-	local addBonus = 0
+	local nAddBonus = 0
 
 	if EventData.Type == "Ability" then
 		if EventData.InflictorName == "Ability_Succubis1" then
 
 		elseif EventData.InflictorName == "Ability_Succubis2" then
-			addBonus = addBonus + object.heartacheUseBonus
+			nAddBonus = nAddBonus + object.heartacheUseBonus
 		elseif EventData.InflictorName == "Ability_Succubis3" then
-			addBonus = addBonus + object.heartacheUseBonus
+			nAddBonus = nAddBonus + object.mesmeUseBonus
 		elseif EventData.InflictorName == "Ability_Succubis4" then
-			addBonus = addBonus + object.holdUseBonus
+			nAddBonus = nAddBonus + object.holdUseBonus
 			object.ultTime = HoN.GetGameTime()
 		end
 	end
 
-	if addBonus > 0 then
+	if nAddBonus > 0 then
 		core.DecayBonus(self)
-		core.nHarassBonus = core.nHarassBonus + addBonus
+		core.nHarassBonus = core.nHarassBonus + nAddBonus
 	end
 end
 object.oncombateventOld = object.oncombatevent
-object.oncombatevent	 = object.oncombateventOverride
+object.oncombatevent	= object.oncombateventOverride
 
 local function CustomHarassUtilityFnOverride(hero)
 	if hero:HasState("State_Succubis_Ability3") then
@@ -238,7 +230,7 @@ local function CustomHarassUtilityFnOverride(hero)
 		val = val + 20
 	end
 
-	-- Less mana less aggerssion
+	-- Less mana less aggression
 	val = val + (unitSelf:GetManaPercent() - 0.80) * 45
 	return val
 
@@ -272,39 +264,39 @@ local function HarassHeroExecuteOverride(botBrain)
 	local nMyExtraRange = core.GetExtraRange(unitSelf)
 	
 	local vecTargetPosition = unitTarget:GetPosition()
-	local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
+	local nTargetnDistanceSQ = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
 	local targetMagicImmune = unitTarget:isMagicImmune()
 	
 	local nLastHarassUtility = behaviorLib.lastHarassUtil
 	local bCanSee = core.CanSeeUnit(botBrain, unitTarget)	
 	local bActionTaken = false
 
-	local portalKey = core.GetItem("Item_PortalKey")
-	local puzzleBox = core.GetItem("Item_Summon")
-	local shrunkenHead = core.GetItem("Item_Immunity")
+	local itemPortalKey = core.GetItem("Item_PortalKey")
+	local itemPuzzleBox = core.GetItem("Item_Summon")
+	local itemShrunkenHead = core.GetItem("Item_Immunity")
 
 	--damage stealth illusion movespeed regen
-	local runeInBottle = bottle.getRune()
+	local runeInBottle = tBottle.getRune()
 	if runeInBottle == "damage" or runeInBottle == "illusion" or runeInBottle == "movespeed" then
 		botBrain:OrderItem(core.GetItem("Item_Bottle"))
 	end
 
 	--pk suprise
-	if bCanSee and portalKey and portalKey:CanActivate() and object.pkThreshold < nLastHarassUtility then
-		if nTargetDistanceSq > 800 * 800 then
+	if bCanSee and itemPortalKey and itemPortalKey:CanActivate() and object.pkThreshold < nLastHarassUtility then
+		if nTargetnDistanceSQ > 800 * 800 then
 			if nLastHarassUtility > behaviorLib.diveThreshold or core.NumberElements(core.GetTowersThreateningPosition(vecTargetPosition, nMyExtraRange, core.myTeam)) == 0 then
 				local _, sortedTable = HoN.GetUnitsInRadius(vecTargetPosition, 1000, core.UNIT_MASK_HERO + core.UNIT_MASK_ALIVE, true)
 				local EnemyHeroes = sortedTable.EnemyHeroes
 				if core.NumberElements(EnemyHeroes) == 1 then
-					bActionTaken = core.OrderItemPosition(botBrain, unitSelf, portalKey, vecTargetPosition)
+					bActionTaken = core.OrderItemPosition(botBrain, unitSelf, itemPortalKey, vecTargetPosition)
 				end
 			end
 		end
 	end
 
-	local mesmeRange = skills.mesme:GetRange()
+	local nMesmeRange = skills.mesme:GetRange()
 	local smittenRange = skills.smitten:GetRange()
-	local mesmeCanActivate = skills.mesme:CanActivate()
+	local bMesmeCanActivate = skills.mesme:CanActivate()
 	local smittenCanActivate = skills.smitten:CanActivate()
 
 	--teamfight
@@ -313,11 +305,11 @@ local function HarassHeroExecuteOverride(botBrain)
 			for _,hero in pairs(core.localUnits["EnemyHeroes"]) do
 				if hero ~= unitTarget then
 					if not hero:HasState("State_Succubis_Ability3") and not hero:HasState("State_Succubis_Ability1") and not hero:isMagicImmune() then
-						distanceSq = Vector3.Distance2DSq(vecMyPosition, hero:GetPosition())
-						if mesmeCanActivate and distanceSq < mesmeRange*mesmeRange then
+						local nDistanceSQ = Vector3.Distance2DSq(vecMyPosition, hero:GetPosition())
+						if bMesmeCanActivate and nDistanceSQ < nMesmeRange*nMesmeRange then
 							bActionTaken = core.OrderAbilityEntity(botBrain, skills.mesme, hero)
 							break
-						elseif smittenCanActivate and distanceSq < smittenRange*smittenRange then
+						elseif smittenCanActivate and nDistanceSQ < smittenRange*smittenRange then
 							bActionTaken = core.OrderAbilityEntity(botBrain, skills.smitten, hero)
 							break
 						end
@@ -330,12 +322,12 @@ local function HarassHeroExecuteOverride(botBrain)
 	if not bActionTaken and bCanSee then
 		if not targetMagicImmune then
 			if nLastHarassUtility > object.holdThreshold and skills.hold:CanActivate() then
-				if puzzleBox and puzzleBox:CanActivate() then
+				if itemPuzzleBox and itemPuzzleBox:CanActivate() then
 					bActionTaken = true
-					botBrain:OrderItem(puzzleBox.object)
-				elseif shrunkenHead and shrunkenHead:CanActivate() then
+					botBrain:OrderItem(itemPuzzleBox.object)
+				elseif itemShrunkenHead and itemShrunkenHead:CanActivate() then
 					bActionTaken = true
-					botBrain:OrderItem(shrunkenHead.object)
+					botBrain:OrderItem(itemShrunkenHead.object)
 				else
 					bActionTaken = core.OrderAbilityEntity(botBrain, skills.hold, unitTarget)
 				end
@@ -377,59 +369,59 @@ function behaviorLib.healHeartacheUtility(botBrain)
 		return 0
 	end
 
-	local missingHP = unitSelf:GetMaxHealth() - unitSelf:GetHealth()
+	local nMissingHP = unitSelf:GetMaxHealth() - unitSelf:GetHealth()
 
-	local heartacheUtil = 0
+	local nHeartacheUtil = 0
 
 	if skills.heartache:CanActivate() and core.NumberElements(core.localUnits["Enemies"]) > 0 then
-		heartacheUtil = core.ATanFn(missingHP, Vector3.Create(300, 25), Vector3.Create(0,0), 100)
+		nHeartacheUtil = core.ATanFn(nMissingHP, Vector3.Create(300, 25), Vector3.Create(0,0), 100)
 	end
 
-	return heartacheUtil
+	return nHeartacheUtil
 end
 
 function behaviorLib.healHeartacheExecute(botBrain)
 	local unitSelf = core.unitSelf
-	local mypos = unitSelf:GetPosition()
+	local vecMypos = unitSelf:GetPosition()
 
 	local bActionTaken = false
 
-	local heartacheCanActivate = skills.heartache:CanActivate()
-	if not bActionTaken and heartacheCanActivate then
-		local heartacheRange = skills.heartache:GetRange()
+	local bHeartacheCanActivate = skills.heartache:CanActivate()
+	if not bActionTaken and bHeartacheCanActivate then
+		local nHeartacheRange = skills.heartache:GetRange()
 		if core.NumberElements(core.localUnits["EnemyHeroes"]) > 0 then
-			local closestHero = nil
-			local closestDistance = 650 * 650 -- Only units closer than 650 are valid
+			local unitClosestHero = nil
+			local nClosestDistance = 650 * 650 -- Only units closer than 650 are valid
 			for _, hero in pairs(core.localUnits["EnemyHeroes"]) do
-				local distance = Vector3.Distance2DSq(hero:GetPosition(), mypos)
-				if distance < closestDistance then
-					closestDistance = distance
-					closestHero = hero
-					if distance < heartacheRange*heartacheRange then
+				local distance = Vector3.Distance2DSq(hero:GetPosition(), vecMypos)
+				if distance < nClosestDistance then
+					nClosestDistance = distance
+					unitClosestHero = hero
+					if distance < nHeartacheRange*nHeartacheRange then
 						break
 					end
 				end
 			end
-			if closestHero then
-				bActionTaken = core.OrderAbilityEntity(botBrain, skills.heartache, closestHero)
+			if unitClosestHero then
+				bActionTaken = core.OrderAbilityEntity(botBrain, skills.heartache, unitClosestHero)
 			end
 		else
 			if core.NumberElements(core.localUnits["EnemyCreeps"]) then
 				--just find creep in range or closest
-				local closestCreep = nil
-				local closestDistance = 650 * 650 -- Only units closer than 650 are valid
+				local unitClosestCreep = nil
+				local nClosestDistance = 650 * 650 -- Only units closer than 650 are valid
 				for _, creep in pairs(core.localUnits["EnemyCreeps"]) do
-					local distance = Vector3.Distance2DSq(creep:GetPosition(), mypos)
-					if distance < closestDistance then
-						closestDistance = distance
-						closestCreep = creep
-						if distance < heartacheRange*heartacheRange then
+					local distance = Vector3.Distance2DSq(creep:GetPosition(), vecMypos)
+					if distance < nClosestDistance then
+						nClosestDistance = distance
+						unitClosestCreep = creep
+						if distance < nHeartacheRange*nHeartacheRange then
 							break
 						end
 					end
 				end
-				if closestCreep then
-					bActionTaken = core.OrderAbilityEntity(botBrain, skills.heartache, closestCreep)
+				if unitClosestCreep then
+					bActionTaken = core.OrderAbilityEntity(botBrain, skills.heartache, unitClosestCreep)
 				end
 			end
 		end
@@ -450,11 +442,11 @@ function behaviorLib.newUseBottleBehaviorUtility(botBrain)
 		return 0
 	end
 
-	utility = behaviorLib.oldUseBottleBehaviorUtility(botBrain)
-	if bottle.getRune() == "regen" then
-		utility = utility * 0.8
+	nUtility = behaviorLib.oldUseBottleBehaviorUtility(botBrain)
+	if tBottle.getRune() == "regen" then
+		nUtility = nUtility * 0.8
 	end
-	return utility
+	return nUtility
 end
 
 behaviorLib.oldUseBottleBehaviorUtility = behaviorLib.tItemBehaviors["Item_Bottle"]["Utility"]
@@ -491,34 +483,34 @@ function behaviorLib.newPickRuneUtility(botBrain)
 
 	behaviorLib.runeToPick = rune
 
-	local utility = 25
+	local nUtility = 25
 
 	if rune.unit then
-		utility = utility + 10
+		nUtility = nUtility + 10
 	end
 
 	if core.GetItem("Item_Bottle") ~= nil then
-		utility = utility + 20 - bottle.getCharges() * 5
+		nUtility = nUtility + 20 - tBottle.getCharges() * 5
 	end
 
-	return utility - Vector3.Distance2DSq(rune.vecLocation, core.unitSelf:GetPosition())/(2000*2000)
+	return nUtility - Vector3.Distance2DSq(rune.vecLocation, core.unitSelf:GetPosition())/(2000*2000)
 end
 behaviorLib.PickRuneBehavior["Utility"] = behaviorLib.newPickRuneUtility
 
 function behaviorLib.newPickRuneExecute(botBrain)
 	bActionTaken = false
 	if core.NumberElements(core.localUnits["EnemyHeroes"]) > 0 then
-		local mesmeRange = skills.mesme:GetRange()
+		local nMesmeRange = skills.mesme:GetRange()
 		local mypos = core.unitSelf:GetPosition()
 		if skills.mesme:CanActivate() then
 			for _,hero in pairs(core.localUnits["EnemyHeroes"]) do
-				if Vector3.Distance2DSq(mypos, hero:GetPosition()) <= mesmeRange * mesmeRange then
+				if Vector3.Distance2DSq(mypos, hero:GetPosition()) <= nMesmeRange * nMesmeRange then
 					bActionTaken = core.OrderAbilityEntity(botBrain, skills.mesme, hero)
 				end
 			end
 		end
 	end
-	if bottle.getCharges() > 0 and behaviorLib.newUseBottleBehaviorUtility(botBrain) > 0 then
+	if tBottle.getCharges() > 0 and behaviorLib.newUseBottleBehaviorUtility(botBrain) > 0 then
 		botBrain:OrderItem(core.GetItem("Item_Bottle").object)
 	end
 
@@ -546,39 +538,39 @@ behaviorLib.PickRuneBehavior["Execute"] = behaviorLib.newPickRuneExecute
 -- helpers for bottle --
 ------------------------
 
-function bottle.getCharges()
+function tBottle.getCharges()
 	local itemBottle = core.GetItem("Item_Bottle")
 	if itemBottle == nil then
 		return 0
 	end
 
-	local charges = nil
+	local nCharges = nil
 	local modifier = itemBottle:GetActiveModifierKey()
 	if modifier == "bottle_empty" then
-		charges = 0
+		nCharges = 0
 	elseif modifier == "bottle_1" then
-		charges = 1
+		nCharges = 1
 	elseif modifier == "bottle_2" then
-		charges = 2
+		nCharges = 2
 	elseif modifier == "bottle_3" then
-		charges = 3
+		nCharges = 3
 	else
-		charges = 4 --rune
+		nCharges = 4 --rune
 	end
-	return charges
+	return nCharges
 end
 
 --damage stealth illusion movespeed regen
-function bottle.getRune()
+function tBottle.getRune()
 	local itemBottle = core.GetItem("Item_Bottle")
 	if itemBottle == nil then
 		return ""
 	end
 	local modifier = itemBottle:GetActiveModifierKey()
-	local key = string.gmatch(modifier, "bottle_%w")
-	if key == "1" or key == "2" or key == "3" or key =="empty" then
+	local sKey = string.gmatch(modifier, "bottle_%w")
+	if sKey == "1" or sKey == "2" or sKey == "3" or sKey =="empty" then
 		return ""
 	else
-		return key
+		return sKey
 	end
 end
