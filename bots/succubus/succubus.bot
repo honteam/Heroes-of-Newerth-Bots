@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="SuccubusBot"
+	description="bot_description_succubus"
+	heroname="Hero_Succubis"
+	rootlua="succubus_main.lua"
+	defaultplayername="SuccubusBot"
+	precachepath="/heroes/succubis/"
+/>
