@@ -202,10 +202,10 @@ function object:SkillBuild()
 	end
 end
 
-function useHeal(botBrain, pos)
+function useHeal(botBrain, vecPosition)
 	object.nHealLastCastTime = HoN.GetGameTime()
-	object.vecHealPos = pos
-	return core.OrderAbilityPosition(botBrain, skills.heal, pos)
+	object.vecHealPos = vecPosition
+	return core.OrderAbilityPosition(botBrain, skills.heal, vecPosition)
 end
 
 behaviorLib.SupportBehavior = {}
@@ -216,22 +216,21 @@ behaviorLib.SupportBehavior = {}
 function behaviorLib.SupportUtility(botBrain)
 	local unitSelf = core.unitSelf
 
-	local localUnits = core.localUnits
-	local allyHeroes = core.CopyTable(localUnits.AllyHeroes)
+	local allyHeroes = core.CopyTable(core.localUnits.AllyHeroes)
 	allyHeroes[unitSelf:GetUniqueID()] = unitSelf
 
 	local sType = ""
 	local nUtility = 0
-	local unitTarget = {}
+	local unitTarget = nil
 
-	local canGiveMana = skills.mana:CanActivate()
-	local canHeal = skills.heal:CanActivate()
+	local bCanGiveMana = skills.mana:CanActivate()
+	local bCanHeal = skills.heal:CanActivate()
 
 	for _, hero in pairs(allyHeroes) do
 		local mana = hero:GetManaPercent()
 		object.nManaNeeded = object.nManaNeeded + (1 - mana) / 150
 		local newUtility = 10 + (1 - mana) * 100 / 2
-		if canGiveMana and newUtility > nUtility then
+		if bCanGiveMana and newUtility > nUtility then
 			nUtility = newUtility
 			sType = "mana"
 			unitTarget = hero
@@ -240,23 +239,23 @@ function behaviorLib.SupportUtility(botBrain)
 		local hp = hero:GetHealthPercent()
 		object.nHealNeeded = object.nHealNeeded + (1 - hp) / 140
 		local newUtility = 10 + (1 - hp) * 100 / 2
-		if canHeal and newUtility > nUtility then
+		if bCanHeal and newUtility > nUtility then
 			nUtility = newUtility
 			sType = "heal"
 			unitTarget = hero
 		end
 	end
 	behaviorLib.SupportBehavior.sType = sType
-	behaviorLib.SupportBehavior.target = unitTarget
+	behaviorLib.SupportBehavior.unitTarget = unitTarget
 	return nUtility
 end
 
 function behaviorLib.SupportExecute(botBrain)
 	if behaviorLib.SupportBehavior.sType == "mana" then
-		return core.OrderAbilityEntity(botBrain, skills.mana, behaviorLib.SupportBehavior.target)
+		return core.OrderAbilityEntity(botBrain, skills.mana, behaviorLib.SupportBehavior.unitTarget)
 	end
 	if behaviorLib.SupportBehavior.sType == "heal" then
-		local unitTarget = behaviorLib.SupportBehavior.target
+		local unitTarget = behaviorLib.SupportBehavior.unitTarget
 		local vecTargetPos = unitTarget:GetPosition() + unitTarget:GetHeading() * unitTarget:GetMoveSpeed() * 3 / 4
 		return useHeal(botBrain, behaviorLib.SupportBehavior.target:GetPosition())
 	end
@@ -280,12 +279,9 @@ function HarassHeroExecuteOverride(botBrain)
 
 	local unitSelf = core.unitSelf
 	local vecMyPosition = unitSelf:GetPosition()
-	local nMyExtraRange = core.GetExtraRange(unitSelf)
 
 	local vecTargetPosition = unitTarget:GetPosition()
-	local nTargetExtraRange = core.GetExtraRange(unitTarget)
 	local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
-	local bTargetRooted = unitTarget:IsStunned() or unitTarget:IsImmobilized() or unitTarget:GetMoveSpeed() < 200
 
 	local nLastHarassUtil = behaviorLib.lastHarassUtil
 	local bCanSee = core.CanSeeUnit(botBrain, unitTarget)
@@ -356,19 +352,19 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 ------------
 function behaviorLib.CustomRetreatExecute(botBrain)
 	local unitSelf = core.unitSelf
-	local myPos = unitSelf:GetPosition()
+	local vecMyPos = unitSelf:GetPosition()
 
 	local bActionTaken = false
 
 	if behaviorLib.lastRetreatUtil > object.nStunThreshold and skills.stun:CanActivate() then
 		if core.NumberElements(core.localUnits.EnemyHeroes) > 0 then
 			local unitTarget = nil
-			local closestDistance = 999999999
+			local nClosestDistance = 999999999
 			for _, unit in pairs(core.localUnits.EnemyHeroes) do
-				local Distance2DSq = Vector3.Distance2DSq(myPos, unit:GetPosition())
-				if Distance2DSq < closestDistance then
+				local nDistance2DSq = Vector3.Distance2DSq(vecMyPos, unit:GetPosition())
+				if nDistance2DSq < nClosestDistance then
 					unitTarget = unit
-					closestDistance = Distance2DSq
+					nClosestDistance = nDistance2DSq
 				end
 			end
 
@@ -388,10 +384,10 @@ function behaviorLib.customPushExecute(botBrain)
 	bActionTaken = false
 
 	if unitSelf:GetManaPercent() > 0.7 then
-		local creeps = core.CopyTable(core.localUnits["EnemyCreeps"])
-		core.InsertToTable(creeps, core.localUnits["AllyCreeps"])
+		local tCreeps = core.CopyTable(core.localUnits["EnemyCreeps"])
+		core.InsertToTable(tCreeps, core.localUnits["AllyCreeps"])
 
-		local vecCenterOfCreeps, nCreeps = core.GetGroupCenter(creeps)
+		local vecCenterOfCreeps, nCreeps = core.GetGroupCenter(tCreeps)
 		--local centerOfCreeps = core.AoETargeting(unitSelf, skills.heal:GetRange(), 300, true, nil, nil, nil)
 		if nCreeps > 4 and vecCenterOfCreeps ~= nil then
 			if skills.heal:CanActivate() then
@@ -410,12 +406,12 @@ end
 
 -- Walk to own heal
 function behaviorLib.getHealedUtility(botBrain)
-	local time = HoN.GetGameTime()
-	if time - 1100 < object.nHealLastCastTime then
+	local nTime = HoN.GetGameTime()
+	if nTime - 1100 < object.nHealLastCastTime then
 		local unitSelf = core.unitSelf
 		if unitSelf:GetHealthPercent() < 0.95 then
-			local distance = Vector3.Distance2D(unitSelf:GetPosition(), object.vecHealPos) - 300
-			if distance < unitSelf:GetMoveSpeed() * (time - object.nHealLastCastTime) / 1000 then
+			local nDistance = Vector3.Distance2D(unitSelf:GetPosition(), object.vecHealPos) - 300
+			if nDistance < unitSelf:GetMoveSpeed() * (nTime - object.nHealLastCastTime) / 1000 then
 				return 40
 			end
 		end
@@ -442,20 +438,20 @@ function behaviorLib.recallAllyUtility(botBrain)
 	if skills.recall:CanActivate() then
 		if core.NumberElements(core.localUnits["EnemyHeroes"]) == 0 and behaviorLib.lastRetreatUtil < 30 then
 			local vecMyPosition = core.unitSelf:GetPosition()
-			for _, hero in pairs(core.teamBotBrain.tAllyHeroes) do
-				if 2000 * 2000 < Vector3.Distance2DSq(vecMyPosition, hero:GetPosition()) then
-					if hero:GetHealthPercent() < 0.35 then
-						local unitList = HoN.GetUnitsInRadius(hero:GetPosition(), 1000, core.UNIT_MASK_ALIVE + core.UNIT_MASK_HERO)
+			for _, unitHero in pairs(core.teamBotBrain.tAllyHeroes) do
+				if 2000 * 2000 < Vector3.Distance2DSq(vecMyPosition, unitHero:GetPosition()) then
+					if unitHero:GetHealthPercent() < 0.35 then
+						local unitList = HoN.GetUnitsInRadius(unitHero:GetPosition(), 1000, core.UNIT_MASK_ALIVE + core.UNIT_MASK_HERO)
 						local bEnemyHeroesPresent = false
 						local myTeam = core.myTeam
-						for _, hero in pairs(unitList) do
-							if hero:GetTeam() ~= myTeam then
+						for _, unitHero in pairs(unitList) do
+							if unitHero:GetTeam() ~= myTeam then
 								bEnemyHeroesPresent = true
 								break
 							end
 						end
 						if bEnemyHeroesPresent then
-							behaviorLib.heroRecallTarget = hero
+							behaviorLib.heroRecallTarget = unitHero
 							return 50
 						end
 					end
@@ -494,8 +490,8 @@ function behaviorLib.newShouldPort(botBrain, vecDesiredPosition)
 
 		local unitList = HoN.GetUnitsInRadius(vecDesiredPosition, 1000, core.UNIT_MASK_ALIVE + core.UNIT_MASK_HERO)
 		local bEnemyHeroesPresent = false
-		for _, hero in pairs(unitList) do
-			if hero:GetTeam() ~= myTeam then
+		for _, unitHero in pairs(unitList) do
+			if unitHero:GetTeam() ~= myTeam then
 				bEnemyHeroesPresent = true
 			end
 		end
