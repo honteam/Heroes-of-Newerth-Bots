@@ -134,9 +134,8 @@ function object:oncombateventOverride(EventData)
 		-- No use bonuses. Add up bonuses to not drop aggro as skills are no longer 'up'
 		if EventData.InflictorName == "Ability_Fairy1" then
 			nAddBonus = nAddBonus + object.nHealUp
-			object.nGraveyardUseTime = EventData.TimeStamp
 		elseif EventData.InflictorName == "Ability_Fairy3" then
-			nAddBonus = nAddBonus + object.nHealUp
+			nAddBonus = nAddBonus + object.nStunUp
 		end
 	elseif EventData.Type == "Item" then
 		if EventData.SourceUnit == core.unitSelf:GetUniqueID() then
