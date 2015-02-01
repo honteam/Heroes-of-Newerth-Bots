@@ -785,6 +785,8 @@ function behaviorLib.GetSafeBlinkPosition(vecDesiredPosition, nRange)
 	return nil
 end
 
+behaviorLib.bTPWithNymph = true -- Set false to not to try get lift from nymph
+
 behaviorLib.tPath = nil
 behaviorLib.nPathNode = 1
 behaviorLib.vecGoal = Vector3.Create()
@@ -909,7 +911,7 @@ function behaviorLib.MoveExecute(botBrain, vecDesiredPosition)
 	local vecMyPosition = unitSelf:GetPosition()
 	local vecMovePosition = vecDesiredPosition
 	
-	if unitSelf:GetTypeName() ~= "Hero_Fairy" then
+	if behaviorLib.bTPWithNymph then
 		local teamBotBrain = core.teamBotBrain
 		local tTeleportData = teamBotBrain.tNymphoraTPData
 

@@ -98,6 +98,8 @@ object.nHealNeeded = 0
 object.vecHealPos = nil
 object.nHealLastCastTime = -20000
 
+-- misc --
+behaviorLib.bTPWithNymph = false -- Don't try to tp with yourself
 
 local function AbilitiesUpUtility(hero)
 	local nUtility = 0
@@ -172,23 +174,23 @@ function object:SkillBuild()
 	end
 
 	for i = 0, unitSelf:GetAbilityPointsAvailable(), 1 do
-		bAbilityLeveled = false
+		local bAbilityLeveled = false
 		if skills.teleport:CanLevelUp() then
 			skills.teleport:LevelUp()
+			bAbilityLeveled = true
 		else
 			if (self.nHealNeeded > 1 and skills.heal:CanLevelUp()) or (self.nManaNeeded > 1 and skills.mana:CanLevelUp()) or
 				(not skills.stun:CanLevelUp() and (skills.heal:CanLevelUp() or skills.mana:CanLevelUp())) then
-				if self.nHealNeeded > self.nManaNeeded and skills.heal:CanLevelUp() then
+				if self.nHealNeeded >= self.nManaNeeded and skills.heal:CanLevelUp() or not skills.mana:CanLevelUp() then
 					skills.heal:LevelUp()
-					bAbilityLeveled = true
 					self.nHealNeeded = self.nHealNeeded - 1
 					--self.nHealNeeded = 0
 				else
 					skills.mana:LevelUp()
-					bAbilityLeveled = true
 					self.nManaNeeded = self.nManaNeeded - 1
 					--self.nManaNeeded = 0
 				end
+				bAbilityLeveled = true
 			elseif skills.stun:CanLevelUp() then
 				skills.stun:LevelUp()
 				bAbilityLeveled = true
@@ -386,7 +388,7 @@ function behaviorLib.customPushExecute(botBrain)
 	bActionTaken = false
 
 	if unitSelf:GetManaPercent() > 0.7 then
-		local creeps = core.localUnits["EnemyCreeps"]
+		local creeps = core.CopyTable(core.localUnits["EnemyCreeps"])
 		core.InsertToTable(creeps, core.localUnits["AllyCreeps"])
 
 		local vecCenterOfCreeps, nCreeps = core.GetGroupCenter(creeps)
