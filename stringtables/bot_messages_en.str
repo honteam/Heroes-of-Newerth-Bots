@@ -180,4 +180,19 @@ rinestone_revenant_death4		Back to the grave...
 rinestone_revenant_death5		I dissipate....
 rinestone_revenant_death6		Cast to the winds....
 
+/////////////////////////////////////////
+// The Community's Legionnaire bot custom messages
+
+community_legionnaire_kill1		BUAHAHAHA!
+community_legionnaire_kill2		Off with their heads!
+community_legionnaire_kill3		I put the meaning into human blender.
+community_legionnaire_kill4		You spin me right round!
+community_legionnaire_kill5		Did I break your spirit?
+community_legionnaire_kill6		You spin my head right round, right round. When ya go down, when ya go down down.
+
+community_legionnaire_death1	Spinning out of control...
+community_legionnaire_death2	I think I'm gonna throw up...
+community_legionnaire_death3	Stop taunting me!
+community_legionnaire_death4	Off with.....my head?
+
 // End - do not delete this line
