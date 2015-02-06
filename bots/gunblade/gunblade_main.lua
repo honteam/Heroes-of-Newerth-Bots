@@ -236,7 +236,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	end
 	
 	--GrapplingShot
-	if (nLastHarassUtility > object.nGrapplingShotThreshold) and abilGrapplingShot:CanActivate() then
+	if (nLastHarassUtility > object.nGrapplingShotThreshold) and abilGrapplingShot:CanActivate() and not unitSelf:HasState("State_Gunblade_Ability4") then
 		local nRange = abilGrapplingShot:GetRange()
 		if nTargetDistanceSq < (nRange * nRange) then
 			bActionTaken = core.OrderAbilityEntity(botBrain, abilGrapplingShot, unitTarget)
@@ -269,7 +269,8 @@ local function HarassHeroExecuteOverride(botBrain)
 	
 	--DemonicShield
 	if not bActionTaken and abilDemonicShield:CanActivate() then
-		if (nLastHarassUtility > object.nDemonicShieldThreshold and (.45 > unitSelf:GetHealthPercent() or core.NumberElements(tLocalEnemyHeroes)) > 0) or (core.NumberElements(tLocalEnemyHeroes) > 2) then--activate on utility calc or if more than 2 hostiles nearby or lower than 45% health with an enemy nearby
+		if ((nLastHarassUtility > object.nDemonicShieldThreshold and (unitSelf:GetHealthPercent() < .45 or core.NumberElements(tLocalEnemyHeroes) > 0)) or (core.NumberElements(tLocalEnemyHeroes) > 2)) then
+			--activate on utility calc or if more than 2 hostiles nearby or lower than 45% health with an enemy nearby
 			bActionTaken = core.OrderAbility(botBrain, abilDemonicShield)
 		end
 	end

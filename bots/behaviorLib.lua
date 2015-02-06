@@ -637,6 +637,7 @@ function behaviorLib.PortLogic(botBrain, vecDesiredPosition)
 				end
 				
 				if bSuccess then
+					behaviorLib.tPath = nil
 					core.nextOrderTime = HoN.GetGameTime() + core.timeBetweenOrders --seed some extra time in there
 				end
 			end
@@ -805,7 +806,7 @@ function behaviorLib.PathLogic(botBrain, vecDesiredPosition)
 	local unitSelf = core.unitSelf
 	local vecMyPosition = unitSelf:GetPosition()
 
-	if bRepath then
+	if bRepath or behaviorLib.tPath == nil then
 		if bDebugEchos then BotEcho("Repathing!") end
 
 		behaviorLib.tPath = behaviorLib.GetSafePath(vecDesiredPosition)
@@ -2465,13 +2466,13 @@ function behaviorLib.PositionSelfBackUp()
 	end
 
 	if vecReturn == nil then
-
 		local tPath = behaviorLib.GetSafePath(core.allyWell:GetPosition())
+		if tPath ~= nil then
+			local ClosestNode = BotMetaData.GetClosestNode(vecMyPos)
 
-		local ClosestNode = BotMetaData.GetClosestNode(vecMyPos)
-
-		if tPath[1]:GetIndex() == ClosestNode:GetIndex() and #tPath > 1 then
-			vecReturn = tPath[2]:GetPosition()
+			if tPath[1]:GetIndex() == ClosestNode:GetIndex() and #tPath > 1 then
+				vecReturn = tPath[2]:GetPosition()
+			end
 		end
 	end
 
@@ -3297,6 +3298,7 @@ function behaviorLib.SellLowestItems(botBrain, numToSell)
 	local inventory = core.unitSelf:GetInventory(true)
 	local lowestValue
 	local lowestSlot
+	local lowestItem = nil
 
 	while numToSell > 0 do
 		lowestValue = 99999
@@ -3316,7 +3318,7 @@ function behaviorLib.SellLowestItems(botBrain, numToSell)
 			BotEcho("Selling "..lowestItem:GetName().." in slot "..lowestItem:GetSlot())
 			behaviorLib.removeItemBehavior(lowestItem:GetName())
 			core.unitSelf:Sell(lowestItem)
-			inventory[lowestItem:GetSlot()] = ""
+			inventory[lowestItem:GetSlot()] = nil
 			numToSell = numToSell - 1
 		else
 			--out of items
@@ -3355,6 +3357,11 @@ function behaviorLib.DetermineNextItemDef(botBrain)
 	end
 
 	local idefCurrent = HoN.GetItemDefinition(name)
+	if idefCurrent == nil then
+		BotEcho('ERROR! Item code '..behaviorLib.curItemList[1]..' is invalid!')
+		return
+	end
+	
 	local bStackable = idefCurrent:GetRechargeable() --"rechargeable" items are items that stack
 
 	local numValid = 0

@@ -122,8 +122,8 @@ object.nBarbedArmorUp = 10
 
 -- Bonus agression points that are applied to the bot upon successfully using a skill/item
 
-object.nTauntUse = 13
-object.nChargeUse = 12
+object.nTauntUse = 14
+object.nChargeUse = 40
 object.nDecapUse = 18
 object.nPortalKeyUse = 20
 object.nBarbedArmorUse = 18
@@ -199,16 +199,22 @@ shopping.CheckItemBuild = legoItemBuilder
 ------------------------------
 --          Skills          --
 ------------------------------
-
+local bSkillsValid = false
 function object:SkillBuild()
 	core.VerboseLog("SkillBuild()")
 
 	local unitSelf = self.core.unitSelf
-	if  skills.abilWhirlingBlade == nil then
+	if not bSkillsValid then
 		skills.abilTaunt = unitSelf:GetAbility(0)
 		skills.abilCharge = unitSelf:GetAbility(1)
 		skills.abilWhirlingBlade = unitSelf:GetAbility(2)
 		skills.abilDecap = unitSelf:GetAbility(3)
+		
+		if (skills.abilWhirlingBlade and skills.abilTaunt and skills.abilCharge and skills.abilWhirlingBlade and skills.abilDecap) then
+			bSkillsValid = true
+		else
+			return
+		end
 	end
 
 	local nPoints = unitSelf:GetAbilityPointsAvailable()
@@ -396,26 +402,28 @@ end
 ----------------------------------------
 --          Harass Behaviour          --
 ----------------------------------------
-
+local easyDecapTime = 0
 local function HarassHeroExecuteOverride(botBrain)
+	local bDebugEchos = false
+	
+	if core.unitSelf:HasState("State_Legionnaire_Ability2_Self") then
+		-- We are currently charging the enemy
+		return true
+	end
 	
 	local unitTarget = behaviorLib.heroTarget
+	--Target is invalid, move on to the next behaviour
 	if unitTarget == nil then
-		return object.harassExecuteOld(botBrain)
+		return false
 	end
-
+	
+	local bActionTaken = false
+		
 	local unitSelf = core.unitSelf
 	local vecMyPosition = unitSelf:GetPosition()
 	local vecTargetPosition = unitTarget:GetPosition()
 	local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
 	local nLastHarassUtility = behaviorLib.lastHarassUtil
-
-	local bActionTaken = false
-
-	if unitSelf:HasState("State_Legionnaire_Ability2_Self") then
-		-- We are currently charging the enemy
-		return true
-	end
 	
 	-- Get items
 	core.itemPortalKey = core.GetItem("Item_PortalKey")
@@ -488,6 +496,12 @@ local function HarassHeroExecuteOverride(botBrain)
 			local nRange = abilDecap:GetRange()
 			if nTargetDistanceSq <= (nRange * nRange) then
 				local nInstantKillThreshold = getDecapKillThreshold()
+				
+				if core.nDifficulty == core.nEASY_DIFFICULTY and HoN:GetGameTime() > easyDecapTime + 3000 then
+					nInstantKillThreshold = nInstantKillThreshold + core.RandomReal(-50, 250)
+					easyDecapTime = HoN:GetGameTime()
+				end
+				
 				if unitTarget:GetHealth() <  nInstantKillThreshold then
 					bActionTaken = core.OrderAbilityEntity(botBrain, abilDecap, unitTarget)
 				end
@@ -546,7 +560,7 @@ object.lastJungleExecute = 0
 
 -------- Behavior Functions --------
 function jungleUtility(botBrain)
-	if (HoN.GetRemainingPreMatchTime() and HoN.GetRemainingPreMatchTime()>14000) or core.tMyLane.sLaneName~='jungle' then -- don't try if we have a lane!
+	if (HoN.GetRemainingPreMatchTime() and HoN.GetRemainingPreMatchTime() > 14000) or core.tMyLane.sLaneName ~= 'jungle' then -- don't try if we have a lane!
 		return 0
 	end
 	return 21
@@ -556,19 +570,19 @@ local bBeenToOutside = false --have we been to the outside of our next camp?
 local bShouldStack = false
 function jungleExecute(botBrain)
 	local unitSelf = core.unitSelf
-	local debugMode=false
+	local debugMode = false
 	local jungleLib = core.teamBotBrain.jungleLib
 
 	local vecMyPos = unitSelf:GetPosition()
 	local vecTargetPos, nCamp = jungleLib.getNearestCampPos(vecMyPos, "Legionnaire", 0, object.currentMaxDifficulty)
 	
 	-- if we don't have a camp to go to, wait at the hard camp closest to well
-	if nCamp==nil then-- we have no next position! Likely the beginning of the game, go to default camp and wait.
+	if nCamp == nil then-- we have no next position! Likely the beginning of the game, go to default camp and wait.
 		object.nLastCamp = -1
 		if core.myTeam == HoN.GetHellbourneTeam() then
-			nCamp=8
+			nCamp = 8
 		else
-			nCamp=2
+			nCamp = 2
 		end
 		vecTargetPos = jungleLib.tJungleSpots[nCamp].vecOutsidePos
 	end
@@ -580,7 +594,7 @@ function jungleExecute(botBrain)
 	if (nCamp ~= object.nLastCamp) then
 		bBeenToOutside = false
 	end
-	object.nLastCamp=nCamp
+	object.nLastCamp = nCamp
 	-- we are too far, reset the camp.
 	if bBeenToOutside and nDistanceSq > 1000 * 1000 and not bShouldStack then
 		bBeenToOutside = false
@@ -681,7 +695,7 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.jungleBehavior)
 
 --Position self, but only if not in jungle.
 local function PositionSelfUtilityOverride(botBrain)
-	if (core.tMyLane and core.tMyLane.sLaneName~='jungle') then
+	if (core.tMyLane and core.tMyLane.sLaneName ~= 'jungle') then
 		return object.oldPositionSelfUtility(botBrain)
 	end
 	return 0
@@ -691,7 +705,7 @@ behaviorLib.PositionSelfBehavior["Utility"] = PositionSelfUtilityOverride
 
 --Pre-game, but, we don't head to lanes, we head to jungle.
 local function PreGameUtilityOverride(botBrain)
-	if (not (core.tMyLane and core.tMyLane.sLaneName=='jungle')) then
+	if (not (core.tMyLane and core.tMyLane.sLaneName == 'jungle')) then
 		return object.oldPreGameUtility(botBrain)
 	end
 	return 0
@@ -701,7 +715,7 @@ behaviorLib.PreGameBehavior["Utility"] = PreGameUtilityOverride
 
 --Return to well, based on more factors than just health.
 function HealAtWellUtilityOverride(botBrain)
-    return object.HealAtWellUtilityOld(botBrain)+(botBrain:GetGold()*8/2000)
+    return object.HealAtWellUtilityOld(botBrain) + (botBrain:GetGold() * 8/2000)
 end
 object.HealAtWellUtilityOld = behaviorLib.HealAtWellBehavior["Utility"]
 behaviorLib.HealAtWellBehavior["Utility"] = HealAtWellUtilityOverride
@@ -711,19 +725,19 @@ behaviorLib.HealAtWellBehavior["Utility"] = HealAtWellUtilityOverride
 -----------------------------------
 
 core.tKillChatKeys={
-    "BUAHAHAHA!",
-    "Off with their heads!",
-    "I put the meaning into human blender.",
-    "You spin me right round!",
-    "Did I break your spirit?",
-    "You spin my head right round, right round. When ya go down, when ya go down down."
+    "community_legionnaire_kill1",
+    "community_legionnaire_kill2",
+    "community_legionnaire_kill3",
+    "community_legionnaire_kill4",
+    "community_legionnaire_kill5",
+    "community_legionnaire_kill6"
 }
 
 core.tDeathChatKeys = {
-    "Spinning out of control..",
-    "I think I'm gonna throw up...",
-    "Stop taunting me!",
-    "Off with.....my head?"
+    "community_legionnaire_death1",
+    "community_legionnaire_death2",
+    "community_legionnaire_death3",
+    "community_legionnaire_death4"
 }
 
 BotEcho(object:GetName()..' finished loading legionnaire_main')

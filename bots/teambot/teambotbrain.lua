@@ -186,6 +186,13 @@ function object:onthink(tGameVariables)
 	StopProfile()
 	
 	StartProfile('UpdateMemoryUnits')
+		-- Track all enemy heroes
+		for nUID,unitEnemy in pairs(object.tEnemyHeroes) do
+			if unitEnemy ~= nil and self:CanSeeUnit(unitEnemy) and unitEnemy:GetHealth() > 0 then
+				self:CreateMemoryUnit(unitEnemy)
+			end
+		end
+		
 		self:UpdateAllMemoryUnits()
 	StopProfile()	
 	

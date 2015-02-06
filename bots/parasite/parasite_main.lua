@@ -88,7 +88,7 @@ object.heroName = 'Hero_Parasite'
 behaviorLib.StartingItems =
 	{"Item_BloodChalice"}
 behaviorLib.LaneItems =
-	{"Item_Marchers", "Item_EnhancedMarchers", "Item_Nuke 5", "Item_SpellShards 3"}
+	{"Item_Marchers", "Item_EnhancedMarchers", "Item_Nuke 5", "Item_SpellShards"}
 behaviorLib.MidItems =
 	{"Item_GrimoireOfPower", "Item_Immunity"} -- Item_Immunity is shrunken head
 behaviorLib.LateItems =
@@ -127,23 +127,28 @@ behaviorLib.safeTreeAngle = 360
 object.nTimeLastFacehugged = 0
 local bBeenToOutside=false
 object.unitInfestedUnit = nil
-object.unitInfestingUnit = nil --currently infesting this unit
 object.nLastCamp=-1
 local nSpamChaliceTill = 0
 
 ------------------------------
 --          Skills          --
 ------------------------------
-
+local bSkillsValid = false
 function object:SkillBuild()
 	core.VerboseLog("SkillBuild()")
 
 	local unitSelf = self.core.unitSelf
-	if  skills.abilLeech == nil then
+	if not bSkillsValid then
 		skills.abilLeech = unitSelf:GetAbility(0)
 		skills.abilInfest = unitSelf:GetAbility(1)
 		skills.abilDrainingVenom = unitSelf:GetAbility(2)
 		skills.abilFacehug = unitSelf:GetAbility(3)
+		
+		if (skills.abilLeech and skills.abilInfest and skills.abilDrainingVenom and skills.abilFacehug) then
+			bSkillsValid = true
+		else
+			return
+		end
 	end
 
 	local nPoints = unitSelf:GetAbilityPointsAvailable()
@@ -167,7 +172,7 @@ end
 ----------------------------------------
 --Return to well, based on more factors than just health.
 function HealAtWellUtilityOverride(botBrain)
-    return object.HealAtWellUtilityOld(botBrain)+(botBrain:GetGold()*8/2000)
+    return object.HealAtWellUtilityOld(botBrain) + (botBrain:GetGold() * 8/2000)
 end
 object.HealAtWellUtilityOld = behaviorLib.HealAtWellBehavior["Utility"]
 behaviorLib.HealAtWellBehavior["Utility"] = HealAtWellUtilityOverride
@@ -249,6 +254,8 @@ local function HarassHeroExecuteOverride(botBrain)
 	local vecTargetPosition = unitTarget:GetPosition()
 	local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
 	local nLastHarassUtility = behaviorLib.lastHarassUtil
+	local bCanSee = core.CanSeeUnit(botBrain, unitTarget)
+	
 	local bActionTaken = false
 	local nTime = HoN:GetGameTime()
 	--don't codex if it hasn't been 0.25 seconds since facehug - because damage won't have been applied yet.
@@ -278,13 +285,13 @@ local function HarassHeroExecuteOverride(botBrain)
 	end
 
 	-- Codex
-	if not bActionTaken then
+	if not bActionTaken and bCanSee and core.nDifficulty ~= core.nEASY_DIFFICULTY then
 		local itemNuke = core.itemNuke
 		if itemNuke then
 			local nNukeRange = itemNuke:GetRange()
 			if itemNuke:CanActivate() and nLastHarassUtility > botBrain.nNukeThreshold and
 			--only codex if it will kill with that and an auto attack
-			(unitTarget:GetHealth() < (300+itemNuke:GetLevel()*100)*(1-unitTarget:GetMagicResistance()) + unitSelf:GetFinalAttackDamageMin()) then
+			(unitTarget:GetHealth() < (300 + itemNuke:GetLevel() * 100) * (1 - unitTarget:GetMagicResistance()) + unitSelf:GetFinalAttackDamageMin()) then
 				if nTargetDistanceSq <= (nNukeRange * nNukeRange) then
 					bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, itemNuke, unitTarget)
 					core.OrderAttackClamp(botBrain, unitSelf, unitTarget, false)
@@ -344,7 +351,7 @@ local function jungleUtility(botBrain)
 	
 	local nRemainingTime = HoN.GetRemainingPreMatchTime()
 	-- don't reference core.tMyLane until it actually has a value
-	if (nRemainingTime and nRemainingTime>14000) or core.tMyLane.sLaneName~='jungle' then -- don't try if we have a lane!
+	if (nRemainingTime and nRemainingTime > 14000) or core.tMyLane.sLaneName ~= 'jungle' then -- don't try if we have a lane!
 		return 0
 	end
 	
@@ -362,17 +369,6 @@ local function jungleExecute(botBrain)
 	local jungleLib = core.teamBotBrain.jungleLib
 	local unitSelf = core.unitSelf -- Set to parasite for the camp searching stuff
 	
-	--get infested unit if there is one
-	if (object.unitInfestingUnit and object.unitInfestingUnit:IsValid() and object.unitInfestingUnit:HasState("State_Parasite_Ability2_Target")) then
-		object.unitInfestedUnit = object.unitInfestingUnit
-		object.unitInfestingUnit = nil
-	end
-
-	--remove infested unit if it is gone
-	if (object.unitInfestedUnit and not object.unitInfestedUnit:IsAlive()) then
-		object.unitInfestedUnit = nil
-	end
-	
 	-- get information about the nearest jungle spot
 	local vecMyPos = unitSelf:GetPosition()
 	local vecTargetPos, nCamp = jungleLib.getNearestCampPos(vecMyPos, "Parasite", 85, 200, unitSelf:GetTeam())
@@ -384,12 +380,12 @@ local function jungleExecute(botBrain)
 	end
 	
 	-- we have no camp to go to... Lets try to find one if we can do them
-	if nCamp==nil then 
+	if nCamp == nil then 
 		local nLevel = unitSelf:GetLevel()
 		if nLevel >= 4 then --no more hard camps on our side of the river.. lets try medium camps if we can do them?
 			vecTargetPos, nCamp = jungleLib.getNearestCampPos(vecMyPos, "Parasite", 40, 200, unitSelf:GetTeam())
 		end
-		if nCamp==nil and nLevel >= 16 then --what.. Still no free camps, take out ancients if we can?
+		if nCamp == nil and nLevel >= 16 then --what.. Still no free camps, take out ancients if we can?
 			vecTargetPos, nCamp = jungleLib.getNearestCampPos(vecMyPos, "Parasite", 40, 300, unitSelf:GetTeam())
 		end
 	end
@@ -402,15 +398,15 @@ local function jungleExecute(botBrain)
 		--BotEcho("New camp!")
 		bBeenToOutside = false
 	end
-	object.nLastCamp=nCamp
+	object.nLastCamp = nCamp
 	
 	-- if we don't have a camp to go to, wait at the hard camp closest to well
-	if nCamp==nil then-- we have no next position! Likely the beginning of the game, go to default camp and wait.
+	if nCamp == nil then-- we have no next position! Likely the beginning of the game, go to default camp and wait.
 		object.nLastCamp = -1
 		if core.myTeam == HoN.GetHellbourneTeam() then
-			nCamp=7
+			nCamp = 7
 		else
-			nCamp=1
+			nCamp = 1
 		end
 		vecTargetPos = jungleLib.tJungleSpots[nCamp].vecOutsidePos
 	end 
@@ -420,7 +416,8 @@ local function jungleExecute(botBrain)
 	
 	-- Get out of creeps and go to the outside of the camp if we haven't yet - this means we can get a good view of all the creeps in the camp to infest the best one.
 	if not bBeenToOutside then
-	
+		--BotEcho("not outside")
+		
 		-- if we are close to the outside of a camp, we can now go into the camp
 		if Vector3.Distance2DSq(vecMyPos, jungleLib.tJungleSpots[nCamp].vecOutsidePos) < 100 * 100 then -- we can go into the camp now!
 			bBeenToOutside = true
@@ -436,9 +433,12 @@ local function jungleExecute(botBrain)
 			-- kill the infected creep
 			return core.OrderAbility(botBrain, abilEscape)
 		end
+		
 		return core.OrderMoveToPosAndHoldClamp(botBrain, unitSelf, jungleLib.tJungleSpots[nCamp].vecOutsidePos)
 	-- Lets kill the units in the camp
-	else 
+	else
+		--BotEcho("inside")
+		
 		-- Kill neutrals in the camp
 		local tUnits = core.localUnits["Neutrals"]
 		if tUnits then
@@ -471,7 +471,7 @@ local function jungleExecute(botBrain)
 						return
 					end
 				else
-					if (core.GetAttackSequenceProgress(unitSelf)=="idle") then
+					if (core.GetAttackSequenceProgress(unitSelf) == "idle") then
 						--perhaps we are stuck? This sometimes happens upon leaving retreating and trying to leave base again. We shall check for it here.
 						if Vector3.Distance2DSq(vecMyPos, jungleLib.tJungleSpots[nCamp].vecOutsidePos) > 1000 * 1000 then -- we are too far, reset it.
 							bBeenToOutside = false
@@ -484,10 +484,10 @@ local function jungleExecute(botBrain)
 			
 			local abilFirstAbilitiy = object.unitInfestedUnit and object.unitInfestedUnit:GetAbility(0)
 			local sTypeName = object.unitInfestedUnit and object.unitInfestedUnit:GetTypeName()
-			if object.unitInfestedUnit and nDistanceSq < 200*200 and (sTypeName == "Neutral_Catman_leader" or sTypeName == "Neutral_Minotaur") and abilFirstAbilitiy and abilFirstAbilitiy:CanActivate() then
+			if object.unitInfestedUnit and nDistanceSq < 200 * 200 and (sTypeName == "Neutral_Catman_leader" or sTypeName == "Neutral_Minotaur") and abilFirstAbilitiy and abilFirstAbilitiy:CanActivate() then
 				--BotEcho("Using ability!")
 				core.OrderAbility(botBrain, abilFirstAbilitiy)
-			elseif (skills.abilInfest:GetActualRemainingCooldownTime()<8 or nDistanceSq < (500 * 500) or object.unitInfestedUnit ~= nil) then
+			elseif (skills.abilInfest:GetActualRemainingCooldownTime() < 8 or nDistanceSq < (500 * 500) or object.unitInfestedUnit ~= nil) then
 				local nLowestHealth = 999999
 				local unitWeakest = nil
 				--BotEcho("Gonna search for a target "..core.NumberElements(tUnits))
@@ -528,11 +528,28 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.jungleBehavior)
 ----------------------------------------
 --  	OnThink Override	  --
 ----------------------------------------
+object.unitHero = nil
 function object:onthinkOverride(tGameVariables) --This is run, even while dead. Every frame.
 	self:onthinkOld(tGameVariables)--don't distrupt old think, run it.
-	local unitSelf = core.unitSelf
 	
-	-- If we start on another behavior, but we are inside a unit, leave the unit. This is in utility as it is run constantly.
+	if self.unitHero == nil then
+		self.unitHero = self:GetHeroUnit()
+	end
+	
+	--get infested unit if there is one
+	local tMyUnits = core.tControllableUnits.AllUnits
+	if core.NumberElements(tMyUnits) > 1 then
+		for nUID, unit in pairs(tMyUnits) do
+			if unit:IsValid() and unit:HasState("State_Parasite_Ability2_Target") then
+				object.unitInfestedUnit = unit
+				break
+			end
+		end
+	else
+		object.unitInfestedUnit = nil
+	end
+	
+	-- If we start on another behavior, but we are inside a unit, leave the unit.
 	if object.unitInfestedUnit and core.GetCurrentBehaviorName(self) ~= "jungle" and core.GetCurrentBehaviorName(self) ~= "RetreatFromThreat" and core.GetCurrentBehaviorName(self) ~= "PositionSelf" then
 		--BotEcho("Exited due to another behavior taking over! ".. core.GetCurrentBehaviorName(self))
 		core.OrderAbility(self, object.unitInfestedUnit:GetAbility(3))
@@ -580,19 +597,19 @@ behaviorLib.PreGameBehavior["Execute"] = PreGameExecuteOverride
 -----------------------------------
 
 core.tKillChatKeys = {
-    "Don't throw up!",
-    "You look a little sick.",
-    "Why is your face so pale?",
-    "The SITE up here is to DIE for!",
-    "Nothing is immune to me!"
+    "community_parasite_kill1",
+    "community_parasite_kill2",
+    "community_parasite_kill3",
+    "community_parasite_kill4",
+    "community_parasite_kill5"
 }
 
 core.tDeathChatKeys = {
-    "All I wanted was a hug!",
-    "I think I'm gonna throw up...",
-    "I feel sick..",
-    "Let me back in!!!",
-	"You cant get rid of me forever"
+    "community_parasite_death1",
+    "community_parasite_death2",
+    "community_parasite_death3",
+    "community_parasite_death4",
+    "community_parasite_death5"
 }
 
 BotEcho(object:GetName()..' finished loading parasite_main')

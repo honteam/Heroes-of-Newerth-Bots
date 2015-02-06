@@ -476,3 +476,62 @@ function object.testDisplayAllNodes()
 		end
 	end
 end
+
+-- Test GetPurchaserPlayersHero
+if false then
+	-- [[
+	local sOutput = "My hero --\n"
+	local inventory = core.unitSelf:GetInventory(false)
+	for slot = 1, 6, 1 do
+		local curItem = inventory[slot]
+		if curItem ~= nil then
+			local unitPurchaserHero = curItem:GetPurchaserPlayersHero()
+			if unitPurchaserHero ~= nil then
+				sOutput = sOutput..slot..": "..unitPurchaserHero:GetTypeName().." "..curItem:GetName().."\n"
+			else
+				
+			end
+		else
+			sOutput = sOutput..slot..": empty\n"
+		end
+	end
+	BotEcho(sOutput)
+	--]]
+	
+	-- [[
+	-- courier
+	local unitCourier			
+	for _,unit in pairs(core.tControllableUnits.InventoryUnits) do
+		BotEcho(unit:GetTypeName())
+		if core.IsCourier(unit) then
+			unitCourier = unit
+			break
+		end
+	end		
+	
+	if unitCourier ~= nil then
+		sOutput = "Courier --\n"
+		local inventory = unitCourier:GetInventory(false)
+		for slot = 1, 6, 1 do
+			local curItem = inventory[slot]
+			if curItem ~= nil then
+				local unitPurchaserHero = curItem:GetPurchaserPlayersHero()
+				if unitPurchaserHero ~= nil then
+					sOutput = sOutput..slot..": "..unitPurchaserHero:GetTypeName().." "..curItem:GetName().."\n"
+				else
+					
+				end
+			else
+				sOutput = sOutput..slot..": empty\n"
+			end
+		end
+		BotEcho(sOutput)
+	end
+	--]]
+end
+
+-- Test Physical and Magical Immunity
+if false then		
+	BotEcho("Magic Immunity: "..tostring(core.unitSelf:IsMagicImmune()).."  Physical: "..tostring(core.unitSelf:IsPhysicalImmune()))
+end
+	

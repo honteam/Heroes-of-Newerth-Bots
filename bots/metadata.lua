@@ -58,7 +58,6 @@ function metadata.Initialize(sMapName)
 		BotEcho(" ! ! Warning, no metadata for map "..sMapName.." ! !")
 	end
 
-	--Todo: per map awaypoints
 	BotMetaData.RegisterLayer('/bots/getAwayPoints.botmetadata')
 	BotMetaData.RegisterLayer(metadata.MapMetadataFile)
 	BotMetaData.SetActiveLayer(metadata.MapMetadataFile)

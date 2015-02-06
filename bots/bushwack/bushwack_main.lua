@@ -71,28 +71,34 @@ behaviorLib.StartingItems = {"2 Item_DuckBoots", "2 Item_MinorTotem", "Item_Heal
 behaviorLib.LaneItems = 
 	{"Item_Marchers", "Item_Soulscream", "Item_Steamboots"}
 behaviorLib.MidItems = 
-	{"Item_Energizer", "Item_ElderParasite", "item_Lighting1", "Item_DawnBringer"} 
+	{"Item_Energizer", "Item_ElderParasite", "Item_Lightning1", "Item_Dawnbringer"} 
 behaviorLib.LateItems = 
-	{"Item_Weapon3", "item_lighting2", "Item_Evasion", "item_Immunity"}
+	{"Item_Weapon3", "Item_Lightning2", "Item_Evasion", "Item_Immunity"}
 
 --------------------------------
 -- Skills
 --------------------------------
+local bSkillsValid = false
 function object:SkillBuild()
 
 	local unitSelf = self.core.unitSelf
-    if  skills.abilDart == nil then
-	skills.abilDart = core.WrapInTable(unitSelf:GetAbility(0))
+    if not bSkillsValid then
+		skills.abilDart = core.WrapInTable(unitSelf:GetAbility(0))
         skills.abilDart.nLastCastTime = 0
         skills.abilJump = unitSelf:GetAbility(1)
         skills.abilSplit = core.WrapInTable(unitSelf:GetAbility(2))
         skills.abilSplit.nLastCastTime = 0
         skills.abilToxin = unitSelf:GetAbility(3)
+		
+		if (skills.abilDart and skills.abilJump and skills.abilSplit and skills.abilToxin) then
+			bSkillsValid = true
+		else
+			return
+		end		
     end
     if unitSelf:GetAbilityPointsAvailable() <= 0 then
         return
-    end
-    
+    end    
    
     local nlev = unitSelf:GetLevel()
     local nlevpts = unitSelf:GetAbilityPointsAvailable()
@@ -228,8 +234,8 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 --Modified from kairus101's BalphBot!
 local function HealAtWellUtilityOverride(botBrain)
 
-local vecBackupPos = core.allyWell and core.allyWell:GetPosition() or behaviorLib.PositionSelfBackUp()
-local nGoldSpendingDesire = 6 / 2000
+	local vecBackupPos = core.allyWell and core.allyWell:GetPosition() or behaviorLib.PositionSelfBackUp()
+	local nGoldSpendingDesire = 6 / 2000
 
 	if (Vector3.Distance2DSq(core.unitSelf:GetPosition(), vecBackupPos) < 400 * 400 and core.unitSelf:GetManaPercent() * 100 < 95) then
 		return 80
@@ -250,28 +256,5 @@ function behaviorLib.CustomReturnToWellExecute(botBrain)
 end
 object.HealAtWellUtilityOld = behaviorLib.HealAtWellBehavior["Utility"]
 behaviorLib.HealAtWellBehavior["Utility"] = HealAtWellUtilityOverride
-
---[[ colors:
-	red
-	aqua == cyan
-	gray
-	navy
-	teal
-	blue
-	lime
-	black
-	brown
-	green
-	olive
-	white
-	silver
-	purple
-	maroon
-	yellow
-	orange
-	lilac
-	fuchsia == magenta
-	invisible
---]]
 
 BotEcho('finished loading bushwack_main')
