@@ -42,26 +42,42 @@ function metadata.GetLane(sLane)
 	return {}
 end
 
-metadata.MapMetadataFile = ""
+metadata.tMetadataFileNames = {}
 metadata.bInitialized = false
 
-function metadata.Initialize(sMapName)	
+function metadata.SetActiveLayer(sLayerName)
+	if metadata.tMetadataFileNames[sLayerName] ~= nil then
+		BotMetaData.SetActiveLayer(metadata.tMetadataFileNames[sLayerName])
+	else
+		BotEcho("Metadata layer " .. sLayerName .. " not found.")
+	end
+end
+
+
+function metadata.Initialize(sMapName)
+	local tMetadataFileNames = metadata.tMetadataFileNames
 	if sMapName == "caldavar" then
-		metadata.MapMetadataFile = '/bots/caldavar.botmetadata'
+		tMetadataFileNames.default = '/bots/caldavar.botmetadata'
 	elseif sMapName == "tutorial_stage1" then
-		metadata.MapMetadataFile = '/bots/tutorial1.botmetadata'
+		tMetadataFileNames.default = '/bots/tutorial1.botmetadata'
 	elseif sMapName == "tutorial" then
-		metadata.MapMetadataFile = '/bots/caldavar.botmetadata'
+		tMetadataFileNames.default = '/bots/caldavar.botmetadata'
 	elseif sMapName == "tutorial_lasthit" then
-		metadata.MapMetadataFile = '/bots/tutorial1.botmetadata'
+		tMetadataFileNames.default = '/bots/tutorial1.botmetadata'
+	elseif sMapName == "Midwars" then
+		nil
 	else
 		BotEcho(" ! ! Warning, no metadata for map "..sMapName.." ! !")
 	end
+	if sMapName == "caldavar" or sMapName:sub(1, 8) == "tutorial" then
+		tMetadataFileNames.awaypoints = '/bots/caldavar-awayPoints.botmetadata'
+	end
 
 	--Todo: per map awaypoints
-	BotMetaData.RegisterLayer('/bots/getAwayPoints.botmetadata')
-	BotMetaData.RegisterLayer(metadata.MapMetadataFile)
-	BotMetaData.SetActiveLayer(metadata.MapMetadataFile)
+	for sMetadataFile in pairs(tMetadataFileNames) do
+		BotMetaData.RegisterLayer(sMetadataFile)
+	end
+	BotMetaData.SetActiveLayer(tMetadataFileNames.default)
 
 	-- Set up lanes
 	local vecStart = Vector3.Create()
@@ -93,13 +109,13 @@ function metadata.Initialize(sMapName)
 	metadata.tBottom.sLaneName = 'lane_bot'
 	
 	if metadata.tTop == nil or core.NumberElements(metadata.tTop) == 0 then
-		BotEcho('Top lane is invalid!')
+		BotEcho('Top lane not found!')
 	end
 	if metadata.tMiddle == nil or core.NumberElements(metadata.tMiddle) == 0 then
-		BotEcho('Middle lane is invalid!')
+		BotEcho('Middle lane not found!')
 	end
 	if metadata.tBottom == nil or core.NumberElements(metadata.tBottom) == 0 then
-		BotEcho('Bottom lane is invalid!')
+		BotEcho('Bottom lane not found!')
 	end
 
 	metadata.bInitialized = true
