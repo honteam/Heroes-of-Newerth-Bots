@@ -65,7 +65,7 @@ function metadata.Initialize(sMapName)
 	elseif sMapName == "tutorial_lasthit" then
 		tMetadataFileNames.default = '/bots/tutorial1.botmetadata'
 	elseif sMapName == "Midwars" then
-		nil
+		tMetadataFileNames.default = '/bots/midwars.botmetadata'
 	else
 		BotEcho(" ! ! Warning, no metadata for map "..sMapName.." ! !")
 	end
