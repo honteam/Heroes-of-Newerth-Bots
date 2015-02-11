@@ -1,4 +1,5 @@
 --AlunaBot v1
+-- by Kairus101
 
 local _G = getfenv(0)
 local object = _G.object
@@ -69,6 +70,7 @@ behaviorLib.LateItems = {"Item_Critical1 4", "Item_HarkonsBlade", "Item_Sasuke",
 --------------------------------
 -- Skills
 --------------------------------
+local bSkillsValid = false
 object.tSkills = {
     1, 0, 1, 2, 1, 3,	-- 1-6
 	1, 0, 0, 0, 3, 		-- 7-11
@@ -79,11 +81,17 @@ function object:SkillBuild()
 
 	local unitSelf = self.core.unitSelf
 
-	if skills.abilEmeraldLightning == nil then
+	if not bSkillsValid then
 		skills.abilEmeraldLightning = unitSelf:GetAbility(0)
 		skills.abilPowerThrow = unitSelf:GetAbility(1)
 		skills.abilDejaVu = unitSelf:GetAbility(2)
 		skills.abilEmeraldRed = unitSelf:GetAbility(3)
+		
+		if skills.abilEmeraldLightning and skills.abilPowerThrow and skills.abilDejaVu and skills.abilEmeraldRed then
+			bSkillsValid = true
+		else
+			return
+		end
 	end
 	
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then
@@ -253,6 +261,11 @@ end
 ----------------------------------------
 -- This is where things get interesting.
 local function snipeUtility(botBrain)
+	if core.nDifficulty == core.nEASY_DIFFICULTY then
+		-- Sniper no sniping!
+		return 0
+	end
+	
 	if (object.bStillThrowing) then
 		return 90
 	end
@@ -269,21 +282,24 @@ local function snipeUtility(botBrain)
 
 	local nDamage = 70 + abilPowerThrow:GetLevel() * 70
 	
-	for nUID,unitEnemy in pairs(HoN.GetHeroes(core.enemyTeam)) do
+	local tEnemyHeroes = {}
+	core.teamBotBrain:AddMemoryUnitsToTable(tEnemyHeroes, core.enemyTeam, nil, nil, function(unit) return unit:IsHero() end)
+	
+	for nUID,unitEnemy in pairs(tEnemyHeroes) do
 		if (unitEnemy) then
-			if core.CanSeeUnit(botBrain, unitEnemy) and unitEnemy:GetHealth() > 0 then
-				tEnemyHero = core.teamBotBrain:CreateMemoryUnit(unitEnemy)
-			else
-				--we can't see them any more, perfect time to strike!
-				tEnemyHero = core.teamBotBrain:GetMemoryUnit(unitEnemy)
-				if (tEnemyHero) then
-					local nHealth = tEnemyHero.storedHealth
-					local vecPosition = tEnemyHero.lastStoredPosition
-					--if we can kill them, and if they are close or (we can use our combo
-					if (nHealth + 40 < nDamage and vecPosition and (Vector3.Distance2DSq(vecSelfPos, vecPosition) < 1500 * 1500 or 
+			local nHealth = unitEnemy:GetHealth()
+			local vecPosition = unitEnemy:GetPosition()
+			
+			if (nHealth ~= nil and vecPosition ~= nil) then
+				if not core.CanSeeUnit(botBrain, unitEnemy) then
+					--BotEcho("Considering sniping "..unitEnemy:GetTypeName())
+					--BotEcho("  hp: "..floor(nHealth).."  nDamage: "..nDamage.."  dist: "..Vector3.Distance2D(vecSelfPos, vecPosition))
+				
+					--we can't see them any more, perfect time to strike!
+					if (nHealth + 40 < nDamage and (Vector3.Distance2DSq(vecSelfPos, vecPosition) < 1500 * 1500 or 
 						unitSelf:HasState("State_Aluna_Ability4") or (abilEmeraldRed:CanActivate() and unitSelf:GetMana() > 200))) then
-						local nSpeed = tEnemyHero:GetMoveSpeed()
-						local nTimePassed = HoN:GetGameTime() - tEnemyHero.lastStoredTime
+						local nSpeed = unitEnemy:GetMoveSpeed()
+						local nTimePassed = HoN:GetGameTime() - unitEnemy.lastStoredTime
 						object.vecEstimatedSnipePosition, object.unitSnipeEstimatedTime = core.GetSnipeLocation(vecPosition, core.enemyWell:GetPosition(), nSpeed, nTimePassed + 800, vecSelfPos, 3000)
 						object.unitSnipeTarget = unitEnemy
 						return 90
@@ -300,6 +316,9 @@ local function snipeExecute(botBrain)
 	if (not abilPowerThrow:CanActivate()) then
 		return false
 	end
+	
+	--BotEcho("Snipe!!")
+	
 	local bActionTaken = false
 	local unitSelf = core.unitSelf
 	if (object.vecEstimatedSnipePosition) then --position exists

@@ -309,7 +309,7 @@ end
 behaviorLib.StartingItems = 
 	{"Item_LoggersHatchet", "Item_IronBuckler", "Item_RunesOfTheBlight"}
 behaviorLib.LaneItems = 
-	{"Item_IronShield", "Item_Marchers", "Item_Steamboots", "Item_ElderParasite"}
+	{"Item_Marchers", "Item_Steamboots", "Item_ElderParasite"}
 behaviorLib.MidItems = 
 	{"Item_SolsBulwark", "Item_Weapon3", "Item_Critical1 4"} --Item_Weapon3 is Savage Mace, Item_Critical1 is Riftshards
 behaviorLib.LateItems = 

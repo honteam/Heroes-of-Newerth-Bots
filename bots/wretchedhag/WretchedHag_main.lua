@@ -159,22 +159,17 @@ function object:onthinkOverride(tGameVariables)
  
 	-- Toggle Steamboots for more Health/Mana
 	local itemSteamboots = core.GetItem("Item_Steamboots")
-	if itemSteamboots and itemSteamboots:CanActivate() then
+	if itemSteamboots ~= nil and itemSteamboots:CanActivate() then	
 		local unitSelf = core.unitSelf
 		local sKey = itemSteamboots:GetActiveModifierKey()
-		if sKey == "str" then
-			-- Toggle away from STR if health is high enough
-			if unitSelf:GetHealthPercent() > .65 then
-				self:OrderItem(itemSteamboots.object, false)
-			end
-		elseif sKey == "agi" then
-			-- Always toggle past AGI
-			self:OrderItem(itemSteamboots.object, false)
-		elseif sKey == "int" then
-			-- Toggle away from INT if health gets too low
-			if unitSelf:GetHealthPercent() < .45 then
-				self:OrderItem(itemSteamboots.object, false)
-			end
+		
+		local sDesired = "int"
+		if unitSelf:GetHealthPercent() < .45 then
+			sDesired = "str"
+		end
+			
+		if sKey ~= sDesired then
+			core.OrderItemClamp(self, unitSelf, itemSteamboots)
 		end
 	end
 end
