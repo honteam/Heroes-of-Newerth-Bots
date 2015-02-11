@@ -290,14 +290,16 @@ function object.GetNearestRune(pos, bCertain, bPrioritizeBetter)
 	local nearestRune = nil
 	local shortestDistanceSQ = 99999999
 	for _,rune in pairs(object.runes) do
-		if not bCertain or (HoN.CanSeePosition(rune.vecLocation) and rune.unit ~= nil)  then
-			local distanceSQ = Vector3.Distance2DSq(rune.vecLocation, pos)
-			if bPrioritizeBetter and rune.unit and rune.unit ~= "Powerup_Refresh" and HoN.CanSeePosition(rune.location) then
-				distanceSQ = distanceSQ / 2
-			end
-			if not rune.picked and distanceSQ < shortestDistanceSQ then
-				nearestRune = rune
-				shortestDistanceSQ = distanceSQ
+		if not rune.bPicked then
+			if not bCertain or (HoN.CanSeePosition(rune.vecLocation) and rune.unit ~= nil)  then
+				local distanceSQ = Vector3.Distance2DSq(rune.vecLocation, pos)
+				if bPrioritizeBetter and rune.unit and rune.unit ~= "Powerup_Refresh" and HoN.CanSeePosition(rune.location) then
+					distanceSQ = distanceSQ / 2
+				end
+				if not rune.picked and distanceSQ < shortestDistanceSQ then
+					nearestRune = rune
+					shortestDistanceSQ = distanceSQ
+				end
 			end
 		end
 	end
@@ -356,6 +358,10 @@ end
 
 ---- Memory units ----
 object.tMemoryUnits = {}
+
+function object:GetMemoryUnit(unit)
+	return self.tMemoryUnits[unit:GetUniqueID()]
+end
 
 object.nMemoryUnitHealthIntervalMS = 3000
 function object:CreateMemoryUnit(unit)	
