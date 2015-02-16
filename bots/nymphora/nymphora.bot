@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="NymphoraBot"
+	description="bot_description_nymphora"
+	heroname="Hero_Fairy"
+	rootlua="nymphora_main.lua"
+	defaultplayername="NymphoraBot"
+	precachepath="/heroes/fairy/"
+/>

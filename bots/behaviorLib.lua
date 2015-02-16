@@ -786,6 +786,8 @@ function behaviorLib.GetSafeBlinkPosition(vecDesiredPosition, nRange)
 	return nil
 end
 
+behaviorLib.bTPWithNymph = true -- Set false to not to try get lift from nymph
+
 behaviorLib.tPath = nil
 behaviorLib.nPathNode = 1
 behaviorLib.vecGoal = Vector3.Create()
@@ -910,6 +912,23 @@ function behaviorLib.MoveExecute(botBrain, vecDesiredPosition)
 	local vecMyPosition = unitSelf:GetPosition()
 	local vecMovePosition = vecDesiredPosition
 	
+	if behaviorLib.bTPWithNymph then
+		local teamBotBrain = core.teamBotBrain
+		local tTeleportData = teamBotBrain.tNymphoraTPData
+
+		local nCurrentTime = HoN.GetGameTime()
+		if tTeleportData.nChannelEndTime > nCurrentTime then
+			local nMoveSpeed = unitSelf:GetMoveSpeed()
+			local itemGhostMarchers = core.itemGhostMarchers
+			if core.TimeToPosition(tTeleportData.vecStartPos, vecMyPosition, nMoveSpeed, itemGhostMarchers) - 100 < tTeleportData.nChannelEndTime - nCurrentTime then
+				if tTeleportData.nChannelEndTime + core.TimeToPosition(tTeleportData.VecDestPos, vecMovePosition, nMoveSpeed, itemGhostMarchers) <
+					nCurrentTime + core.TimeToPosition(vecMyPosition, vecMovePosition, nMoveSpeed, itemGhostMarchers) then
+					bActionTaken = core.OrderMoveToPosAndHold(botBrain, unitSelf, tTeleportData.vecStartPos)
+				end
+			end
+		end
+	end
+
 	local nDesiredDistanceSq = Vector3.Distance2DSq(vecDesiredPosition, vecMyPosition)			
 	if nDesiredDistanceSq > core.nOutOfPositionRangeSq then
 		--check porting

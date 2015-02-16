@@ -107,6 +107,7 @@ object.runes = {
 }
 local tRuneNames = {"Powerup_Damage", "Powerup_Illusion", "Powerup_Stealth", "Powerup_Refresh", "Powerup_Regen", "Powerup_MoveSpeed", "Powerup_Super"}
 
+object.tNymphoraTPData = {vecStartPos = Vector3.Create(), VecDestPos = Vector3.Create(), nChannelEndTime = 0}
 
 local tMapLanes = {}
 
