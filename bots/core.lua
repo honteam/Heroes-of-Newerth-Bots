@@ -1048,7 +1048,7 @@ function core.GetFurthestCreepWavePos(tLane, bTraverseForward)
 		
 	vecReturn = tbotTeam:GetFrontOfCreepWavePosition(tLane.sLaneKey)
 	
-	if bDebugEchos then BotEcho("Front of "..tLane.sLaneKey..":"..tostring(vecReturn)) end	
+	if bDebugEchos then BotEcho("Front of "..tLane.sLaneKey..":"..tostring(vecReturn)) end
 	if bDebugLines and vecReturn then
 		core.DrawXPosition(vecReturn, 'red')
 	end

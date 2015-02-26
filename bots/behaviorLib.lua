@@ -2346,7 +2346,10 @@ function behaviorLib.PositionSelfExecute(botBrain)
 	local unitTarget = nil
 	vecDesiredPos, unitTarget = behaviorLib.PositionSelfLogic(botBrain)
 
-	if bDebugEchos then BotEcho("PositionSelf myPos: "..tostring(vecMyPosition)); BotEcho("PositionSelf: "..tostring(vecDesiredPos)) end
+	if bDebugEchos then
+		BotEcho("PositionSelf myPos: "..tostring(vecMyPosition))
+		BotEcho("PositionSelf: "..tostring(vecDesiredPos))
+	end
 	
 	if vecDesiredPos then
 		behaviorLib.MoveExecute(botBrain, vecDesiredPos)

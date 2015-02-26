@@ -64,7 +64,7 @@ function metadata.Initialize(sMapName)
 		tMetadataFileNames.default = '/bots/caldavar.botmetadata'
 	elseif sMapName == "tutorial_lasthit" then
 		tMetadataFileNames.default = '/bots/tutorial1.botmetadata'
-	elseif sMapName == "Midwars" then
+	elseif sMapName == "midwars" then
 		tMetadataFileNames.default = '/bots/midwars.botmetadata'
 	else
 		BotEcho(" ! ! Warning, no metadata for map "..sMapName.." ! !")
@@ -74,7 +74,8 @@ function metadata.Initialize(sMapName)
 	end
 
 	--Todo: per map awaypoints
-	for sMetadataFile in pairs(tMetadataFileNames) do
+	for _, sMetadataFile in pairs(tMetadataFileNames) do
+		BotEcho(sMetadataFile)
 		BotMetaData.RegisterLayer(sMetadataFile)
 	end
 	BotMetaData.SetActiveLayer(tMetadataFileNames.default)
@@ -93,20 +94,24 @@ function metadata.Initialize(sMapName)
 		
 		return nOriginalCost + 9999
 	end
-	
-	metadata.tTop = BotMetaData.FindPath(vecStart, vecEnd, funcLaneCost)
-	metadata.tTop.sLaneKey = sLane
-	metadata.tTop.sLaneName = 'lane_top'
-	
+
+	if sMapName == "caldavar" then
+		metadata.tTop = BotMetaData.FindPath(vecStart, vecEnd, funcLaneCost)
+		metadata.tTop.sLaneKey = sLane
+		metadata.tTop.sLaneName = 'lane_top'
+	end
+
 	sLane = 'middle'
 	metadata.tMiddle = BotMetaData.FindPath(vecStart, vecEnd, funcLaneCost)
 	metadata.tMiddle.sLaneKey = sLane
 	metadata.tMiddle.sLaneName = 'lane_mid'
 	
-	sLane = 'bottom'
-	metadata.tBottom = BotMetaData.FindPath(vecStart, vecEnd, funcLaneCost)
-	metadata.tBottom.sLaneKey = sLane
-	metadata.tBottom.sLaneName = 'lane_bot'
+	if sMapName == "caldavar" then
+		sLane = 'bottom'
+		metadata.tBottom = BotMetaData.FindPath(vecStart, vecEnd, funcLaneCost)
+		metadata.tBottom.sLaneKey = sLane
+		metadata.tBottom.sLaneName = 'lane_bot'
+	end
 	
 	if metadata.tTop == nil or core.NumberElements(metadata.tTop) == 0 then
 		BotEcho('Top lane not found!')
