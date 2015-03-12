@@ -2398,6 +2398,12 @@ function behaviorLib.PositionSelfBackUp()
 
 	local bDebugLines = false
 
+	if core.tGameVariables.sMapName == "midwars" then
+		if BotMetaData.GetClosestNode(core.unitSelf:GetPosition()):GetProperty("base") then
+			return core.allyWell:GetPosition()
+		end
+	end
+
 	local vecReturn = nil
 
 	--Metadata have teams as following strings
@@ -2468,7 +2474,6 @@ function behaviorLib.PositionSelfBackUp()
 	end
 
 	if vecReturn == nil then
-
 		local tPath = behaviorLib.GetSafePath(core.allyWell:GetPosition())
 
 		local ClosestNode = BotMetaData.GetClosestNode(vecMyPos)

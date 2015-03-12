@@ -78,6 +78,18 @@ function object:TeamBotBrainInitialize()
 		BotEcho('enemyHeroes')
 		core.printGetTypeNameTable(self.tEnemyHeroes)		
 	end
+
+	if core.tGameVariables.sMapName == "midwars" then
+		self.runes = {{vecLocation = Vector3.Create(7064, 8190), unit=nil, bPicked = true, bBetter=true}}
+		self.nRuneSpawnInterval = 60000
+	else
+		-- metadata file for runes?
+		self.runes = {
+			{vecLocation = Vector3.Create(5824, 9728), unit=nil, bPicked = true, bBetter=true},
+			{vecLocation = Vector3.Create(11136, 5376), unit=nil, bPicked = true, bBetter=true}
+		}
+		self.nRuneSpawnInterval = 120000
+	end
 	
 	object.teamBotBrainInitialized = true
 end
@@ -97,16 +109,14 @@ local STATE_PUSHING		= 2
 object.nPushState = STATE_IDLE
 
 -- To track runes
-object.nRuneNextSpawnCheck = 120000 --2min mark
+object.nRuneSpawnInterval = 60000 -- 1min in midwars, init sets it to 120000 if caldavar
+object.nRuneNextSpawnCheck = object.nRuneSpawnInterval 
 object.nRuneNextCheck = 120000
 object.nRuneCheckInterval = 1000
 
-object.runes = {
-	{vecLocation = Vector3.Create(5824, 9728), unit=nil, bPicked = true, bBetter=true},
-	{vecLocation = Vector3.Create(11136, 5376), unit=nil, bPicked = true, bBetter=true}
-}
-local tRuneNames = {"Powerup_Damage", "Powerup_Illusion", "Powerup_Stealth", "Powerup_Refresh", "Powerup_Regen", "Powerup_MoveSpeed", "Powerup_Super"}
+object.runes = {}
 
+local tRuneNames = {"Powerup_Damage", "Powerup_Illusion", "Powerup_Stealth", "Powerup_Refresh", "Powerup_Regen", "Powerup_MoveSpeed", "Powerup_Super"}
 
 local tMapLanes = {}
 
@@ -123,17 +133,7 @@ end
 --Called every frame the engine gives us during the actual match
 function object:onthink(tGameVariables)
 	StartProfile('onthink')
-	
-	if core.coreInitialized ~= true then
-		core.CoreInitialize(self)
-	end	
-	if self.teamBotBrainInitialized ~= true then
-		self:TeamBotBrainInitialize()
-	end
-	if metadata.bInitialized ~= true then
-		metadata.Initialize(tGameVariables.sMapName)
-	end	
-	
+
 	if core.tGameVariables == nil then
 		if tGameVariables == nil then
 			BotEcho("TGAMEVARIABLES IS NIL OH GOD OH GOD WHYYYYYYYY!??!?!!?")
@@ -168,6 +168,17 @@ function object:onthink(tGameVariables)
 				object.bDefense = false
 			end
 		end
+	end
+	if core.coreInitialized ~= true then
+		core.CoreInitialize(self)
+	end	
+
+	if metadata.bInitialized ~= true then
+		metadata.Initialize(tGameVariables.sMapName)
+	end	
+	
+	if self.teamBotBrainInitialized ~= true then
+		self:TeamBotBrainInitialize()
 	end
 
 	if self.bRunLogic == false then 

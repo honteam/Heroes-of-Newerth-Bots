@@ -202,7 +202,7 @@ function object:onthink(tGameVariables)
 		self:SkillBuild()
 	end
 	StopProfile()
-	
+
 	if self.bRunBehaviors ~= false then
 		StartProfile('Assess behaviors')
 		if nGameTime >= behaviorLib.nNextBehaviorTime then

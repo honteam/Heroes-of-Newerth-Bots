@@ -1705,21 +1705,27 @@ function core.GetLaneBreakdown(unit)
 	local botDist = 99999
 	local inTop = -1
 	local inMid = -1
-	local inBot = -1		
+	local inBot = -1
 
-	local vecTopPoint = core.GetFurthestPointOnPath(position, metadata.GetTopLane(), core.bTraverseForward)		
-	if vecTopPoint then
-		topDist = Vector3.Distance2D(position, vecTopPoint)
+	if metadata.GetTopLane() ~= nil and #metadata.GetTopLane() > 0 then
+		local vecTopPoint = core.GetFurthestPointOnPath(position, metadata.GetTopLane(), core.bTraverseForward)		
+		if vecTopPoint then
+			topDist = Vector3.Distance2D(position, vecTopPoint)
+		end
 	end
 	
-	local vecMidPoint = core.GetFurthestPointOnPath(position, metadata.GetMiddleLane(), core.bTraverseForward)
-	if vecMidPoint then
-		midDist = Vector3.Distance2D(position, vecMidPoint)
+	if metadata.GetMiddleLane() ~= nil and #metadata.GetMiddleLane() > 0 then
+		local vecMidPoint = core.GetFurthestPointOnPath(position, metadata.GetMiddleLane(), core.bTraverseForward)
+		if vecMidPoint then
+			midDist = Vector3.Distance2D(position, vecMidPoint)
+		end
 	end
 	
-	local vecBotPoint = core.GetFurthestPointOnPath(position, metadata.GetBottomLane(), core.bTraverseForward)
-	if vecBotPoint then
-		botDist = Vector3.Distance2D(position, vecBotPoint)
+	if metadata.GetBottomLane() ~= nil and #metadata.GetBottomLane() > 0 then
+		local vecBotPoint = core.GetFurthestPointOnPath(position, metadata.GetBottomLane(), core.bTraverseForward)
+		if vecBotPoint then
+			botDist = Vector3.Distance2D(position, vecBotPoint)
+		end
 	end
 	
 	--pick two lowest ones
