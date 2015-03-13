@@ -12,9 +12,9 @@ local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 
 --------------------------------
 
-metadata.tTop = {}
-metadata.tMiddle = {}
-metadata.tBottom = {}
+metadata.tTop = nil
+metadata.tMiddle = nil
+metadata.tBottom = nil
 
 function metadata.GetTopLane()
 	return metadata.tTop
@@ -66,6 +66,10 @@ function metadata.Initialize(sMapName)
 		tMetadataFileNames.default = '/bots/tutorial1.botmetadata'
 	elseif sMapName == "midwars" then
 		tMetadataFileNames.default = '/bots/midwars.botmetadata'
+		tMetadataFileNames.awaypoints = "/bots/midwars-awayPoints.botmetadata"
+	elseif sMapName == "grimmscrossing" then
+		tMetadataFileNames.default = "/bots/grimmscrossing.botmetadata"
+		tMetadataFileNames.awaypoints = "/bots/grimmscrossing-awayPoints.botmetadata"
 	else
 		BotEcho(" ! ! Warning, no metadata for map "..sMapName.." ! !")
 	end
@@ -73,7 +77,6 @@ function metadata.Initialize(sMapName)
 		tMetadataFileNames.awaypoints = '/bots/caldavar-awayPoints.botmetadata'
 	end
 
-	--Todo: per map awaypoints
 	for _, sMetadataFile in pairs(tMetadataFileNames) do
 		BotEcho(sMetadataFile)
 		BotMetaData.RegisterLayer(sMetadataFile)
@@ -95,24 +98,31 @@ function metadata.Initialize(sMapName)
 		return nOriginalCost + 9999
 	end
 
-	if sMapName == "caldavar" then
+	local tLanes = {top = true, middle = true, bottom = true}
+	if sMapName == "midwars" then
+		tLanes.top = false
+		tLanes.bottom = false
+	elseif sMapName == "grimmscrossing" then
+		tLanes.middle = false
+	end
+
+	if tLanes.top then
 		metadata.tTop = BotMetaData.FindPath(vecStart, vecEnd, funcLaneCost)
 		metadata.tTop.sLaneKey = sLane
 		metadata.tTop.sLaneName = 'lane_top'
 	end
-
-	sLane = 'middle'
-	metadata.tMiddle = BotMetaData.FindPath(vecStart, vecEnd, funcLaneCost)
-	metadata.tMiddle.sLaneKey = sLane
-	metadata.tMiddle.sLaneName = 'lane_mid'
-	
-	if sMapName == "caldavar" then
+	if tLanes.middle then
+		metadata.tMiddle = BotMetaData.FindPath(vecStart, vecEnd, funcLaneCost)
+		metadata.tMiddle.sLaneKey = sLane
+		metadata.tMiddle.sLaneName = 'lane_mid'
+	end
+	if tLanes.bottom then
 		sLane = 'bottom'
 		metadata.tBottom = BotMetaData.FindPath(vecStart, vecEnd, funcLaneCost)
 		metadata.tBottom.sLaneKey = sLane
 		metadata.tBottom.sLaneName = 'lane_bot'
 	end
-	
+
 	if metadata.tTop == nil or core.NumberElements(metadata.tTop) == 0 then
 		BotEcho('Top lane not found!')
 	end

@@ -78,18 +78,6 @@ function object:TeamBotBrainInitialize()
 		BotEcho('enemyHeroes')
 		core.printGetTypeNameTable(self.tEnemyHeroes)		
 	end
-
-	if core.tGameVariables.sMapName == "midwars" then
-		self.runes = {{vecLocation = Vector3.Create(7064, 8190), unit=nil, bPicked = true, bBetter=true}}
-		self.nRuneSpawnInterval = 60000
-	else
-		-- metadata file for runes?
-		self.runes = {
-			{vecLocation = Vector3.Create(5824, 9728), unit=nil, bPicked = true, bBetter=true},
-			{vecLocation = Vector3.Create(11136, 5376), unit=nil, bPicked = true, bBetter=true}
-		}
-		self.nRuneSpawnInterval = 120000
-	end
 	
 	object.teamBotBrainInitialized = true
 end
@@ -124,7 +112,7 @@ local function getMapLanes()
 	if core.tGameVariables.sMapName == 'tutorial_laning' or core.tGameVariables.sMapName == 'midwars' then
 		tMapLanes = {"mid"}
 	elseif core.tGameVariables.sMapName == 'grimmscrossing' or core.tGameVariables.sMapName == 'riftwars' then
-		tMapLanes = {"bot", "mid"}-- these are un-tested, and for possible future development
+		tMapLanes = {"bot", "top"}
 	elseif core.tGameVariables.sMapName == 'caldavar' then
 		tMapLanes = {"bot", "mid", "top", "jungle"}
 	end
@@ -133,6 +121,18 @@ end
 --Called every frame the engine gives us during the actual match
 function object:onthink(tGameVariables)
 	StartProfile('onthink')
+
+	if core.coreInitialized ~= true then
+		core.CoreInitialize(self)
+	end
+
+	if metadata.bInitialized ~= true then
+		metadata.Initialize(tGameVariables.sMapName)
+	end
+
+	if self.teamBotBrainInitialized ~= true then
+		self:TeamBotBrainInitialize()
+	end
 
 	if core.tGameVariables == nil then
 		if tGameVariables == nil then
@@ -167,18 +167,22 @@ function object:onthink(tGameVariables)
 			if core.nDifficulty == core.nEASY_DIFFICULTY and bEnemyTeamHasHuman then
 				object.bDefense = false
 			end
-		end
-	end
-	if core.coreInitialized ~= true then
-		core.CoreInitialize(self)
-	end	
 
-	if metadata.bInitialized ~= true then
-		metadata.Initialize(tGameVariables.sMapName)
-	end	
-	
-	if self.teamBotBrainInitialized ~= true then
-		self:TeamBotBrainInitialize()
+			if core.tGameVariables.sMapName == "midwars" then
+				self.runes = {{vecLocation = Vector3.Create(7064, 8190), unit=nil, bPicked = true, bBetter=true}}
+				self.nRuneSpawnInterval = 60000
+			elseif core.tGameVariables.sMapName == "grimmscrossing" then
+				self.runes = {{vecLocation = Vector3.Create(8065, 8189), unit=nil, bPicked = true, bBetter=true}}
+				self.nRuneSpawnInterval = 60000
+			else
+				-- metadata file for runes?
+				self.runes = {
+					{vecLocation = Vector3.Create(5824, 9728), unit=nil, bPicked = true, bBetter=true},
+					{vecLocation = Vector3.Create(11136, 5376), unit=nil, bPicked = true, bBetter=true}
+				}
+				self.nRuneSpawnInterval = 120000
+			end
+		end
 	end
 
 	if self.bRunLogic == false then 
@@ -1158,6 +1162,11 @@ local function ValidateLanes(tNewCurrentLanes)
 			nJungle = nJungle + 1
 		end
 	end
+
+	--Does this map have all these lanes
+	local bHaveMid = metadata.GetMiddleLane() ~= nil
+	local bHaveTop = metadata.GetTopLane() ~= nil
+	local bHaveBot = metadata.GetBottomLane() ~= nil
 	
 	--too many players to a lane check
 	local tLongLane = nil
@@ -1174,10 +1183,10 @@ local function ValidateLanes(tNewCurrentLanes)
 		return false
 	end
 	
-	if #tNewCurrentLanes > 2 and (core.NumberElements(tLongLane) + nLong == 0 or core.NumberElements(object.tMiddleLane) + nMid == 0 or core.NumberElements(tShortLane) + nShort == 0) then --lane empty for no reason.. silly junglers up to no good.
+	if #tNewCurrentLanes > 2 and (core.NumberElements(tLongLane) + nLong == 0 or (core.NumberElements(object.tMiddleLane) + nMid == 0 and bHaveMid) or core.NumberElements(tShortLane) + nShort == 0) then --lane empty for no reason.. silly junglers up to no good.
 		--BotEcho("silly junglers")
 		return false
-	elseif (core.NumberElements(object.tMiddleLane) + nMid == 0) then -- no-one in mid! NO! INVALID! STAMP IT WITH LOTS OF RED AND HURL IT AWAY!
+	elseif core.NumberElements(object.tMiddleLane) + nMid == 0 and bHaveMid then -- no-one in mid! NO! INVALID! STAMP IT WITH LOTS OF RED AND HURL IT AWAY!
 		--BotEcho("NO MID")
 		return false
 	end
@@ -1202,7 +1211,7 @@ local function SumPreferences(tPossibleLanes, nIndex, nSum, tCurrentLanes)
 		tPossibleLanes = {sDefaultLane}
 	end
 	-- Iterate over the remaining lanes
-	for i = 1, #tPossibleLanes do 
+	for i = 1, #tPossibleLanes do
 		if nIndex == core.NumberElements(object.tBotsLeft) + 1 then 
 			-- Done all units, no need to search deeper.
 			if nSum > nHighestCombo and ValidateLanes(tCurrentLanes) then
@@ -1481,12 +1490,11 @@ function object:BuildLanes()
 	if (#tJungle > 0) then
 		tremove(tPossibleLanes, "Jungle")
 	end
-	
+
 	object.tCombinations = {}
 	-- Sort our best combinations into object.tCombinations
 	SumPreferences(tPossibleLanes, 1, 0, {})
 	--BotEcho("highest combination was with "..nHighestCombo.." and there was "..#object.tCombinations)
-	
 	
 	--Assign bots to lane.
 	if object.tCombinations[1] == nil then
@@ -1516,7 +1524,7 @@ end
 function object:GetDesiredLane(unitAsking)
 	if unitAsking then
 		local nUniqueID = unitAsking:GetUniqueID()
-		
+
 		if self.tTopLane[nUniqueID] then
 			return metadata.GetTopLane()
 		elseif self.tMiddleLane[nUniqueID] then
