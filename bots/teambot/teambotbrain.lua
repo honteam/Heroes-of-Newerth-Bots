@@ -171,9 +171,11 @@ function object:onthink(tGameVariables)
 			if core.tGameVariables.sMapName == "midwars" then
 				self.runes = {{vecLocation = Vector3.Create(7064, 8190), unit=nil, bPicked = true, bBetter=true}}
 				self.nRuneSpawnInterval = 60000
+				self.nRuneNextSpawnCheck = 60000
 			elseif core.tGameVariables.sMapName == "grimmscrossing" then
 				self.runes = {{vecLocation = Vector3.Create(8065, 8189), unit=nil, bPicked = true, bBetter=true}}
-				self.nRuneSpawnInterval = 60000
+				self.nRuneSpawnInterval = 120000
+				self.nRuneNextSpawnCheck = 120000
 			else
 				-- metadata file for runes?
 				self.runes = {
@@ -181,6 +183,7 @@ function object:onthink(tGameVariables)
 					{vecLocation = Vector3.Create(11136, 5376), unit=nil, bPicked = true, bBetter=true}
 				}
 				self.nRuneSpawnInterval = 120000
+				self.nRuneNextSpawnCheck = 120000
 			end
 		end
 	end
@@ -249,7 +252,7 @@ function object:onthink(tGameVariables)
 
 	local time = HoN.GetMatchTime()
 	if time and time > object.nRuneNextSpawnCheck then
-		object.nRuneNextSpawnCheck = object.nRuneNextSpawnCheck + 120000
+		object.nRuneNextSpawnCheck = object.nRuneNextSpawnCheck + object.nRuneSpawnInterval
 
 		for _,rune in pairs(object.runes) do
 			--something spawned
@@ -324,6 +327,7 @@ function object:PrintLanes(tTop, tMid, tBot)
 	if not tBot then
 		tBot = self.tBottomLane
 	end
+	tJungle = self.tJungle
 	
 	print('    top: ')
 	for nUID, unit in pairs(tTop) do
@@ -337,6 +341,11 @@ function object:PrintLanes(tTop, tMid, tBot)
 	end
 	print('\n    bot: ')
 	for nUID, unit in pairs(tBot) do
+		print('['..nUID..']'..unit:GetTypeName())
+		print(', ')
+	end
+	print("\n    jungle: ")
+	for nUID, unit in pairs(tJungle) do
 		print('['..nUID..']'..unit:GetTypeName())
 		print(', ')
 	end
@@ -1178,11 +1187,14 @@ local function ValidateLanes(tNewCurrentLanes)
 		tLongLane = object.tBottomLane
 		tShortLane = object.tTopLane
 	end
-	if ((core.NumberElements(object.tJungle) + nJungle > 1 and nJungle ~= 0) or (core.NumberElements(object.tMiddleLane) + nMid > 1 and nMid ~= 0) or (core.NumberElements(tLongLane) + nLong > 2 and nLong ~= 0) or (core.NumberElements(tShortLane) + nShort > 2 and nShort ~= 0)) then -- too many players in lanes!
+	if ((core.NumberElements(object.tJungle) + nJungle > 1 and nJungle ~= 0) or
+		(core.NumberElements(object.tMiddleLane) + nMid > 1 and nMid ~= 0) or
+		(core.NumberElements(tLongLane) + nLong > 2 and nLong ~= 0) or
+		(core.NumberElements(tShortLane) + nShort > 2 and nShort ~= 0)) then -- too many players in lanes!
 		--BotEcho("Too many players in lanes.")
 		return false
 	end
-	
+
 	if #tNewCurrentLanes > 2 and (core.NumberElements(tLongLane) + nLong == 0 or (core.NumberElements(object.tMiddleLane) + nMid == 0 and bHaveMid) or core.NumberElements(tShortLane) + nShort == 0) then --lane empty for no reason.. silly junglers up to no good.
 		--BotEcho("silly junglers")
 		return false

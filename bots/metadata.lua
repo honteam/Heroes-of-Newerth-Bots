@@ -112,6 +112,7 @@ function metadata.Initialize(sMapName)
 		metadata.tTop.sLaneName = 'lane_top'
 	end
 	if tLanes.middle then
+		sLane = "middle"
 		metadata.tMiddle = BotMetaData.FindPath(vecStart, vecEnd, funcLaneCost)
 		metadata.tMiddle.sLaneKey = sLane
 		metadata.tMiddle.sLaneName = 'lane_mid'
