@@ -195,7 +195,7 @@ function object:onthink(tGameVariables)
 	if self.tAllyHeroes == nil or core.NumberElements(self.tAllyHeroes) < 1 then
 		return
 	end
-	
+
 	self.bPurchasedThisFrame = false
 	
 	StartProfile('Validation')
@@ -1187,10 +1187,13 @@ local function ValidateLanes(tNewCurrentLanes)
 		tLongLane = object.tBottomLane
 		tShortLane = object.tTopLane
 	end
+
+	local nMaxHeroesOnLane = ceil(core.NumberElements(object.tAllyHeroes)/(#tMapLanes))
+
 	if ((core.NumberElements(object.tJungle) + nJungle > 1 and nJungle ~= 0) or
 		(core.NumberElements(object.tMiddleLane) + nMid > 1 and nMid ~= 0) or
-		(core.NumberElements(tLongLane) + nLong > 2 and nLong ~= 0) or
-		(core.NumberElements(tShortLane) + nShort > 2 and nShort ~= 0)) then -- too many players in lanes!
+		(core.NumberElements(tLongLane) + nLong > nMaxHeroesOnLane and nLong ~= 0) or
+		(core.NumberElements(tShortLane) + nShort > nMaxHeroesOnLane and nShort ~= 0)) then -- too many players in lanes!
 		--BotEcho("Too many players in lanes.")
 		return false
 	end
@@ -1209,7 +1212,7 @@ local function ValidateLanes(tNewCurrentLanes)
 		--BotEcho("bad dependencies")
 		return false
 	end
-	
+
 	return true
 end
 
@@ -1253,21 +1256,26 @@ local function SumPreferences(tPossibleLanes, nIndex, nSum, tCurrentLanes)
 				tinsert(tNewCurrentLanes, tPossibleLanes[i])
 				local tNewPossibleLanes = core.CopyTable(tPossibleLanes)
 				tremove(tNewPossibleLanes, i)
-				-- The following are clashes between laning types, so we remove them.
-				if tPossibleLanes[i] == "ShortSolo" then
-					core.RemoveByValue(tNewPossibleLanes, "ShortSupport")
-					core.RemoveByValue(tNewPossibleLanes, "ShortCarry")
-				elseif tPossibleLanes[i] == "ShortSupport" then
-					core.RemoveByValue(tNewPossibleLanes, "ShortSolo")
-				elseif tPossibleLanes[i] == "ShortCarry" then
-					core.RemoveByValue(tNewPossibleLanes, "ShortSolo")
-				elseif tPossibleLanes[i] == "LongSolo" then
-					core.RemoveByValue(tNewPossibleLanes, "LongSupport")
-					core.RemoveByValue(tNewPossibleLanes, "LongCarry")
-				elseif tPossibleLanes[i] == "LongSupport" then
-					core.RemoveByValue(tNewPossibleLanes, "LongSolo")
-				elseif tPossibleLanes[i] == "LongCarry" then
-					core.RemoveByValue(tNewPossibleLanes, "LongSolo")
+
+				local nMaxHeroesOnLane = ceil(core.NumberElements(object.tAllyHeroes)/(#tMapLanes))
+
+				if nMaxHeroesOnLane < 3 then
+					-- The following are clashes between laning types, so we remove them.
+					if tPossibleLanes[i] == "ShortSolo" then
+						core.RemoveByValue(tNewPossibleLanes, "ShortSupport")
+						core.RemoveByValue(tNewPossibleLanes, "ShortCarry")
+					elseif tPossibleLanes[i] == "ShortSupport" then
+						core.RemoveByValue(tNewPossibleLanes, "ShortSolo")
+					elseif tPossibleLanes[i] == "ShortCarry" then
+						core.RemoveByValue(tNewPossibleLanes, "ShortSolo")
+					elseif tPossibleLanes[i] == "LongSolo" then
+						core.RemoveByValue(tNewPossibleLanes, "LongSupport")
+						core.RemoveByValue(tNewPossibleLanes, "LongCarry")
+					elseif tPossibleLanes[i] == "LongSupport" then
+						core.RemoveByValue(tNewPossibleLanes, "LongSolo")
+					elseif tPossibleLanes[i] == "LongCarry" then
+						core.RemoveByValue(tNewPossibleLanes, "LongSolo")
+					end
 				end
 				
 				-- Recurrsively run the function for the next bot
@@ -1536,7 +1544,6 @@ end
 function object:GetDesiredLane(unitAsking)
 	if unitAsking then
 		local nUniqueID = unitAsking:GetUniqueID()
-
 		if self.tTopLane[nUniqueID] then
 			return metadata.GetTopLane()
 		elseif self.tMiddleLane[nUniqueID] then
@@ -1546,12 +1553,11 @@ function object:GetDesiredLane(unitAsking)
 		elseif self.tJungle[nUniqueID] then
 			--Jungle doesn't have a lane, but to stop other parts of the code failing, use a dummy lane.
 			--With the lane name 'jungle', so we can use core.tMyLane.sLaneName == 'jungle' to know whether we are jungle or not.	
-			local jungleLane = core.CopyTable(metadata.GetMiddleLane())
-			jungleLane.sLaneName = 'jungle'
-			return jungleLane
+			return {sLaneName = "jungle"}
 		end
 		
 		BotEcho("Couldn't find a lane for unit: "..tostring(unitAsking)..'  name: '..unitAsking:GetTypeName()..'  id: '..nUniqueID)
+
 		self.teamBotBrainInitialized = false	
 	else
 		BotEcho("Couldn't find a lane for unit: nil")
