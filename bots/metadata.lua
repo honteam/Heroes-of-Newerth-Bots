@@ -43,22 +43,23 @@ function metadata.GetLane(sLane)
 end
 
 metadata.MapMetadataFile = ""
+metadata.JukeMetadataFile = "/bots/metadata/getAwayPoints.botmetadata"
 metadata.bInitialized = false
 
 function metadata.Initialize(sMapName)	
 	if sMapName == "caldavar" then
-		metadata.MapMetadataFile = '/bots/caldavar.botmetadata'
+		metadata.MapMetadataFile = '/bots/metadata/caldavar.botmetadata'
 	elseif sMapName == "tutorial_stage1" then
-		metadata.MapMetadataFile = '/bots/tutorial1.botmetadata'
+		metadata.MapMetadataFile = '/bots/metadata/tutorial1.botmetadata'
 	elseif sMapName == "tutorial" then
-		metadata.MapMetadataFile = '/bots/caldavar.botmetadata'
+		metadata.MapMetadataFile = '/bots/metadata/caldavar.botmetadata'
 	elseif sMapName == "tutorial_lasthit" then
-		metadata.MapMetadataFile = '/bots/tutorial1.botmetadata'
+		metadata.MapMetadataFile = '/bots/metadata/tutorial1.botmetadata'
 	else
 		BotEcho(" ! ! Warning, no metadata for map "..sMapName.." ! !")
 	end
 
-	BotMetaData.RegisterLayer('/bots/getAwayPoints.botmetadata')
+	BotMetaData.RegisterLayer(metadata.JukeMetadataFile)
 	BotMetaData.RegisterLayer(metadata.MapMetadataFile)
 	BotMetaData.SetActiveLayer(metadata.MapMetadataFile)
 

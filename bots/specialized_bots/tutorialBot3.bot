@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="tutorialBot3"
+	description=""
+	heroname="Hero_WitchSlayer"
+	rootlua="tutorialBot3_main.lua"
+	defaultplayername="tutorialBot3"
+	precachepath="/heroes/witch_slayer/"
+	unlisted="true"
+/>

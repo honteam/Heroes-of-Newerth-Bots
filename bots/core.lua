@@ -703,7 +703,10 @@ end
 
 function core.GetFinalAttackDamageAverage(unit)
 	--The final calculated damage (total of base, bonus, multipliers, etc)'s average
-	return (unit:GetFinalAttackDamageMax() + unit:GetFinalAttackDamageMin()) * 0.5
+	local nMax = unit:GetFinalAttackDamageMax() or 0
+	local nMin = unit:GetFinalAttackDamageMin() or 0
+	
+	return (nMax + nMin) * 0.5
 end
 
 function core.GetAttacksPerSecond(unit)
@@ -1696,7 +1699,6 @@ function core.GetLaneBreakdown(unit)
 	local lineLen = 150
 
 	local tLanePoints = nil
-	local sLaneName = nil
 	local nPercent = nil
 	
 	local position = unit:GetPosition()
@@ -2176,18 +2178,6 @@ end
 --GetStashAccess -> CanAccessStash
 if unitMetatable.GetStashAccess ~= nil and unitMetatable.CanAccessStash == nil then
 	unitMetatable.CanAccessStash = unitMetatable.GetStashAccess
-end
-
-if unitMetatable.isMagicImmune == nil then
-	unitMetatable.isMagicImmune = function (unit)
-		local tStates = { "State_Item3E", "State_Predator_Ability2", "State_Jereziah_Ability2", "State_Rampage_Ability1_Self", "State_Rhapsody_Ability4_Buff", "State_Hiro_Ability1" }
-		for _, sState in ipairs(tStates) do
-			if unit:HasState(sState) then
-				return true
-			end
-		end
-		return false
-	end
 end
 
 --[[ colors:

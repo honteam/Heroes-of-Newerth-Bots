@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="tutorialBot2"
+	description=""
+	heroname="Hero_Hammerstorm"
+	rootlua="tutorialBot2_main.lua"
+	defaultplayername="tutorialBot2"
+	precachepath="/heroes/hammerstorm/"
+	unlisted="true"
+/>
