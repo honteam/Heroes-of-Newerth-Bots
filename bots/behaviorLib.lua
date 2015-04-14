@@ -2685,7 +2685,7 @@ function behaviorLib.RetreatFromThreatExecute(botBrain)
 		if itemPortable and itemPortable:CanActivate() and vecMyPos and vecWell and behaviorLib.nLastHealAtWellUtil > 20 then
 		       
 			-- closest node from a position which is 500 units closer to well than yourself
-			BotMetaData.SetActiveLayer('/bots/getAwayPoints.botmetadata')
+			BotMetaData.SetActiveLayer(metadata.JukeMetadataFile)
 			local vecNodePos = BotMetaData.GetClosestNode(vecMyPos + Vector3.Normalize(vecWell - vecMyPos) * 300):GetPosition()
 			BotMetaData.SetActiveLayer(metadata.MapMetadataFile)
 		       
@@ -3481,7 +3481,6 @@ Current algorithm:
 	end
 	
 	local unitSelf = core.unitSelf
-	local bChanged = false
 	local bShuffled = false
 	local bGoldReduced = false
 	local tInventory = core.unitSelf:GetInventory(true)
@@ -3513,7 +3512,7 @@ Current algorithm:
 		end
 	end
 
-	if nextItemDef then
+	if nextItemDef ~= nil then
 		core.teamBotBrain.bPurchasedThisFrame = true
 		
 		--open up slots if we don't have enough room in the stash + inventory
@@ -3533,12 +3532,14 @@ Current algorithm:
 			behaviorLib.ShuffleCombine(botBrain, nextItemDef, unitSelf)
 		end
 
-		local nGoldAmtBefore = botBrain:GetGold()
-		unitSelf:PurchaseRemaining(nextItemDef)
+		local nGoldAmountBefore = botBrain:GetGold()
+		
+		if nextItemDef ~= nil and unitSelf:GetItemCostRemaining(nextItemDef) < nGoldAmountBefore then
+			unitSelf:PurchaseRemaining(nextItemDef)
+		end
 
-		local nGoldAmtAfter = botBrain:GetGold()
-		bGoldReduced = (nGoldAmtAfter < nGoldAmtBefore)
-		bChanged = bChanged or bGoldReduced
+		local nGoldAmountAfter = botBrain:GetGold()
+		bGoldReduced = (nGoldAmountAfter < nGoldAmountBefore)
 
 		--Check to see if this purchased item has uncombined parts
 		componentDefs = unitSelf:GetItemComponentsRemaining(nextItemDef)
@@ -3549,9 +3550,8 @@ Current algorithm:
 	end
 
 	bShuffled = behaviorLib.SortInventoryAndStash(botBrain)
-	bChanged = bChanged or bShuffled
-
-	if not bChanged then
+	
+	if not bGoldReduced and not bShuffled then
 		if behaviorLib.printShopDebug then
 			BotEcho("Finished Buying!")
 		end

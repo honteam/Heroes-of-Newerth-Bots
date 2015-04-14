@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<bot
-	name="RevBot"
-	description="bot_description_revenant"
-	heroname="Hero_Revenant"
-	rootlua="revenant_main.lua"
-	defaultplayername="RevenantBot"
-	precachepath="/heroes/revenant/"
-/>

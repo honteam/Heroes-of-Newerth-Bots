@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="Mellow_InksElloniaBot"
+	description="bot_description_ellonia"
+	heroname="Hero_Ellonia"
+	rootlua="../heroes/ellonia_main.lua"
+	defaultplayername="ElloniaBot"
+	precachepath="heroes/ellonia"
+/>
