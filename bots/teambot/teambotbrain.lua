@@ -115,7 +115,7 @@ local function getMapLanes()
 		tMapLanes = {"mid"}
 	elseif core.tGameVariables.sMapName == 'grimmscrossing' or core.tGameVariables.sMapName == 'riftwars' then
 		tMapLanes = {"bot", "mid"}-- these are un-tested, and for possible future development
-	elseif core.tGameVariables.sMapName == 'caldavar' then
+	else --'caldavar', 'tutorial', etc
 		tMapLanes = {"bot", "mid", "top", "jungle"}
 	end
 end
@@ -186,6 +186,13 @@ function object:onthink(tGameVariables)
 	StopProfile()
 	
 	StartProfile('UpdateMemoryUnits')
+		-- Track all enemy heroes
+		for nUID,unitEnemy in pairs(object.tEnemyHeroes) do
+			if unitEnemy ~= nil and self:CanSeeUnit(unitEnemy) and unitEnemy:GetHealth() > 0 then
+				self:CreateMemoryUnit(unitEnemy)
+			end
+		end
+		
 		self:UpdateAllMemoryUnits()
 	StopProfile()	
 	
@@ -202,7 +209,7 @@ function object:onthink(tGameVariables)
 		local curTime = HoN.GetGameTime()
 
 		if HoN.GetRemainingPreMatchTime() <= self.nInitialBotMove then
-			if curTime > self.laneReassessTime and self.nPushState == STATE_IDLE then
+			if (curTime > self.laneReassessTime or object.bLanePreferencesUpdated) and self.nPushState == STATE_IDLE then
 				--TODO: defense lanes integration
 				self:BuildLanes()
 				
@@ -212,6 +219,8 @@ function object:onthink(tGameVariables)
 					self.laneReassessTime = curTime + self.laneDoubleCheckTime
 					self.bLanesDoubleChecked = true
 				end
+				
+				object.bLanePreferencesUpdated = false
 			end
 		end
 	StopProfile()
@@ -283,14 +292,16 @@ function object.GetNearestRune(pos, bCertain, bPrioritizeBetter)
 	local nearestRune = nil
 	local shortestDistanceSQ = 99999999
 	for _,rune in pairs(object.runes) do
-		if not bCertain or (HoN.CanSeePosition(rune.vecLocation) and rune.unit ~= nil)  then
-			local distanceSQ = Vector3.Distance2DSq(rune.vecLocation, pos)
-			if bPrioritizeBetter and rune.unit and rune.unit ~= "Powerup_Refresh" and HoN.CanSeePosition(rune.location) then
-				distanceSQ = distanceSQ / 2
-			end
-			if not rune.picked and distanceSQ < shortestDistanceSQ then
-				nearestRune = rune
-				shortestDistanceSQ = distanceSQ
+		if not rune.bPicked then
+			if not bCertain or (HoN.CanSeePosition(rune.vecLocation) and rune.unit ~= nil)  then
+				local distanceSQ = Vector3.Distance2DSq(rune.vecLocation, pos)
+				if bPrioritizeBetter and rune.unit and rune.unit ~= "Powerup_Refresh" and HoN.CanSeePosition(rune.location) then
+					distanceSQ = distanceSQ / 2
+				end
+				if not rune.picked and distanceSQ < shortestDistanceSQ then
+					nearestRune = rune
+					shortestDistanceSQ = distanceSQ
+				end
 			end
 		end
 	end
@@ -349,6 +360,10 @@ end
 
 ---- Memory units ----
 object.tMemoryUnits = {}
+
+function object:GetMemoryUnit(unit)
+	return self.tMemoryUnits[unit:GetUniqueID()]
+end
 
 object.nMemoryUnitHealthIntervalMS = 3000
 function object:CreateMemoryUnit(unit)	
@@ -774,11 +789,15 @@ end
 
 function object.CalculateDefense(unitHero)
 	local bDebugEchos = false
+	
+	if unitHero == nil then
+		return 0
+	end	
 
 	--Health
 	local nHealth = unitHero:GetHealth()
-	local nMagicReduction = unitHero:GetMagicResistance()
-	local nPhysicalReduction = unitHero:GetPhysicalResistance()
+	local nMagicReduction = unitHero:GetMagicResistance() or 0
+	local nPhysicalReduction = unitHero:GetPhysicalResistance() or 0
 	
 	--This is obviously not strictly accurate, but this will be effective for our utility calculations
 	local nHealthDefense = nHealth + (nHealth * nMagicReduction) + (nHealth * nPhysicalReduction)
@@ -1240,11 +1259,13 @@ local function SumPreferences(tPossibleLanes, nIndex, nSum, tCurrentLanes)
 end
 
 object.tAlreadyLoadedPrefs = {}
+object.bLanePreferencesUpdated = false
 function object:SetLanePreferences(tPrefs)
 	if tPrefs then
 		BotEcho("^yLoading Lane Preferences for: "..tPrefs.hero:GetTypeName())
 		if not object.tAlreadyLoadedPrefs[tPrefs.hero:GetUniqueID()] then
 			object.tAlreadyLoadedPrefs[tPrefs.hero:GetUniqueID()] = tPrefs
+			object.bLanePreferencesUpdated = true
 		end
 	else
 		BotEcho("TPREFS IS NIL!")
@@ -1465,20 +1486,22 @@ function object:BuildLanes()
 		tremove(tPossibleLanes, "Jungle")
 	end
 	
+	if bDebugEchos then core.printTable(tPossibleLanes) end
+	
 	object.tCombinations = {}
 	-- Sort our best combinations into object.tCombinations
 	SumPreferences(tPossibleLanes, 1, 0, {})
 	--BotEcho("highest combination was with "..nHighestCombo.." and there was "..#object.tCombinations)
 	
-	
 	--Assign bots to lane.
 	if object.tCombinations[1] == nil then
+		BotEcho("ERROR! No Lane combinations!")
 		return
 	end
 	
 	for key, value in pairs(object.tCombinations[1]) do
 		local hero = object.tLanePreferences[key].hero
-		--BotEcho(hero:GetTypeName().."("..hero:GetUniqueID()..")'s role is "..value)
+		if bDebugEchos then BotEcho(hero:GetTypeName().."("..hero:GetUniqueID()..")'s role is "..value) end
 		if string.find(value, "Short") then
 			tShortLane[hero:GetUniqueID()] = hero
 		elseif string.find(value, "Long") then
@@ -1488,6 +1511,17 @@ function object:BuildLanes()
 		elseif string.find(value, "Jungle") then
 			tJungle[hero:GetUniqueID()] = hero
 		end
+	end
+	
+	if bDebugEchos then
+		BotEcho('Short')
+		core.printGetTypeNameTable(tShortLane)
+		BotEcho('Long')
+		core.printGetTypeNameTable(tLongLane)
+		BotEcho('Mid')
+		core.printGetTypeNameTable(tMiddleLane)
+		BotEcho('Jungle')
+		core.printGetTypeNameTable(tJungle)		
 	end
 
 	self.tTopLane = tTopLane
@@ -1508,9 +1542,9 @@ function object:GetDesiredLane(unitAsking)
 			return metadata.GetBottomLane()
 		elseif self.tJungle[nUniqueID] then
 			--Jungle doesn't have a lane, but to stop other parts of the code failing, use a dummy lane.
-			--With the lane name 'jungle', so we can use core.tMyLane.sLaneName == 'jungle' to know whether we are jungle or not.	
+			--With the lane name 'jungle', so we can use core.tMyLane.sLaneName == 'lane_jungle' to know whether we are jungle or not.	
 			local jungleLane = core.CopyTable(metadata.GetMiddleLane())
-			jungleLane.sLaneName = 'jungle'
+			jungleLane.sLaneName = 'lane_jungle'
 			return jungleLane
 		end
 		

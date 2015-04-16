@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+    name="SoulReaperBot"
+    description="bot_description_soul_reaper"
+    heroname="Hero_HellDemon"
+    rootlua="../heroes/soulreaper_main.lua"
+    defaultplayername="SoulReaperBot"
+    precachepath="/heroes/helldemon/"
+/>

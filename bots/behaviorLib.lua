@@ -637,6 +637,7 @@ function behaviorLib.PortLogic(botBrain, vecDesiredPosition)
 				end
 				
 				if bSuccess then
+					behaviorLib.tPath = nil
 					core.nextOrderTime = HoN.GetGameTime() + core.timeBetweenOrders --seed some extra time in there
 				end
 			end
@@ -805,7 +806,7 @@ function behaviorLib.PathLogic(botBrain, vecDesiredPosition)
 	local unitSelf = core.unitSelf
 	local vecMyPosition = unitSelf:GetPosition()
 
-	if bRepath then
+	if bRepath or behaviorLib.tPath == nil then
 		if bDebugEchos then BotEcho("Repathing!") end
 
 		behaviorLib.tPath = behaviorLib.GetSafePath(vecDesiredPosition)
@@ -814,7 +815,7 @@ function behaviorLib.PathLogic(botBrain, vecDesiredPosition)
 
 		--double check the first node since we have a really sparse graph
 		local tPath = behaviorLib.tPath
-		if #tPath > 1 then
+		if tPath and #tPath > 1 then
 			local vecMeToFirst = tPath[1]:GetPosition() - vecMyPosition
 			local vecFirstToSecond = tPath[2]:GetPosition() - tPath[1]:GetPosition()
 			if Vector3.Dot(vecMeToFirst, vecFirstToSecond) < 0 then
@@ -2465,13 +2466,13 @@ function behaviorLib.PositionSelfBackUp()
 	end
 
 	if vecReturn == nil then
-
 		local tPath = behaviorLib.GetSafePath(core.allyWell:GetPosition())
+		if tPath ~= nil then
+			local ClosestNode = BotMetaData.GetClosestNode(vecMyPos)
 
-		local ClosestNode = BotMetaData.GetClosestNode(vecMyPos)
-
-		if tPath[1]:GetIndex() == ClosestNode:GetIndex() and #tPath > 1 then
-			vecReturn = tPath[2]:GetPosition()
+			if tPath[1]:GetIndex() == ClosestNode:GetIndex() and #tPath > 1 then
+				vecReturn = tPath[2]:GetPosition()
+			end
 		end
 	end
 
@@ -2684,9 +2685,9 @@ function behaviorLib.RetreatFromThreatExecute(botBrain)
 		if itemPortable and itemPortable:CanActivate() and vecMyPos and vecWell and behaviorLib.nLastHealAtWellUtil > 20 then
 		       
 			-- closest node from a position which is 500 units closer to well than yourself
-			BotMetaData.SetActiveLayer('/bots/getAwayPoints.botmetadata')
+			BotMetaData.SetActiveLayer(metadata.JukeMetadataFile)
 			local vecNodePos = BotMetaData.GetClosestNode(vecMyPos + Vector3.Normalize(vecWell - vecMyPos) * 300):GetPosition()
-			BotMetaData.SetActiveLayer('/bots/test.botmetadata')
+			BotMetaData.SetActiveLayer(metadata.MapMetadataFile)
 		       
 			if bDebugLines then
 				core.DrawDebugArrow(vecMyPos, vecMyPos + Vector3.Normalize(vecWell - vecMyPos) * 300, 'green')
@@ -2803,7 +2804,7 @@ function behaviorLib.HealAtWellExecute(botBrain)
 	local bActionTaken = behaviorLib.CustomHealAtWellExecute(botBrain)
 	if not bActionTaken and Vector3.Distance2DSq(core.unitSelf:GetPosition(), wellPos) > 1200 * 1200 then
 		itemGhostMarchers = core.GetItem("Item_EnhancedMarchers")
-		if itemGhostMarchers ~= nil then
+		if itemGhostMarchers ~= nil and itemGhostMarchers:CanActivate() then
 			botBrain:OrderItem(itemGhostMarchers.object or itemGhostMarchers, false)
 		end
 		bActionTaken = behaviorLib.CustomReturnToWellExecute(botBrain)
@@ -3297,6 +3298,7 @@ function behaviorLib.SellLowestItems(botBrain, numToSell)
 	local inventory = core.unitSelf:GetInventory(true)
 	local lowestValue
 	local lowestSlot
+	local lowestItem = nil
 
 	while numToSell > 0 do
 		lowestValue = 99999
@@ -3316,7 +3318,7 @@ function behaviorLib.SellLowestItems(botBrain, numToSell)
 			BotEcho("Selling "..lowestItem:GetName().." in slot "..lowestItem:GetSlot())
 			behaviorLib.removeItemBehavior(lowestItem:GetName())
 			core.unitSelf:Sell(lowestItem)
-			inventory[lowestItem:GetSlot()] = ""
+			inventory[lowestItem:GetSlot()] = nil
 			numToSell = numToSell - 1
 		else
 			--out of items
@@ -3355,6 +3357,11 @@ function behaviorLib.DetermineNextItemDef(botBrain)
 	end
 
 	local idefCurrent = HoN.GetItemDefinition(name)
+	if idefCurrent == nil then
+		BotEcho('ERROR! Item code '..behaviorLib.curItemList[1]..' is invalid!')
+		return
+	end
+	
 	local bStackable = idefCurrent:GetRechargeable() --"rechargeable" items are items that stack
 
 	local numValid = 0
@@ -3474,7 +3481,6 @@ Current algorithm:
 	end
 	
 	local unitSelf = core.unitSelf
-	local bChanged = false
 	local bShuffled = false
 	local bGoldReduced = false
 	local tInventory = core.unitSelf:GetInventory(true)
@@ -3506,7 +3512,7 @@ Current algorithm:
 		end
 	end
 
-	if nextItemDef then
+	if nextItemDef ~= nil then
 		core.teamBotBrain.bPurchasedThisFrame = true
 		
 		--open up slots if we don't have enough room in the stash + inventory
@@ -3526,12 +3532,14 @@ Current algorithm:
 			behaviorLib.ShuffleCombine(botBrain, nextItemDef, unitSelf)
 		end
 
-		local nGoldAmtBefore = botBrain:GetGold()
-		unitSelf:PurchaseRemaining(nextItemDef)
+		local nGoldAmountBefore = botBrain:GetGold()
+		
+		if nextItemDef ~= nil and unitSelf:GetItemCostRemaining(nextItemDef) < nGoldAmountBefore then
+			unitSelf:PurchaseRemaining(nextItemDef)
+		end
 
-		local nGoldAmtAfter = botBrain:GetGold()
-		bGoldReduced = (nGoldAmtAfter < nGoldAmtBefore)
-		bChanged = bChanged or bGoldReduced
+		local nGoldAmountAfter = botBrain:GetGold()
+		bGoldReduced = (nGoldAmountAfter < nGoldAmountBefore)
 
 		--Check to see if this purchased item has uncombined parts
 		componentDefs = unitSelf:GetItemComponentsRemaining(nextItemDef)
@@ -3542,9 +3550,8 @@ Current algorithm:
 	end
 
 	bShuffled = behaviorLib.SortInventoryAndStash(botBrain)
-	bChanged = bChanged or bShuffled
-
-	if not bChanged then
+	
+	if not bGoldReduced and not bShuffled then
 		if behaviorLib.printShopDebug then
 			BotEcho("Finished Buying!")
 		end

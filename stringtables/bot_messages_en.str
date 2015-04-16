@@ -109,7 +109,7 @@ viper_engineer_kill2	I think you forget, I am good with calculation.
 viper_engineer_kill3	Heimerdinger has got nothing on me.
 viper_engineer_kill4	That was easier than computing quadratic air resistance.
 viper_engineer_kill5	Something more challenging please, it's like I am proving the uncertainty principle.
-viper_engineer_kill6	That was about as simple as understanding the time-dependent Schrödinger equation.
+viper_engineer_kill6	That was about as simple as understanding the time-dependent SchrÃ¶dinger equation.
 
 /////////////////////////////////////////
 //Schnarchnase's Gravekeeper bot custom messages
@@ -179,5 +179,35 @@ rinestone_revenant_death3		I'll be back! Don't you worry...
 rinestone_revenant_death4		Back to the grave...
 rinestone_revenant_death5		I dissipate....
 rinestone_revenant_death6		Cast to the winds....
+
+/////////////////////////////////////////
+// The Community's Legionnaire bot custom messages
+
+community_legionnaire_kill1		BUAHAHAHA!
+community_legionnaire_kill2		Off with their heads!
+community_legionnaire_kill3		I put the meaning into human blender.
+community_legionnaire_kill4		You spin me right round!
+community_legionnaire_kill5		Did I break your spirit?
+community_legionnaire_kill6		You spin my head right round, right round. When ya go down, when ya go down down.
+
+community_legionnaire_death1	Spinning out of control...
+community_legionnaire_death2	I think I'm gonna throw up...
+community_legionnaire_death3	Stop taunting me!
+community_legionnaire_death4	Off with.....my head?
+
+/////////////////////////////////////////
+// The Community's Parasite bot custom messages
+
+community_parasite_kill1		Don't throw up!
+community_parasite_kill2		You look a little sick.
+community_parasite_kill3		Why is your face so pale?
+community_parasite_kill4		The SITE up here is to DIE for!
+community_parasite_kill5		Nothing is immune to me!
+
+community_parasite_death1		All I wanted was a hug!
+community_parasite_death2		I think I'm gonna throw up...
+community_parasite_death3		I feel sick...
+community_parasite_death4		Let me back in!!!
+community_parasite_death5		You cant get rid of me forever
 
 // End - do not delete this line

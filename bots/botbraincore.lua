@@ -101,6 +101,7 @@ function object:onthink(tGameVariables)
 	end
 	
 	local nGameTime = HoN.GetGameTime()
+	local unitSelf = core.unitSelf
 	
 	--[Tutorial] After the reset time, switch legion to different behaviors. 
 	--  This also stop doing some tutorial-specific crutches
@@ -138,7 +139,7 @@ function object:onthink(tGameVariables)
 		end
 		
 		local bDebugEchos = false
-		--if core.unitSelf:GetTypeName() == "Hero_Frosty" then bDebugEchos = true end
+		--if unitSelf:GetTypeName() == "Hero_Frosty" then bDebugEchos = true end
 		if bDebugEchos then BotEcho("Time until next check: "..(core.nEasyAggroReassessTime-nGameTime)/1000) end
 	end		
 	
@@ -146,7 +147,12 @@ function object:onthink(tGameVariables)
 	core.ProcessChatMessages(self)
 	StopProfile()
 
-	if not core.unitSelf:IsAlive() then
+	if not unitSelf:IsAlive() then
+		StopProfile()
+		return
+	end
+	
+	if core.bIsTutorial and nGameTime < core.nTutorialWaitTime then
 		StopProfile()
 		return
 	end
@@ -190,7 +196,7 @@ function object:onthink(tGameVariables)
 	end
 	
 	if core.tMyLane ~= nil then
-		object.vecLaneForward, object.vecLaneForwardOrtho = core.AssessLaneDirection(core.unitSelf:GetPosition(), core.tMyLane, core.bTraverseForward)
+		object.vecLaneForward, object.vecLaneForwardOrtho = core.AssessLaneDirection(unitSelf:GetPosition(), core.tMyLane, core.bTraverseForward)
 	end
 
 	StartProfile('Validate')
@@ -204,6 +210,28 @@ function object:onthink(tGameVariables)
 	StopProfile()
 	
 	if self.bRunBehaviors ~= false then
+		-- Toggle Steamboots for more Health/Mana
+		local itemSteamboots = core.GetItem("Item_Steamboots")
+		if itemSteamboots ~= nil and itemSteamboots:CanActivate() then	
+			local sCurrentBehavior = core.GetCurrentBehaviorName(self)
+			local bHealthRegen = sCurrentBehavior == "UseHealthPot" or sCurrentBehavior == "UseRunesOfTheBlight" or unitSelf:HasState("State_RunesOfTheBlight") or unitSelf:HasState("State_HealthPotion")
+			local bManaRegen = sCurrentBehavior == "UseManaPot" or unitSelf:HasState("State_ManaPotion")
+			
+			local sKey = itemSteamboots:GetActiveModifierKey()
+			
+			local sDesired = unitSelf:GetPrimaryAttribute()
+			
+			if unitSelf:GetHealthPercent() < 0.45 then
+				sDesired = "str"
+			elseif unitSelf:GetManaPercent() < 0.35 and not bManaRegen then
+				sDesired = "int"
+			end
+				
+			if sKey ~= sDesired then
+				core.OrderItemClamp(self, unitSelf, itemSteamboots)
+			end
+		end
+	
 		StartProfile('Assess behaviors')
 		if nGameTime >= behaviorLib.nNextBehaviorTime then
 			behaviorLib.nNextBehaviorTime = behaviorLib.nNextBehaviorTime + behaviorLib.nBehaviorAssessInterval
@@ -254,7 +282,7 @@ function object:onthink(tGameVariables)
 							
 							local heroTarget = behaviorLib.heroTarget
 							if core.CanSeeUnit(self, heroTarget) and heroTarget:GetHealthPercent() > 0.5 then
-								local nDistanceSq = Vector3.Distance2DSq(heroTarget:GetPosition(), core.unitSelf:GetPosition())
+								local nDistanceSq = Vector3.Distance2DSq(heroTarget:GetPosition(), unitSelf:GetPosition())
 								if nDistanceSq < core.nEasyAbilityRangeSq then
 									bUseAbils = true
 								end
@@ -454,9 +482,9 @@ function core.BotBrainCoreInitialize(tGameVariables)
 	
 	--[Tutorial] Make everyone less aggressive and easy mode. Later legion will switch to Medium.
 	if core.bIsTutorial then
-		core.nDifficulty = core.nEASY_DIFFICULTY
-		
+		core.nDifficulty = core.nEASY_DIFFICULTY		
 		core.bTutorialBehaviorReset = false
+		core.nTutorialWaitTime = HoN.GetGameTime() + 1000
 	end
 	
 	--[Difficulty]
@@ -530,7 +558,7 @@ function core.GetLastBehaviorName(botBrain)
 	return botBrain.sLastBehaviorName
 end
 
--- Each entry in core.tMessageList is {nTimeToSend, bAllChat, sMessage}
+-- Each entry in core.tMessageList is a struct
 function core.ProcessChatMessages(botBrain)
 	local nCurrentTime = HoN.GetGameTime()
 	local tOutMessages = {}
@@ -546,11 +574,11 @@ function core.ProcessChatMessages(botBrain)
 	end
 	
 	if #tOutMessages > 1 then	
-		BotEcho("tOutMessages pre:")
-		core.printTableTable(tOutMessages)
+		--BotEcho("tOutMessages pre:")
+		--core.printTableTable(tOutMessages)
 		tsort(tOutMessages, function(a,b) return (a[1] < b[1]) end)
-		BotEcho("tOutMessages post:")
-		core.printTableTable(tOutMessages)
+		--BotEcho("tOutMessages post:")
+		--core.printTableTable(tOutMessages)
 	end
 	
 	for i, tMessageStruct in ipairs(tOutMessages) do
@@ -600,10 +628,10 @@ function core.AllChatLocalizedMessage(sMessageKey, tTokens, nDelayMS)
 		return
 	end
 	
-	tTokens = tTokens or {}
+	local tLocalTokens = tTokens or {}
 	
 	local nCurrentTime = HoN.GetGameTime()
-	tinsert(core.tMessageList, {(nCurrentTime + nDelayMS), true, sMessageKey, true, tTokens})
+	tinsert(core.tMessageList, {(nCurrentTime + nDelayMS), true, sMessageKey, true, tLocalTokens})
 end
 
 --Team chats the localized message corresponding to sMessageKey in the appropriate bot_messages_??.str stringtable
@@ -613,10 +641,10 @@ function core.TeamChatLocalizedMessage(sMessageKey, tTokens, nDelayMS)
 		return
 	end
 	
-	tTokens = tTokens or {}
+	local tLocalTokens = tTokens or {}
 	
 	local nCurrentTime = HoN.GetGameTime()
-	tinsert(core.tMessageList, {(nCurrentTime + nDelayMS), false, sMessageKey, true, tTokens})
+	tinsert(core.tMessageList, {(nCurrentTime + nDelayMS), false, sMessageKey, true, tLocalTokens})
 end
 
 

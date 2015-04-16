@@ -37,6 +37,7 @@ PERIOD			.
 
 // General
 general_set									Set
+general_sortby								Sort By:
 general_new									NEW!
 general_cancel								Cancel
 general_ok									OK
@@ -134,7 +135,7 @@ general_mode_botmatch						Bot Match
 general_mode_captainsmode					Captains Pick
 general_mode_captainsmode_desc				Group leaders are the captains of the team and do all of the banning and picking for the team.
 general_mode_krosmode						Shuffle Pick
-general_mode_krosmode_desc					Players pick a hero, and then heroes who's abilities will be added to a pool. Then, your abilities are randomly selected out of that pool each time you spawn.
+general_mode_krosmode_desc					Players pick a hero, and then heroes whose abilities will be added to a pool. Then, your abilities are randomly selected out of that pool each time you spawn.
 general_mode_gated							Core Pool
 general_mode_gated_desc						Players choose from a crafted pool of 40 heroes. 
 general_mode_restrictivemodes				Restrictive Modes
@@ -241,6 +242,7 @@ general_product_type_h 						Hero
 general_product_type_eap 					Early Access
 general_product_type_s 						Status
 general_product_type_m 						Miscellaneous
+general_product_type_w						Ward
 
 // main.interface
 main_peel_tip								Watch HoN TV
@@ -406,6 +408,7 @@ map_tutorial								Tutorial
 map_watchtower								Watchtower
 map_midwars									Mid Wars
 map_riftwars								Rift Wars
+map_prophets								Prophets
 
 // game_options.package
 options_repair_confirm_head					Repair Install
@@ -614,12 +617,12 @@ options_checkbox_screen_edge_scroll			Screen Edge Scroll
 options_screen_edge_scroll_tip				If enabled, the camera will move when the mouse cursor is placed at the edge of the screen.
 
 options_checkbox_camera_lock				Lock Camera
-options_screen_camera_lock_tip				If enabled, the camera will move with the hero in game.
+options_screen_camera_lock_tip				If enabled, the camera will move with the hero in-game.
 
 options_checkbox_constrain_cursor			Constrain Cursor
 options_constrain_cursor_tip				If enabled, the mouse cursor will be restricted from moving outside of the game window while the game window has focus.
 options_checkbox_display_xp_rewards			Display XP Reward
-options_display_xp_rewards_tip				If enabled, the game will show when your hero gains experience in game by drawing purple numbers at the source of the reward.
+options_display_xp_rewards_tip				If enabled, the game will show when your hero gains experience in-game by drawing purple numbers at the source of the reward.
 
 options_header_control_options				Control Options
 options_yellow_label_action					Action
@@ -698,6 +701,9 @@ options_label_acti_ab_4_keybind				Activate Ability 4
 options_label_acti_extra_ab_1_keybind		Activate Extra Ability 1
 options_label_acti_extra_ab_2_keybind		Activate Extra Ability 2
 options_label_acti_extra_ab_3_keybind		Activate Extra Ability 3
+options_label_acti_extra_ab_4_keybind		Activate Extra Ability 4
+options_label_acti_extra_ab_5_keybind		Activate Extra Ability 5
+options_label_acti_extra_ab_6_keybind		Activate Extra Ability 6
 options_label_attribute_boost_keybind		Attribute Boost
 options_label_levelup_ab_1_keybind			Level Up Ability 1
 options_label_levelup_ab_2_keybind			Level Up Ability 2
@@ -711,6 +717,7 @@ options_label_acti_inven_3_keybind			Activate Inventory 3
 options_label_acti_inven_4_keybind			Activate Inventory 4
 options_label_acti_inven_5_keybind			Activate Inventory 5
 options_label_acti_inven_6_keybind			Activate Inventory 6
+options_label_ward_keybind					Ward
 options_label_taunt_keybind					Taunt
 options_label_prev_attack_mod_keybind		Prev Attack Modifier
 options_label_next_attack_mod_keybind		Next Attack Modifier
@@ -838,7 +845,7 @@ options_checkbox_team_or_player_color		Use Player Specific Colors
 options_screen_team_or_player_color_tip		Uses Player Specific Colors rather than Team Colors
 
 options_checkbox_show_timestamps			Show Timestamps
-options_checkbox_show_timestamps_tip		If enabled, displays timestamps for in game chat.
+options_checkbox_show_timestamps_tip		If enabled, displays timestamps for in-game chat.
 
 options_checkbox_reverse_minimap			Swap Mini Map
 options_checkbox_reverse_minimap_tip		If enabled, the mini map on the game interface is moved from the lower left to the lower right of the screen.
@@ -853,7 +860,7 @@ options_checkbox_disable_background_effects		Disable Background Effects
 options_checkbox_disable_background_effects_tip	If enabled, the background lobby effects and animations will not be loaded or played. \n\n(Requires a restart)         
 
 options_current_weather						Weather Conditions
-options_current_weather_tip					When a weather condition is selected, that weather effect will occur in game.
+options_current_weather_tip					When a weather condition is selected, that weather effect will occur in-game.
 
 options_slider_notification_duration		Display Duration
 options_slider_notification_duration_tip	Sets the length in seconds that notifications will be displayed before fading away.
@@ -861,7 +868,7 @@ options_slider_notification_duration_tip	Sets the length in seconds that notific
 options_checkbox_disable_notifications		Disable All Notifications
 options_checkbox_disable_notifications_tip	If enabled, no popup notifications will be displayed, but they will still be recorded to your notification history.
 
-options_checkbox_disable_notifications_ingame		Disable Notifications When In Game
+options_checkbox_disable_notifications_ingame		Disable Notifications When In-Game
 options_checkbox_disable_notifications_ingame_tip	If enabled, no popup notifications will be displayed while in a game, but they will still be recorded to your notification history and display when not in a game.
 
 options_checkbox_selection_highlight		Selection Highlight
@@ -1158,7 +1165,7 @@ create_acc_label_select_payment_type		Select Payment Type and Make Payment On Fo
 create_acc_label_terms_conditions			Terms & Conditions | Privacy Policy
 create_acc_label_finsh_create_account		Create Account
 create_account_please_wait					Please Wait...
-create_acc_label_nick_name_tip		 		*This is the name that you will be identified by while in game.
+create_acc_label_nick_name_tip		 		*This is the name that you will be identified by while in the game.
 create_acc_label_ref_name_tip		 		*This player will become your referrer, you will both be eligible for rewards.
 create_acc_input_address					Address:
 create_acc_input_province					Province:
@@ -2261,6 +2268,8 @@ mstore_product508_name		Under the Sea Bundle
 mstore_product508_desc		Show off your love for H2O with the under the sea bundle! Save 20% buying with gold!
 mstore_product509_name		Oni Devourer
 mstore_product509_desc		This otherworldly demon has broken into Newerth! Exterminate your foes as the true Oni Devourer!
+mstore_product510_name  	GM gold star
+mstore_product510_desc  	For Newerth and Justice!
 mstore_product519_name		Flag- Afghanistan
 mstore_product520_name		King Ra
 mstore_product520_desc		Show off your explosive potential as King Ra, ruler of the dead.
@@ -3574,7 +3583,6 @@ mstore_product1793_name		Laser Etched
 mstore_product1794_name     Slasher Maliken
 mstore_product1795_name     Hero Alt- Slasher Maliken
 mstore_product1798_name     POG Bubbles
-mstore_product1799_name     Hero Alt- POG Bubbles
 mstore_product1800_name		Stardust Green Color
 mstore_product1801_name		Stardust Bundle
 mstore_product1800_name		Stardust Green Color
@@ -3728,8 +3736,8 @@ mstore_product1966_name     Grendel
 mstore_product1967_name     Hero Alt- Grendel
 mstore_product1968_name     Chupacabra
 mstore_product1969_name     Hero Alt- Chupacabra
-mstore_product1970_name     Ultimate Rampage
-mstore_product1971_name     Hero Alt- Ultimate Rampage
+mstore_product1970_name     Wyvern Rampage
+mstore_product1971_name     Hero Alt- Wyvern Rampage
 mstore_product1972_name     Bogatyr
 mstore_product1973_name     Hero Alt- Bogatyr
 mstore_product1974_name     Green Knight
@@ -3740,12 +3748,6 @@ mstore_product1978_name     Artesia le Fay
 mstore_product1979_name     Hero Alt- Artesia le Fay
 mstore_product1980_name     The Kurgan
 mstore_product1981_name     Hero Alt- The Kurgan
-mstore_product1982_name     Elite Bundle
-mstore_product1982_desc     Elite Bundle
-mstore_product1983_name     Limited Bundle
-mstore_product1983_desc     Limited Bundle
-mstore_product1984_name     Djinn Bundle
-mstore_product1984_desc     Djinn Bundle
 mstore_product1986_name     Hero Alt- Dreadknight Salforis
 mstore_product1987_name     Hero Alt- Legendary Valkyrie
 mstore_product1988_name     Hero Alt- Sachi Swiftblade
@@ -3868,7 +3870,9 @@ mstore_product2121_name     Hero Alt- POG Accursed
 mstore_product2122_name     POG Andromeda
 mstore_product2123_name     Hero Alt- POG Andromeda
 mstore_product2124_name     POG Electrician
+mstore_product2125_name		POG Arachna
 mstore_product2126_name     POG Armadon
+mstore_product2127_name     POG Armadon
 mstore_product2128_name     POG Behemoth
 mstore_product2130_name     POG Balphagore
 mstore_product2132_name     POG Blacksmith
@@ -4087,7 +4091,7 @@ mstore_product2350_desc		When you raid the Vault of the Keeper you get 1 chest. 
 mstore_product2351_name		Pandora's Box
 mstore_product2351_desc		Purchase Pandora's Box and get 1 chance at any Ultimate Avatar, Seven Sins Avatars, Early Access or Gold Avatar! Limit 5 per customer.
 mstore_product2352_name		Merrick's Mystery Box
-mstore_product2351_desc		Purchase Pandora's Box and get 1 chance at any Ultimate Avatar, Seven Sins or Virtues Avatars, Early Access or Gold Avatar! Limit 5 per customer.
+mstore_product2352_desc		Purchase Merrick’s Mystery Box to get 3 chests, each of which could contain any Basic, Premium, Holiday or Limited Edition avatar! Limit 5 per customer.
 mstore_product2353_name     Moira
 mstore_product2354_name     Singularity
 mstore_product2355_name     Hecate
@@ -4098,10 +4102,8 @@ mstore_product2359_name     Russian Battlebear
 mstore_product2360_name     Hero Alt- Russian Battlebear
 mstore_product2361_name		Izbushka Courier
 mstore_product2361_desc		Get Baba Yaga's house as your own personal courier! Remember to say the magic phrase.
-mstore_product2362_name     Battle Armor Pegasus
-mstore_product2363_name     Hero Alt- Battle Armor Pegasus
-mstore_product2364_name     Venus De Aquarius
-mstore_product2365_name     Hero Alt- Venus De Aquarius
+mstore_product2364_name     Venus De Bubbles
+mstore_product2365_name     Hero Alt- Venus De Bubbles
 mstore_product2366_name     POG Flint Beastwood
 mstore_product2367_name     Shock Troop War
 mstore_product2368_name     Hero Alt- Shock Troop War
@@ -4148,28 +4150,18 @@ mstore_product2408_name     Manticore
 mstore_product2409_name     Hero Alt- Manticore
 mstore_product2410_name     Insanitarius Berzerker
 mstore_product2411_name     Hero Alt- Insanitarius Berzerker
-mstore_product2412_name     Knightslayer
-mstore_product2413_name     Hero Alt- Knightslayer
 mstore_product2414_name     Wicked Wish
 mstore_product2415_name     Hero Alt- Wicked Wish
-mstore_product2416_name     Forsaken Warg Rider
-mstore_product2417_name     Hero Alt- Forsaken Warg Rider
 mstore_product2418_name     End Bringer Lancelot
 mstore_product2419_name     Hero Alt- End Bringer Lancelot
 mstore_product2420_name     Space Wizard Merlin
 mstore_product2421_name     Hero Alt- Space Wizard Merlin
-mstore_product2422_name     Olympus Armor Pegasus
-mstore_product2423_name     Hero Alt- Olympus Armor Pegasus
-mstore_product2424_name     Aquarius
-mstore_product2425_name     Hero Alt- Aquarius
-mstore_product2426_name     Soviet Klanx
-mstore_product2427_name     Hero Alt- Soviet Klanx
-mstore_product2428_name     Hero Alt- Cheburashka Courier
+mstore_product2422_name     Olympic Pegasus
+mstore_product2423_name     Hero Alt- Olympic Pegasus
+mstore_product2428_name     Cheburashka Courier
 mstore_product2428_desc     We found this little guy in a crate of oranges. He was so cute, we decided to give him a job!
-mstore_product2429_name     Ultimate Flint
-mstore_product2430_name     Hero Alt- Ultimate Flint
-mstore_product2431_name     Chinese Phoenix
-mstore_product2432_name     Hero Alt- Chinese Phoenix
+mstore_product2431_name     Dynasty
+mstore_product2432_name     Hero Alt- Dynasty
 mstore_product2433_name     Bloodtide Brigade
 mstore_product2434_name     The Shroud
 mstore_product2438_name     Axia
@@ -4180,39 +4172,177 @@ mstore_product2442_name     Ussuri
 mstore_product2443_name     Hero Alt- Ussuri
 mstore_product2444_name     Riftshards Gladiator
 mstore_product2445_name     Hero Alt- Riftshards Gladiator
-mstore_product2446_name     Persian Manticore
-mstore_product2447_name     Hero Alt- Persian Manticore
 mstore_product2448_name     Preda Tori
 mstore_product2449_name     Hero Alt- Preda Tori
-mstore_product2450_name     EnvyUs
-mstore_product2451_name     Hero Alt- EnvyUs
-mstore_product2452_name     Blood Flo
-mstore_product2453_name     Hero Alt- Blood Flo
+mstore_product2450_name     Ellie Envy
+mstore_product2451_name     Hero Alt- Ellie Envy
+mstore_product2452_name     Bonnie Blood Hunter
+mstore_product2453_name     Hero Alt- Bonnie Blood Hunter
 mstore_product2454_name     Lynn X
 mstore_product2455_name     Hero Alt- Lynn X
-mstore_product2456_name     Honeypot
-mstore_product2457_name     Hero Alt- Honeypot
-mstore_product2458_name     Gray Wizard
-mstore_product2459_name     Hero Alt- Gray Wizard
-mstore_product2460_name     Golden Aquarius
-mstore_product2461_name     Hero Alt- Golden Aquarius
-mstore_product2462_name     Golden Leo
-mstore_product2463_name     Hero Alt- Golden Leo
-mstore_product2464_name     Golden Virgo
-mstore_product2465_name     Hero Alt- Golden Virgo
-mstore_product2466_name     Golden Centaur
-mstore_product2467_name     Hero Alt- Golden Centaur
-mstore_product2468_name     Golden Capricorn
-mstore_product2469_name     Hero Alt- Golden Capricorn
-mstore_product2470_name     Golden Libra
-mstore_product2471_name     Hero Alt- Golden Libra
-mstore_product2472_name     Diablo
-mstore_product2473_name     Hero Alt- Diablo
+mstore_product2464_name     Virgo
+mstore_product2465_name     Hero Alt- Virgo
+mstore_product2466_name     Sagittarius
+mstore_product2467_name     Hero Alt- Sagittarius
+mstore_product2470_name     Libra
+mstore_product2471_name     Hero Alt- Libra
+mstore_product2472_name     Scarlord
+mstore_product2473_name     Hero Alt- Scarlord
 mstore_product2474_name     Baal
 mstore_product2475_name     Hero Alt- Baal
-mstore_product2476_name     Beelzebub
-mstore_product2477_name     Hero Alt- Beelzebub
 mstore_product2478_name     Greatest of Thailand
+mstore_product2479_name     Lotto Ticket 1
+mstore_product2480_name     Lady Liberty
+mstore_product2481_name     Hero Alt- Lady Liberty
+mstore_product2482_name     Minos
+mstore_product2483_name     Hero Alt- Minos
+mstore_product2486_name     Scorpio
+mstore_product2487_name     Hero Alt- Scorpio
+mstore_product2494_name     Aeacus
+mstore_product2495_name     Hero Alt- Aeacus
+mstore_product2496_name     Abaddon
+mstore_product2497_name     Hero Alt- Abaddon
+mstore_product2504_name     Call to Arms Bronze
+mstore_product2505_name     Call to Arms Silver
+mstore_product2506_name     Call to Arms Gold
+mstore_product2507_name     Bronze Chip
+mstore_product2508_name     Silver Chip
+mstore_product2509_name     Gold Chip
+mstore_product2510_name     High Roller Chip
+mstore_product2511_name     Small Rift Cache
+mstore_product2511_desc     The Rift holds many treasures for those who dare to enter. Purchase this chest and have a chance to win any Premium Avatar! Limit 1 per customer.
+mstore_product2512_name     Large Rift Cache
+mstore_product2512_desc     The Rift holds many treasures for those who dare to enter. Purchase Large Rift Cache and get 1 chance at any Ultimate Avatar, Gold Avatar or Premium Avatar! Limit 5 per customer.
+mstore_product2513_name     Coffers of the Rift
+mstore_product2513_desc     The Rift holds many treasures for those who dare to enter. This chest could contain any Gold, Ultimate or Plinko Edition Avatar! Limit 5 per customer.
+mstore_product2514_name     Hero Alt- La Llorona Transformed
+mstore_product2517_name     Mistress of Arms
+mstore_product2518_name     Hero Alt- Mistress of Arms
+mstore_product2519_name     Gunclaw
+mstore_product2520_name     Hero Alt- Gunclaw
+mstore_product2521_name     POG Doctor Repulsor
+mstore_product2522_name     Grizzington
+mstore_product2523_name     Hero Alt- Grizzington
+mstore_product2524_name     Scoria
+mstore_product2525_name     Hero Alt- Scoria
+mstore_product2532_name     MechaKing
+mstore_product2533_name     Hero Alt- MechaKing
+mstore_product2535_name		URSA Bonus I
+mstore_product2535_desc		Collect the URSA Corps Avatars to receive a permanent 1.2 silver coin multiplier!
+mstore_product2536_name		Tarot
+mstore_product2537_name		Icosa
+mstore_product2538_name		Tyche
+mstore_product2539_name		Senior SBT
+mstore_product2539_desc		Senior SBT member!
+mstore_product2540_name		URSA Wildflower Maize
+mstore_product2540_desc		Like those enlisted in the CORP, URSA Wildflower Maize is chic, vibrant, and maintains a feel of exclusivity and spontaneity.
+mstore_product2543_name		Pull Bomb
+mstore_product2544_name		Essence Link
+mstore_product2545_name		Deflection
+mstore_product2546_name		Thunderbolt
+mstore_product2547_name		Get Burnt
+mstore_product2549_name     Tarot Chalice
+mstore_product2550_name     Tarot Rune
+mstore_product2551_name     Tarot Scale
+mstore_product2552_name     Tarot Sword
+mstore_product2556_name     School Ranking
+mstore_product2561_name     Corn Stalker
+mstore_product2562_name     Hero Alt- Corn Stalker
+mstore_product2563_name     Season 2 Bronze
+mstore_product2564_name     Season 2 Silver
+mstore_product2565_name     Season 2 Gold
+mstore_product2566_name     Rune Weaver
+mstore_product2567_name     Hero Alt- Rune Weaver
+mstore_product2568_name     Barrage
+mstore_product2569_name     Hero Alt- Barrage
+mstore_product2570_name     Arctos
+mstore_product2571_name     Hero Alt- Arctos
+mstore_product2572_name     URSA Courier
+mstore_product2572_desc     The URSA Corps is running low on ammo--quick, send in the custom courier!
+mstore_product2573_name     URSA Taunt
+mstore_product2573_desc     A roaring, exploding bear bomb is by far the best way to display your primal dominance on the battlefield!
+mstore_product2574_name     Kane
+mstore_product2575_name     Hero- Kane
+mstore_product2576_name     8-Bit Kane
+mstore_product2577_name     Hero Alt- 8-Bit Kane
+mstore_product2578_name     Katana
+mstore_product2579_name     Hero Alt- Katana
+mstore_product2581_name     POG Sand Wraith
+mstore_product2582_name     POG Predator
+mstore_product2583_name     POG Swiftblade
+mstore_product2584_name     POG Wretched Hag
+mstore_product2586_name     URSA Bonus II
+mstore_product2586_desc     Collect URSA Corps Avatars to receive a permanent 1.4 silver coin multiplier from Matchmaking games!
+mstore_product2587_name     URSA Bonus III
+mstore_product2587_desc     Collect URSA Corps Avatars to receive a permanent 1.6 silver coin multiplier from Matchmaking games!
+mstore_product2588_name     URSA Bonus IV
+mstore_product2588_desc     Collect URSA Corps Avatars to receive a permanent 1.8 silver coin multiplier from Matchmaking games!
+mstore_product2585_name     URSA Bonus V
+mstore_product2585_desc     Collect URSA Corps Avatars to receive a permanent 2.0 silver coin multiplier from Matchmaking games!
+mstore_product2591_name     Lady Nak
+mstore_product2592_name     Hero Alt- Lady Nak
+mstore_product2595_name     Possessed Riftwalker
+mstore_product2596_name     Hero Alt- Possessed Riftwalker
+mstore_product2597_name     Thriller Rhapsody
+mstore_product2598_name     Hero Alt- Thriller Rhapsody
+mstore_product2599_name     Bedsheet Devourer
+mstore_product2600_name     Hero Alt- Bedsheet Devourer
+mstore_product2601_name     Straw Man Lodestone
+mstore_product2602_name     Hero Alt- Straw Man Lodestone
+mstore_product2603_name     Raving Madman
+mstore_product2604_name     Hero Alt- Raving Madman
+mstore_product2605_name		Kane
+mstore_product2606_name		8-Bit Kane
+mstore_product2607_name		Katana
+mstore_product2608_name		Glowing Halloween
+mstore_product2608_desc		Haunt the chat server with this special holiday edition glowing orange name color!
+mstore_product2609_name     Halloween Party Bundle
+mstore_product2609_desc     No tricks here, just treats! Join the Halloween party with Ellie Envy, Bonnie Blood Hunter, Preda Tori, Lynn X and Thriller Rhapsody!
+mstore_product2610_name     Game HoN Bundle 4
+mstore_product2610_desc     Earn your rewards for participating in Game HoN events!
+mstore_product2611_name     Game HoN Bundle 5
+mstore_product2611_desc     Earn your rewards for participating in Game HoN events!
+mstore_product2612_name     Game HoN Bundle 6
+mstore_product2612_desc     Earn your rewards for participating in Game HoN events!
+mstore_product2615_name     Pumpkin Courier
+mstore_product2615_desc		This spooky pumpkin knows all about possessions. Oh, your possessions? Here you go, with extra haunting!
+mstore_product2616_name		Harvest Goody Bag
+mstore_product2616_desc		This Goody Bag contains an assortment of Avatars including some HE, LE, Gold, and Ultimate Avatars!
+mstore_product2617_name		Harvest Festival Bundle
+mstore_product2617_desc		This bundle offers Tricks AND Treats! Get all 4 Halloween Cosplay Party avatars and a surprise gift!
+mstore_product2621_name     Mae Nak
+mstore_product2622_name     Hero Alt- Mae Nak
+mstore_product2627_name     URSA Corps Announcer Pack
+mstore_product2627_desc     Lock and load and armor up, URSA warriors! If this announcer pack doesn't get you ready to roar, you might already be dead!
+mstore_product2656_name     MSHL MVP
+mstore_product2657_name     Legion Strength Bundle
+mstore_product2657_desc     Bolster your avatar collection with an avatar for every Legion Strength hero. That's 21 avatars for the low price of 1575 GC. What a deal!!!
+mstore_product2658_name     Hellbourne Strength Bundle
+mstore_product2658_desc     Reinforce your avatar collection with an avatar for every Hellbourne Strength hero. That's 20 avatars for the low price of 1575 GC. What a deal!!!
+mstore_product2659_name     Legion Intelligence Bundle
+mstore_product2659_desc     Boost your avatar collection with an avatar for every Legion Intelligence hero. That's 21 avatars for the low price of 1575 GC. What a deal!!!
+mstore_product2660_name     Hellbourne Intelligence Bundle
+mstore_product2660_desc     Fortify your avatar collection with an avatar for every Hellbourne Intelligence hero (minus Riftwalker). That's 20 avatars for the low price of 1575 GC. What a deal!!!
+mstore_product2661_name     Legion Agility Bundle 
+mstore_product2661_desc     Jump start your avatar collection with an avatar for every Legion Agility hero. That's 21 avatars for the low price of 1575 GC. What a deal!!!
+mstore_product2662_name     Hellbourne Agility Bundle
+mstore_product2662_desc     Expand your avatar collection with an avatar for every Hellbourne Agility hero. That's 20 avatars for the low price of 1575 GC. What a deal!!!
+mstore_product2665_name     Aluna Ward
+mstore_product2665_desc     Reveal your pro Aluna skills with this custom ward skin!
+mstore_product2666_name     Empath Ward
+mstore_product2666_desc     Reveal your pro Empath skills with this custom ward skin!
+mstore_product2669_name     Glacius Ward
+mstore_product2669_desc     Reveal your elite Glacius skills with this custom ward skin!
+mstore_product2670_name     Pearl Ward
+mstore_product2670_desc     Reveal your elite Pearl skills with this custom ward skin!
+mstore_product2671_name     Rhapsody Ward
+mstore_product2671_desc     Reveal your pro Rhapsody skills with this custom ward skin!
+mstore_product2672_name     Torturer Ward
+mstore_product2672_desc     Reveal your elite Torturer skills with this custom ward skin!
+mstore_product2673_name		Ursa Ward
+mstore_product2673_desc		Reveal your loyalty with this custom URSA Corps ward skin and expose the enemy for the cowards they are!
+mstore_product2692_name     Support Ward Bundle
+mstore_product2692_desc     Nothing shows your love for supports quite like these support-themed ward skins.
 
 mstore_product999999001_name	Default Account Icon
 mstore_product999999002_name	Default Chat Symbol
@@ -4221,6 +4351,9 @@ mstore_product999999003_desc	Return to the original announcer.
 mstore_product999999004_name	Default Name Color
 mstore_product999999004_desc	Return to your original Name Color.
 mstore_product999999005_name	Tokens and Passes
+mstore_product999999006_name	Default Ward
+mstore_product999999006_desc	Set your wards to the default appearance.
+
 mstore_product172_name		S2Games Logo
 mstore_product172_desc		S2Games Staff Icon
 mstore_product173_name		Gold Color
@@ -4296,14 +4429,17 @@ mstore_tip_couriers_step3a		* You can also purchase Courier Avatars at this scre
 mstore_tip_couriers_btnselect	Select the Courier's Avatar
 mstore_tip_couriers_btnlock		If you own the courier, click this to lock its avatar.
 
-
 mstore_category59		Flags
 mstore_category59_desc		Choose from a long list of countries to represent!
 mstore_category60		Hero Symbols
 mstore_category60_desc		Avoiding real life? Choose a hero symbol instead!
 mstore_category61		Misc Symbols
 mstore_category61_desc
+mstore_category74			Wards
+mstore_category74_desc		Customize the appearance of your Wards of Sight and Revelation.
 
+mstore_ward_sight			Sight
+mstore_ward_revelation		Revelation
 
 mstore_exttip_namecolor		Name Colors are found in the chat list, in the in-game stat window, and on your forum account.  They come with a default symbol and give you a higher position in the chat list than colorless people.
 
@@ -4656,19 +4792,40 @@ mstore_collectorsEditionSet28_owned_tip		This avatar is part of the Shroud pack.
 mstore_collectorsEditionSet28_expired		The Shroud - Unavailable
 mstore_collectorsEditionSet28_expired_tip	This avatar is part of the Shroud pack and is not currently available for purchase.
 
-mstore_collectorsEditionSet29				Item Avatar
-mstore_collectorsEditionSet29_tip			This is an Item Avatar.
-mstore_collectorsEditionSet29_owned			Item Avatar
-mstore_collectorsEditionSet29_owned_tip		This is an Item Avatar.
-mstore_collectorsEditionSet29_expired		Item Avatar - Unavailable
-mstore_collectorsEditionSet29_expired_tip	This is an Item Avatar and is not currently available for purchase.
+mstore_collectorsEditionSet29				The URSA Corps
+mstore_collectorsEditionSet29_tip			This avatar is part of the URSA Corps pack.
+mstore_collectorsEditionSet29_owned			The URSA Corps
+mstore_collectorsEditionSet29_owned_tip		This avatar is part of the URSA Corps pack.
+mstore_collectorsEditionSet29_expired		The URSA Corps - Unavailable
+mstore_collectorsEditionSet29_expired_tip	This avatar is part of the URSA Corps pack and is not currently available for purchase.
 
-mstore_collectorsEditionSet30				The URSA Corps
-mstore_collectorsEditionSet30_tip			This avatar is part of the URSA Corps pack.
-mstore_collectorsEditionSet30_owned			The URSA Corps
-mstore_collectorsEditionSet30_owned_tip		This avatar is part of the URSA Corps pack.
-mstore_collectorsEditionSet30_expired		The URSA Corps - Unavailable
-mstore_collectorsEditionSet30_expired_tip	This avatar is part of the URSA Corps pack and is not currently available for purchase.
+mstore_collectorsEditionSet30				Zodiac
+mstore_collectorsEditionSet30_tip			This avatar is part of the Zodiac pack.
+mstore_collectorsEditionSet30_owned			Zodiac
+mstore_collectorsEditionSet30_owned_tip		This avatar is part of the Zodiac pack.
+mstore_collectorsEditionSet30_expired		Zodiac - Unavailable
+mstore_collectorsEditionSet30_expired_tip	This avatar is part of the Zodiac pack and is not currently available for purchase.
+
+mstore_collectorsEditionSet31				Item Avatar
+mstore_collectorsEditionSet31_tip			This is an Item Avatar.
+mstore_collectorsEditionSet31_owned			Item Avatar
+mstore_collectorsEditionSet31_owned_tip		This is an Item Avatar.
+mstore_collectorsEditionSet31_expired		Item Avatar - Unavailable
+mstore_collectorsEditionSet31_expired_tip	This is an Item Avatar and is not currently available for purchase.
+
+mstore_collectorsEditionSet32				Halloween Avatar
+mstore_collectorsEditionSet32_tip			This is a Halloween Avatar.
+mstore_collectorsEditionSet32_owned			Halloween Avatar
+mstore_collectorsEditionSet32_owned_tip		This is a Halloween Avatar.
+mstore_collectorsEditionSet32_expired		Halloween Avatar - Unavailable
+mstore_collectorsEditionSet32_expired_tip	This is a Halloween Avatar and is not currently available for purchase.
+
+mstore_collectorsEditionSet33				Three Judges Avatar
+mstore_collectorsEditionSet33_tip			This is a Three Judges Avatar.
+mstore_collectorsEditionSet33_owned			Three Judges Avatar
+mstore_collectorsEditionSet33_owned_tip		This is a Three Judges Avatar.
+mstore_collectorsEditionSet33_expired		Three Judges Avatar - Unavailable
+mstore_collectorsEditionSet33_expired_tip	This is a Three Judges Avatar and is not currently available for purchase.
 
 mstore_ultimateedition					Ultimate Avatar
 mstore_ultimateedition_tip				This avatar is an Ultimate Avatar.
@@ -4828,6 +4985,8 @@ mstore_choosetype56					Choose this Avatar
 mstore_choosetype56_desc			Click here to choose this Avatar.
 mstore_choosetype57					Choose this Courier
 mstore_choosetype57_desc			Click here to choose this avatar for your courier.
+mstore_choosetype74					Choose this Ward
+mstore_choosetype74_desc			Click here to choose this Custom Ward.
 mstore_choose						Choose
 mstore_buy							Buy
 mstore_redeem						Redeem
@@ -4989,7 +5148,7 @@ mstore_error51		Your request has been processed successfully!
 mstore_error52		You do not have enough tickets to purchase this item.
 mstore_error53		The product could not be assigned to your account, you may already own it.
 mstore_error54		There was an error processing your request, we were unable to load the product. Please try again later.
-mstore_error50		Plinko is currently disabled. Please try again later.
+mstore_error55		Plinko is currently disabled. Please try again later.
 mstore_error56		Purchasing coins in-game is currently disabled.
 
 mstore_formerror16		The nickname you entered was too long. Choose a shorter nickname.
@@ -5128,6 +5287,9 @@ mstore_Hero_SirBenzington_name		Sir Benzington
 mstore_Hero_Circe_name				Circe the Deceiver
 mstore_Hero_Klanx_name				Klanx
 mstore_Hero_Riptide_name			Riptide
+mstore_Hero_Moira_name				Moira
+mstore_Hero_Tarot_name				Tarot
+mstore_Hero_Kane_name				Kane
 
 //Account Icons
 mstore_unlock_icon_btn				Unlock Icon Slot
@@ -5685,6 +5847,8 @@ game_mentor_help_9	Ping location
 game_mentor_help_13 You can view this screen at any time from the menu dropdown
 game_mentor_help_15 Transmit your cursor
 
+game_objectives_quests						Quests
+
 courier_state_Idle 							Courier Idle
 courier_state_GettingStashItems 			Courier Getting Stash Items
 courier_state_DeliveringItems 				Courier Delivering Items
@@ -5715,7 +5879,7 @@ courier_no_controller_desc					Currently there is no player using or controlling
 
 courier_controller_desc 					The courier is currently being controlled by, or executing actions for {playerName}.
 
-courier_uncontrollable 						This courier cannot be controlled by you because the player whom owns it has has not shared it with you.
+courier_uncontrollable 						This courier cannot be controlled by you because the player whom owns it has not shared it with you.
 
 player_tip_permadead						You are dead and cannot respawn.
 team_tip_permadead							This player is dead and cannot respawn.
@@ -6540,6 +6704,8 @@ mainlobby_gamelist_midwars_title			Mid Wars
 mainlobby_gamelist_midwars_desc				Play a game on Mid Wars
 mainlobby_gamelist_riftwars_title			Rift Wars
 mainlobby_gamelist_riftwars_desc			Play a game on Rift Wars
+mainlobby_gamelist_prophets_title			Prophets
+mainlobby_gamelist_prophets_desc			Play a game on Prophets
 mainlobby_gamelist_midwars_text				Have Fun!
 mainlobby_gamelist_test_title				Test Map
 mainlobby_gamelist_test_desc				It's a secret to everybody.
@@ -6703,6 +6869,15 @@ globby_make_ref_tip							Make this player a referee
 globby_spot_locked							Locked
 globby_quick_stats							Wins\nLosses\nK:D\nA:D\nK+A:D\nWards\nXPM\nGPM
 game_gold_report							^wGold Earned From Killing Players\n^wGold Earned From Assisting Players Deaths\n^wGold Earned From Buildings\n^wGold Earned From Last Hitting Creeps\n^wGold Lost To Dying\n^vCurrent Buy Back Cost\n^vCurrent Gold To Be Lost On Death\n^wGold Per Min\n
+gold_report_kills							From Player Kills
+gold_report_assists							From Assists
+gold_report_buildings						From Building Kills
+gold_report_creeps							From Last-Hitting Creeps
+gold_report_lost_to_death					Total Gold Lost to Deaths
+gold_report_buyback_cost					Current Buyback Cost
+gold_report_to_lose_on_death				Current Gold to Lose on Death
+gold_report_gpm								Gold Per Minute
+
 globby_current_selection					Current Selection
 
 globby_select_avatar						Select Avatar
@@ -6803,6 +6978,7 @@ game_lobby_phase_picking					Picking Phase
 game_lobby_phase_loading					Loading Match...
 game_lobby_phase_prematch					Pre-Match Phase
 game_lobby_phase_match 						In Match
+game_lobby_phase_postmatch 					Post-Match
 game_lobby_phase_ended 						Match Over
 game_lobby_phase_hiddenban					Hidden Banning Phase
 game_lobby_phase_locking					Locking Phase
@@ -7247,7 +7423,6 @@ tooltip_logout								Log Out
 tooltip_options								Options
 tooltip_offlinereplays						Local Replays
 tooltip_changelog							Change Log
-tooltip_twitchtv 							TwitchTV Streaming
 tooltip_motd								Message of the Day
 tooltip_lang								Language
 tooltip_players_online						Players Online
@@ -7494,7 +7669,7 @@ loading_tip1					Holding ^gCONTROL^* while using the shop will display recipe sc
 loading_tip2					While using an ability, you can hold ^gSHIFT^* and select another ability to put it in your ability queue. As soon as the first ability has completed the next ability will fire immediately after.
 loading_tip3					You can attack your own creeps when they are low health. If you kill them it results in a "deny" and surrounding enemies get much less experience than they would normally.
 loading_tip4					If you attack your tower when it is low and destroy it, the enemy team gets much less gold than if they had destroyed it themselves.
-loading_tip5					Typing /matchup or /ma in game will print a list of all the players, heroes, levels, and player colors.
+loading_tip5					Typing /matchup or /ma in-game will print a list of all the players, heroes, levels, and player colors.
 loading_tip6					You can sell an item from your stash by holding ^gSHIFT^* and ^gCONTROL^* when ^gRIGHT ^gCLICKING^* an item.
 loading_tip7					You can quickly transfer an item between your stash and inventory by holding ^gCONTROL^* and ^gRIGHT ^gCLICKING^* the item.
 loading_tip8					Lost track of where your hero is? Tapping the ^gC^* key will center the screen on your hero.
@@ -7529,11 +7704,11 @@ loading_tip36					Your team will appreciate you more if you use high damage nuke
 loading_tip37					You can see the gold, skills, health, and mana, of your allies at the top left of your screen. If you select their hero, you can see their items.
 loading_tip38					Do not be afraid to lose. Good judgment comes from experience, and experience comes from bad judgment. Everyone was new at one point.
 loading_tip39					Be nice! A player will often ignore advice if you are screaming at them. Try saying it in a polite tone as a suggestion more than an order.
-loading_tip40					Typing /gameinfo or /gi in game will print a list of the current game options.
+loading_tip40					Typing /gameinfo or /gi in-game will print a list of the current game options.
 loading_tip41					Clicking on this hint box will display a new hint.
 loading_tip42					Selecting a ^!yRegion^* and enabling the "Filter Pre-Query" checkbox on game browser interface will allow you to browse and refresh games faster.
-loading_tip43					When a notification pops up in game, you can ^gRIGHT ^gCLICK^* anywhere on it to close it rather than clicking the 'X' button.
-loading_tip44					You can turn specific notifications on or off, or disable notifications in game by clicking "Options" and then navigating to the "Interface" tab.
+loading_tip43					When a notification pops up in-game, you can ^gRIGHT ^gCLICK^* anywhere on it to close it rather than clicking the 'X' button.
+loading_tip44					You can turn specific notifications on or off, or disable notifications in-game by clicking "Options" and then navigating to the "Interface" tab.
 loading_tip45					Each team can only pause up to 3 times per game. Use them wisely!
 loading_tip46					You can use the command /friendlychat or /fc to only accept messages from players in your clan or on your friend list.
 loading_tip47					Typing /help will display a list of potentially useful commands available to you.
@@ -7669,6 +7844,7 @@ mm_current_basic_verify4		Any Amount!
 mm_current_verified_1			As a Verified account, you may choose to play Verified Only matches.
 mm_current_verified_2			By thumbing up the "Verified Only" option above, basic accounts will be excluded when searching for your match.
 mm_current_verified_3			To play Verified Only matches, select the custom tab to the left.
+mm_ffa 							Free For All
 mm_5v5							5 vs 5
 mm_4v4							4 vs 4
 mm_3v3							3 vs 3
@@ -8456,6 +8632,9 @@ sysbar_driver_restarted						Video Driver Restarted
 sysbar_driver_restarted_desc				Your video driver stopped responding and has been recovered, HoN has automatically disabled d3dEx on this machine to improve stability.
 gl_incorrect_display 						OpenGL - Incorrect Display
 gl_incorrect_display_desc 					You HoN window is currently not on the same display as what you have selected in the options. For optimal performance you should select the correct display in the options and restart HoN, or move the window to the correct display.
+sysbar_mods									Mods Detected
+sysbar_mods_desc							Modded files have been detected on your system, this may prevent you from playing in HonTour matches and games using tournament rules. Click to view a list of detected files.
+main_mods_header							The following files were loaded by your client:
 
 // F2P TMM
 tmm_player_needs_tokens					This player it not able to play with the current options.
@@ -9707,6 +9886,11 @@ hero_tip_offensive_tip_Hero_Treant_2			If the enemy team has stealth detection, 
 hero_tip_defensive_tip_Hero_Treant_1			Casting Shrunken Head, Nullfire Blade, Geometer's Bane, or another magic immunity or dispel will instantly remove Root. Buy stealth detection to prevent him from ambushing your team.
 hero_tip_defensive_tip_Hero_Treant_2			Items such as Shieldbreaker and Hellflower are great ways to help kill enemy tank heroes like Keeper of the Forest.  Nullfire Blade can also help by removing his Nature's Veil.
 
+hero_tip_offensive_tip_Hero_Kane_1				Waylay can be used in many ways. From catching players off guard to wiping out creep waved for a quick farm and push.
+hero_tip_offensive_tip_Hero_Kane_2				If you are taking a lot of damage during the laning phase try keeping Balance of Power set to Defense so you can increase your base armor making enemies have a harder time harrassing you out of lane.
+hero_tip_defensive_tip_Hero_Kane_1				Remember you can use your ultimate to call out a tower to force it to attack you. When doing this with your Steel Resolve you can tank a tower for your creeps and take very little damage.
+hero_tip_defensive_tip_Hero_Kane_2				Putting an early point in steel resolve will go a long way in putting you ahead in any 1 versus 1 fight.
+
 hero_tip_offensive_tip_Hero_Kraken_1			Use Tsunami Charge to escape from enemies. Torrent can also be used to slow assailants.
 hero_tip_offensive_tip_Hero_Kraken_2			Release the Kraken has a 1 second delay.  Predict where your enemies will run to catch them in it.
 hero_tip_defensive_tip_Hero_Kraken_1			Don't sandwich yourself between Kraken and a wall or tree. When he Releases the Kraken, furiously click away from the center of the beast. If you touch the center, you will be stunned.
@@ -9751,6 +9935,11 @@ hero_tip_offensive_tip_Hero_Midas_1				Use Golden Salvo and Lion's Pride as the 
 hero_tip_offensive_tip_Hero_Midas_2				Elemental Warp applies Reagent also at your starting location, so use Golden Salvo after Elemental Warping away as a secondary combo.
 hero_tip_defensive_tip_Hero_Midas_1				Avoid being hit by two of Midas' spells in a short window. Move erratically to dodge his skill shots.
 hero_tip_defensive_tip_Hero_Midas_2				Midas does primarily magic damage. Buy magic armor such as Mystic Vestments to help you survive his spells.
+
+hero_tip_offensive_tip_Hero_Moira_1				Use Ephemeral Forge to get yourself in a good position to use your abilities, leaving yourself out of harm's way.
+hero_tip_offensive_tip_Hero_Moira_2				Cast Shards of Harkon on yourself or an ally right before entering your Arcane Overload! The Shards will stun when you exit the ability.
+hero_tip_defensive_tip_Hero_Moira_1				Kill the Illusion created by Ephemeral Forge quickly. It takes 250% bonus damage and gives you gold and experience when you kill it!
+hero_tip_defensive_tip_Hero_Moira_2				Remember if you have Mana Sunder cast on you, you lose all of your Mana again if you use an ability for its duration. Wait until it's over to combo spells together!
 
 hero_tip_offensive_tip_Hero_Monarch_1			Cast Chrysalis when you're being focused. Cast Cleansing Wind before you emerge to give yourself a big boost of speed and remove any debuffs.
 hero_tip_offensive_tip_Hero_Monarch_2			Keep back in team fights so you don't get focused down before you can use your reactive spells to save your team.
@@ -10107,7 +10296,7 @@ match_stat_rewards_reward_history				Reward History:
 match_stat_rewards_concluded					Concluded
 match_stat_rewards_new_rewards					New Rewards
 match_stat_rewards_rewards_earned				Rewards Earned
-match_stat_rewards_new_rewards_earned			Show New Rewards
+match_stat_rewards_new_rewards_earned			New Rewards
 match_stat_rewards_level_up						Level Up!
 match_stat_rewards_has_item						Unlocked
 match_stat_rewards_earn_item					Unlock
@@ -10216,6 +10405,9 @@ ms_toolip_desc_annihilation						Earn an annihilation in a match to receive a co
 
 ms_toolip_legacy								Legacy Bonus
 ms_toolip_legacy_desc							As a legacy player, you received additional bonus coins for this match!
+
+ms_toolip_bonus									Silver Bonus Multiplier
+ms_toolip_bonus_desc							You own a silver bonus multiplier, giving you bonus coins for this match!
 
 ms_stats_tabs_rewards							R\\nE\\nW\\nA\\nR\\nD\\nS\\n
 ms_stats_tabs_stats								S\\nT\\nA\\nT\\nS\\n
@@ -10402,32 +10594,40 @@ HeroCategory_protective						Protective
 HeroCategory_tank							Tank
 
 // bot descriptions
-bot_description_ra					Amun-Ra serves as a pusher and mid-game carry that works well in most lanes. Authored by St0l3n_ID!
+bot_description_aluna				Aluna is a strong ranged intelligence hero with a high damage nuke that can be global. Authored by Kairus101!
 bot_description_arachna				Arachna is a single-target DPS carry with strong harassment capability and low survivability.
+bot_description_balphagore			Balphagore is a melee strength tank with insane pushing potential. Authored by Kairus101!
+bot_description_blacksmith			A powerful, luck-based intelligence hero who has a nuke with a high damage cap! Authored by Kormoranos!
+bot_description_bombardier			Bombardier is a ranged intelligence hero with strong magic damage spells. Authored by Anakonda!
+bot_description_bushwack 			Bushwack is a highly mobile, short ranged carry who excels in kiting his enemies. Authored by `IceCube`!
 bot_description_chronos				Chronos is a strong late game carry. Although weak early on, he can become very deadly and elusive later.
+bot_description_dampeer				Dampeer is a feared melee ganker early game and an effective carry late game. Authored by DildoSamuri!
 bot_description_defiler				Defiler is a team-oriented lane pusher with a dangerous ultimate. Her spells pack a punch!
-bot_description_shaman				Demented Shaman is a deadly support whose spells have both offensive and defensive components.
+bot_description_ellonia				Ellonia is a ranged intelligence hero with powerful, icy skill shots! Authored by Mellow_Ink!
+bot_description_engineer			A capable ganker, Engineer also provides a lot of teamfight capability. Authored by V1P3R`!
 bot_description_flint_beastwood		Flint Beastwood is a late-game DPS carry and consummate sniper, with a very long attack range.
 bot_description_forsaken_archer		Forsaken Archer is a carry with a good mix of both Physical and Magic damage.
 bot_description_glacius				Glacius is a support hero with strong spells, including a global mana regeneration aura.
-bot_description_hammerstorm			With one of the best stuns in the game, Hammerstorm is a very reliable physical hero.
-bot_description_magmar				Magmus is one of the most effective gankers and initiators in the game if played well.
-bot_description_predator			Predator is a carry strength hero who is known for his survivability and damage potential.
-bot_description_witch_slayer		Witch Slayer is one of the most reliable support heroes, with two different controlling abilities.
-bot_description_rhapsody			Rhapsody is a support hero with pushing ability and a damage-absorbing ult. Authored by fane_maciuca!
-bot_description_soul_reaper			Soul Reaper is a strong, versatile hero who can heal, harm, and execute! Authored by paradox870!
-bot_description_engineer			A capable ganker, Engineer also provides a lot of teamfight capability. Authored by V1P3R`!
 bot_description_gravekeeper			Gravekeeper is a versatile hero with solid Magic and Physical damage. Authored by Schnarchnase!
-bot_description_ellonia				Ellonia is a ranged intelligence hero with powerful, icy skill shots! Authored by Mellow_Ink!
-bot_description_balphagore			Balphagore is a melee strength tank with insane pushing potential. Authored by Kairus101!
-bot_description_bombardier			Bombardier is a ranged intelligence hero, with strong magic damage spells. Authored by Anakonda!
-bot_description_revenant			Revenant is a ganker who lowers armor while adding magical damage to allies. Authored by Rinestone!
-bot_description_wretched_hag		Wretched Hag is a mobile ganker and semicarry who excels in AoE magic damage. Authored by DarkFire!
-bot_description_moon_queen			Moon Queen is a short-ranged carry with strong ganking and a deadly ult. Authored by Anakonda!
-bot_description_blacksmith			A powerful, luck-based intelligence hero who has a nuke with a high damage cap! Authored by Kormoranos!
-bot_description_ravenor				Ravenor is strength carry whose attacks are imbued with heavy magic damage. Authored by tchackie!
+bot_description_grinex				Grinex is a fast melee ganker whose stealth makes him a slippery foe. Authored by Darkfire!
+bot_description_gunblade			Gunblade is a agile carry, able to deal severe damage at close range. Authored by ModernSaint!
+bot_description_hammerstorm			With one of the best stuns in the game, Hammerstorm is a very reliable physical hero.
+bot_description_legionnaire			Legionnaire is a jungling tank who punishes attackers. A collaboration by Rinestone, DarkFire and Kairus101!
+bot_description_magmar				Magmus is one of the most effective gankers and initiators in the game if played well.
 bot_description_maliken				Maliken is a hard-hitting strength carry whose ult can dominate a teamfight. Authored by Kairus101!
+bot_description_moon_queen			Moon Queen is a short-ranged carry with strong ganking and a deadly ult. Authored by Anakonda!
 bot_description_myrmidon			Myrmidon is a ranged support hero, with great crowd control. A collaboration by VHD, DarkFire and Kairus101!
+bot_description_parasite			A jungling bot who has very large burst damage output. A collaboration by Mellow_Ink and Kairus101!
+bot_description_predator			Predator is a carry strength hero who is known for his survivability and damage potential.
+bot_description_ra					Amun-Ra serves as a pusher and mid-game carry that works well in most lanes. Authored by St0l3n_ID!
+bot_description_ravenor				Ravenor is strength carry whose attacks are imbued with heavy magic damage. Authored by tchackie!
+bot_description_revenant			Revenant is a ganker who lowers armor while adding magical damage to allies. Authored by Rinestone!
+bot_description_rhapsody			Rhapsody is a support hero with pushing ability and a damage-absorbing ult. Authored by fane_maciuca!
+bot_description_shaman				Demented Shaman is a deadly support whose spells have both offensive and defensive components.
+bot_description_soul_reaper			Soul Reaper is a strong, versatile hero who can heal, harm, and execute! Authored by paradox870!
+bot_description_succubus			Succubus is a good disabler with high spell damage. Authored by Anakonda!
+bot_description_witch_slayer		Witch Slayer is one of the most reliable support heroes, with two different controlling abilities.
+bot_description_wretched_hag		Wretched Hag is a mobile ganker and semicarry who excels in AoE magic damage. Authored by DarkFire!
 
 // Maintenance
 maintenance_general 			Under Maintenance
@@ -10533,14 +10733,14 @@ plinko_ticket_purchase 			This item costs ^994{ticketCost}^* tickets! This will 
 plinko_prize_tier_1 			Diamond Chest
 plinko_prize_tier_2 			Gold Chest
 plinko_prize_tier_3 			Silver Chest
-plinko_prize_tier_4 			Bronze Chest
+plinko_prize_tier_4 			URSA Corps
 plinko_prize_tier_5 			Tickets
 plinko_prize_tier_6 			Tickets
 
 plinko_prize_tier_1_tip 		The Diamond Chest includes a chance for any Gold, Early Access, or Plinko Exclusive Avatars.
 plinko_prize_tier_2_tip			The Gold Chest includes a chance for any Limited or Holiday Edition Avatars.
 plinko_prize_tier_3_tip			The Silver Chest includes a chance for any Premium Avatars.
-plinko_prize_tier_4_tip			The Bronze Chest includes a chance for any Basic Avatars.
+plinko_prize_tier_4_tip			The URSA Corps Chest includes a chance for any URSA Corps or eSports Avatars only.
 plinko_prize_tier_5_tip			Large bundle of tickets.
 plinko_prize_tier_6_tip			Bundle of tickets.
 
@@ -10557,6 +10757,7 @@ plinko_drop_request_status_1	Your request has been processed successfully!
 plinko_drop_request_status_2	You don't have enough tickets to complete this request.
 plinko_drop_request_status_3	You don't have enough gold to complete this request.
 plinko_drop_request_status_4	A currency was not specified in the request.
+plinko_drop_request_status_5	Plinko is currently disabled. Please try again later.
 
 plinko_tickets_redeemed 		Your tickets have successfully been redeemed for your prize!
 plinko_drops_bought 			You have successfully bought more Chips!
@@ -10570,4 +10771,5 @@ dice_tooltip_body2				Using the amulet will give you a new set of abilities. Thi
 dice_tooltip_unusable			The amulet can only be used if you can afford them and you are in your team's well.
 
 dice_prompt_body				Using the amulet will either consume one of your uses or, if you have no uses, cost you {cost} goblin coins.\n\nYou currently have {tokens} uses and {gold} goblin coins.
+
 // End - do not delete this line
