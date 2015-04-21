@@ -143,8 +143,8 @@ object.onthink 	= object.onthinkOverride
 
 
 --Override core.BehaviorsSwitched so we can reset our Terror watch variable
-local function BehaviorsSwitchedOverride()
-	object.BehaviorsSwitchedOld()
+local function BehaviorsSwitchedOverride(botBrain)
+	object.BehaviorsSwitchedOld(botBrain)
 	
 	object.bHadTerrorLast = nil
 end

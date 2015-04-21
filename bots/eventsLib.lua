@@ -121,13 +121,16 @@ function object:oncombatevent(EventData)
 			--BotEcho("Port used!")
 			behaviorLib.bLastPortResult = false
 		end
-	elseif EventData.Type == "State" or EventData.Type == "Buff" then
+	elseif EventData.Type == "State" then
 		if core.idefBlightStones ~= nil and EventData.StateName == core.idefBlightStones.stateName then
 			--BotEcho("Runes of Blight applied")
 			core.idefBlightStones.expireTime = curTimeMS + EventData.StateDuration
 		elseif core.idefHealthPotion ~= nil and EventData.StateName == core.idefHealthPotion.stateName then
 			--BotEcho("health pot applied")
 			core.idefHealthPotion.expireTime = curTimeMS + EventData.StateDuration
+		elseif EventData.StateName == "State_Teleport_GrimmCrossroads" then --applies to midwars too
+			--BotEcho("Teleport event!")
+			behaviorLib.TeleporterUsed()
 		end
 	elseif EventData.Type == "Kill" then
 		if core.tableContains(core.EnemyHeroes, EventData.TargetUnit) > 0 then

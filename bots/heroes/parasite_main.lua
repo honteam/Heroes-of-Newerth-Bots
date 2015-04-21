@@ -537,16 +537,18 @@ function object:onthinkOverride(tGameVariables) --This is run, even while dead. 
 	end
 	
 	--get infested unit if there is one
-	local tMyUnits = core.tControllableUnits.AllUnits
-	if core.NumberElements(tMyUnits) > 1 then
-		for nUID, unit in pairs(tMyUnits) do
-			if unit:IsValid() and unit:HasState("State_Parasite_Ability2_Target") then
-				object.unitInfestedUnit = unit
-				break
+	if core.tControllableUnits ~= nil then
+		local tMyUnits = core.tControllableUnits.AllUnits
+		if core.NumberElements(tMyUnits) > 1 then
+			for nUID, unit in pairs(tMyUnits) do
+				if unit:IsValid() and unit:HasState("State_Parasite_Ability2_Target") then
+					object.unitInfestedUnit = unit
+					break
+				end
 			end
+		else
+			object.unitInfestedUnit = nil
 		end
-	else
-		object.unitInfestedUnit = nil
 	end
 	
 	-- If we start on another behavior, but we are inside a unit, leave the unit.

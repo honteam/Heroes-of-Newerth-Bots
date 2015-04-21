@@ -81,7 +81,14 @@ function behaviorLib.PositionSelfCreepWave(botBrain, unitCurrentTarget)
 	local nMyThreat =  funcGetThreat(unitSelf)
 	local nMyDefense = funcGetDefense(unitSelf)
 	local nodeBackUp, nNodeBackUp = core.GetPrevWaypoint(core.tMyLane, vecMyPos, core.bTraverseForward)
-	local vecBackUp = nodeBackUp:GetPosition()
+	
+	local vecBackUp = nil
+	
+	if nodeBackUp ~= nil then
+		vecBackUp = nodeBackUp:GetPosition()
+	else
+		vecBackUp = core.allyWell:GetPosition()
+	end
 	
 	local nExtraThreat = 0.0
 	if unitSelf:HasState("State_HealthPotion") then
@@ -668,11 +675,27 @@ function behaviorLib.GetSafePath(vecDesiredPosition)
 	local nAllyTowerMul      = behaviorLib.nPathAllyTowerMul
 	local nBaseMul           = behaviorLib.nPathBaseMul
 
+	-- Node cost
 	local function funcNodeCost(nodeParent, nodeCurrent, link, nOriginalCost)
-		--TODO: local nDistance = link:GetLength()
+		local bTeleport = link:GetProperty("teleport")
+		if bTeleport and (not nodeParent:GetProperty("TeleportStart") or core.unitSelf:HasState("State_Teleport_GrimmCrossroads")) then
+			return 9999
+		end
+		
 		local nDistance = Vector3.Distance(nodeParent:GetPosition(), nodeCurrent:GetPosition())
 		local nCostToParent = nOriginalCost - nDistance
-
+		
+		if bTeleport and nodeParent:GetProperty("TeleportStart") then
+			return nCostToParent + 10 -- teleports are "instant"
+		end
+		
+		--if bTeleport and nodeParent:GetProperty("TeleportStart") then
+		--	BotEcho("Considering teleport link!")
+		--end
+		--local nDistanceLink = link:GetLength()
+		--if (nDistance ~= nDistanceLink) then
+		--	BotEcho(nDistance.." ~= "..nDistanceLink)
+		--end
 		--BotEcho(format("nOriginalCost: %s  nDistance: %s  nSq: %s", nOriginalCost, nDistance, nDistance*nDistance))
 
 		local sZoneProperty  = nodeCurrent:GetProperty("zone")
@@ -710,7 +733,7 @@ function behaviorLib.GetSafePath(vecDesiredPosition)
 
 		return nCostToParent + nDistance * nMultiplier
 	end
-
+	
 	return BotMetaData.FindPath(core.unitSelf:GetPosition(), vecDesiredPosition, funcNodeCost)
 end
 
@@ -827,6 +850,7 @@ function behaviorLib.PathLogic(botBrain, vecDesiredPosition)
 
 	--Follow path logic
 	local vecReturn = nil
+	local nodeWaypoint = nil
 
 	local tPath = behaviorLib.tPath
 	local nPathNode = behaviorLib.nPathNode
@@ -838,7 +862,7 @@ function behaviorLib.PathLogic(botBrain, vecDesiredPosition)
 				behaviorLib.nPathNode = nPathNode				
 			end
 			
-			local nodeWaypoint = tPath[behaviorLib.nPathNode]
+			nodeWaypoint = tPath[behaviorLib.nPathNode]
 			if nodeWaypoint then
 				vecReturn = nodeWaypoint:GetPosition()
 			end
@@ -899,17 +923,38 @@ function behaviorLib.PathLogic(botBrain, vecDesiredPosition)
 		end
 	end	
 	
-	return vecReturn				
+	return vecReturn, nodeWaypoint
+end
+
+function behaviorLib.TeleporterUsed()
+	behaviorLib.unitCurrentTeleporter = nil
+	
+	if behaviorLib.tPath ~= nil and behaviorLib.nPathNode ~= nil then
+		local nodeCurrent = behaviorLib.tPath[behaviorLib.nPathNode]
+		while nodeCurrent ~= nil and nodeCurrent:GetProperty("TeleportStart") do
+			behaviorLib.nPathNode = behaviorLib.nPathNode + 1
+			nodeCurrent = behaviorLib.tPath[behaviorLib.nPathNode]
+		end
+	end
 end
 
 function behaviorLib.MoveExecute(botBrain, vecDesiredPosition)
+	local bDebugEchos = false
 	if bDebugEchos then BotEcho("Movin'") end
+	
 	local bActionTaken = false
 	
 	local unitSelf = core.unitSelf
 	local vecMyPosition = unitSelf:GetPosition()
 	local vecMovePosition = vecDesiredPosition
 	
+	--use teleporter
+	if behaviorLib.unitCurrentTeleporter ~= nil then
+		if bDebugEchos then BotEcho("Using teleporter!!") end
+		bActionTaken = core.OrderTouch(botBrain, unitSelf, behaviorLib.unitCurrentTeleporter)
+	end
+	
+	--path / port logic
 	local nDesiredDistanceSq = Vector3.Distance2DSq(vecDesiredPosition, vecMyPosition)			
 	if nDesiredDistanceSq > core.nOutOfPositionRangeSq then
 		--check porting
@@ -927,10 +972,33 @@ function behaviorLib.MoveExecute(botBrain, vecDesiredPosition)
 		if bActionTaken == false then
 			--we'll need to path there
 			if bDebugEchos then BotEcho("Pathin'") end
+			
+			local vecWaypoint = nil
+			local nodeCurrent = nil
+			
 			StartProfile("PathLogic")
-				local vecWaypoint = behaviorLib.PathLogic(botBrain, vecDesiredPosition)
+				vecWaypoint, nodeCurrent = behaviorLib.PathLogic(botBrain, vecDesiredPosition)
 			StopProfile()
-			if vecWaypoint then
+			
+			if nodeCurrent ~= nil and nodeCurrent:GetProperty("TeleportStart") then				
+				if behaviorLib.unitCurrentTeleporter == nil then
+					local tUnits = HoN.GetUnitsInRadius(nodeCurrent:GetPosition(), 150, core.UNIT_MASK_ALIVE + core.UNIT_MASK_GADGET)
+					
+					if bDebugEchos then BotEcho("Saving teleporter!!") end					
+					if bDebugEchos then core.printGetTypeNameTable(tUnits) end
+					
+					for _,unit in pairs(tUnits) do
+						if unit:GetTypeName() == "Teleport_Legion_Gadget" or unit:GetTypeName() == "Teleport_Hellbourne_Gadget" then
+							if bDebugEchos then BotEcho("Teleporter Saved!!") end
+							behaviorLib.unitCurrentTeleporter = unit
+						else
+							if bDebugEchos then BotEcho(unit:GetTypeName().." != Teleport_Hellborne_Gadget != Teleport_Legion_Gadget") end
+						end
+					end
+				end
+			end
+			
+			if vecWaypoint ~= nil then
 				vecMovePosition = vecWaypoint
 			end
 		end
@@ -2396,6 +2464,12 @@ function behaviorLib.PositionSelfBackUp()
 
 	local bDebugLines = false
 
+	if core.tGameVariables.sMapName == "midwars" then
+		if BotMetaData.GetClosestNode(core.unitSelf:GetPosition()):GetProperty("base") then
+			return core.allyWell:GetPosition()
+		end
+	end
+
 	local vecReturn = nil
 
 	--Metadata have teams as following strings
@@ -2412,15 +2486,15 @@ function behaviorLib.PositionSelfBackUp()
 	--Check if we are at/on lane
 	nLaneProximityThreshold = core.teamBotBrain.nLaneProximityThreshold
 	tLaneBreakdown = core.GetLaneBreakdown(core.unitSelf)
-	if tLaneBreakdown["mid"] >= nLaneProximityThreshold then
+	if tLaneBreakdown["lane_mid"] >= nLaneProximityThreshold then
 		bAtLane = true
-		sLane = "middle"
-	elseif tLaneBreakdown["top"] >= nLaneProximityThreshold then
+		sLane = "lane_mid"
+	elseif tLaneBreakdown["lane_top"] >= nLaneProximityThreshold then
 		bAtLane = true
-		sLane = "top"
-	elseif tLaneBreakdown["bot"] >= nLaneProximityThreshold then
+		sLane = "lane_top"
+	elseif tLaneBreakdown["lane_bot"] >= nLaneProximityThreshold then
 		bAtLane = true
-		sLane = "bottom"
+		sLane = "lane_bot"
 	end
 
 	local bDiving = false
@@ -2685,9 +2759,9 @@ function behaviorLib.RetreatFromThreatExecute(botBrain)
 		if itemPortable and itemPortable:CanActivate() and vecMyPos and vecWell and behaviorLib.nLastHealAtWellUtil > 20 then
 		       
 			-- closest node from a position which is 500 units closer to well than yourself
-			BotMetaData.SetActiveLayer(metadata.JukeMetadataFile)
+			metadata.SetActiveLayer(metadata.JukeMetadataFile)
 			local vecNodePos = BotMetaData.GetClosestNode(vecMyPos + Vector3.Normalize(vecWell - vecMyPos) * 300):GetPosition()
-			BotMetaData.SetActiveLayer(metadata.MapMetadataFile)
+			metadata.SetActiveLayer(metadata.MapMetadataFile)
 		       
 			if bDebugLines then
 				core.DrawDebugArrow(vecMyPos, vecMyPos + Vector3.Normalize(vecWell - vecMyPos) * 300, 'green')

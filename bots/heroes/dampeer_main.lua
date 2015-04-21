@@ -1,4 +1,4 @@
---DampeerBot v0.76412523
+--DampeerBot v1.0
 
 local _G = getfenv(0)
 local object = _G.object
@@ -253,28 +253,5 @@ local function HarassHeroExecuteOverride(botBrain)
 end
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
-
---[[ colors:
-	red
-	aqua == cyan
-	gray
-	navy
-	teal
-	blue
-	lime
-	black
-	brown
-	green
-	olive
-	white
-	silver
-	purple
-	maroon
-	yellow
-	orange
-	fuchsia == magenta
-	rainbows motherfucker
-	invisible
---]]
 
 BotEcho('finished loading dampeer_main')

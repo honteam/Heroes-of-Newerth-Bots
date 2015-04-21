@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<botmetadata version="1">
+	<nodes>
+		<node index="0" name="" x="9167.6289" y="4789.5918" z="0.0000" radius="32.0000" />
+		<node index="1" name="" x="8304.5400" y="5831.5820" z="0.0000" radius="32.0000" />
+		<node index="2" name="" x="5908.0186" y="8450.3779" z="0.0000" radius="32.0000" />
+		<node index="3" name="" x="5757.0444" y="7844.2803" z="0.0000" radius="32.0000" />
+		<node index="4" name="" x="4784.3340" y="8926.8408" z="0.0000" radius="32.0000" />
+		<node index="5" name="" x="5263.3433" y="10494.7256" z="0.0000" radius="32.0000" />
+		<node index="6" name="" x="5638.3086" y="10728.1182" z="0.0000" radius="32.0000" />
+		<node index="7" name="" x="8120.1660" y="10676.9893" z="0.0000" radius="32.0000" />
+		<node index="8" name="" x="8498.9717" y="6064.0347" z="0.0000" radius="32.0000" />
+		<node index="9" name="" x="8029.8589" y="5738.3496" z="0.0000" radius="32.0000" />
+		<node index="10" name="" x="10130.9854" y="7982.4805" z="0.0000" radius="32.0000" />
+		<node index="11" name="" x="7805.9604" y="10387.4668" z="0.0000" radius="32.0000" />
+		<node index="12" name="" x="6600.7295" y="9613.8018" z="0.0000" radius="32.0000" />
+		<node index="13" name="" x="10573.1963" y="5773.6299" z="0.0000" radius="32.0000" />
+	</nodes>
+	<links />
+</botmetadata>

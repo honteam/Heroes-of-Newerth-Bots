@@ -1051,7 +1051,7 @@ function core.GetFurthestCreepWavePos(tLane, bTraverseForward)
 		
 	vecReturn = tbotTeam:GetFrontOfCreepWavePosition(tLane.sLaneKey)
 	
-	if bDebugEchos then BotEcho("Front of "..tLane.sLaneKey..":"..tostring(vecReturn)) end	
+	if bDebugEchos then BotEcho("Front of "..tLane.sLaneKey..":"..tostring(vecReturn)) end
 	if bDebugLines and vecReturn then
 		core.DrawXPosition(vecReturn, 'red')
 	end
@@ -1707,28 +1707,34 @@ function core.GetLaneBreakdown(unit)
 	local botDist = 99999
 	local inTop = -1
 	local inMid = -1
-	local inBot = -1		
+	local inBot = -1
 
-	local vecTopPoint = core.GetFurthestPointOnPath(position, metadata.GetTopLane(), core.bTraverseForward)		
-	if vecTopPoint then
-		topDist = Vector3.Distance2D(position, vecTopPoint)
+	if metadata.GetTopLane() ~= nil and #metadata.GetTopLane() > 0 then
+		local vecTopPoint = core.GetFurthestPointOnPath(position, metadata.GetTopLane(), core.bTraverseForward)		
+		if vecTopPoint then
+			topDist = Vector3.Distance2D(position, vecTopPoint)
+		end
 	end
 	
-	local vecMidPoint = core.GetFurthestPointOnPath(position, metadata.GetMiddleLane(), core.bTraverseForward)
-	if vecMidPoint then
-		midDist = Vector3.Distance2D(position, vecMidPoint)
+	if metadata.GetMiddleLane() ~= nil and #metadata.GetMiddleLane() > 0 then
+		local vecMidPoint = core.GetFurthestPointOnPath(position, metadata.GetMiddleLane(), core.bTraverseForward)
+		if vecMidPoint then
+			midDist = Vector3.Distance2D(position, vecMidPoint)
+		end
 	end
 	
-	local vecBotPoint = core.GetFurthestPointOnPath(position, metadata.GetBottomLane(), core.bTraverseForward)
-	if vecBotPoint then
-		botDist = Vector3.Distance2D(position, vecBotPoint)
+	if metadata.GetBottomLane() ~= nil and #metadata.GetBottomLane() > 0 then
+		local vecBotPoint = core.GetFurthestPointOnPath(position, metadata.GetBottomLane(), core.bTraverseForward)
+		if vecBotPoint then
+			botDist = Vector3.Distance2D(position, vecBotPoint)
+		end
 	end
 	
 	--pick two lowest ones
 	local nBiggestDist = max(topDist, midDist, botDist)
 	local nLowestDist = min(topDist, midDist, botDist)
 	if (nLowestDist > 1200) then --clearly not in a lane.
-		return {top=0, mid=0, bot=0}, {top=vecTopPoint, mid=vecMidPoint, bot=vecBotPoint}
+		return {lane_top=0, lane_mid=0, lane_bot=0}, {lane_top=vecTopPoint, lane_mid=vecMidPoint, lane_bot=vecBotPoint}
 	end
 	
 	if topDist == nBiggestDist then
@@ -1769,7 +1775,7 @@ function core.GetLaneBreakdown(unit)
 		end
 	end
 	
-	return {top=inTop, mid=inMid, bot=inBot}, {top=vecTopPoint, mid=vecMidPoint, bot=vecBotPoint}
+	return {lane_top=inTop, lane_mid=inMid, lane_bot=inBot}, {lane_top=vecTopPoint, lane_mid=vecMidPoint, lane_bot=vecBotPoint}
 end
 
 function core.GetFurthestPointOnPath(position, tPath, bTraverseForward)
