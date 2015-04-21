@@ -97,36 +97,34 @@ local STATE_PUSHING		= 2
 object.nPushState = STATE_IDLE
 
 -- To track runes
-object.nRuneNextSpawnCheck = 120000 --2min mark
+object.nRuneSpawnInterval = 60000 -- 1min in midwars, init sets it to 120000 if caldavar
+object.nRuneNextSpawnCheck = object.nRuneSpawnInterval 
 object.nRuneNextCheck = 120000
 object.nRuneCheckInterval = 1000
 
-object.runes = {
-	{vecLocation = Vector3.Create(5824, 9728), unit=nil, bPicked = true, bBetter=true},
-	{vecLocation = Vector3.Create(11136, 5376), unit=nil, bPicked = true, bBetter=true}
-}
-local tRuneNames = {"Powerup_Damage", "Powerup_Illusion", "Powerup_Stealth", "Powerup_Refresh", "Powerup_Regen", "Powerup_MoveSpeed", "Powerup_Super"}
+object.runes = {}
 
+local tRuneNames = {"Powerup_Damage", "Powerup_Illusion", "Powerup_Stealth", "Powerup_Refresh", "Powerup_Regen", "Powerup_MoveSpeed", "Powerup_Super"}
 
 local tMapLanes = {}
 
 local function getMapLanes()
 	if core.tGameVariables.sMapName == 'tutorial_laning' or core.tGameVariables.sMapName == 'midwars' then
-		tMapLanes = {"mid"}
+		tMapLanes = {"lane_mid"}
 	elseif core.tGameVariables.sMapName == 'grimmscrossing' or core.tGameVariables.sMapName == 'riftwars' then
-		tMapLanes = {"bot", "mid"}-- these are un-tested, and for possible future development
+		tMapLanes = {"lane_bot", "lane_top"}
 	else --'caldavar', 'tutorial', etc
-		tMapLanes = {"bot", "mid", "top", "jungle"}
+		tMapLanes = {"lane_bot", "lane_mid", "lane_top", "lane_jungle"}
 	end
 end
 
 --Called every frame the engine gives us during the actual match
 function object:onthink(tGameVariables)
 	StartProfile('onthink')
-	
+
 	if core.coreInitialized ~= true then
 		core.CoreInitialize(self)
-	end	
+	end
 	if self.teamBotBrainInitialized ~= true then
 		self:TeamBotBrainInitialize()
 	end
@@ -167,6 +165,24 @@ function object:onthink(tGameVariables)
 			if core.nDifficulty == core.nEASY_DIFFICULTY and bEnemyTeamHasHuman then
 				object.bDefense = false
 			end
+
+			if core.tGameVariables.sMapName == "midwars" then
+				self.runes = {{vecLocation = Vector3.Create(7064, 8190), unit=nil, bPicked = true, bBetter=true}}
+				self.nRuneSpawnInterval = 60000
+				self.nRuneNextSpawnCheck = 60000
+			elseif core.tGameVariables.sMapName == "grimmscrossing" then
+				self.runes = {{vecLocation = Vector3.Create(8065, 8189), unit=nil, bPicked = true, bBetter=true}}
+				self.nRuneSpawnInterval = 120000
+				self.nRuneNextSpawnCheck = 120000
+			else
+				-- metadata file for runes?
+				self.runes = {
+					{vecLocation = Vector3.Create(5824, 9728), unit=nil, bPicked = true, bBetter=true},
+					{vecLocation = Vector3.Create(11136, 5376), unit=nil, bPicked = true, bBetter=true}
+				}
+				self.nRuneSpawnInterval = 120000
+				self.nRuneNextSpawnCheck = 120000
+			end
 		end
 	end
 
@@ -177,7 +193,7 @@ function object:onthink(tGameVariables)
 	if self.tAllyHeroes == nil or core.NumberElements(self.tAllyHeroes) < 1 then
 		return
 	end
-	
+
 	self.bPurchasedThisFrame = false
 	
 	StartProfile('Validation')
@@ -243,7 +259,7 @@ function object:onthink(tGameVariables)
 
 	local time = HoN.GetMatchTime()
 	if time and time > object.nRuneNextSpawnCheck then
-		object.nRuneNextSpawnCheck = object.nRuneNextSpawnCheck + 120000
+		object.nRuneNextSpawnCheck = object.nRuneNextSpawnCheck + object.nRuneSpawnInterval
 
 		for _,rune in pairs(object.runes) do
 			--something spawned
@@ -331,6 +347,13 @@ function object:PrintLanes(tTop, tMid, tBot)
 	end
 	print('\n    bot: ')
 	for nUID, unit in pairs(tBot) do
+		print('['..nUID..']'..unit:GetTypeName())
+		print(', ')
+	end
+		
+	tJungle = self.tJungle
+	print("\n    jungle: ")
+	for nUID, unit in pairs(tJungle) do
 		print('['..nUID..']'..unit:GetTypeName())
 		print(', ')
 	end
@@ -910,28 +933,11 @@ function object:GroupAndPushLogic()
 		
 		if nCurrentMatchTime > self.nNextPushTime then
 			--determine target lane
-			local nLane = random(3)
-			local tLaneUnits = nil
-			local tLaneNodes = nil
+			local sLane = nil
+			local tLaneUnits = {}
+			local tLaneNodes = {}
 			
-			--put everyone in the target's lane
-			self.tTopLane = {}
-			self.tBottomLane = {}
-			self.tMiddleLane = {}
-			self.tJungle = {}
-			if nLane == 1 then
-				self.tTopLane = core.CopyTable(self.tAllyHeroes)
-				tLaneUnits = self.tTopLane
-				tLaneNodes = metadata.GetTopLane()
-			elseif nLane == 2 then
-				self.tMiddleLane = core.CopyTable(self.tAllyHeroes)
-				tLaneUnits = self.tMiddleLane
-				tLaneNodes = metadata.GetMiddleLane()
-			else
-				self.tBottomLane = core.CopyTable(self.tAllyHeroes)
-				tLaneUnits = self.tBottomLane
-				tLaneNodes = metadata.GetBottomLane()
-			end
+			sLane, tLaneUnits, tLaneNodes = self:RandomPushLane()
 			
 			local unitTarget = core.GetClosestLaneTower(tLaneNodes, core.bTraverseForward, core.enemyTeam)
 			if unitTarget == nil then
@@ -1050,6 +1056,78 @@ function object:GroupAndPushLogic()
 	end
 end
 
+function object:RandomPushLane()
+	local sLane = "nil"
+	local tLaneUnits = {}
+	local tLaneNodes = {}	
+	
+	local nValidLanes = 3
+	
+	local tMetaTopLane = metadata.GetTopLane()
+	local tMetaMidLane = metadata.GetMiddleLane()
+	local tMetaBotLane = metadata.GetBottomLane()
+	
+	if tMetaTopLane == nil then
+		nValidLanes = nValidLanes - 1
+	end
+	if tMetaMidLane == nil then
+		nValidLanes = nValidLanes - 1
+	end
+	if tMetaBotLane == nil then
+		nValidLanes = nValidLanes - 1
+	end
+
+	local nRandom = random(nValidLanes)
+	
+	if nRandom == 1 then
+		if tMetaTopLane ~= nil then
+			nLane = 1
+		elseif tMetaMidLane ~= nil then
+			nLane = 2
+		elseif tMetaBotLane ~= nil then
+			nLane = 3
+		end
+	elseif nRandom == 2 then
+		if tMetaMidLane ~= nil then
+			nLane = 2
+		elseif tMetaBotLane ~= nil then
+			nLane = 3
+		end
+	elseif nRandom == 3 then
+		if tMetaBotLane ~= nil then
+			nLane = 3
+		end
+	else
+		BotEcho("RandomPushLane - no valid lanes!")
+	end
+	
+	--put everyone in the target lane
+	self.tTopLane = {}
+	self.tBottomLane = {}
+	self.tMiddleLane = {}
+	self.tJungle = {}
+	if nLane == 1 then
+		self.tTopLane = core.CopyTable(self.tAllyHeroes)
+		sLane = tMetaTopLane.sLaneName
+		tLaneUnits = self.tTopLane
+		tLaneNodes = tMetaTopLane
+	elseif nLane == 2 then
+		self.tMiddleLane = core.CopyTable(self.tAllyHeroes)
+		sLane = tMetaMidLane.sLaneName
+		tLaneUnits = self.tMiddleLane
+		tLaneNodes = tMetaMidLane
+	elseif nLane == 3 then
+		self.tBottomLane = core.CopyTable(self.tAllyHeroes)
+		sLane = tMetaBotLane.sLaneName
+		tLaneUnits = self.tBottomLane
+		tLaneNodes = tMetaBotLane
+	else
+		BotEcho("RandomPushLane - "..nLane.." is an invalid lane!")
+	end
+	
+	return sLane, tLaneUnits, tLaneNodes
+end
+
 function object:GroupUtility()
 	local nUtility = 0
 	
@@ -1160,6 +1238,11 @@ local function ValidateLanes(tNewCurrentLanes)
 			nJungle = nJungle + 1
 		end
 	end
+
+	--Does this map have all these lanes
+	local bHaveMid = metadata.GetMiddleLane() ~= nil
+	local bHaveTop = metadata.GetTopLane() ~= nil
+	local bHaveBot = metadata.GetBottomLane() ~= nil
 	
 	--too many players to a lane check
 	local tLongLane = nil
@@ -1171,15 +1254,21 @@ local function ValidateLanes(tNewCurrentLanes)
 		tLongLane = object.tBottomLane
 		tShortLane = object.tTopLane
 	end
-	if ((core.NumberElements(object.tJungle) + nJungle > 1 and nJungle ~= 0) or (core.NumberElements(object.tMiddleLane) + nMid > 1 and nMid ~= 0) or (core.NumberElements(tLongLane) + nLong > 2 and nLong ~= 0) or (core.NumberElements(tShortLane) + nShort > 2 and nShort ~= 0)) then -- too many players in lanes!
+
+	local nMaxHeroesOnLane = ceil(core.NumberElements(object.tAllyHeroes)/(#tMapLanes))
+
+	if ((core.NumberElements(object.tJungle) + nJungle > 1 and nJungle ~= 0) or
+		(core.NumberElements(object.tMiddleLane) + nMid > 1 and nMid ~= 0) or
+		(core.NumberElements(tLongLane) + nLong > nMaxHeroesOnLane and nLong ~= 0) or
+		(core.NumberElements(tShortLane) + nShort > nMaxHeroesOnLane and nShort ~= 0)) then -- too many players in lanes!
 		--BotEcho("Too many players in lanes.")
 		return false
 	end
-	
-	if #tNewCurrentLanes > 2 and (core.NumberElements(tLongLane) + nLong == 0 or core.NumberElements(object.tMiddleLane) + nMid == 0 or core.NumberElements(tShortLane) + nShort == 0) then --lane empty for no reason.. silly junglers up to no good.
+
+	if #tNewCurrentLanes > 2 and (core.NumberElements(tLongLane) + nLong == 0 or (core.NumberElements(object.tMiddleLane) + nMid == 0 and bHaveMid) or core.NumberElements(tShortLane) + nShort == 0) then --lane empty for no reason.. silly junglers up to no good.
 		--BotEcho("silly junglers")
 		return false
-	elseif (core.NumberElements(object.tMiddleLane) + nMid == 0) then -- no-one in mid! NO! INVALID! STAMP IT WITH LOTS OF RED AND HURL IT AWAY!
+	elseif core.NumberElements(object.tMiddleLane) + nMid == 0 and bHaveMid then -- no-one in mid! NO! INVALID! STAMP IT WITH LOTS OF RED AND HURL IT AWAY!
 		--BotEcho("NO MID")
 		return false
 	end
@@ -1190,7 +1279,7 @@ local function ValidateLanes(tNewCurrentLanes)
 		--BotEcho("bad dependencies")
 		return false
 	end
-	
+
 	return true
 end
 
@@ -1204,7 +1293,7 @@ local function SumPreferences(tPossibleLanes, nIndex, nSum, tCurrentLanes)
 		tPossibleLanes = {sDefaultLane}
 	end
 	-- Iterate over the remaining lanes
-	for i = 1, #tPossibleLanes do 
+	for i = 1, #tPossibleLanes do
 		if nIndex == core.NumberElements(object.tBotsLeft) + 1 then 
 			-- Done all units, no need to search deeper.
 			if nSum > nHighestCombo and ValidateLanes(tCurrentLanes) then
@@ -1234,21 +1323,26 @@ local function SumPreferences(tPossibleLanes, nIndex, nSum, tCurrentLanes)
 				tinsert(tNewCurrentLanes, tPossibleLanes[i])
 				local tNewPossibleLanes = core.CopyTable(tPossibleLanes)
 				tremove(tNewPossibleLanes, i)
-				-- The following are clashes between laning types, so we remove them.
-				if tPossibleLanes[i] == "ShortSolo" then
-					core.RemoveByValue(tNewPossibleLanes, "ShortSupport")
-					core.RemoveByValue(tNewPossibleLanes, "ShortCarry")
-				elseif tPossibleLanes[i] == "ShortSupport" then
-					core.RemoveByValue(tNewPossibleLanes, "ShortSolo")
-				elseif tPossibleLanes[i] == "ShortCarry" then
-					core.RemoveByValue(tNewPossibleLanes, "ShortSolo")
-				elseif tPossibleLanes[i] == "LongSolo" then
-					core.RemoveByValue(tNewPossibleLanes, "LongSupport")
-					core.RemoveByValue(tNewPossibleLanes, "LongCarry")
-				elseif tPossibleLanes[i] == "LongSupport" then
-					core.RemoveByValue(tNewPossibleLanes, "LongSolo")
-				elseif tPossibleLanes[i] == "LongCarry" then
-					core.RemoveByValue(tNewPossibleLanes, "LongSolo")
+
+				local nMaxHeroesOnLane = ceil(core.NumberElements(object.tAllyHeroes)/(#tMapLanes))
+
+				if nMaxHeroesOnLane < 3 then
+					-- The following are clashes between laning types, so we remove them.
+					if tPossibleLanes[i] == "ShortSolo" then
+						core.RemoveByValue(tNewPossibleLanes, "ShortSupport")
+						core.RemoveByValue(tNewPossibleLanes, "ShortCarry")
+					elseif tPossibleLanes[i] == "ShortSupport" then
+						core.RemoveByValue(tNewPossibleLanes, "ShortSolo")
+					elseif tPossibleLanes[i] == "ShortCarry" then
+						core.RemoveByValue(tNewPossibleLanes, "ShortSolo")
+					elseif tPossibleLanes[i] == "LongSolo" then
+						core.RemoveByValue(tNewPossibleLanes, "LongSupport")
+						core.RemoveByValue(tNewPossibleLanes, "LongCarry")
+					elseif tPossibleLanes[i] == "LongSupport" then
+						core.RemoveByValue(tNewPossibleLanes, "LongSolo")
+					elseif tPossibleLanes[i] == "LongCarry" then
+						core.RemoveByValue(tNewPossibleLanes, "LongSolo")
+					end
 				end
 				
 				-- Recurrsively run the function for the next bot
@@ -1357,24 +1451,24 @@ function object:BuildLanes()
 	
 	local tPossibleLanes = {}
 	
-	if core.tableContains(tMapLanes, "mid") > 0 then
+	if core.tableContains(tMapLanes, "lane_mid") > 0 then
 		insertAll(tPossibleLanes, "Mid")
 	end
-	if core.tableContains(tMapLanes, "bot") > 0 then
+	if core.tableContains(tMapLanes, "lane_bot") > 0 then
 		if core.myTeam == HoN.GetLegionTeam() then
 			insertAll(tPossibleLanes, "ShortSolo", "ShortSupport", "ShortCarry")
 		else
 			insertAll(tPossibleLanes, "LongSolo", "LongSupport", "LongCarry")
 		end
 	end
-	if core.tableContains(tMapLanes, "top") > 0 then
+	if core.tableContains(tMapLanes, "lane_top") > 0 then
 		if core.myTeam == HoN.GetLegionTeam() then
 			insertAll(tPossibleLanes, "LongSolo", "LongSupport", "LongCarry")
 		else
 			insertAll(tPossibleLanes, "ShortSolo", "ShortSupport", "ShortCarry")
 		end
 	end
-	if core.tableContains(tMapLanes, "jungle") > 0 then
+	if core.tableContains(tMapLanes, "lane_jungle") > 0 then
 		insertAll(tPossibleLanes, "Jungle")
 	end
 	sDefaultLane = tPossibleLanes[1] -- this will be mid if the map supports it.
@@ -1385,13 +1479,13 @@ function object:BuildLanes()
 		local nDistToWellSq = Vector3.Distance2DSq(vecPosition, core.allyWell:GetPosition())
 		if nDistToWellSq > (1200 * 1200) then
 			local tLaneBreakdown = core.GetLaneBreakdown(unitHero)
-			if tLaneBreakdown["mid"] >= self.nLaneProximityThreshold then
+			if tLaneBreakdown["lane_mid"] >= self.nLaneProximityThreshold then
 				tMiddleLane[nID] = unitHero
-			elseif tLaneBreakdown["top"] >= self.nLaneProximityThreshold  then
+			elseif tLaneBreakdown["lane_top"] >= self.nLaneProximityThreshold  then
 				tTopLane[nID] = unitHero
-			elseif tLaneBreakdown["bot"] >= self.nLaneProximityThreshold then
+			elseif tLaneBreakdown["lane_bot"] >= self.nLaneProximityThreshold then
 				tBottomLane[nID] = unitHero
-			elseif (tLaneBreakdown["bot"] + tLaneBreakdown["top"] + tLaneBreakdown["mid"] == 0) then --too far ( > 1200) from any lane, not in base, must be jungle.
+			elseif (tLaneBreakdown["lane_bot"] + tLaneBreakdown["lane_top"] + tLaneBreakdown["lane_mid"] == 0) then --too far ( > 1200) from any lane, not in base, must be jungle.
 				tJungle[nID] = unitHero
 			end
 		end
@@ -1703,11 +1797,11 @@ function object:DefenseLogic()
 		--determine the defense target's lane
 		local tLane = nil
 		local tLaneBreakdown = core.GetLaneBreakdown(unitTarget)		
-		if tLaneBreakdown["mid"] >= self.nLaneProximityThreshold then
+		if tLaneBreakdown["lane_mid"] >= self.nLaneProximityThreshold then
 			tLane = self.tMiddleLane
-		elseif tLaneBreakdown["top"] >= self.nLaneProximityThreshold  then
+		elseif tLaneBreakdown["lane_top"] >= self.nLaneProximityThreshold  then
 			tLane = self.tTopLane
-		elseif tLaneBreakdown["bot"] >= self.nLaneProximityThreshold then
+		elseif tLaneBreakdown["lane_bot"] >= self.nLaneProximityThreshold then
 			tLane = self.tBottomLane
 		end
 		

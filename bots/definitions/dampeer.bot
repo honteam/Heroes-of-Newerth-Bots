@@ -3,7 +3,7 @@
 	name="DampeerBot"
 	description="bot_description_dampeer"
 	heroname="Hero_Dampeer"
-	rootlua="dampeer_main.lua"
+	rootlua="../heroes/dampeer_main.lua"
 	defaultplayername="DampeerBot"
 	precachepath="/heroes/dampeer/"
 />

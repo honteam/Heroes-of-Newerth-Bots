@@ -366,7 +366,7 @@ function object:onthink(tGameVariables)
 						object.nCurrentBehavior = i
 						
 						if self.sCurrentBehaviorName ~= self.sLastBehaviorName then
-							core.BehaviorsSwitched()
+							core.BehaviorsSwitched(object)
 						end
 						
 						break
@@ -505,9 +505,10 @@ function core.BotBrainCoreInitialize(tGameVariables)
 	core.botBrainInitialized = true
 end
 
-function core.BehaviorsSwitched()
+function core.BehaviorsSwitched(botBrain)
 	--Reset any stateful behavior stuff
 	behaviorLib.bCheckPorting = true
+	behaviorLib.unitCurrentTeleporter = nil
 end
 
 
@@ -930,17 +931,18 @@ end
 function core.ValidateItem(item)
 	--if item ~= nil then BotEcho("item "..item:GetTypeName().." is in slot "..item:GetSlot()) end
 	if item ~= nil and (not item:IsValid() or item:GetSlot() > 6) then
-		item = nil
-	end	
+		return nil
+	end
+	return item
 end
 
 function core.FindItems(botBrain)
 	--seach for the key Items of ours that we want to track
 	
-	core.ValidateItem(core.itemGhostMarchers)
-	core.ValidateItem(core.itemHatchet)
-	core.ValidateItem(core.itemRoT)
-	
+	core.itemGhostMarchers = core.ValidateItem(core.itemGhostMarchers)
+	core.itemHatchet = core.ValidateItem(core.itemHatchet)
+	core.itemRoT = core.ValidateItem(core.itemRoT)
+		
 	local unitSelf = core.unitSelf
 	
 	if (core.itemGhostMarchers and core.itemHatchet and core.itemRoT) then
