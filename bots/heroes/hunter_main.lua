@@ -28,8 +28,8 @@ object.bAttackCommands = true
 object.bAbilityCommands = true
 object.bOtherCommands = true
 
-object.bReportBehavior = true
-object.bDebugUtility = true
+object.bReportBehavior = false
+object.bDebugUtility = false
 object.bDebugExecute = true
 
 object.logger = {}
@@ -77,15 +77,15 @@ behaviorLib.LateItems =
 --------------------------------
 -- Levelling Order | Skills
 --------------------------------
--- 0 = Silence		3 = Haemorrhage
--- 1 = Feast		4 = Attribute boost
+-- 0 = Silence	3 = Haemorrhage
+-- 1 = Feast	4 = Attribute boost
 -- 2 = Blood Sense	
 object.tSkills = {
-    1, 0, 1, 2, 1,
-    3, 1, 0, 2, 2, 
-    3, 0, 2, 0, 4,
-    3, 4, 4, 4, 4,
-    4, 4, 4, 4, 4,
+	1, 0, 1, 2, 1,
+	3, 1, 0, 2, 2, 
+	3, 0, 2, 0, 4,
+	3, 4, 4, 4, 4,
+	4, 4, 4, 4, 4,
 }
 
 ------------------------------
@@ -94,15 +94,15 @@ object.tSkills = {
 local bSkillsValid = false
 function object:SkillBuild()
 -- takes care at load/reload, <name_#> to be replaced by some convenient name.
-    local unitSelf = self.core.unitSelf
+	local unitSelf = self.core.unitSelf
 	
-    if not bSkillsValid then
-        skills.abilSilence 			= unitSelf:GetAbility(0)
-        skills.abilFeast 			= unitSelf:GetAbility(1)
-        skills.abilBloodSense		= unitSelf:GetAbility(2)
-        skills.abilHemorrhage 		= unitSelf:GetAbility(3)
+	if not bSkillsValid then
+		skills.abilSilence 			= unitSelf:GetAbility(0)
+		skills.abilFeast 			= unitSelf:GetAbility(1)
+		skills.abilBloodSense		= unitSelf:GetAbility(2)
+		skills.abilHemorrhage 		= unitSelf:GetAbility(3)
 		skills.abilAttributeBoost	= unitSelf:GetAbility(4)
-    
+		
 		if skills.abilSilence and skills.abilBloodSense and skills.abilFeast and skills.abilHemorrhage and skills.abilAttributeBoost then
 			bSkillsValid = true
 		else 
@@ -110,15 +110,15 @@ function object:SkillBuild()
 		end
 	end
 	
-    if unitSelf:GetAbilityPointsAvailable() <= 0 then
-        return
-    end
+	if unitSelf:GetAbilityPointsAvailable() <= 0 then
+		return
+	end
     
-    local nlev = unitSelf:GetLevel()
-    local nlevpts = unitSelf:GetAbilityPointsAvailable()
-    for i = nlev, nlev+nlevpts do
-        unitSelf:GetAbility( object.tSkills[i] ):LevelUp()
-    end
+	local nlev = unitSelf:GetLevel()
+	local nlevpts = unitSelf:GetAbilityPointsAvailable()
+	for i = nlev, nlev+nlevpts do
+		unitSelf:GetAbility( object.tSkills[i] ):LevelUp()
+	end
 end
 --core.WrapInTable(unitSelf:GetAbility(3))
 
@@ -126,28 +126,28 @@ end
 -- Harass Utility Calculations  --
 ----------------------------------
 -- bonus aggression points if a skill/item is available for use
-object.nSilenceUp 			= 36
-object.nFeastUp 			= 28
-object.nHemorrhageUp 		= 38
-object.nManaBurn1Up			= 35
+object.nSilenceUp		= 36
+object.nFeastUp 		= 28
+object.nHemorrhageUp	= 38
+object.nManaBurn1Up		= 35
 
 -- bonus aggression points that are applied to the bot upon successfully using a skill/item
-object.nSilenceUse 			= 38
-object.nFeastUse 			= 24
-object.nHemorrhageUse 		= 52
-object.nManaBurn1Use 		= 40
+object.nSilenceUse		= 38
+object.nFeastUse 		= 24
+object.nHemorrhageUse 	= 52
+object.nManaBurn1Use 	= 40
 
 -- thresholds of aggression the bot must reach to use these abilities
-object.nSilenceThreshold 	= 38
+object.nSilenceThreshold	= 38
 object.nFeastThreshold 		= 34
-object.nHemorrhageThreshold = 48
+object.nHemorrhageThreshold	= 48
 object.nManaBurn1Threshold	= 44
 
 -- Additional Modifiers
 
 --weight overrides
-behaviorLib.nCreepPushbackMul = 0.3
-behaviorLib.nTargetPositioningMul = 0.8
+behaviorLib.nCreepPushbackMul		= 0.3
+behaviorLib.nTargetPositioningMul	= 0.8
 
 local function AbilitiesUpUtilityFn()
 	local val = 0
@@ -216,7 +216,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	local unitTarget = behaviorLib.heroTarget
 	local unitECreep = core.localUnits["EnemyCreeps"]
 	
-	 if unitTarget == nil or not unitTarget:IsValid() then
+	if unitTarget == nil or not unitTarget:IsValid() then
 		return false --can not execute, move on to the next behaviour
 	end
 
@@ -244,12 +244,12 @@ local function HarassHeroExecuteOverride(botBrain)
 	local nIsSighted = core.CanSeeUnit(botBrain, unitTarget)
 	
 	--Effective Hit Point Calculation--
-	GetHealthE = unitTarget:GetHealth()
-	MagicResist = unitTarget:GetMagicResistance()
+	local GetHealthE = unitTarget:GetHealth()
+	local MagicResist = unitTarget:GetMagicResistance()
 	local nEffectiveHP = ((MagicResist + 1) * GetHealthE)
 	
 	-- Silence B -Hostile-
-	if not bActionTaken and abilSilence:CanActivate() and nIsSighted then --Cast Silence if
+	if abilSilence:CanActivate() and nIsSighted then --Cast Silence if
 		local nRange = abilSilence:GetRange()
 		if nTargetDistanceSq < (nRange * nRange) then -- target is in range and
 			if (nLastHarassUtility > botBrain.nSilenceThreshold) then -- ability passes threshold
@@ -297,7 +297,6 @@ local function HarassHeroExecuteOverride(botBrain)
 			if (unitSelf:GetHealthPercent() > .25) then -- Or BH is in fighting order with more damage then 
 				bActionTaken = core.OrderAbilityEntity(botBrain, abilSilence, unitSelf) -- Cast Silence on self 
 			end
-			
 		elseif itemNullBlade:CanActivate() then
 			if unitSelf:HasState(State_Hunter_Ability1_Buff) then -- Verifies there is a debuff on BH
 				bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, itemNullBlade, unitSelf) -- Purges the silence debuff
@@ -314,7 +313,7 @@ local function HarassHeroExecuteOverride(botBrain)
 		local nTargetCreepDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecEnemyCreepPosition)
 		if nTargetCreepDistanceSq < (nRange * nRange) then -- Cast Feast if and target is in range and
 			if (.05 < unitSelf:GetHealthPercent() < .70) then -- if Self is below 70% HP, but don't attempt if HP is extremely low
-				bActionTaken = core.OrderAbilityEntity(botBrain, abilFeast, unitCreep, false)
+				bActionTaken = core.OrderAbilityEntity(botBrain, abilFeast, vecEnemyCreepPosition, false)
 			end
 		end
 	end
