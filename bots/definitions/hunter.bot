@@ -2,8 +2,8 @@
 <bot
 	name="BloodHunterbot"
 	description="bot_description_hunter"
-	rootlua="hunter_main.lua"
 	heroname="Hero_Hunter"
+	rootlua="../heroes/hunter_main.lua"
 	defaultplayername="BloodHunterBot"
 	precachepath="/heroes/hunter/"
 />
