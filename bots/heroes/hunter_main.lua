@@ -1,16 +1,16 @@
----------------------------------------------------------------------------------------------
----     _____     _                   ____	
----    |  __ \   | |                 |  _  \	  H    H			
----    | |  | |  | |                 | |  \ \	  H    H			
----    | |__| |  | |                 | |   \ \	  H    H			       _________
----    |     /   | |                 | |    | |	  H    H			      |___   ___|		
----    |     \   | |                 | |    | |	  HHHHHH			 _        | |		   __
----    |  ___ \  | |   ___     ___   | |    | |	  H    H   _     _	| |____   | |   ___	  |  |___
----    | |   | | | |  / _ \   / _ \  | |    | |	  H    H  | |   | |	|  __  \  | |  / _ \  |   __  \
----    | |___| | | | | |_| | | |_| | | |___/ /	  H    H  | |___| |	| |  | |  | | |  __/  |  |  |_|
----    |______/  |_|  \___/   \___/  |______/	  H    H   \_____/	|_|  |_|  |_|  \___|  |__|  
----    
-------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
+---     _____     _                   ____															---
+---    |  __ \   | |                 |  _  \	  H    H											---
+---    | |  | |  | |                 | |  \ \	  H    H											---
+---    | |__| |  | |                 | |   \ \	  H    H			       _________				---
+---    |     /   | |                 | |    | |	  H    H			      |___   ___|				---
+---    |     \   | |                 | |    | |	  HHHHHH			 _        | |		   _		---
+---    |  ___ \  | |   ___     ___   | |    | |	  H    H   _     _	| |____   | |   ___	  | |___	---
+---    | |   | | | |  / _ \   / _ \  | |    | |	  H    H  | |   | |	|  __  \  | |  / _ \  |   _  \	---
+---    | |___| | | | | |_| | | |_| | | |___/ /	  H    H  | |___| |	| |  | |  | | |  __/  | |  |_|	---
+---    |______/  |_|  \___/   \___/  |______/	  H    H   \_____/	|_|  |_|  |_|  \___|  |_|  		---
+---    																								---
+-------------------------------------------------------------------------------------------------------
 -- Blood Hunter Bot V 1.25
 -- Coded By: ModernSaint
 
@@ -30,7 +30,7 @@ object.bOtherCommands = true
 
 object.bReportBehavior = false
 object.bDebugUtility = false
-object.bDebugExecute = true
+object.bDebugExecute = false
 
 object.logger = {}
 object.logger.bWriteLog = false
@@ -213,14 +213,13 @@ object.oncombatevent = object.oncombateventOverride
 local function HarassHeroExecuteOverride(botBrain)
 	local bDebugEchos = false
 	
-	local unitTarget = behaviorLib.heroTarget
-	local unitECreep = core.localUnits["EnemyCreeps"]
+	local unitTarget = behaviorLib.heroTarget --All hero-class enemies (either player or bots)
 	
 	if unitTarget == nil or not unitTarget:IsValid() then
 		return false --can not execute, move on to the next behaviour
 	end
 
-	local unitSelf = core.unitSelf
+	local unitSelf = core.unitSelf 
 	
 	local vecMyPosition = unitSelf:GetPosition()
 	local vecTargetPosition = unitTarget:GetPosition()
@@ -231,11 +230,8 @@ local function HarassHeroExecuteOverride(botBrain)
 	local bActionTaken = false
 	
 	local abilSilence = skills.abilSilence
-	local abilFeast = skills.abilFeast		
 	local abilHemorrhage = skills.abilHemorrhage
 	local SilenceLvl = abilSilence:GetLevel()	
-	
-	local bActionTaken = false
 	
 	--Item Declares--
 	local itemCodex = core.GetItem ("Item_Nuke")
@@ -306,24 +302,55 @@ local function HarassHeroExecuteOverride(botBrain)
 		end
 	end
 	
-	--feast
-	if not bActionTaken and abilFeast:CanActivate() then
-		local nRange = abilFeast:GetRange()
-		local vecEnemyCreepPosition = unitECreep:GetPosition()
-		local nTargetCreepDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecEnemyCreepPosition)
-		if nTargetCreepDistanceSq < (nRange * nRange) then -- Cast Feast if and target is in range and
-			if (.05 < unitSelf:GetHealthPercent() < .70) then -- if Self is below 70% HP, but don't attempt if HP is extremely low
-				bActionTaken = core.OrderAbilityEntity(botBrain, abilFeast, vecEnemyCreepPosition, false)
-			end
-		end
-	end
-	
 	if not bActionTaken then
 		return object.harassExecuteOld(botBrain)
 	end
 end
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
+
+--------------------------
+--Feast Function Pieces --
+--------------------------
+
+local function feastingActionsUtility(botBrain)
+	local abilFeast = skills.abilFeast	
+	local unitSelf = core.unitSelf 	
+	
+	if abilFeast:CanActivate() and ((unitSelf:GetHealthPercent() < .65) or (unitSelf:GetManaPercent() > .85  and unitSelf:GetHealthPercent() < .85)) and unitSelf:IsAlive() then
+		return 25
+	end
+	
+	return 0
+end
+
+local function feastingActionsExecute(botBrain)
+
+	local unitECreep = core.localUnits["EnemyCreeps"]
+	local abilFeast = skills.abilFeast	
+	
+	if unitECreep then --If there are local enemy creeps,
+		local unitFeastTarget = nil --Setting up target for feasting
+		for _, unitTarget in pairs(unitECreep) do --looks for the highest health creep to feast on!
+			local targetHealth = unitTarget:GetHealth() 
+			if targetHealth > nBestTargetHealth and unitTarget:IsAlive() then --Error; "attempt to compare nil with number"
+				unitFeastTarget = unitTarget
+				nBestTargetHealth = targetHealth
+			end
+		end
+		-- Our good ol' "27 B-Stroke 6"
+		if unitFeastTarget then --If the unit is a feast target
+			bActionTaken = core.OrderAbilityEntity(botBrain, abilFeast, unitFeastTarget, false) --consume the best creep
+		end
+	end
+end
+	
+--Setting up behaviour
+behaviorLib.feastingBehavior = {} --creation of 'feast' behaviour library
+behaviorLib.feastingBehavior["Utility"] = feastingActionsUtility --connecting the utility function to the behaviour (when it will act)
+behaviorLib.feastingBehavior["Execute"] = feastingActionsExecute --connecting the execute function to the behaviour (what to do when acting)
+behaviorLib.feastingBehavior["Name"] = "feast" --dictating the name of the behaviour
+tinsert(behaviorLib.tBehaviors, behaviorLib.feastingBehavior) --instantiation of the behaviour/letting it roam
 
 ----------------------------------------------------
 --  	   Heal At Well Override		  --
