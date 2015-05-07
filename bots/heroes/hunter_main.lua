@@ -341,7 +341,7 @@ local function feastingActionsExecute(botBrain)
 		local nBestTargetHealth = unitSelf:GetHealth()/5
 	
 		for _, unitTarget in pairs(unitECreep) do --looks for the highest health creep to feast on!
-			local targetHealth = unitTarget:GetHealth() 
+			local targetHealth = unitTarget:GetMaxHealth() 
 			if targetHealth > nBestTargetHealth and unitTarget:IsAlive() then 
 				unitFeastTarget = unitTarget
 				nBestTargetHealth = targetHealth
