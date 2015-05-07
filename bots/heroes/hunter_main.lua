@@ -28,9 +28,9 @@ object.bAttackCommands = true
 object.bAbilityCommands = true
 object.bOtherCommands = true
 
-object.bReportBehavior = false
-object.bDebugUtility = false
-object.bDebugExecute = false
+object.bReportBehavior = true
+object.bDebugUtility = true
+object.bDebugExecute = true
 
 object.logger = {}
 object.logger.bWriteLog = false
@@ -314,11 +314,13 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 --------------------------
 
 local function feastingActionsUtility(botBrain)
+
 	local abilFeast = skills.abilFeast	
 	local unitSelf = core.unitSelf 	
 	
-	if abilFeast:CanActivate() and ((unitSelf:GetHealthPercent() < .65) or (unitSelf:GetManaPercent() > .85  and unitSelf:GetHealthPercent() < .85)) and unitSelf:IsAlive() then
-		return 25
+	--If blood hunter is severely wounded, or has access mana and is mildly wounded...
+	if abilFeast:CanActivate() and ((unitSelf:GetHealthPercent() < .35) or (unitSelf:GetManaPercent() > .75  and unitSelf:GetHealthPercent() < .85)) and unitSelf:IsAlive() then
+		return 25 --Run feastingActionsExecute
 	end
 	
 	return 0
@@ -326,21 +328,43 @@ end
 
 local function feastingActionsExecute(botBrain)
 
+	local unitSelf = core.unitSelf
+	local unitFeastTarget = nil --Setting up target for feasting
 	local unitECreep = core.localUnits["EnemyCreeps"]
+	
 	local abilFeast = skills.abilFeast	
 	
+	local bActionTaken = false
+	
 	if unitECreep then --If there are local enemy creeps,
-		local unitFeastTarget = nil --Setting up target for feasting
+	
+		local nBestTargetHealth = unitSelf:GetHealth()/5
+	
 		for _, unitTarget in pairs(unitECreep) do --looks for the highest health creep to feast on!
 			local targetHealth = unitTarget:GetHealth() 
-			if targetHealth > nBestTargetHealth and unitTarget:IsAlive() then --Error; "attempt to compare nil with number"
+			if targetHealth > nBestTargetHealth and unitTarget:IsAlive() then 
 				unitFeastTarget = unitTarget
 				nBestTargetHealth = targetHealth
 			end
 		end
+		
 		-- Our good ol' "27 B-Stroke 6"
-		if unitFeastTarget then --If the unit is a feast target
-			bActionTaken = core.OrderAbilityEntity(botBrain, abilFeast, unitFeastTarget, false) --consume the best creep
+		if unitFeastTarget then --If the unit is a feast target has been chosen
+		
+			local vecMyPosition = unitSelf:GetPosition() --BH's position
+			local vecTargetPosition = unitFeastTarget:GetPosition() --FeastTarget's position
+			local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition) --Distance between BH and FeastTarget
+			local nRange = abilFeast:GetRange()
+			
+			if nTargetDistanceSq < (nRange * nRange) then --If the target creep is in range |Error = function arguments expected 
+			
+				bActionTaken = core.OrderAbilityEntity(botBrain, abilFeast, unitFeastTarget, false) --consume the best creep
+				
+			elseif nTargetDistanceSq > (nRange * nRange) then --If the creep is not in range, get in range
+			
+				core.OrderMoveToPosClamp(botBrain, unitSelf, vecTargetPosition, false) --Command to move towards the targeted creep
+			end
+				bActionTaken = true
 		end
 	end
 end
