@@ -28,9 +28,9 @@ object.bAttackCommands = true
 object.bAbilityCommands = true
 object.bOtherCommands = true
 
-object.bReportBehavior = true
-object.bDebugUtility = true
-object.bDebugExecute = true
+object.bReportBehavior = false
+object.bDebugUtility = false
+object.bDebugExecute = false
 
 object.logger = {}
 object.logger.bWriteLog = false
