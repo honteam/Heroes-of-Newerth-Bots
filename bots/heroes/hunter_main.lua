@@ -362,11 +362,14 @@ local function feastingActionsExecute(botBrain)
 				
 			elseif nTargetDistanceSq > (nRange * nRange) then --If the creep is not in range, get in range
 			
-				core.OrderMoveToPosClamp(botBrain, unitSelf, vecTargetPosition, false) --Command to move towards the targeted creep
+				bActionTaken = core.OrderMoveToPosClamp(botBrain, unitSelf, vecTargetPosition, false) --Command to move towards the targeted creep
+				
 			end
-				bActionTaken = true
 		end
 	end
+	
+	return false
+	
 end
 	
 --Setting up behaviour
