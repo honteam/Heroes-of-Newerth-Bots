@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="BloodHunterbot"
+	description="bot_description_hunter"
+	heroname="Hero_Hunter"
+	rootlua="../heroes/hunter_main.lua"
+	defaultplayername="BloodHunterBot"
+	precachepath="/heroes/hunter/"
+/>
