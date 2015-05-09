@@ -40,11 +40,13 @@ object.eventsLib = {}
 object.metadata = {}
 object.behaviorLib = {}
 object.skills = {}
+
 runfile "bots/core.lua"
 runfile "bots/botbraincore.lua"
 runfile "bots/eventsLib.lua"
 runfile "bots/metadata.lua"
 runfile "bots/behaviorLib.lua"
+
 local core, eventsLib, behaviorLib, metadata, skills = object.core, object.eventsLib, object.behaviorLib, object.metadata, object.skills
 local print, ipairs, pairs, string, table, next, type, tinsert, tremove, tsort, format, tostring, tonumber, strfind, strsub
 = _G.print, _G.ipairs, _G.pairs, _G.string, _G.table, _G.next, _G.type, _G.table.insert, _G.table.remove, _G.table.sort, _G.string.format, _G.tostring, _G.tonumber, _G.string.find, _G.string.sub
@@ -52,6 +54,7 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
 = _G.math.ceil, _G.math.floor, _G.math.pi, _G.math.tan, _G.math.atan, _G.math.atan2, _G.math.abs, _G.math.cos, _G.math.sin, _G.math.acos, _G.math.max, _G.math.random
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
+
 BotEcho('loading Blood Hunter...')
 
 --------------------------------
@@ -242,7 +245,10 @@ local function HarassHeroExecuteOverride(botBrain)
 	--Effective Hit Point Calculation--
 	local GetHealthE = unitTarget:GetHealth()
 	local MagicResist = unitTarget:GetMagicResistance()
-	local nEffectiveHP = ((MagicResist + 1) * GetHealthE)
+	local nEffectiveHP = 0
+	if nIsSighted then
+		nEffectiveHP = ((MagicResist + 1) * GetHealthE)
+	end
 	
 	-- Silence B -Hostile-
 	if abilSilence:CanActivate() and nIsSighted then --Cast Silence if
@@ -368,7 +374,7 @@ local function feastingActionsExecute(botBrain)
 		end
 	end
 	
-	return false
+	return bActionTaken
 	
 end
 	
