@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="AIHelperBot"
+	description=""
+	heroname=""
+	rootlua="aiunitcontrol.lua"
+	defaultplayername=""
+	precachepath=""
+	unlisted="true"
+/>

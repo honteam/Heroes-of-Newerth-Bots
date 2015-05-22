@@ -30,7 +30,7 @@ If he has reached the mid-game (Level 11+) and his farm is bad, he will go for a
 If his game is going well, he will pick up a portal key for more killing power. (esp. vs humans)
 
 credits:
--code examples from the S2 Bots (WitchSlayer as a template )
+-code examples from the Bots (WitchSlayer as a template )
 -Snippet Compedium by St0l3n_ID
 -using code from Snippet Compedium
 -V1P3R` Engi Bot (Kill Messages)
