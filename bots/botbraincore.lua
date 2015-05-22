@@ -950,36 +950,38 @@ function core.FindItems(botBrain)
 	end	
 	
 	local inventory = unitSelf:GetInventory(false)
-	for slot = 1, 6, 1 do
-		local curItem = inventory[slot]
-		if curItem and not curItem:IsRecipe() then
-			if core.itemGhostMarchers == nil and curItem:GetName() == "Item_EnhancedMarchers" then
-				core.itemGhostMarchers = core.WrapInTable(curItem)
-				core.itemGhostMarchers.expireTime = 0
-				core.itemGhostMarchers.duration = 6000
-				core.itemGhostMarchers.msMult = 0.12
-				--Echo("Saving ghostmarchers")
-			end
-			
-			if core.itemHatchet == nil and curItem:GetName() == "Item_LoggersHatchet" then
-				core.itemHatchet = core.WrapInTable(curItem)
-				if unitSelf:GetAttackType() == "melee" then
-					core.itemHatchet.creepDamageMul = 1.32
-				else
-					core.itemHatchet.creepDamageMul = 1.12
+	if inventory ~= nil then
+		for slot = 1, 6, 1 do
+			local curItem = inventory[slot]
+			if curItem and not curItem:IsRecipe() then
+				if core.itemGhostMarchers == nil and curItem:GetName() == "Item_EnhancedMarchers" then
+					core.itemGhostMarchers = core.WrapInTable(curItem)
+					core.itemGhostMarchers.expireTime = 0
+					core.itemGhostMarchers.duration = 6000
+					core.itemGhostMarchers.msMult = 0.12
+					--Echo("Saving ghostmarchers")
 				end
-				--Echo("Saving hatchet")
-			end
-			
-			if core.itemRoT == nil and curItem:GetName() == "Item_ManaRegen3" then
-				core.itemRoT = core.WrapInTable(curItem)
-				core.itemRoT.bHeroesOnly = (curItem:GetActiveModifierKey() == "ringoftheteacher_heroes")
-				core.itemRoT.nNextUpdateTime = 0
-				core.itemRoT.Update = function() 
-					local nCurrentTime = HoN.GetGameTime()
-					if nCurrentTime > core.itemRoT.nNextUpdateTime then
-						core.itemRoT.bHeroesOnly = (core.itemRoT:GetActiveModifierKey() == "ringoftheteacher_heroes")
-						core.itemRoT.nNextUpdateTime = nCurrentTime + 800
+				
+				if core.itemHatchet == nil and curItem:GetName() == "Item_LoggersHatchet" then
+					core.itemHatchet = core.WrapInTable(curItem)
+					if unitSelf:GetAttackType() == "melee" then
+						core.itemHatchet.creepDamageMul = 1.32
+					else
+						core.itemHatchet.creepDamageMul = 1.12
+					end
+					--Echo("Saving hatchet")
+				end
+				
+				if core.itemRoT == nil and curItem:GetName() == "Item_ManaRegen3" then
+					core.itemRoT = core.WrapInTable(curItem)
+					core.itemRoT.bHeroesOnly = (curItem:GetActiveModifierKey() == "ringoftheteacher_heroes")
+					core.itemRoT.nNextUpdateTime = 0
+					core.itemRoT.Update = function() 
+						local nCurrentTime = HoN.GetGameTime()
+						if nCurrentTime > core.itemRoT.nNextUpdateTime then
+							core.itemRoT.bHeroesOnly = (core.itemRoT:GetActiveModifierKey() == "ringoftheteacher_heroes")
+							core.itemRoT.nNextUpdateTime = nCurrentTime + 800
+						end
 					end
 				end
 			end
