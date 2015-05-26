@@ -31,6 +31,11 @@ glhf2			glhf
 ggwp1			Good game, well played.
 ggwp2			ggwp
 
+lane_top		Top
+lane_bot		Bottom
+lane_mid		Middle
+lane_jungle		Jungle
+
 /////////////////////////////////////////
 //St0l3n_ID's Amun-Ra bot custom messages
 
@@ -158,7 +163,7 @@ kairus101_balphagore_kill5		Feeling.. trapped?
 kairus101_balphagore_death1		Going to leave me here to rot?
 kairus101_balphagore_death2		Bargh, my minions got stuck..
 kairus101_balphagore_death3		You make me sick!
-kairus101_balphagore_death4		I got S2'd..
+kairus101_balphagore_death4		Team? TEAM??
 kairus101_balphagore_death5		Team? TEAM??
 kairus101_balphagore_death6		Hey, you used a cheat code!
 kairus101_balphagore_death7		Go my minions!
