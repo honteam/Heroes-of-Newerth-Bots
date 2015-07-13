@@ -1,7 +1,7 @@
 Heroes-of-Newerth-Bots
 ======================
 
-This is the code repository for Heroes of Newerth's open-source bot code. This repo is for better communication and codeflow between the community, the Community Bot Team, and S2 Games.
+This is the code repository for Heroes of Newerth's open-source bot code. This repo is for better communication and codeflow between the community, the Community Bot Team, and Frostburn Studios.
 
 How to Submit a Bot on GitHub
 =============================
@@ -17,9 +17,9 @@ You will only need to do this once per project in order to submit. Unless otherw
 3. Create a Pull Request
     * If you have the newest GitHub UI, this will be a green button next to the branch selector.
     * If you have the old GitHub UI, this will be a white button with the text 'Pull Request' at the top right.
-4. Direct the pull request at the S2Games Community branch.
+4. Direct the pull request at the honteam Community branch.
     * The branch that the pull request is aimed at is the one on the left.
-    * Make sure that the repository is listed as 's2games/Heroes-of-Newerth-Bots' and the branch is listed as 'Community'.
+    * Make sure that the repository is listed as 'honteam/Heroes-of-Newerth-Bots' and the branch is listed as 'Community'.
     * Pull requests not directed at the Community branch WILL BE REJECTED, and you will be asked to make a new pull request aimed at the Community branch.
 5. Make sure the source branch is your development branch
     * The source branch is the branch listed on the right
@@ -30,8 +30,4 @@ You will only need to do this once per project in order to submit. Unless otherw
     * Feel free to be an active part of the discussion on GitHub for any project that you are a part of. This is your code - our goal is simply to make sure it works and is efficient.
 8. You can make changes to your submission by simply committing the fixes to your original project branch.
     * You should NOT be making changes that were not requested after submitting. As with the forum submissions, the review process is for a STATIC submission. Your submission may be rejected if unrequested changes are made after submission.
-9. Once the reviewer is satisfied with your submission, the change will be accepted and merged into the Community branch on the official S2Games repository.
-
-Here is how code will flow between the branches:
-
-![Codeflow](http://i.imgur.com/qsXW8ZV.jpg)
+9. Once the reviewer is satisfied with your submission, the change will be accepted and merged into the Community branch on the official honteam repository.
