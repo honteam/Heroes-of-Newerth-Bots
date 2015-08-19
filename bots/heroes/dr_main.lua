@@ -260,23 +260,23 @@ behaviorLib.CustomHarassUtility = CustomHarassUtilityFnOverride
 -- @return: none
 --
 local function HarassHeroExecuteOverride(botBrain)
-    local unitTarget = behaviorLib.heroTarget
-    if unitTarget == nil then
-        return object.harassExecuteOld(botBrain) --Target is invalid, move on to the next behavior
-    end
+	local unitTarget = behaviorLib.heroTarget
+	if unitTarget == nil then
+		return object.harassExecuteOld(botBrain)
+	end
     
-    local unitSelf = core.unitSelf
-    local vecMyPosition = unitSelf:GetPosition() 
-    local nAttackRange = core.GetAbsoluteAttackRangeToUnit(unitSelf, unitTarget)
-    local nMyExtraRange = core.GetExtraRange(unitSelf)
+	local unitSelf = core.unitSelf
+	local vecMyPosition = unitSelf:GetPosition()
+--  local nAttackRange = core.GetAbsoluteAttackRangeToUnit(unitSelf, unitTarget)
+--  local nMyExtraRange = core.GetExtraRange(unitSelf)
     
-    local vecTargetPosition = unitTarget:GetPosition()
-    local nTargetExtraRange = core.GetExtraRange(unitTarget)
-    local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
+	local vecTargetPosition = unitTarget:GetPosition()
+--  local nTargetExtraRange = core.GetExtraRange(unitTarget)
+	local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
     
-    local nLastHarassUtility = behaviorLib.lastHarassUtil
-    local bCanSee = core.CanSeeUnit(botBrain, unitTarget)    
-    local bActionTaken = false
+	local nLastHarassUtility = behaviorLib.lastHarassUtil
+	local bCanSee = core.CanSeeUnit(botBrain, unitTarget)
+	local bActionTaken = false
 
 	if bCanSee then
 		local bTargetVuln = unitTarget:IsStunned() or unitTarget:IsImmobilized() or unitTarget:IsPerplexed()
