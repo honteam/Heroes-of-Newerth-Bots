@@ -161,7 +161,7 @@ local function funcFindItemsOverride(botBrain)
 				if core.itemMorph == nil and curItem:GetName() == "Item_Morph" then
 					core.itemMorph = core.WrapInTable(curItem)
 				elseif core.itemHFlower == nil and curItem:GetName() == "Item_Silence" then
-					core.itemHFlower = curItem
+					core.itemHFlower = core.WrapInTable(curItem)
 				end
 			end
 		end
@@ -178,7 +178,7 @@ function object:onthinkOverride(tGameVariables)
 	-- If we're low HP, run for our life!
 	local unitSelf = core.unitSelf
 	if unitSelf and unitSelf:GetHealth() > 0 and unitSelf:GetHealth() < 400
-		and skills.abilR:CanActivate() and unitSelf:GetMana() > 350
+		and skills.abilR:CanActivate() and unitSelf:GetMana() > 230
 	then
 		-- stolen from RallyTest and adjusted a bit to fit
 		local myPos = unitSelf:GetPosition()
