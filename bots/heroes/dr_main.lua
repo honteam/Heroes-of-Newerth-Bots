@@ -178,7 +178,7 @@ function object:onthinkOverride(tGameVariables)
 	-- If we're low HP, run for our life!
 	local unitSelf = core.unitSelf
 	if unitSelf and unitSelf:GetHealth() > 0 and unitSelf:GetHealth() < 400
-		and skills.abilR:CanActivate() and unitSelf:GetMana() > 500
+		and skills.abilR:CanActivate() and unitSelf:GetMana() > 350
 	then
 		-- stolen from RallyTest and adjusted a bit to fit
 		local myPos = unitSelf:GetPosition()
