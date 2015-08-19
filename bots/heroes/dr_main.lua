@@ -122,7 +122,6 @@ function object:SkillBuild()
 	if skills.abilQ == nil then
 		skills.abilQ = unitSelf:GetAbility(0)
 		skills.abilW = unitSelf:GetAbility(1)
-		skills.abilE = unitSelf:GetAbility(2)
 		skills.abilR = unitSelf:GetAbility(3)
 		skills.abilAttributeBoost = unitSelf:GetAbility(4)
 	end
