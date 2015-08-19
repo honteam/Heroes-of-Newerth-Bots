@@ -337,9 +337,7 @@ local function HarassHeroExecuteOverride(botBrain)
 						object.bToggleUltimateFrenzy = false
 					end
 				else
-					tmp[1] = tmp[1] / rangeNeeded
-					tmp[2] = tmp[2] / rangeNeeded
-					tmp[3] = tmp[3] / rangeNeeded
+					tmp = tmp / rangeNeeded
 				end
 
 				if use then
@@ -356,13 +354,15 @@ local function HarassHeroExecuteOverride(botBrain)
 			local range = skills.abilQ:GetRange()
 			if nTargetDistanceSq < (range * range) then
 				core.OrderAbilityPosition(botBrain, skills.abilQ, vecMyPosition)
+			else
+				core.OrderMoveToUnitClamp(botBrain, unitSelf, unitTarget)
 			end
 		end
 	end
 
-    if not bActionTaken then
-        return object.harassExecuteOld(botBrain)
-    end 
+	if not bActionTaken then
+		return object.harassExecuteOld(botBrain)
+	end 
 end
 -- overload the behaviour stock function with custom 
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
