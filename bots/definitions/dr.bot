@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="DoctorBot"
+	description="Doctor Repulsor Bot"
+	heroname="Hero_DoctorRepulsor"
+	rootlua="dr_main.lua"
+	defaultplayername="DoctorBot"
+	precachepath="/heroes/doctor_repulsor"
+/>
