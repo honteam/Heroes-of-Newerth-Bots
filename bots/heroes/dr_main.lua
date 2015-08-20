@@ -270,9 +270,9 @@ local function HarassHeroExecuteOverride(botBrain)
 				if itemSilence ~= nil and itemSilence:CanActivate() 
 					and nLastHarassUtility > botBrain.nHFlowerThreshold
 				then
-					local range = core.itemHFlower:GetRange()
+					local range = itemSilence:GetRange()
 					if nTargetDistanceSq < (range * range) then
-						bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, core.itemHFlower, unitTarget)
+						bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, itemSilence, unitTarget)
 					else
 						bNeedRange = true
 						nRangeNeeded = (range * range) - nTargetDistanceSq
