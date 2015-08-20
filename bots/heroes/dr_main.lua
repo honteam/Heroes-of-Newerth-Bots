@@ -146,7 +146,7 @@ function object:oncombateventOverride(EventData)
 			local lvl = core.unitSelf:GetLevel()
 			if lvl >= 16 then
 				nBonus = nBonus + object.nSpeedUse + 10 * lvl / 10
-			elseif level >= 11 then
+			elseif lvl >= 11 then
 				nBonus = nBonus + object.nSpeedUse + 5 * lvl / 10
 			else
 				nBonus = nBonus + object.nSpeedUse + (lvl / 3) * 2
@@ -267,7 +267,7 @@ local function HarassHeroExecuteOverride(botBrain)
 			if not bActionTaken then
 				-- try hell flower or opposing charges
 				local itemSilence = core.GetItem("Item_Silence")
-				if itemSilence ~= nil and itemSilence:CanActivate() 
+				if itemSilence ~= nil and itemSilence:CanActivate()
 					and nLastHarassUtility > botBrain.nHFlowerThreshold
 				then
 					local range = itemSilence:GetRange()
@@ -314,12 +314,14 @@ local function HarassHeroExecuteOverride(botBrain)
 			end
 		end
 
-		if not bActionTaken and nLastHarassUtility > botBrain.nContrpThreshold then
+		if not bActionTaken and skills.abilQ:CanActivate()
+			and nLastHarassUtility > botBrain.nContrpThreshold
+		then
 			local range = skills.abilQ:GetRange()
-			if nTargetDistanceSq < (range * range) then
-				core.OrderAbility(botBrain, skills.abilQ)
+			if nTargetDistanceSq - (range * range) <= 24000 then
+				bActionTaken = core.OrderAbility(botBrain, skills.abilQ)
 			else
-				core.OrderMoveToUnitClamp(botBrain, unitSelf, unitTarget)
+				bActionTaken = core.OrderMoveToUnitClamp(botBrain, unitSelf, unitTarget)
 			end
 		end
 	end
