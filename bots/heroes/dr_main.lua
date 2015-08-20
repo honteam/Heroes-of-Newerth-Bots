@@ -80,7 +80,7 @@ object.tSkills = {
 	0, 2, 1, 0,		-- Q E W Q	(4)
 	1, 3, 0, 0,		-- W R Q Q	(8)		Maxed Q here	(Level 1 ult)
 	1, 3, 1, 2,		-- W R W E  (12)	Maxed W here	(Level 2 ult)
-	2, 2, 2, 3,		-- E E E R  (16)					(Level 3 ult)
+	2, 2, 4, 3,		-- E E S R  (16)					(Level 3 ult)
 	4, 4, 4, 4,		-- stats	(20)
 	4, 4, 4, 4,		-- stats	(24)
 	4				-- stats	(25)
@@ -102,7 +102,7 @@ object.nMorphUse = 40
 
 --thresholds of aggression the bot must reach to use these abilities
 object.nContrpThreshold = 25
-object.nOpposingThreshold = 10
+object.nOpposingThreshold = 20
 object.nSpeedThreshold = 40
 object.nHFlowerThreshold = 40
 object.nMorphThreshold = 40
@@ -123,7 +123,6 @@ function object:SkillBuild()
 		skills.abilQ = unitSelf:GetAbility(0)
 		skills.abilW = unitSelf:GetAbility(1)
 		skills.abilR = unitSelf:GetAbility(3)
-		skills.abilAttributeBoost = unitSelf:GetAbility(4)
 	end
 
 	if unitSelf:GetAbilityPointsAvailable() <= 0 then
@@ -136,58 +135,6 @@ function object:SkillBuild()
 		unitSelf:GetAbility( object.tSkills[i] ):LevelUp()
 	end
 end
-
-local function funcFindItemsOverride(botBrain)
-	local bUpdated = object.FindItemsOld(botBrain)
-
-	if core.itemMorph ~= nil and not core.itemMorph:IsValid() then
-		core.itemMorph = nil
-	end
-
-	if core.itemHFlower ~= nil and not core.itemHFlower:IsValid() then
-		core.itemHFlower = nil
-	end
-
-	if bUpdated then
-		if core.itemHFlower and core.itemMorph then
-			return
-		end
-
-		local inventory = core.unitSelf:GetInventory(true)
-		for slot = 1, 12, 1 do
-			local curItem = inventory[slot]
-			if curItem then
-				if core.itemMorph == nil and curItem:GetName() == "Item_Morph" then
-					core.itemMorph = core.WrapInTable(curItem)
-				elseif core.itemHFlower == nil and curItem:GetName() == "Item_Silence" then
-					core.itemHFlower = core.WrapInTable(curItem)
-				end
-			end
-		end
-	end
-end
-object.FindItemsOld = core.FindItems
-core.FindItems = funcFindItemsOverride
-
--- @param: tGameVariables
--- @return: none
-function object:onthinkOverride(tGameVariables)
-	self:onthinkOld(tGameVariables)
-
-	-- If we're low HP, run for our life!
-	local unitSelf = core.unitSelf
-	if unitSelf and unitSelf:GetHealth() > 0 and unitSelf:GetHealth() < 400
-		and skills.abilR:CanActivate() and unitSelf:GetMana() > 230
-	then
-		-- stolen from RallyTest and adjusted a bit to fit
-		local vecOrigin = unitSelf:GetPosition()
-		local vecDirection = Vector3.Create(1, 0)
-		vecDirection = core.RotateVec2D(vecDirection, 90)
-		core.OrderAbilityPosition(self, skills.abilR, vecOrigin + vecDirection * 500)
-	end
-end
-object.onthinkOld = object.onthink
-object.onthink 	= object.onthinkOverride
 
 -- @param: eventdata
 -- @return: none
@@ -212,9 +159,10 @@ function object:oncombateventOverride(EventData)
 			nBonus = nBonus + object.nContrpUse
 		end
 	elseif EventData.Type == "Item" and EventData.SourceUnit == core.unitSelf:GetUniqueID() then
-		if core.itemMorph ~= nil and EventData.InflictorName == core.itemMorph:GetName() then
+		local itemMorph, itemSilence = core.GetItem("Item_Morph"), core.GetItem("Item_Silence")
+		if itemMorph ~= nil and EventData.InflictorName == itemMorph:GetName() then
 			nBonus = nBonus + object.nMorphUse
-		elseif core.itemHFlower ~= nil and EventData.InflictorName == core.itemHFlower:GetName() then
+		elseif itemSilence ~= nil and EventData.InflictorName == itemSilence:GetName() then
 			nBonus = nBonus + object.nHFlowerUse
 		end
 	end
@@ -244,17 +192,40 @@ local function CustomHarassUtilityFnOverride(hero)
 		nValue = nValue + object.nSpeedUp
 	end
 
-	if core.itemMorph and core.itemMorph:CanActivate() then
+	local itemMorph = core.GetItem("Item_Morph")
+	if itemMorph and itemMorph:CanActivate() then
 		nValue = nValue + object.nMorphUp
 	end
 
-	if core.itemHFlower and core.itemHFlower:CanActivate() then
+	local itemSilence = core.GetItem("Item_Silence")
+	if itemSilence and itemSilence:CanActivate() then
 		nValue = nValue + object.nHFlowerUp
 	end
 
 	return nValue
 end
 behaviorLib.CustomHarassUtility = CustomHarassUtilityFnOverride  
+
+-- @param botBrain: CBotBrain
+-- @return: none
+local function CustomRetreatExecuteFnOverride(botBrain)
+	-- If we're low HP, run for our life!
+	local unitSelf = core.unitSelf
+	if unitSelf and unitSelf:GetHealth() > 0 and unitSelf:GetHealth() < 400
+		and skills.abilR:CanActivate() and unitSelf:GetMana() > 230
+	then
+		-- stolen from RallyTest and adjusted a bit to fit
+		local vecOrigin = unitSelf:GetPosition()
+		local vecDirection = Vector3.Create(1, 0)
+		vecDirection = core.RotateVec2D(vecDirection, unitSelf:GetTeam() == 2 and 90 or -90)
+		core.OrderAbilityPosition(self, skills.abilR, vecOrigin + vecDirection * 500)
+
+		return true
+	end
+
+	return false
+end
+behaviorLib.CustomRetreatExecute = CustomRetreatExecuteFnOverride
 
 -- @param botBrain: CBotBrain
 -- @return: none
@@ -280,21 +251,23 @@ local function HarassHeroExecuteOverride(botBrain)
 
 	if bCanSee then
 		local bTargetVuln = unitTarget:IsStunned() or unitTarget:IsImmobilized() or unitTarget:IsPerplexed()
-		core.FindItems()
 
 		if not bTargetVuln then
 			local bNeedRange = false
 			local nRangeNeeded = 0
-			if core.itemMorph ~= nil and core.itemMorph:CanActivate() then
-				local range = core.itemMorph:GetRange()
+
+			local itemMorph = core.GetItem("Item_Morph")
+			if itemMorph ~= nil and itemMorph:CanActivate() then
+				local range = itemMorph:GetRange()
 				if nLastHarassUtility > botBrain.nMorphThreshold and nTargetDistanceSq < (range * range) then
-					bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, core.itemMorph, unitTarget)
+					bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, itemMorph, unitTarget)
 				end
 			end
 
 			if not bActionTaken then
 				-- try hell flower or opposing charges
-				if core.itemHFlower ~= nil and core.itemHFlower:CanActivate() 
+				local itemSilence = core.GetItem("Item_Silence")
+				if itemSilence ~= nil and itemSilence:CanActivate() 
 					and nLastHarassUtility > botBrain.nHFlowerThreshold
 				then
 					local range = core.itemHFlower:GetRange()
@@ -363,7 +336,9 @@ local function HarassHeroExecuteOverride(botBrain)
 
 	if not bActionTaken then
 		return object.harassExecuteOld(botBrain)
-	end 
+	end
+
+	return bActionTaken
 end
 -- overload the behaviour stock function with custom 
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
