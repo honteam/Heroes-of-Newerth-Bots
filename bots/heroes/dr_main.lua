@@ -180,10 +180,10 @@ function object:onthinkOverride(tGameVariables)
 		and skills.abilR:CanActivate() and unitSelf:GetMana() > 230
 	then
 		-- stolen from RallyTest and adjusted a bit to fit
-		local myPos = unitSelf:GetPosition()
+		local vecOrigin = unitSelf:GetPosition()
 		local vecDirection = Vector3.Create(1, 0)
 		vecDirection = core.RotateVec2D(vecDirection, 90)
-		core.OrderAbilityPosition(self, skills.abilR, myPos + vecDirection * 500)
+		core.OrderAbilityPosition(self, skills.abilR, vecOrigin + vecDirection * 500)
 	end
 end
 object.onthinkOld = object.onthink
@@ -192,36 +192,36 @@ object.onthink 	= object.onthinkOverride
 -- @param: eventdata
 -- @return: none
 function object:oncombateventOverride(EventData)
-	local bonus = 0
+	local nBonus = 0
 
 	if EventData.Type == "Ability" then
 		if EventData.InflictorName == "Ability_DoctorRepulsor4" then
 			local lvl = core.unitSelf:GetLevel()
 			if lvl >= 16 then
-				bonus = bonus + object.nSpeedUse + 10 * lvl / 10
+				nBonus = nBonus + object.nSpeedUse + 10 * lvl / 10
 			elseif level >= 11 then
-				bonus = bonus + object.nSpeedUse + 5 * lvl / 10
+				nBonus = nBonus + object.nSpeedUse + 5 * lvl / 10
 			else
-				bonus = bonus + object.nSpeedUse + (lvl / 3) * 2
+				nBonus = nBonus + object.nSpeedUse + (lvl / 3) * 2
 			end
 		elseif EventData.InflictorName == "Ability_DoctorRepulsor1" then
-			bonus = bonus + object.nContrpUse
+			nBonus = nBonus + object.nContrpUse
 		elseif EventData.InflictorName == "Ability_DoctorRepulsor2" then
-			bonus = bonus + object.nOpposingUse
+			nBonus = nBonus + object.nOpposingUse
 		else
-			bonus = bonus + object.nContrpUse
+			nBonus = nBonus + object.nContrpUse
 		end
 	elseif EventData.Type == "Item" and EventData.SourceUnit == core.unitSelf:GetUniqueID() then
 		if core.itemMorph ~= nil and EventData.InflictorName == core.itemMorph:GetName() then
-			bonus = bonus + object.nMorphUse
+			nBonus = nBonus + object.nMorphUse
 		elseif core.itemHFlower ~= nil and EventData.InflictorName == core.itemHFlower:GetName() then
-			bonus = bonus + object.nHFlowerUse
+			nBonus = nBonus + object.nHFlowerUse
 		end
 	end
 
-	if bonus > 0 then
+	if nBonus > 0 then
 		core.DecayBonus(self)
-		core.nHarassBonus = core.nHarassBonus + bonus
+		core.nHarassBonus = core.nHarassBonus + nBonus
 	end
 end
 object.oncombateventOld = object.oncombatevent
@@ -230,29 +230,29 @@ object.oncombatevent     = object.oncombateventOverride
 -- @param: iunitentity hero
 -- @return: number
 local function CustomHarassUtilityFnOverride(hero)
-	local value = 0
+	local nValue = 0
 
 	if skills.abilQ:CanActivate() then
-		value = value + object.nContrpUp
+		nValue = nValue + object.nContrpUp
 	end
 
 	if skills.abilW:CanActivate() then
-		value = value + object.nOpposingUp
+		nValue = nValue + object.nOpposingUp
 	end
 
 	if skills.abilR:CanActivate() then
-		value = value + object.nSpeedUp
+		nValue = nValue + object.nSpeedUp
 	end
 
 	if core.itemMorph and core.itemMorph:CanActivate() then
-		value = value + object.nMorphUp
+		nValue = nValue + object.nMorphUp
 	end
 
 	if core.itemHFlower and core.itemHFlower:CanActivate() then
-		value = value + object.nHFlowerUp
+		nValue = nValue + object.nHFlowerUp
 	end
 
-	return value
+	return nValue
 end
 behaviorLib.CustomHarassUtility = CustomHarassUtilityFnOverride  
 
@@ -284,7 +284,7 @@ local function HarassHeroExecuteOverride(botBrain)
 
 		if not bTargetVuln then
 			local bNeedRange = false
-			local rangeNeeded = 0
+			local nRangeNeeded = 0
 			if core.itemMorph ~= nil and core.itemMorph:CanActivate() then
 				local range = core.itemMorph:GetRange()
 				if nLastHarassUtility > botBrain.nMorphThreshold and nTargetDistanceSq < (range * range) then
@@ -302,7 +302,7 @@ local function HarassHeroExecuteOverride(botBrain)
 						bActionTaken = core.OrderItemEntityClamp(botBrain, unitSelf, core.itemHFlower, unitTarget)
 					else
 						bNeedRange = true
-						rangeNeeded = (range * range) - nTargetDistanceSq
+						nRangeNeeded = (range * range) - nTargetDistanceSq
 					end
 				elseif skills.abilW:CanActivate() and nLastHarassUtility > botBrain.nOpposingThreshold then
 					local range = skills.abilW:GetRange()
@@ -318,31 +318,31 @@ local function HarassHeroExecuteOverride(botBrain)
 						end
 					else
 						bNeedRange = true
-						rangeNeeded = (range * range) - nTargetDistanceSq
+						nRangeNeeded = (range * range) - nTargetDistanceSq
 					end
 				end
 			end
 
 			if skills.abilR:CanActivate() and unitSelf:GetMana() >= 100 then
-				local tmp = vecTargetPosition
-				local use = true
+				local vecTmp = vecTargetPosition
+				local bUse = true
 				if not bNeedRange then
 					if not object.bToggleUltimateFrenzy then
 						-- This will move him a bit and then we can proc his E correctly hopefully.
-						tmp[1] = tmp[1] * 1.02
-						tmp[2] = tmp[2] * 1.02
-						tmp[3] = tmp[3] * 0.50
+						vecTmp[1] = vecTmp[1] * 1.02
+						vecTmp[2] = vecTmp[2] * 1.02
+						vecTmp[3] = vecTmp[3] * 0.50
 						object.bToggleUltimateFrenzy = true
 					else
-						use = false
+						bUse = false
 						object.bToggleUltimateFrenzy = false
 					end
 				else
-					tmp = tmp / rangeNeeded
+					vecTmp = vecTmp / nRangeNeeded
 				end
 
-				if use then
-					core.OrderAbilityPosition(botBrain, skills.abilR, tmp)
+				if bUse then
+					core.OrderAbilityPosition(botBrain, skills.abilR, vecTmp)
 				end
 			elseif bNeedRange then
 				bActionTaken = core.OrderMoveToUnitClamp(botBrain, unitSelf, unitTarget)
