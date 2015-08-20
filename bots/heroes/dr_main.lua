@@ -310,9 +310,10 @@ local function HarassHeroExecuteOverride(botBrain)
 						bActionTaken = core.OrderAbilityEntity(botBrain, skills.abilW, unitTarget)
 
 						-- if we can cast Q, do it too
-						-- Level 5 is needed to make sure that the Q will hit, we can do a range check
-						-- here but this is faster.
-						if unitSelf:GetLevel() >= 5 and skills.abilQ:CanActivate() then
+						local qRange = skills.abilQ:GetRange()
+						if skills.abilQ:CanActivate()
+							and (unitSelf:GetLevel() >= 5 or nTargetDistanceSq < (qRange * qRange))
+						then
 							core.OrderAbility(botBrain, skills.abilQ)
 						end
 					else
@@ -322,7 +323,7 @@ local function HarassHeroExecuteOverride(botBrain)
 				end
 			end
 
-			if skills.abilR:CanActivate() and unitSelf:GetMana() > 150 then
+			if skills.abilR:CanActivate() and unitSelf:GetMana() >= 100 then
 				local tmp = vecTargetPosition
 				local use = true
 				if not bNeedRange then
