@@ -314,9 +314,7 @@ local function HarassHeroExecuteOverride(botBrain)
 			end
 		end
 
-		-- if we took an action or we can still harass, use Q only if we're quite near
-		-- the target.
-		if not bActionTaken or nLastHarassUtility > botBrain.nContrpThreshold then
+		if not bActionTaken and nLastHarassUtility > botBrain.nContrpThreshold then
 			local range = skills.abilQ:GetRange()
 			if nTargetDistanceSq < (range * range) then
 				core.OrderAbilityPosition(botBrain, skills.abilQ, vecMyPosition)
