@@ -318,9 +318,10 @@ local function HarassHeroExecuteOverride(botBrain)
 			and nLastHarassUtility > botBrain.nContrpThreshold
 		then
 			local range = skills.abilQ:GetRange()
-			if nTargetDistanceSq - (range * range) <= 24000 then
+			local off = nTargetDistanceSq - (range * range)
+			if off <= 24000 then
 				bActionTaken = core.OrderAbility(botBrain, skills.abilQ)
-			else
+			elseif off <= 130000 then	-- just so he does not dive towers
 				bActionTaken = core.OrderMoveToUnitClamp(botBrain, unitSelf, unitTarget)
 			end
 		end
