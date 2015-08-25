@@ -214,12 +214,16 @@ local function CustomRetreatExecuteFnOverride(botBrain)
 	if unitSelf and unitSelf:GetHealth() > 0 and unitSelf:GetHealth() < 400
 		and skills.abilR:CanActivate() and unitSelf:GetMana() > 230
 	then
+--[[
 		-- stolen from RallyTest and adjusted a bit to fit
 		local vecOrigin = unitSelf:GetPosition()
 		local vecDirection = Vector3.Create(1, 0)
 		vecDirection = core.RotateVec2D(vecDirection, unitSelf:GetTeam() == 2 and 90 or -90)
-		core.OrderAbilityPosition(self, skills.abilR, vecOrigin + vecDirection * 500)
-
+		core.OrderAbilityPosition(botBrain, skills.abilR, vecOrigin + vecDirection * 500)
+]]
+		core.OrderAbilityPosition(botBrain, skills.abilR,
+			behaviorLib.GetSafeBlinkPosition(core.allyWell:GetPosition(), 500)
+		)
 		return true
 	end
 
