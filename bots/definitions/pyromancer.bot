@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="PyromancerBot"
+	description="Catch this!"
+	heroname="Hero_Pyromancer"
+	rootlua="../heroes/pyromancer_main.lua"
+	defaultplayername="PyromancerBot"
+	precachepath="/heroes/pyromancer"
+/>
