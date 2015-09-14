@@ -10404,6 +10404,7 @@ HeroCategory_tank							Tank
 // bot descriptions
 bot_description_aluna				Aluna is a strong ranged intelligence hero with a high damage nuke that can be global. Authored by Kairus101!
 bot_description_arachna				Arachna is a single-target DPS carry with strong harassment capability and low survivability.
+bot_description_armadon				Armadon is a tanky hero with huge aoe dmg in teamfights. Authored by Sparks1992!
 bot_description_balphagore			Balphagore is a melee strength tank with insane pushing potential. Authored by Kairus101!
 bot_description_blacksmith			A powerful, luck-based intelligence hero who has a nuke with a high damage cap! Authored by Kormoranos!
 bot_description_blood_hunter		Blood Hunter is a capable carry who relies on his spells to disable and lockdown his prey. Authored by ModernSaint!
