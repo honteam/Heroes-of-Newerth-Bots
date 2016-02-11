@@ -9,9 +9,6 @@
 local _G = getfenv(0)
 local object = _G.object
 
--- Set to true for local debug echo messages
-local bDebugLocal = false
-
 object.myName = object:GetName()
 
 object.bRunLogic 		= true
@@ -80,11 +77,11 @@ object.tSkills = {
 ----------------------------------
 behaviorLib.StartingItems = {"Item_PretendersCrown", "2 Item_MinorTotem", "Item_HealthPotion", "2 Item_RunesOfTheBlight"}
 behaviorLib.LaneItems = 
-	{"Item_Strength5", "Item_Striders", "Item_MysticPotpourri", "Item_MysticVestments"}
+	{"Item_Strength5", "Item_Striders", "Item_MysticPotpourri", "Item_MysticVestments"} -- Strength5 is Fortified Bracer and Potpourri is Refreshing Ornament
 behaviorLib.MidItems = 
-	{"Item_Astrolabe", "Item_Intelligence7", "Item_PostHaste", "Item_Protect"} 
+	{"Item_Astrolabe", "Item_Intelligence7", "Item_PostHaste", "Item_Protect"} -- Intelligence7 is SotM and Protect is Null Stone
 behaviorLib.LateItems = 
-	{"Item_Morph", "Item_BehemothsHeart", "Item_Immunity"}
+	{"Item_Morph", "Item_BehemothsHeart", "Item_Immunity"} -- Morph is Sheepstick
 
 --------------------------------
 -- Skills
@@ -94,14 +91,10 @@ function object:SkillBuild()
 
 	local unitSelf = self.core.unitSelf
     if not bSkillsValid then
-		skills.abilNuke = core.WrapInTable(unitSelf:GetAbility(0))
-        skills.abilNuke.nLastCastTime = 0
-        skills.abilShield = core.WrapInTable(unitSelf:GetAbility(1))
-        skills.abilShield.nLastCastTime = 0
-        skills.abilMana = core.WrapInTable(unitSelf:GetAbility(2))
-        skills.abilMana.nLastCastTime = 0
-        skills.abilUltimate = core.WrapInTable(unitSelf:GetAbility(3))
-        skills.abilUltimate.nLastCastTime = 0
+		skills.abilNuke = unitSelf:GetAbility(0)
+        skills.abilShield = unitSelf:GetAbility(1)
+        skills.abilMana = unitSelf:GetAbility(2)
+        skills.abilUltimate = unitSelf:GetAbility(3)
 		
 		if (skills.abilNuke and skills.abilShield and skills.abilMana and skills.abilUltimate) then
 			bSkillsValid = true
@@ -132,7 +125,6 @@ object.nNukeUse = 14
 object.nShieldUse = 5
 object.nUltimateUse = 28
 --thresholds of aggression the bot must reach to use these abilities
-object.nNukeThreshold = 10
 object.nUltimateThreshold = 60
 ----------------------------------------------
 --  		  oncombatevent override		--
@@ -250,7 +242,7 @@ local function HarassHeroExecuteOverride(botBrain)
 		local nRange = abilNuke:GetRange()
 		if nTargetDistanceSq < (nRange * nRange) then
 			-- Highest priority, not much reason to NOT cast this spell. If we have high mana, target has low health, or a gank/fight is happening, cast it.
-			if ( nLastHarassUtility > botBrain.nNukeThreshold and unitSelf:GetManaPercent() > 0.50 ) or unitSelf:GetManaPercent() > 0.85 or ( unitTarget:GetHealthPercent() < 0.50 ) or (core.NumberElements(tLocalAllyHeroes) > 2) or (core.NumberElements(tLocalEnemyHeroes) > 2) then
+			if (unitTarget:GetHealthPercent() < (unitSelf:GetManaPercent() + 0.15)) or (core.NumberElements(tLocalAllyHeroes) > 2) or (core.NumberElements(tLocalEnemyHeroes) > 2) then
 				bActionTaken = core.OrderAbilityEntity(botBrain, abilNuke, unitTarget)
 			end
 		end
@@ -290,7 +282,7 @@ local function AttackCreepsExecuteOverride(botBrain)
 	end
 	
 	if not bActionTaken then
-		return object.harassExecuteOld(botBrain)
+		return object.attackCreepsOld(botBrain)
 	end	
 end
 object.attackCreepsOld = behaviorLib.AttackCreepsBehavior["Execute"]
