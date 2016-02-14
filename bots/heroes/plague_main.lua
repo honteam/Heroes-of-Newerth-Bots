@@ -1,7 +1,7 @@
 --[[
 
- PlagueBot v1.0
- by CASHBALLER 
+	PlagueBot v1.0
+	by CASHBALLER 
 
 --]]
 
@@ -90,27 +90,27 @@ local bSkillsValid = false
 function object:SkillBuild()
 
 	local unitSelf = self.core.unitSelf
-    if not bSkillsValid then
+	if not bSkillsValid then
 		skills.abilNuke = unitSelf:GetAbility(0)
-        skills.abilShield = unitSelf:GetAbility(1)
-        skills.abilMana = unitSelf:GetAbility(2)
-        skills.abilUltimate = unitSelf:GetAbility(3)
+		skills.abilShield = unitSelf:GetAbility(1)
+		skills.abilMana = unitSelf:GetAbility(2)
+		skills.abilUltimate = unitSelf:GetAbility(3)
 		
 		if (skills.abilNuke and skills.abilShield and skills.abilMana and skills.abilUltimate) then
 			bSkillsValid = true
 		else
 			return
 		end		
-    end
-    if unitSelf:GetAbilityPointsAvailable() <= 0 then
-        return
-    end    
-   
-    local nlev = unitSelf:GetLevel()
-    local nlevpts = unitSelf:GetAbilityPointsAvailable()
-    for i = nlev, nlev+nlevpts do
-        unitSelf:GetAbility( object.tSkills[i] ):LevelUp()
-    end
+	end
+	if unitSelf:GetAbilityPointsAvailable() <= 0 then
+		return
+	end
+	
+	local nlev = unitSelf:GetLevel()
+	local nlevpts = unitSelf:GetAbilityPointsAvailable()
+	for i = nlev, nlev+nlevpts do
+		unitSelf:GetAbility( object.tSkills[i] ):LevelUp()
+	end
 end
 
 ---------------------------------------------------
@@ -121,7 +121,7 @@ end
 object.nNukeUp = 18
 object.nUltimateUp = 7
 -- bonus aggression points that are applied to the bot upon successfully using a skill/item
-object.nNukeUse = 14
+object.nNukeUse = 24
 object.nShieldUse = 5
 object.nUltimateUse = 28
 --thresholds of aggression the bot must reach to use these abilities
@@ -188,6 +188,7 @@ local function UseShield(botBrain, bCheckNearAllies)
 			return core.OrderAbilityEntity(botBrain, abilShield, unitSelf)
 		end
 	end
+	return false
 end
 
 ----------------------------------
@@ -215,6 +216,7 @@ local function UseExtinguish(botBrain, nManaThreshold)
 			end
 		end
 	end
+	return false
 end
 
 ----------------------------------
@@ -262,6 +264,8 @@ local function HarassHeroExecuteOverride(botBrain)
 	if not bActionTaken then
 		return object.harassExecuteOld(botBrain)
 	end
+	
+	return bActionTaken
 end
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
@@ -283,7 +287,9 @@ local function AttackCreepsExecuteOverride(botBrain)
 	
 	if not bActionTaken then
 		return object.attackCreepsOld(botBrain)
-	end	
+	end
+	
+	return bActionTaken
 end
 object.attackCreepsOld = behaviorLib.AttackCreepsBehavior["Execute"]
 behaviorLib.AttackCreepsBehavior["Execute"] = AttackCreepsExecuteOverride
