@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bot
 	name="PlagueBot"
-	description="A Plague Rider Bot by CASHBALLER."
+	description="bot_description_plague_rider"
 	heroname="Hero_DiseasedRider"
-	rootlua="plague_main.lua"
+	rootlua="../heroes/plague_main.lua"
 	defaultplayername="PlagueBot"
 	precachepath="/heroes/diseasedrider/"
 />
