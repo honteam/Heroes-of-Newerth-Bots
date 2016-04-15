@@ -72,7 +72,7 @@ object.heroName = 'Hero_Midas'
 	"Item #" is "get this level of the item" --]]
 behaviorLib.StartingItems = {"Item_Scarab", "2 Item_RunesOfTheBlight", "Item_ManaPotion"} -- Items: Scarab, 2 Runes Of The Blight, Mana Potion
 behaviorLib.LaneItems = {"Item_Marchers", "Item_Steamboots", "Item_PortalKey"} -- Items: Marchers, Steamboots, Portal Key
-behaviorLib.MidItems = {"Item_Spellshards", "Item_HealthMana2" } -- Items: Spell Shards, Icon Of The Goddes
+behaviorLib.MidItems = {"Item_SpellShards", "Item_HealthMana2" } -- Items: Spell Shards, Icon Of The Goddes
 behaviorLib.LateItems = {"Item_GrimoireOfPower", "Item_Morph"} -- Items: Grimoire Of Power, Kuldra Sheepstick
 
 --------------------------------
