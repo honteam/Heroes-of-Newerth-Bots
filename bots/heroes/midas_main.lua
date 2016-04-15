@@ -206,16 +206,16 @@ local function HarassHeroExecuteOverride(botBrain)
 		
 		-- Portal Key -- Uses PK to close in ONLY if target is NOT MAGIC IMMUNE
 		if bCanSee and not bTargetMagicImmune and itemPortalKey and itemPortalKey:CanActivate() then   
-		if nDistSq > 800 * 800 then
-			if nLastHarassUtility > behaviorLib.diveThreshold or core.NumberElements(core.GetTowersThreateningPosition(vecTargetPosition, nMyExtraRange, core.myTeam)) == 0 then
-				local _, sortedTable = HoN.GetUnitsInRadius(vecTargetPosition, 1000, core.UNIT_MASK_HERO + core.UNIT_MASK_ALIVE, true)
-				local EnemyHeroes = sortedTable.EnemyHeroes
-				if core.NumberElements(EnemyHeroes) == 1 then
-					bActionTaken = core.OrderItemPosition(botBrain, unitSelf, itemPortalKey, vecTargetPosition)
+			if nDistSq > 800 * 800 then
+				if nLastHarassUtility > behaviorLib.diveThreshold or core.NumberElements(core.GetTowersThreateningPosition(vecTargetPosition, nMyExtraRange, core.myTeam)) == 0 then
+					local _, sortedTable = HoN.GetUnitsInRadius(vecTargetPosition, 1000, core.UNIT_MASK_HERO + core.UNIT_MASK_ALIVE, true)
+					local EnemyHeroes = sortedTable.EnemyHeroes
+					if core.NumberElements(EnemyHeroes) == 1 then
+						bActionTaken = core.OrderItemPosition(botBrain, unitSelf, itemPortalKey, vecTargetPosition)
+					end
 				end
 			end
 		end
-	end
 		
 		-- Since all of Midas's skill are Magic Dmg, and Ultimate depends on whether they hit or not, Midas will use skill only when his target is NOT MAGIC IMMUNE
 		
@@ -406,8 +406,16 @@ tinsert(behaviorLib.tBehaviors, behaviorLib.HealBehavior)
 
 -- Blink code taken from ChronosBot - Works really well with Elemental Warp
 
+
 function behaviorLib.CustomReturnToWellExecute(botBrain)
-	return core.OrderBlinkAbilityToEscape(botBrain, skills.abilWarp, true)
+	local itemPortalKey = core.GetItem("Item_PortalKey")
+	local abilWarp = skills.abilWarp
+	if itemPortalKey ~= nil and itemPortalKey:CanActivate() then
+			return core.OrderBlinkItemToEscape(botBrain, unitSelf, itemPortalKey)
+		else if abilWarp:CanActivate() then
+			return core.OrderBlinkAbilityToEscape(botBrain, skills.abilWarp, true)
+		end
+	end
 end
 
 --------------------------------------------
