@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bot
 	name="Midasbot"
-	description="Midas is a hard-to-kill strength nuker with high survivability and enough gold to make him escape any situation"
-	rootlua="Midas_main.lua"
+	description="bot_description_midas"
+	rootlua="../heroes/Midas_main.lua"
 	heroname="Hero_Midas"
 	defaultplayername="MidasBot"
 	precachepath="/heroes/midas/"
