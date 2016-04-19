@@ -162,9 +162,6 @@ function object:oncombateventOverride(EventData)
 		if EventData.InflictorName == "Ability_ShadowBlade3" then
 			nAddBonus = nAddBonus + object.nSoulUseBonus
 		end
-		if EventData.InflictorName == "Ability_ShadowBlade4" then
-			nAddBonus = nAddBonus + object.nSoulUseBonus
-		end
 	end
 	
 	if nAddBonus > 0 then
@@ -294,15 +291,19 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 	local nCount = 0
 
 	local bCanSeeUnit = unitTarget and core.CanSeeUnit(botBrain, unitTarget)
+	
 	for id, unitEnemy in pairs(tEnemies) do
 		if core.CanSeeUnit(botBrain, unitEnemy) then
 			nCount = nCount + 1
 		end
 	end
-
+	
 	if unitSelf:GetHealthPercent() < .50 then
 		local abilGargantuan = skills.abilGargantuan
 		local abilEssence = skills.abilEssence
+		local unitAlly = core.unitAllyHeroes
+		local bCanSeeAlly = unitAlly and core.CanSeeAlly(botBrain, unitAlly)
+		local abilFeint = skills.abilFeint
 		-- BACK OFF!
 		-- Use Gargantuan THEN Essence on SELF
 		if bCanSeeUnit and abilGargantuan:CanActivate() and abilEssence:CanActivate() then
@@ -321,7 +322,10 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 				object.bDefensiveGargantuan = true	-- Don't get aggressive if we're blinking away
 				
 				end
+			
 		end
+		if abilFeint:CanActivate() and bCanSeeAlly
+			bActionTaken = core.OrderAbility(botBrain, abilFeint, unitAlly)
 	end
 
 	return bActionTaken
