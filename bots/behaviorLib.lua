@@ -1416,7 +1416,7 @@ function behaviorLib.attackEnemyMinionsUtility(botBrain)
 	
 	local nUtility = 0
 	for _, unit in pairs(tEnemies) do
-		if not unit:IsInvulnerable() and not unit:IsHero() and unit:GetOwnerPlayerID() ~= nil then
+		if not unit:IsInvulnerable() and not unit:IsHero() and unit:GetOwnerPlayerID() == nil then
 			local nTempHP = unit:GetHealth()
 			if nTempHP < nMinionHP then
 				unitWeakestMinion = unit
@@ -2641,7 +2641,7 @@ function behaviorLib.funcGetThreatOfEnemy(unitEnemy)
 	--Level differences increase / decrease actual nThreat
 	local nThreat = behaviorLib.nEnemyBaseThreat + Clamp(nEnemyLevel - nMyLevel, 0, behaviorLib.nMaxLevelDifference)
 	
-	--Magic-Formel: Threat to Range, T(700²) = 2, T(1100²) = 1.5, T(2000²)= 0.75
+	--Magic-Formel: Threat to Range, T(700Â²) = 2, T(1100Â²) = 1.5, T(2000Â²)= 0.75
 	-- Magic numbers are awful. You can totally represent the 0.75 <= y <= 2 portion with a linear function
 	-- To see the graph, punch "graph y = (3 * ((-1) * x^2+ 112810000)) / (4 * (  19 * x^2 +  32810000))" into Google.
 	-- This is something that perhaps should be looked into simplifying.
