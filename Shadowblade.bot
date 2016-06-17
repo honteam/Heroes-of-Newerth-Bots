@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="Shadowbladebot"
+	description="Shadowblade is a unique hero that can be played on all roles by building STR to make him Tank/Carry, AGI to make him Carry and INT for Support/Carry"
+	rootlua="Shadowblade_main.lua"
+	heroname="Hero_ShadowBlade"
+	defaultplayername="ShadowbladeBot"
+	precachepath="/heroes/shadowblade/"
+/>
