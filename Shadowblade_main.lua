@@ -253,6 +253,7 @@ local function HarassHeroExecuteOverride(botBrain)
 				elseif abilSoul:CanActivate() then
 						bActionTaken = core.OrderAbility(botBrain, abilSoul) 
 				end
+			end	
 		end
 	end	
 		
@@ -308,24 +309,26 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 		-- Use Gargantuan THEN Essence on SELF
 		if bCanSeeUnit and abilGargantuan:CanActivate() and abilEssence:CanActivate() then
 			bActionTaken = core.OrderAbility(botBrain, abilGargantuan)
-			bActionTaken = core.OrderAbility(botBrain, abilEssence, unitSelf)
-				
-				if bActionTaken then
+			
+			if bActionTaken then
 				object.bDefensiveGargantuan = true	-- Don't get aggressive if we're blinking away
-				
-				end
+				bActionTaken = core.OrderAbility(botBrain, abilEssence, unitSelf)
+			end
 		-- If Essence is on Cooldown, use only Gargantuan
 			elseif bCanSeeUnit and abilGargantuan:CanActivate() then
-			bActionTaken = core.OrderAbility(botBrain, abilGargantuan)
+			
+				bActionTaken = core.OrderAbility(botBrain, abilGargantuan)
 				
 				if bActionTaken then
-				object.bDefensiveGargantuan = true	-- Don't get aggressive if we're blinking away
-				
-				end
+					object.bDefensiveGargantuan = true	-- Don't get aggressive if we're blinking away
+				end	
+			end
+			
 			
 		end
 		if abilFeint:CanActivate() and bCanSeeAlly
 			bActionTaken = core.OrderAbility(botBrain, abilFeint, unitAlly)
+		end	
 	end
 
 	return bActionTaken
