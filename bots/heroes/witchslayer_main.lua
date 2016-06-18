@@ -123,16 +123,19 @@ object.onthink 	= object.onthinkOverride
 
 object.nGraveyardUp = 12
 object.nMiniaturizationUp = 8
+object.nPowerDrainUp = 5
 object.nSilverBulletUp = 35
 object.nSheepstickUp = 12
 
 object.nGraveyardUse = 16
 object.nMiniaturizationUse = 15
+object.nPowerDrain = 10
 object.nSilverBulletUse = 55
 object.nSheepstickUse = 16
 
 object.nGraveyardThreshold = 45
 object.nMiniaturizationThreshold = 40
+object.nPowerDrainThreshold = 35
 object.nSilverBulletThreshold = 60
 object.nSheepstickThreshold = 30
 
@@ -152,6 +155,10 @@ local function AbilitiesUpUtility(hero)
 	
 	if skills.abilSilverBullet:CanActivate() then
 		nUtility = nUtility + object.nSilverBulletUp
+	end
+	
+	if skills.abilPowerDrain:CanActivate() then
+		nUtility = nUtility + object.nPowerDrainUp
 	end
 	
 	if object.itemSheepstick and object.itemSheepstick:CanActivate() then
@@ -187,6 +194,8 @@ function object:oncombateventOverride(EventData)
 			nAddBonus = nAddBonus + object.nMiniaturizationUse
 		elseif EventData.InflictorName == "Ability_WitchSlayer4" then
 			nAddBonus = nAddBonus + object.nSilverBulletUse
+		elseif EventData.InflictorName == "Ability_WitchSlayer3" then
+			nAddBonus = nAddBonus + object.nPowerDrainUse
 		end
 	elseif EventData.Type == "Item" then
 		if core.itemSheepstick ~= nil and EventData.SourceUnit == core.unitSelf:GetUniqueID() and EventData.InflictorName == core.itemSheepstick:GetName() then
@@ -318,8 +327,34 @@ local function HarassHeroExecuteOverride(botBrain)
 		end
 	end
 	
-	--aggressive Power Drain?
-	
+	-- Power Drain
+	if not bActionTaken and  nLastHarassUtility > botBrain.nPowerDrainThreshold then
+		local abilPowerDrain = skills.abilPowerDrain
+		if abilPowerDrain:CanActivate() then
+	    local nRange = abilPowerDrain:GetRange()
+			if nTargetDistanceSq < (nRange * nRange) then
+				bActionTaken = core.OrderAbilityEntity(botBrain, abilPowerDrain, unitTarget)
+			end
+		end
+	end
+  
+  -- Power Drain - Creep
+  local unitTargetCreep = core.unitEnemyCreepTarget
+  local tEnemyCreeps = core.localUnits["EnemyCreeps"]
+  if not bActionTaken then
+      for _, unit in pairs(tEnemyCreeps) do
+           if not unit:IsInvulnerable() and not unit:IsHero()  then
+                local unitMana = unit:GetMana()
+                local unitSelf = core.unitSelf
+                if unitMana => 100 and unitSelf:GetManaPercent() < .30 then
+                   bActionTaken = core.OrderAbilityEntity(botBrain, abilPowerDrain, unitTargetCreep)
+                end    
+            end
+      end      
+  end
+  
+  
+  
 	if not bActionTaken then
 		if bDebugEchos then BotEcho("  No action yet, proceeding with normal harass execute.") end
 		return object.harassExecuteOld(botBrain)
@@ -366,7 +401,7 @@ core.FindItems = funcFindItemsOverride
 behaviorLib.StartingItems = 
 	{"Item_GuardianRing", "Item_PretendersCrown", "Item_MinorTotem", "Item_HealthPotion", "Item_RunesOfTheBlight"}
 behaviorLib.LaneItems = 
-	{"Item_ManaRegen3", "Item_Marchers", "Item_Striders", "Item_GraveLocket"} --ManaRegen3 is Ring of the Teacher
+	{"Item_Marchers", "Item_Striders", "Item_GraveLocket"}
 behaviorLib.MidItems = 
 	{"Item_SacrificialStone", "Item_NomesWisdom", "Item_Astrolabe", "Item_Intelligence7"} --Intelligence7 is Staff of the Master
 behaviorLib.LateItems = 
