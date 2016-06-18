@@ -209,16 +209,17 @@ local function HarassHeroExecuteOverride(botBrain)
 		
 		-- Portal Key -- Used only if Ultimate isn't channeling
 		if bCanSee and itemPortalKey and itemPortalKey:CanActivate() and not unitTarget:HasState("State_Panda_Ability4") and not unitSelf:HasState("State_Panda_Ability4") then   
-		if nDistSq > 800 * 800 then
-			if nLastHarassUtility > behaviorLib.diveThreshold or core.NumberElements(core.GetTowersThreateningPosition(vecTargetPosition, nMyExtraRange, core.myTeam)) == 0 then
-				local _, sortedTable = HoN.GetUnitsInRadius(vecTargetPosition, 1000, core.UNIT_MASK_HERO + core.UNIT_MASK_ALIVE, true)
-				local EnemyHeroes = sortedTable.EnemyHeroes
-				if core.NumberElements(EnemyHeroes) == 1 then
-					bActionTaken = core.OrderItemPosition(botBrain, unitSelf, itemPortalKey, vecTargetPosition)
+			if nDistSq > 800 * 800 then
+				if nLastHarassUtility > behaviorLib.diveThreshold or core.NumberElements(core.GetTowersThreateningPosition(vecTargetPosition, nMyExtraRange, core.myTeam)) == 0 then
+					local _, sortedTable = HoN.GetUnitsInRadius(vecTargetPosition, 1000, core.UNIT_MASK_HERO + core.UNIT_MASK_ALIVE, true)
+					local EnemyHeroes = sortedTable.EnemyHeroes
+					if core.NumberElements(EnemyHeroes) == 1 then
+						bActionTaken = core.OrderItemPosition(botBrain, unitSelf, itemPortalKey, vecTargetPosition)
+					end
 				end
 			end
 		end
-	end
+
 		
 		
 
@@ -285,14 +286,14 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 
 function behaviorLib.CustomReturnToWellExecute(botBrain)
 	local itemPortalKey = core.GetItem("Item_PortalKey")
-	local abilWarp = skills.abilWarp
+	local abilCannonBall = skills.abilCannonBall
 	if itemPortalKey ~= nil and itemPortalKey:CanActivate() then
 			return core.OrderBlinkItemToEscape(botBrain, unitSelf, itemPortalKey)
-		else if abilWarp:CanActivate() then
-			return core.OrderBlinkAbilityToEscape(botBrain, skills.abilWarp, true)
-			 end
+		else if abilCannonBall:CanActivate() then
+			return core.OrderBlinkAbilityToEscape(botBrain, skills.abilCannonBall, true)
+		     end
 	end
-+end
+end
 
 --------------------------------------------
 --          PushExecute Override          --
