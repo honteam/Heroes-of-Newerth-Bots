@@ -1,6 +1,6 @@
 --[[
 
-	PlagueBot v1.0
+	PlagueBot v1.1
 	by CASHBALLER 
 
 --]]
@@ -77,11 +77,11 @@ object.tSkills = {
 ----------------------------------
 behaviorLib.StartingItems = {"Item_PretendersCrown", "2 Item_MinorTotem", "Item_HealthPotion", "2 Item_RunesOfTheBlight"}
 behaviorLib.LaneItems = 
-	{"Item_Strength5", "Item_Striders", "Item_MysticPotpourri", "Item_MysticVestments"} -- Strength5 is Fortified Bracer and Potpourri is Refreshing Ornament
+	{"Item_Strength5", "Item_Marchers", "Item_Striders", "Item_MysticPotpourri", "Item_MysticVestments"} -- Strength5 is Fortified Bracer and Potpourri is Refreshing Ornament
 behaviorLib.MidItems = 
-	{"Item_Astrolabe", "Item_Intelligence7", "Item_PostHaste", "Item_Protect"} -- Intelligence7 is SotM and Protect is Null Stone
+	{"Item_Astrolabe", "Item_Glowstone", "Item_MightyBlade", "Item_NeophytesBook", "Item_Intelligence7", "Item_PostHaste"} -- Intelligence7 is SotM and Protect is Null Stone
 behaviorLib.LateItems = 
-	{"Item_Morph", "Item_BehemothsHeart", "Item_Immunity"} -- Morph is Sheepstick
+	{"Item_Glowstone", "Item_Lifetube", "Item_Protect", "Item_AcolytesStaff", "Item_Morph", "Item_BehemothsHeart", "Item_Immunity"} -- Morph is Sheepstick
 
 --------------------------------
 -- Skills
@@ -125,7 +125,7 @@ object.nNukeUse = 24
 object.nShieldUse = 5
 object.nUltimateUse = 28
 --thresholds of aggression the bot must reach to use these abilities
-object.nUltimateThreshold = 60
+object.nUltimateThreshold = 50
 ----------------------------------------------
 --  		  oncombatevent override		--
 ----------------------------------------------
