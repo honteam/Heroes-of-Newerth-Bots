@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="tutorialBot1"
+	description=""
+	heroname="Hero_Defiler"
+	rootlua="tutorialBot1_main.lua"
+	defaultplayername="tutorialBot"
+	precachepath="/heroes/defiler/"
+	unlisted="true"
+/>

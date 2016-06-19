@@ -81,7 +81,14 @@ function behaviorLib.PositionSelfCreepWave(botBrain, unitCurrentTarget)
 	local nMyThreat =  funcGetThreat(unitSelf)
 	local nMyDefense = funcGetDefense(unitSelf)
 	local nodeBackUp, nNodeBackUp = core.GetPrevWaypoint(core.tMyLane, vecMyPos, core.bTraverseForward)
-	local vecBackUp = nodeBackUp:GetPosition()
+	
+	local vecBackUp = nil
+	
+	if nodeBackUp ~= nil then
+		vecBackUp = nodeBackUp:GetPosition()
+	else
+		vecBackUp = core.allyWell:GetPosition()
+	end
 	
 	local nExtraThreat = 0.0
 	if unitSelf:HasState("State_HealthPotion") then
@@ -279,6 +286,8 @@ function behaviorLib.PositionSelfTraverseLane(botBrain)
 			if bDebugEchos then BotEcho("PositionSelfTraverseLane - can't fine furthest creep wave pos in lane " .. tLane.sLaneName) end
 			desiredPos = core.enemyMainBaseStructure:GetPosition()
 		end
+		
+		if bDebugEchos then BotEcho("    vFurthest: "..tostring(vecFurthest)) end
 	else
 		BotEcho('PositionSelfTraverseLane - unable to get my lane!')
 	end
@@ -432,7 +441,7 @@ function behaviorLib.PositionSelfLogic(botBrain)
 	end
 	
 	if not vecDesiredPos then
-		if bDebugEchos then BotEcho("PositionSelfTraverseLane") end
+		if bDebugEchos then BotEcho("PositionSelfTraverseLane: "..tostring(vecLanePosition)) end
 		StartProfile("PositionSelfTraverseLane")
 			vecDesiredPos = vecLanePosition
 		StopProfile()
@@ -635,6 +644,7 @@ function behaviorLib.PortLogic(botBrain, vecDesiredPosition)
 				end
 				
 				if bSuccess then
+					behaviorLib.tPath = nil
 					core.nextOrderTime = HoN.GetGameTime() + core.timeBetweenOrders --seed some extra time in there
 				end
 			end
@@ -665,11 +675,27 @@ function behaviorLib.GetSafePath(vecDesiredPosition)
 	local nAllyTowerMul      = behaviorLib.nPathAllyTowerMul
 	local nBaseMul           = behaviorLib.nPathBaseMul
 
+	-- Node cost
 	local function funcNodeCost(nodeParent, nodeCurrent, link, nOriginalCost)
-		--TODO: local nDistance = link:GetLength()
+		local bTeleport = link:GetProperty("teleport")
+		if bTeleport and (not nodeParent:GetProperty("TeleportStart") or core.unitSelf:HasState("State_Teleport_GrimmCrossroads")) then
+			return 9999
+		end
+		
 		local nDistance = Vector3.Distance(nodeParent:GetPosition(), nodeCurrent:GetPosition())
 		local nCostToParent = nOriginalCost - nDistance
-
+		
+		if bTeleport and nodeParent:GetProperty("TeleportStart") then
+			return nCostToParent + 10 -- teleports are "instant"
+		end
+		
+		--if bTeleport and nodeParent:GetProperty("TeleportStart") then
+		--	BotEcho("Considering teleport link!")
+		--end
+		--local nDistanceLink = link:GetLength()
+		--if (nDistance ~= nDistanceLink) then
+		--	BotEcho(nDistance.." ~= "..nDistanceLink)
+		--end
 		--BotEcho(format("nOriginalCost: %s  nDistance: %s  nSq: %s", nOriginalCost, nDistance, nDistance*nDistance))
 
 		local sZoneProperty  = nodeCurrent:GetProperty("zone")
@@ -707,7 +733,7 @@ function behaviorLib.GetSafePath(vecDesiredPosition)
 
 		return nCostToParent + nDistance * nMultiplier
 	end
-
+	
 	return BotMetaData.FindPath(core.unitSelf:GetPosition(), vecDesiredPosition, funcNodeCost)
 end
 
@@ -723,59 +749,64 @@ function behaviorLib.GetSafeBlinkPosition(vecDesiredPosition, nRange)
 	--vecDesiredPosition further away position. You are normaly going to well
 	local tPath = behaviorLib.GetSafePath(vecDesiredPosition)
 
-	if #tPath == 1 then
-		if nRangeSq >= Vector3.Distance2DSq(tpath[1]:GetPosition(), vecMyPos) then
-			return tpath[1]:GetPosition()
-		else
-			return vecMyPos + Vector3.Normalize(tpath[1]:GetPosition() - vecMyPos) * nRange
-		end
-	end
-
-	--Iterate from end to start.
-	--When going around cliffs there may be multiple "good" spots, get the last one
-	local vecInRange = nil
-	local vecOutRange = nil
-
-	--
-	for i = #tPath, 1, -1 do
-		local nodeCurrent = tPath[i]
-		if Vector3.Distance2DSq(vecMyPos, nodeCurrent:GetPosition()) <= nRangeSq then
-			vecInRange = nodeCurrent:GetPosition()
-			if tPath[i + 1] ~= nil then
-				vecOutRange = tPath[i + 1]:GetPosition()
+	if tPath ~= nil then
+		local vecStartPosition = tPath[1]:GetPosition()
+		if #tPath == 1 then
+			if nRangeSq >= Vector3.Distance2DSq(vecStartPosition, vecMyPos) then
+				return vecStartPosition
 			else
-				vecOutRange = nil
+				return vecMyPos + Vector3.Normalize(vecStartPosition - vecMyPos) * nRange
 			end
 		end
+
+		--Iterate from end to start.
+		--When going around cliffs there may be multiple "good" spots, get the last one
+		local vecInRange = nil
+		local vecOutRange = nil
+
+		--
+		for i = #tPath, 1, -1 do
+			local nodeCurrent = tPath[i]
+			if Vector3.Distance2DSq(vecMyPos, nodeCurrent:GetPosition()) <= nRangeSq then
+				vecInRange = nodeCurrent:GetPosition()
+				if tPath[i + 1] ~= nil then
+					vecOutRange = tPath[i + 1]:GetPosition()
+				else
+					vecOutRange = nil
+				end
+			end
+		end
+
+		--the first node is not in range
+		if vecInRange == nil then
+			-- just blink towards the first node
+			return vecMyPos + Vector3.Normalize(vecStartPosition - vecMyPos) * nRange
+		end
+
+		-- Find the point D such that the lenght of CD is equal to nRange
+		--     c
+		--  A-----D---------B
+		--   \   /
+		-- d  \ /   a
+		--     C
+
+		--law of sin
+		-- a/sin(A) = d/sin(D)
+		--sin(D) = d*sin(A)/a
+
+		local nAngleAtA = core.AngleBetween(vecOutRange - vecInRange, vecMyPos - vecInRange)
+		local nAngleAtD = asin(Vector3.Distance2D(vecInRange, vecMyPos) * sin(nAngleAtA) / nRange)
+
+		-- C = 180 - A - D
+		local nAngleAtC = pi - nAngleAtA - nAngleAtD
+
+		-- law of sin again
+		local nDistanceAToD = nRange/sin(nAngleAtA)*sin(nAngleAtC)
+
+		return Vector3.Normalize(vecOutRange - vecInRange) * nDistanceAToD + vecInRange
 	end
-
-	--the first node is not in range
-	if vecInRange == nil then
-		-- just blink towards the first node
-		return vecMyPos + Vector3.Normalize(tpath[1]:GetPosition() - vecMyPos) * nRange
-	end
-
-	-- Find the point D such that the lenght of CD is equal to nRange
-	--     c
-	--  A-----D---------B
-	--   \   /
-	-- d  \ /   a
-	--     C
-
-	--law of sin
-	-- a/sin(A) = d/sin(D)
-	--sin(D) = d*sin(A)/a
-
-	local nAngleAtA = core.AngleBetween(vecOutRange - vecInRange, vecMyPos - vecInRange)
-	local nAngleAtD = asin(Vector3.Distance2D(vecInRange, vecMyPos) * sin(nAngleAtA) / nRange)
-
-	-- C = 180 - A - D
-	local nAngleAtC = pi - nAngleAtA - nAngleAtD
-
-	-- law of sin again
-	local nDistanceAToD = nRange/sin(nAngleAtA)*sin(nAngleAtC)
-
-	return Vector3.Normalize(vecOutRange - vecInRange) * nDistanceAToD + vecInRange
+	
+	return nil
 end
 
 behaviorLib.tPath = nil
@@ -798,7 +829,7 @@ function behaviorLib.PathLogic(botBrain, vecDesiredPosition)
 	local unitSelf = core.unitSelf
 	local vecMyPosition = unitSelf:GetPosition()
 
-	if bRepath then
+	if bRepath or behaviorLib.tPath == nil then
 		if bDebugEchos then BotEcho("Repathing!") end
 
 		behaviorLib.tPath = behaviorLib.GetSafePath(vecDesiredPosition)
@@ -807,7 +838,7 @@ function behaviorLib.PathLogic(botBrain, vecDesiredPosition)
 
 		--double check the first node since we have a really sparse graph
 		local tPath = behaviorLib.tPath
-		if #tPath > 1 then
+		if tPath and #tPath > 1 then
 			local vecMeToFirst = tPath[1]:GetPosition() - vecMyPosition
 			local vecFirstToSecond = tPath[2]:GetPosition() - tPath[1]:GetPosition()
 			if Vector3.Dot(vecMeToFirst, vecFirstToSecond) < 0 then
@@ -819,6 +850,7 @@ function behaviorLib.PathLogic(botBrain, vecDesiredPosition)
 
 	--Follow path logic
 	local vecReturn = nil
+	local nodeWaypoint = nil
 
 	local tPath = behaviorLib.tPath
 	local nPathNode = behaviorLib.nPathNode
@@ -830,7 +862,7 @@ function behaviorLib.PathLogic(botBrain, vecDesiredPosition)
 				behaviorLib.nPathNode = nPathNode				
 			end
 			
-			local nodeWaypoint = tPath[behaviorLib.nPathNode]
+			nodeWaypoint = tPath[behaviorLib.nPathNode]
 			if nodeWaypoint then
 				vecReturn = nodeWaypoint:GetPosition()
 			end
@@ -891,17 +923,38 @@ function behaviorLib.PathLogic(botBrain, vecDesiredPosition)
 		end
 	end	
 	
-	return vecReturn				
+	return vecReturn, nodeWaypoint
+end
+
+function behaviorLib.TeleporterUsed()
+	behaviorLib.unitCurrentTeleporter = nil
+	
+	if behaviorLib.tPath ~= nil and behaviorLib.nPathNode ~= nil then
+		local nodeCurrent = behaviorLib.tPath[behaviorLib.nPathNode]
+		while nodeCurrent ~= nil and nodeCurrent:GetProperty("TeleportStart") do
+			behaviorLib.nPathNode = behaviorLib.nPathNode + 1
+			nodeCurrent = behaviorLib.tPath[behaviorLib.nPathNode]
+		end
+	end
 end
 
 function behaviorLib.MoveExecute(botBrain, vecDesiredPosition)
+	local bDebugEchos = false
 	if bDebugEchos then BotEcho("Movin'") end
+	
 	local bActionTaken = false
 	
 	local unitSelf = core.unitSelf
 	local vecMyPosition = unitSelf:GetPosition()
 	local vecMovePosition = vecDesiredPosition
 	
+	--use teleporter
+	if behaviorLib.unitCurrentTeleporter ~= nil then
+		if bDebugEchos then BotEcho("Using teleporter!!") end
+		bActionTaken = core.OrderTouch(botBrain, unitSelf, behaviorLib.unitCurrentTeleporter)
+	end
+	
+	--path / port logic
 	local nDesiredDistanceSq = Vector3.Distance2DSq(vecDesiredPosition, vecMyPosition)			
 	if nDesiredDistanceSq > core.nOutOfPositionRangeSq then
 		--check porting
@@ -919,10 +972,33 @@ function behaviorLib.MoveExecute(botBrain, vecDesiredPosition)
 		if bActionTaken == false then
 			--we'll need to path there
 			if bDebugEchos then BotEcho("Pathin'") end
+			
+			local vecWaypoint = nil
+			local nodeCurrent = nil
+			
 			StartProfile("PathLogic")
-				local vecWaypoint = behaviorLib.PathLogic(botBrain, vecDesiredPosition)
+				vecWaypoint, nodeCurrent = behaviorLib.PathLogic(botBrain, vecDesiredPosition)
 			StopProfile()
-			if vecWaypoint then
+			
+			if nodeCurrent ~= nil and nodeCurrent:GetProperty("TeleportStart") then				
+				if behaviorLib.unitCurrentTeleporter == nil then
+					local tUnits = HoN.GetUnitsInRadius(nodeCurrent:GetPosition(), 150, core.UNIT_MASK_ALIVE + core.UNIT_MASK_GADGET)
+					
+					if bDebugEchos then BotEcho("Saving teleporter!!") end					
+					if bDebugEchos then core.printGetTypeNameTable(tUnits) end
+					
+					for _,unit in pairs(tUnits) do
+						if unit:GetTypeName() == "Teleport_Legion_Gadget" or unit:GetTypeName() == "Teleport_Hellbourne_Gadget" then
+							if bDebugEchos then BotEcho("Teleporter Saved!!") end
+							behaviorLib.unitCurrentTeleporter = unit
+						else
+							if bDebugEchos then BotEcho(unit:GetTypeName().." != Teleport_Hellborne_Gadget != Teleport_Legion_Gadget") end
+						end
+					end
+				end
+			end
+			
+			if vecWaypoint ~= nil then
 				vecMovePosition = vecWaypoint
 			end
 		end
@@ -1749,6 +1825,10 @@ function behaviorLib.HarassHeroExecute(botBrain)
 			if not bWellDiving then
 				if behaviorLib.lastHarassUtil < behaviorLib.diveThreshold then
 					if bDebugEchos then BotEcho("DON'T DIVE!") end
+					
+					if core.NumberElements(core.GetTowersThreateningPosition(vecDesiredPos, nil, core.myTeam)) > 0 then
+						return false
+					end
 									
 					if bUseTargetPosition and not bChanged then
 						core.OrderMoveToUnitClamp(botBrain, unitSelf, unitTarget, false)
@@ -2031,8 +2111,15 @@ function behaviorLib.PushUtility(botBrain)
 	return utility
 end
 
-function behaviorLib.PushExecute(botBrain)
+function behaviorLib.customPushExecute(botBrain)
+	--This is a great function to override with your pushing shiznizzle. -Karius
+end
 
+function behaviorLib.PushExecute(botBrain)
+	if (behaviorLib.customPushExecute(botBrain)) then
+		return
+	end
+	
 	local bDebugLines = false
 	
 	--if botBrain.myName == 'ShamanBot' then bDebugLines = true end
@@ -2328,6 +2415,8 @@ function behaviorLib.PositionSelfExecute(botBrain)
 	local unitTarget = nil
 	vecDesiredPos, unitTarget = behaviorLib.PositionSelfLogic(botBrain)
 
+	if bDebugEchos then BotEcho("PositionSelf myPos: "..tostring(vecMyPosition)); BotEcho("PositionSelf: "..tostring(vecDesiredPos)) end
+	
 	if vecDesiredPos then
 		behaviorLib.MoveExecute(botBrain, vecDesiredPos)
 	else
@@ -2375,6 +2464,12 @@ function behaviorLib.PositionSelfBackUp()
 
 	local bDebugLines = false
 
+	if core.tGameVariables.sMapName == "midwars" then
+		if BotMetaData.GetClosestNode(core.unitSelf:GetPosition()):GetProperty("base") then
+			return core.allyWell:GetPosition()
+		end
+	end
+
 	local vecReturn = nil
 
 	--Metadata have teams as following strings
@@ -2391,15 +2486,15 @@ function behaviorLib.PositionSelfBackUp()
 	--Check if we are at/on lane
 	nLaneProximityThreshold = core.teamBotBrain.nLaneProximityThreshold
 	tLaneBreakdown = core.GetLaneBreakdown(core.unitSelf)
-	if tLaneBreakdown["mid"] >= nLaneProximityThreshold then
+	if tLaneBreakdown["lane_mid"] >= nLaneProximityThreshold then
 		bAtLane = true
-		sLane = "middle"
-	elseif tLaneBreakdown["top"] >= nLaneProximityThreshold then
+		sLane = "lane_mid"
+	elseif tLaneBreakdown["lane_top"] >= nLaneProximityThreshold then
 		bAtLane = true
-		sLane = "top"
-	elseif tLaneBreakdown["bot"] >= nLaneProximityThreshold then
+		sLane = "lane_top"
+	elseif tLaneBreakdown["lane_bot"] >= nLaneProximityThreshold then
 		bAtLane = true
-		sLane = "bottom"
+		sLane = "lane_bot"
 	end
 
 	local bDiving = false
@@ -2445,13 +2540,13 @@ function behaviorLib.PositionSelfBackUp()
 	end
 
 	if vecReturn == nil then
-
 		local tPath = behaviorLib.GetSafePath(core.allyWell:GetPosition())
+		if tPath ~= nil then
+			local ClosestNode = BotMetaData.GetClosestNode(vecMyPos)
 
-		local ClosestNode = BotMetaData.GetClosestNode(vecMyPos)
-
-		if tPath[1]:GetIndex() == ClosestNode:GetIndex() and #tPath > 1 then
-			vecReturn = tPath[2]:GetPosition()
+			if tPath[1]:GetIndex() == ClosestNode:GetIndex() and #tPath > 1 then
+				vecReturn = tPath[2]:GetPosition()
+			end
 		end
 	end
 
@@ -2630,91 +2725,142 @@ function behaviorLib.RetreatFromThreatUtility(botBrain)
 	return Clamp(nUtility, 0, 100)
 end
 
+
+behaviorLib.nTimeTeleported = 0
+function behaviorLib.CustomGetToJukeSpotExecute(botBrain, vecJukespot)
+	return false
+end
+ 
 function behaviorLib.RetreatFromThreatExecute(botBrain)
+	local bDebugLines = false
+       
+	if behaviorLib.nTimeTeleported+250 > HoN:GetGameTime() then -- we are escaping!
+		return
+	end
+       
 	--people can/will override this code, similar to CustomHarassUtility.
 	local bActionTaken = behaviorLib.CustomRetreatExecute(botBrain)
-	
+       
+	local unitSelf = core.unitSelf
+       
 	--Activate ghost marchers if we can
-	local itemGhostMarchers = core.itemGhostMarchers
-	if not bActionTaken and behaviorLib.lastRetreatUtil >= behaviorLib.retreatGhostMarchersThreshold and itemGhostMarchers and itemGhostMarchers:CanActivate() then
-		bActionTaken = core.OrderItemClamp(botBrain, core.unitSelf, itemGhostMarchers)
+	local itemGhostMarchers = core.GetItem("Item_EnhancedMarchers")
+	if not bActionTaken and itemGhostMarchers and behaviorLib.lastRetreatUtil >= behaviorLib.retreatGhostMarchersThreshold and itemGhostMarchers:CanActivate() then
+		bActionTaken = core.OrderItemClamp(botBrain, unitSelf, itemGhostMarchers)
 	end
-	
+       
+	--Juke time!
 	if not bActionTaken then
-		local unitSelf = core.unitSelf
+		local vecMyPos = unitSelf:GetPosition()
+		local itemPortable = core.GetItem("Item_HomecomingStone") or core.GetItem("Item_PostHaste")
+		local vecWell = core.allyWell and core.allyWell:GetPosition()
+	       
+		--BotEcho(behaviorLib.nLastHealAtWellUtil)
+		if itemPortable and itemPortable:CanActivate() and vecMyPos and vecWell and behaviorLib.nLastHealAtWellUtil > 20 then
+		       
+			-- closest node from a position which is 500 units closer to well than yourself
+			metadata.SetActiveLayer(metadata.JukeMetadataFile)
+			local vecNodePos = BotMetaData.GetClosestNode(vecMyPos + Vector3.Normalize(vecWell - vecMyPos) * 300):GetPosition()
+			metadata.SetActiveLayer(metadata.MapMetadataFile)
+		       
+			if bDebugLines then
+				core.DrawDebugArrow(vecMyPos, vecMyPos + Vector3.Normalize(vecWell - vecMyPos) * 300, 'green')
+				core.DrawDebugArrow(vecMyPos, vecNodePos, 'blue')
+			end
+			       
+			nJukeDistSq = Vector3.Distance2DSq(vecMyPos, vecNodePos)
+			--is the juke a decent idea? We don't want to run back towards the enemy! (unless it is part of the juke spot)
+			if (nJukeDistSq < 600 *  600 or abs(core.AngleBetween(vecWell - vecMyPos, vecNodePos - vecMyPos)) < 1) then
+				if nJukeDistSq < 50 * 50 then
+					bActionTaken = core.OrderItemPosition(botBrain, unitSelf, itemPortable, vecWell)
+					behaviorLib.nTimeTeleported = HoN:GetGameTime()
+				else
+					bActionTaken = behaviorLib.CustomGetToJukeSpotExecute(botBrain, vecNodePos)
+					if not bActionTaken then
+						bActionTaken = core.OrderMoveToPosClamp(botBrain, unitSelf, vecNodePos, false)
+					end
+				end
+			end
+		end
+	end
+       
+	if not bActionTaken then
 		local vecPos = behaviorLib.PositionSelfBackUp()
-		bActionTaken = core.OrderMoveToPosClamp(botBrain, unitSelf, vecPos, false)
+		bActionTaken = vecPos and core.OrderMoveToPosClamp(botBrain, unitSelf, vecPos, false)
 	end
 	return bActionTaken
 end
-
+ 
 function behaviorLib.CustomRetreatExecute(botBrain)
 	--  this is a great function to override with using retreating skills, such as blinks, travels, stuns or slows.
 	return false
 end
-
+ 
 behaviorLib.RetreatFromThreatBehavior = {}
 behaviorLib.RetreatFromThreatBehavior["Utility"] = behaviorLib.RetreatFromThreatUtility
 behaviorLib.RetreatFromThreatBehavior["Execute"] = behaviorLib.RetreatFromThreatExecute
 behaviorLib.RetreatFromThreatBehavior["Name"] = "RetreatFromThreat"
 tinsert(behaviorLib.tBehaviors, behaviorLib.RetreatFromThreatBehavior)
-
-
+ 
+ 
 ----------------------------------
---	HealAtWell
+--      HealAtWell
 --
---	Utility: 0 to 100 based on proximity and current health/mana
+--      Utility: 0 to 100 based on proximity and current health/mana
 ----------------------------------
-
+ 
 function behaviorLib.WellProximityUtility(nDist)
-	local maxVal = 15
-	local farX = 8000
-
-	local util = 0
-	util = util + core.ParabolicDecayFn(nDist, maxVal, farX)
-	
+	local nMaxVal = 15
+	local nFarX = 8000
+ 
+	local nUtil = 0
+	nUtil = nUtil + core.ParabolicDecayFn(nDist, nMaxVal, nFarX)
+       
 	if nDist <= 600 then
-		util = util + 20
+		nUtil = nUtil + 20
 	end
-
-	util = Clamp(util, 0, 100)
-
-	--BotEcho("WellProxUtil: "..util.."  nDist: "..nDist)
-	return util
+ 
+	nUtil = Clamp(nUtil, 0, 100)
+ 
+	--BotEcho("WellProxUtil: "..nUtil.."  nDist: "..nDist)
+	return nUtil
 end
-
-function behaviorLib.WellHealthUtility(healthPercent)
-	local height = 100
-	local vCriticalPoint = Vector3.Create(0.30, 25)--up from 0.25,20
-
-	local util = height / ( (height/vCriticalPoint.y) ^ (healthPercent/vCriticalPoint.x) )
-	--BotEcho("WellHealthUtil: "..util.."  percent: "..healthPercent)
-	return util
+ 
+function behaviorLib.WellHealthUtility(nHealthPercent)
+	local nHeight = 100
+	local vecCriticalPoint = Vector3.Create(0.30, 25)--up from 0.25,20
+ 
+	local nUtil = nHeight / ( (nHeight/vecCriticalPoint.y) ^ (nHealthPercent/vecCriticalPoint.x) )
+	--BotEcho("WellHealthUtil: "..util.."  percent: "..nHealthPercent)
+	return nUtil
 end
-
-behaviorLib.HealAtWellEmptyManaPoolUtility = 8
+ 
+behaviorLib.nLastHealAtWellUtil = 0
+behaviorLib.nHealAtWellEmptyManaPoolUtility = 8
 -------- Behavior Fns --------
 function behaviorLib.HealAtWellUtility(botBrain)
-	local utility = 0
-	local hpPercent = core.unitSelf:GetHealthPercent()
-	local mpPercent = core.unitSelf:GetManaPercent()
-
+	local nUtility = 0
+	local unitSelf = core.unitSelf
+	local hpPercent = unitSelf:GetHealthPercent()
+	local mpPercent = unitSelf:GetManaPercent()
+ 
 	if hpPercent < 0.95 or mpPercent < 0.95 then
-		local wellPos = (core.allyWell and core.allyWell:GetPosition()) or Vector3.Create()
-		local nDist = Vector3.Distance2D(wellPos, core.unitSelf:GetPosition())
-
-		utility = behaviorLib.WellHealthUtility(hpPercent) + behaviorLib.WellProximityUtility(nDist)
+		local vecWellPos = (core.allyWell and core.allyWell:GetPosition()) or Vector3.Create()
+		local nDist = Vector3.Distance2D(vecWellPos, unitSelf:GetPosition())
+ 
+		nUtility = behaviorLib.WellHealthUtility(hpPercent) + behaviorLib.WellProximityUtility(nDist)
 	end
 	-- add (1 - 0.3%) * 8 for default utility and 30% mana remaining.
-	utility = utility + (1 - (core.unitSelf:GetManaPercent())) * behaviorLib.HealAtWellEmptyManaPoolUtility
-	
-	if botBrain.bDebugUtility == true and utility ~= 0 then
-		BotEcho(format("  HealAtWellUtility: %g", utility))
+	nUtility = nUtility + (1 - mpPercent) * behaviorLib.nHealAtWellEmptyManaPoolUtility
+       
+	if botBrain.bDebugUtility == true and nUtility ~= 0 then
+		BotEcho(format("  HealAtWellUtility: %g", nUtility))
 	end
-
-	return utility
+       
+	behaviorLib.nLastHealAtWellUtil = nUtility
+       
+	return nUtility
 end
-
 -- people can/well override this function to heal at well better (bottle sip etc) called the whole time
 function behaviorLib.CustomHealAtWellExecute(botBrain)
 	return false
@@ -2724,20 +2870,22 @@ function behaviorLib.CustomReturnToWellExecute(botBrain)
 	return false
 end
 
-function behaviorLib.HealAtWellExecute(botBrain)	
+function behaviorLib.HealAtWellExecute(botBrain)
+	local wellPos = (core.allyWell and core.allyWell:GetPosition())
+	local backUpPos = behaviorLib.PositionSelfBackUp() or wellPos
+	
 	-- call the custom functions
 	local bActionTaken = behaviorLib.CustomHealAtWellExecute(botBrain)
 	if not bActionTaken and Vector3.Distance2DSq(core.unitSelf:GetPosition(), wellPos) > 1200 * 1200 then
 		itemGhostMarchers = core.GetItem("Item_EnhancedMarchers")
-		if itemGhostMarchers ~= nil then
+		if itemGhostMarchers ~= nil and itemGhostMarchers:CanActivate() then
 			botBrain:OrderItem(itemGhostMarchers.object or itemGhostMarchers, false)
 		end
 		bActionTaken = behaviorLib.CustomReturnToWellExecute(botBrain)
 	end
 	
 	if not bActionTaken then
-		local wellPos = behaviorLib.PositionSelfBackUp() or (core.allyWell and core.allyWell:GetPosition())
-		core.OrderMoveToPosAndHoldClamp(botBrain, core.unitSelf, wellPos, false)
+		core.OrderMoveToPosAndHoldClamp(botBrain, core.unitSelf, backUpPos, false)
 	end
 end
 
@@ -2870,12 +3018,12 @@ function behaviorLib.DetermineBuyState(botBrain)
 					end
 				end
 
-                --an item was found, we are all done here
+				--an item was found, we are all done here
 				if behaviorLib.printShopDebug then
 					BotEcho("   DetermineBuyState - Found Item!")
 				end
 
-                return
+				return
 			end
 		end
 	end
@@ -3224,6 +3372,7 @@ function behaviorLib.SellLowestItems(botBrain, numToSell)
 	local inventory = core.unitSelf:GetInventory(true)
 	local lowestValue
 	local lowestSlot
+	local lowestItem = nil
 
 	while numToSell > 0 do
 		lowestValue = 99999
@@ -3243,7 +3392,7 @@ function behaviorLib.SellLowestItems(botBrain, numToSell)
 			BotEcho("Selling "..lowestItem:GetName().." in slot "..lowestItem:GetSlot())
 			behaviorLib.removeItemBehavior(lowestItem:GetName())
 			core.unitSelf:Sell(lowestItem)
-			inventory[lowestItem:GetSlot()] = ""
+			inventory[lowestItem:GetSlot()] = nil
 			numToSell = numToSell - 1
 		else
 			--out of items
@@ -3282,6 +3431,11 @@ function behaviorLib.DetermineNextItemDef(botBrain)
 	end
 
 	local idefCurrent = HoN.GetItemDefinition(name)
+	if idefCurrent == nil then
+		BotEcho('ERROR! Item code '..behaviorLib.curItemList[1]..' is invalid!')
+		return
+	end
+	
 	local bStackable = idefCurrent:GetRechargeable() --"rechargeable" items are items that stack
 
 	local numValid = 0
@@ -3401,7 +3555,6 @@ Current algorithm:
 	end
 	
 	local unitSelf = core.unitSelf
-	local bChanged = false
 	local bShuffled = false
 	local bGoldReduced = false
 	local tInventory = core.unitSelf:GetInventory(true)
@@ -3433,7 +3586,7 @@ Current algorithm:
 		end
 	end
 
-	if nextItemDef then
+	if nextItemDef ~= nil then
 		core.teamBotBrain.bPurchasedThisFrame = true
 		
 		--open up slots if we don't have enough room in the stash + inventory
@@ -3453,12 +3606,14 @@ Current algorithm:
 			behaviorLib.ShuffleCombine(botBrain, nextItemDef, unitSelf)
 		end
 
-		local nGoldAmtBefore = botBrain:GetGold()
-		unitSelf:PurchaseRemaining(nextItemDef)
+		local nGoldAmountBefore = botBrain:GetGold()
+		
+		if nextItemDef ~= nil and unitSelf:GetItemCostRemaining(nextItemDef) < nGoldAmountBefore then
+			unitSelf:PurchaseRemaining(nextItemDef)
+		end
 
-		local nGoldAmtAfter = botBrain:GetGold()
-		bGoldReduced = (nGoldAmtAfter < nGoldAmtBefore)
-		bChanged = bChanged or bGoldReduced
+		local nGoldAmountAfter = botBrain:GetGold()
+		bGoldReduced = (nGoldAmountAfter < nGoldAmountBefore)
 
 		--Check to see if this purchased item has uncombined parts
 		componentDefs = unitSelf:GetItemComponentsRemaining(nextItemDef)
@@ -3469,9 +3624,8 @@ Current algorithm:
 	end
 
 	bShuffled = behaviorLib.SortInventoryAndStash(botBrain)
-	bChanged = bChanged or bShuffled
-
-	if not bChanged then
+	
+	if not bGoldReduced and not bShuffled then
 		if behaviorLib.printShopDebug then
 			BotEcho("Finished Buying!")
 		end

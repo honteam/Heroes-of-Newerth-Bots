@@ -1,0 +1,61 @@
+
+---------------------------------------------------
+--				  Courier shopping				 --
+---------------------------------------------------
+--  Utility: If we can purchase an item we need
+--  Execute: Send courier, always returns false to allow other bahaviors.
+---------------------------------------------------
+local unitCourier
+function behaviorLib.SendCourierUtility(botBrain)
+	--Find the courier if we don't know about them.
+	if not unitCourier or not unitCourier:IsValid() and core.tControllableUnits then
+		local tInventoryUnits = core.tControllableUnits["InventoryUnits"]
+		for key, unit in pairs(tInventoryUnits) do
+			if unit and unit:GetTypeName() == "Pet_FlyngCourier" then
+				unitCourier = unit
+			end
+		end
+		
+		--We still have no courier.. we don't want to run this behavior.
+		if not unitCourier or not unitCourier:IsValid() then
+			return 0
+		end
+	end
+
+	
+	return 0
+end
+
+function behaviorLib.SendCourierExecute(botBrain)
+	local unitSelf = core.unitSelf
+	return core.OrderItemClamp(botBrain, unitSelf, behaviorLib.itemRingOfSorcery) -- Use Ring of Sorcery
+end
+behaviorLib.CourierShopBehavior = {}
+behaviorLib.CourierShopBehavior["Utility"] = behaviorLib.SendCourierUtility
+behaviorLib.CourierShopBehavior["Execute"] = behaviorLib.SendCourierExecute
+behaviorLib.CourierShopBehavior["Name"] = "CourierShop"
+tinsert(behaviorLib.tBehaviors, behaviorLib.CourierShopBehavior)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+behaviorLib.itemBuild = {
+	"Item_GuardianRing", "Item_RunesOfTheBlight", "Item_HealthPotion", "2 Item_ManaPotion", "2 Item_MinorTotem", 
+	"Item_ManaRegen3", "Item_Marchers", "Item_Shield2", "Item_PlatedGreaves",  --ManaRegen3 is Ring of the Teacher, Shield2 is Helm of the Black Legion
+	"Item_MysticVestments", "Item_Lightbrand", "Item_MagicArmor2", "Item_GrimoireOfPower", --MagicArmor2 is Shaman's
+	"Item_FrostfieldPlate", "Item_Morph", "Item_BehemothsHeart", 'Item_Damage9' --Morph is Sheepstick. Item_Damage9 is Doombringer
+}

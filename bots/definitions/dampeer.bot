@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="DampeerBot"
+	description="bot_description_dampeer"
+	heroname="Hero_Dampeer"
+	rootlua="../heroes/dampeer_main.lua"
+	defaultplayername="DampeerBot"
+	precachepath="/heroes/dampeer/"
+/>

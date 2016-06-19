@@ -67,7 +67,7 @@ core.nEasyLowHumanHealthKillChance = 0.166666
 core.bEasyTurnOffHealAtWell = false
 core.nEasyTurnOffHealAtWellDuration = 5000
 core.nEasyTurnOffHealAtWellHumanLastSeenTime = 0
-core.bBetterErrors = true
+core.bBetterErrors = false
 
 --Called every frame the engine gives us during the pick phase
 function object:onpickframe()
@@ -86,7 +86,7 @@ function object:onthink(tGameVariables)
 	end
 
 	if metadata.bInitialized == false then
-		metadata.Initialize()
+		metadata.Initialize(tGameVariables.sMapName)
 	end
 
 	if core.botBrainInitialized == false or core.unitSelf == nil then
@@ -101,6 +101,7 @@ function object:onthink(tGameVariables)
 	end
 	
 	local nGameTime = HoN.GetGameTime()
+	local unitSelf = core.unitSelf
 	
 	--[Tutorial] After the reset time, switch legion to different behaviors. 
 	--  This also stop doing some tutorial-specific crutches
@@ -138,7 +139,7 @@ function object:onthink(tGameVariables)
 		end
 		
 		local bDebugEchos = false
-		--if core.unitSelf:GetTypeName() == "Hero_Frosty" then bDebugEchos = true end
+		--if unitSelf:GetTypeName() == "Hero_Frosty" then bDebugEchos = true end
 		if bDebugEchos then BotEcho("Time until next check: "..(core.nEasyAggroReassessTime-nGameTime)/1000) end
 	end		
 	
@@ -146,7 +147,12 @@ function object:onthink(tGameVariables)
 	core.ProcessChatMessages(self)
 	StopProfile()
 
-	if not core.unitSelf:IsAlive() then
+	if not unitSelf:IsAlive() then
+		StopProfile()
+		return
+	end
+	
+	if core.bIsTutorial and nGameTime < core.nTutorialWaitTime then
 		StopProfile()
 		return
 	end
@@ -190,7 +196,7 @@ function object:onthink(tGameVariables)
 	end
 	
 	if core.tMyLane ~= nil then
-		object.vecLaneForward, object.vecLaneForwardOrtho = core.AssessLaneDirection(core.unitSelf:GetPosition(), core.tMyLane, core.bTraverseForward)
+		object.vecLaneForward, object.vecLaneForwardOrtho = core.AssessLaneDirection(unitSelf:GetPosition(), core.tMyLane, core.bTraverseForward)
 	end
 
 	StartProfile('Validate')
@@ -204,6 +210,28 @@ function object:onthink(tGameVariables)
 	StopProfile()
 	
 	if self.bRunBehaviors ~= false then
+		-- Toggle Steamboots for more Health/Mana
+		local itemSteamboots = core.GetItem("Item_Steamboots")
+		if itemSteamboots ~= nil and itemSteamboots:CanActivate() then	
+			local sCurrentBehavior = core.GetCurrentBehaviorName(self)
+			local bHealthRegen = sCurrentBehavior == "UseHealthPot" or sCurrentBehavior == "UseRunesOfTheBlight" or unitSelf:HasState("State_RunesOfTheBlight") or unitSelf:HasState("State_HealthPotion")
+			local bManaRegen = sCurrentBehavior == "UseManaPot" or unitSelf:HasState("State_ManaPotion")
+			
+			local sKey = itemSteamboots:GetActiveModifierKey()
+			
+			local sDesired = unitSelf:GetPrimaryAttribute()
+			
+			if unitSelf:GetHealthPercent() < 0.45 then
+				sDesired = "str"
+			elseif unitSelf:GetManaPercent() < 0.35 and not bManaRegen then
+				sDesired = "int"
+			end
+				
+			if sKey ~= sDesired then
+				core.OrderItemClamp(self, unitSelf, itemSteamboots)
+			end
+		end
+	
 		StartProfile('Assess behaviors')
 		if nGameTime >= behaviorLib.nNextBehaviorTime then
 			behaviorLib.nNextBehaviorTime = behaviorLib.nNextBehaviorTime + behaviorLib.nBehaviorAssessInterval
@@ -254,7 +282,7 @@ function object:onthink(tGameVariables)
 							
 							local heroTarget = behaviorLib.heroTarget
 							if core.CanSeeUnit(self, heroTarget) and heroTarget:GetHealthPercent() > 0.5 then
-								local nDistanceSq = Vector3.Distance2DSq(heroTarget:GetPosition(), core.unitSelf:GetPosition())
+								local nDistanceSq = Vector3.Distance2DSq(heroTarget:GetPosition(), unitSelf:GetPosition())
 								if nDistanceSq < core.nEasyAbilityRangeSq then
 									bUseAbils = true
 								end
@@ -338,7 +366,7 @@ function object:onthink(tGameVariables)
 						object.nCurrentBehavior = i
 						
 						if self.sCurrentBehaviorName ~= self.sLastBehaviorName then
-							core.BehaviorsSwitched()
+							core.BehaviorsSwitched(object)
 						end
 						
 						break
@@ -417,6 +445,10 @@ function core.BotBrainCoreInitialize(tGameVariables)
 	core.unitSelf = object:GetHeroUnit()
 	core.teamBotBrain = HoN.GetTeamBotBrain()
 	
+	if (tGameVariables.bIsRetail == false) then
+		--core.bBetterErrors = true
+	end
+	
 	if core.teamBotBrain == nil then
 		BotEcho('teamBotBrain is nil!')		
 	end
@@ -450,9 +482,9 @@ function core.BotBrainCoreInitialize(tGameVariables)
 	
 	--[Tutorial] Make everyone less aggressive and easy mode. Later legion will switch to Medium.
 	if core.bIsTutorial then
-		core.nDifficulty = core.nEASY_DIFFICULTY
-		
+		core.nDifficulty = core.nEASY_DIFFICULTY		
 		core.bTutorialBehaviorReset = false
+		core.nTutorialWaitTime = HoN.GetGameTime() + 1000
 	end
 	
 	--[Difficulty]
@@ -473,9 +505,10 @@ function core.BotBrainCoreInitialize(tGameVariables)
 	core.botBrainInitialized = true
 end
 
-function core.BehaviorsSwitched()
+function core.BehaviorsSwitched(botBrain)
 	--Reset any stateful behavior stuff
 	behaviorLib.bCheckPorting = true
+	behaviorLib.unitCurrentTeleporter = nil
 end
 
 
@@ -526,7 +559,7 @@ function core.GetLastBehaviorName(botBrain)
 	return botBrain.sLastBehaviorName
 end
 
--- Each entry in core.tMessageList is {nTimeToSend, bAllChat, sMessage}
+-- Each entry in core.tMessageList is a struct
 function core.ProcessChatMessages(botBrain)
 	local nCurrentTime = HoN.GetGameTime()
 	local tOutMessages = {}
@@ -542,11 +575,11 @@ function core.ProcessChatMessages(botBrain)
 	end
 	
 	if #tOutMessages > 1 then	
-		BotEcho("tOutMessages pre:")
-		core.printTableTable(tOutMessages)
+		--BotEcho("tOutMessages pre:")
+		--core.printTableTable(tOutMessages)
 		tsort(tOutMessages, function(a,b) return (a[1] < b[1]) end)
-		BotEcho("tOutMessages post:")
-		core.printTableTable(tOutMessages)
+		--BotEcho("tOutMessages post:")
+		--core.printTableTable(tOutMessages)
 	end
 	
 	for i, tMessageStruct in ipairs(tOutMessages) do
@@ -596,10 +629,10 @@ function core.AllChatLocalizedMessage(sMessageKey, tTokens, nDelayMS)
 		return
 	end
 	
-	tTokens = tTokens or {}
+	local tLocalTokens = tTokens or {}
 	
 	local nCurrentTime = HoN.GetGameTime()
-	tinsert(core.tMessageList, {(nCurrentTime + nDelayMS), true, sMessageKey, true, tTokens})
+	tinsert(core.tMessageList, {(nCurrentTime + nDelayMS), true, sMessageKey, true, tLocalTokens})
 end
 
 --Team chats the localized message corresponding to sMessageKey in the appropriate bot_messages_??.str stringtable
@@ -609,10 +642,10 @@ function core.TeamChatLocalizedMessage(sMessageKey, tTokens, nDelayMS)
 		return
 	end
 	
-	tTokens = tTokens or {}
+	local tLocalTokens = tTokens or {}
 	
 	local nCurrentTime = HoN.GetGameTime()
-	tinsert(core.tMessageList, {(nCurrentTime + nDelayMS), false, sMessageKey, true, tTokens})
+	tinsert(core.tMessageList, {(nCurrentTime + nDelayMS), false, sMessageKey, true, tLocalTokens})
 end
 
 
@@ -898,17 +931,18 @@ end
 function core.ValidateItem(item)
 	--if item ~= nil then BotEcho("item "..item:GetTypeName().." is in slot "..item:GetSlot()) end
 	if item ~= nil and (not item:IsValid() or item:GetSlot() > 6) then
-		item = nil
-	end	
+		return nil
+	end
+	return item
 end
 
 function core.FindItems(botBrain)
 	--seach for the key Items of ours that we want to track
 	
-	core.ValidateItem(core.itemGhostMarchers)
-	core.ValidateItem(core.itemHatchet)
-	core.ValidateItem(core.itemRoT)
-	
+	core.itemGhostMarchers = core.ValidateItem(core.itemGhostMarchers)
+	core.itemHatchet = core.ValidateItem(core.itemHatchet)
+	core.itemRoT = core.ValidateItem(core.itemRoT)
+		
 	local unitSelf = core.unitSelf
 	
 	if (core.itemGhostMarchers and core.itemHatchet and core.itemRoT) then
@@ -916,36 +950,38 @@ function core.FindItems(botBrain)
 	end	
 	
 	local inventory = unitSelf:GetInventory(false)
-	for slot = 1, 6, 1 do
-		local curItem = inventory[slot]
-		if curItem and not curItem:IsRecipe() then
-			if core.itemGhostMarchers == nil and curItem:GetName() == "Item_EnhancedMarchers" then
-				core.itemGhostMarchers = core.WrapInTable(curItem)
-				core.itemGhostMarchers.expireTime = 0
-				core.itemGhostMarchers.duration = 6000
-				core.itemGhostMarchers.msMult = 0.12
-				--Echo("Saving ghostmarchers")
-			end
-			
-			if core.itemHatchet == nil and curItem:GetName() == "Item_LoggersHatchet" then
-				core.itemHatchet = core.WrapInTable(curItem)
-				if unitSelf:GetAttackType() == "melee" then
-					core.itemHatchet.creepDamageMul = 1.32
-				else
-					core.itemHatchet.creepDamageMul = 1.12
+	if inventory ~= nil then
+		for slot = 1, 6, 1 do
+			local curItem = inventory[slot]
+			if curItem and not curItem:IsRecipe() then
+				if core.itemGhostMarchers == nil and curItem:GetName() == "Item_EnhancedMarchers" then
+					core.itemGhostMarchers = core.WrapInTable(curItem)
+					core.itemGhostMarchers.expireTime = 0
+					core.itemGhostMarchers.duration = 6000
+					core.itemGhostMarchers.msMult = 0.12
+					--Echo("Saving ghostmarchers")
 				end
-				--Echo("Saving hatchet")
-			end
-			
-			if core.itemRoT == nil and curItem:GetName() == "Item_ManaRegen3" then
-				core.itemRoT = core.WrapInTable(curItem)
-				core.itemRoT.bHeroesOnly = (curItem:GetActiveModifierKey() == "ringoftheteacher_heroes")
-				core.itemRoT.nNextUpdateTime = 0
-				core.itemRoT.Update = function() 
-					local nCurrentTime = HoN.GetGameTime()
-					if nCurrentTime > core.itemRoT.nNextUpdateTime then
-						core.itemRoT.bHeroesOnly = (core.itemRoT:GetActiveModifierKey() == "ringoftheteacher_heroes")
-						core.itemRoT.nNextUpdateTime = nCurrentTime + 800
+				
+				if core.itemHatchet == nil and curItem:GetName() == "Item_LoggersHatchet" then
+					core.itemHatchet = core.WrapInTable(curItem)
+					if unitSelf:GetAttackType() == "melee" then
+						core.itemHatchet.creepDamageMul = 1.32
+					else
+						core.itemHatchet.creepDamageMul = 1.12
+					end
+					--Echo("Saving hatchet")
+				end
+				
+				if core.itemRoT == nil and curItem:GetName() == "Item_ManaRegen3" then
+					core.itemRoT = core.WrapInTable(curItem)
+					core.itemRoT.bHeroesOnly = (curItem:GetActiveModifierKey() == "ringoftheteacher_heroes")
+					core.itemRoT.nNextUpdateTime = 0
+					core.itemRoT.Update = function() 
+						local nCurrentTime = HoN.GetGameTime()
+						if nCurrentTime > core.itemRoT.nNextUpdateTime then
+							core.itemRoT.bHeroesOnly = (core.itemRoT:GetActiveModifierKey() == "ringoftheteacher_heroes")
+							core.itemRoT.nNextUpdateTime = nCurrentTime + 800
+						end
 					end
 				end
 			end
@@ -1359,6 +1395,11 @@ end
 
 function core.OrderMoveToPosClamp(botBrain, unit, position, bInterruptAttacks, bQueueCommand)
 	if object.bRunCommands == false or object.bMoveCommands == false then
+		return false
+	end
+	
+	if unit == nil or position == nil then
+		BotEcho("invalid OrderMoveToPosClamp call!")
 		return false
 	end
 
