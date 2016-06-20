@@ -311,9 +311,8 @@ local function CustomPushExecuteFnOverride(botBrain)
 	if abilFlurry:CanActivate() and core.unitSelf:GetManaPercent() > 0.60 then
 		local tCreeps = core.localUnits["EnemyCreeps"]
 		local nNumberCreeps =  core.NumberElements(tCreeps)
-		local vecTarget = core.GetGroupCenter(tCreeps)
-		local nDistSq = Vector3.Distance2DSq(unitSelf:GetPosition(), vecTarget)
-		if nNumberCreeps >= nMinimumCreeps and nDistSq < 190 * 190 then
+		if nNumberCreeps >= nMinimumCreeps then
+			local vecTarget = core.GetGroupCenter(tCreeps)
 			core.OrderMoveToUnitClamp(botBrain, unitSelf, vecTarget)				-- Go towards the creeps
 			bActionTaken = core.OrderAbility(botBrain, abilFlurry)					-- Then Use Flurry
 		end
