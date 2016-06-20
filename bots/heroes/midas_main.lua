@@ -47,6 +47,8 @@ local ceil, floor, pi, tan, atan, atan2, abs, cos, sin, acos, max, random
 local BotEcho, VerboseLog, BotLog = core.BotEcho, core.VerboseLog, core.BotLog
 local Clamp = core.Clamp
 
+local tBottle = {}
+
 BotEcho('loading midas_main...')
 
 --------------------------------
@@ -71,7 +73,7 @@ object.heroName = 'Hero_Midas'
 	"# Item" is "get # of these"
 	"Item #" is "get this level of the item" --]]
 behaviorLib.StartingItems = {"Item_Scarab", "2 Item_RunesOfTheBlight", "Item_ManaPotion"} -- Items: Scarab, 2 Runes Of The Blight, Mana Potion
-behaviorLib.LaneItems = {"Item_Marchers", "Item_Steamboots", "Item_PortalKey"} -- Items: Marchers, Steamboots, Portal Key
+behaviorLib.LaneItems = {"Item_Bottle", "Item_Marchers", "Item_Steamboots", "Item_PortalKey"} -- Items: Marchers, Steamboots, Portal Key
 behaviorLib.MidItems = {"Item_SpellShards", "Item_HealthMana2" } -- Items: Spell Shards, Icon Of The Goddes
 behaviorLib.LateItems = {"Item_GrimoireOfPower", "Item_Morph"} -- Items: Grimoire Of Power, Kuldra Sheepstick
 
@@ -200,6 +202,11 @@ local function HarassHeroExecuteOverride(botBrain)
 	local itemPortalKey = core.GetItem("Item_PortalKey")
 	local nMyExtraRange = core.GetExtraRange(unitSelf)
 	
+	--damage stealth illusion movespeed regen
+	local runeInBottle = tBottle.getRune()
+	if runeInBottle == "damage" or runeInBottle == "illusion" or runeInBottle == "movespeed" then
+		botBrain:OrderItem(core.GetItem("Item_Bottle"))
+	end
 	
 	--since we are using an old pointer, ensure we can still see the target for entity targeting
 	if unitTarget ~= nil then 
@@ -453,6 +460,134 @@ end
 
 object.TeamGroupBehaviorOld = behaviorLib.TeamGroupBehavior["Execute"]
 behaviorLib.TeamGroupBehavior["Execute"] = TeamGroupBehaviorOverride
+
+-- Change default behaviors if we have rune
+function behaviorLib.newUseBottleBehaviorUtility(botBrain)
+	if core.unitSelf:HasState("State_PowerupRegen") or core.unitSelf:HasState("State_PowerupStealth") then
+		return 0
+	end
+
+	nUtility = behaviorLib.oldUseBottleBehaviorUtility(botBrain)
+	if tBottle.getRune() == "regen" then
+		nUtility = nUtility * 0.8
+	end
+	return nUtility
+end
+
+behaviorLib.oldUseBottleBehaviorUtility = behaviorLib.tItemBehaviors["Item_Bottle"]["Utility"]
+behaviorLib.tItemBehaviors["Item_Bottle"]["Utility"] = behaviorLib.newUseBottleBehaviorUtility
+
+function behaviorLib.newAttackCreepsUtility(botBrain)
+	if  core.unitSelf:HasState("State_PowerupStealth") then
+		return 0
+	end
+
+	return behaviorLib.oldAttackCreepsUtility(botBrain)
+end
+behaviorLib.oldAttackCreepsUtility = behaviorLib.AttackCreepsBehavior["Utility"]
+behaviorLib.AttackCreepsBehavior["Utility"] = behaviorLib.newAttackCreepsUtility
+
+function behaviorLib.newattackEnemyMinionsUtility(botBrain)
+	if  core.unitSelf:HasState("State_PowerupStealth") then
+		return 0
+	end
+
+	return behaviorLib.oldattackEnemyMinionsUtility(botBrain)
+end
+behaviorLib.oldattackEnemyMinionsUtility = behaviorLib.attackEnemyMinionsBehavior["Utility"]
+behaviorLib.attackEnemyMinionsBehavior["Utility"] = behaviorLib.newattackEnemyMinionsUtility
+
+---------------------------
+-- Override rune picking --
+---------------------------
+function behaviorLib.newPickRuneUtility(botBrain)
+	local rune = core.teamBotBrain.GetNearestRune(core.unitSelf:GetPosition())
+	if rune == nil then
+		return 0
+	end
+
+	behaviorLib.runeToPick = rune
+
+	local nUtility = 25
+
+	if rune.unit then
+		nUtility = nUtility + 10
+	end
+
+	if core.GetItem("Item_Bottle") ~= nil then
+		nUtility = nUtility + 20 - tBottle.getCharges() * 5
+	end
+
+	return nUtility - Vector3.Distance2DSq(rune.vecLocation, core.unitSelf:GetPosition())/(2000*2000)
+end
+behaviorLib.PickRuneBehavior["Utility"] = behaviorLib.newPickRuneUtility
+
+function behaviorLib.newPickRuneExecute(botBrain)
+	bActionTaken = false
+	if tBottle.getCharges() > 0 and behaviorLib.newUseBottleBehaviorUtility(botBrain) > 0 then
+		botBrain:OrderItem(core.GetItem("Item_Bottle").object)
+	end
+
+	if not bActionTaken then
+		itemPortalKey = core.GetItem("Item_PortalKey")
+		if itemPortalKey ~= nil and itemPortalKey:CanActivate() then
+			botBrain:OrderItemPosition(itemPortalKey.object, behaviorLib.GetSafeBlinkPosition(behaviorLib.runeToPick.vecLocation, 1200))
+			bActionTaken = true
+		end
+	end
+
+	if not bActionTaken then
+		bActionTaken = behaviorLib.pickRune(botBrain, behaviorLib.runeToPick)
+	end
+	return bActionTaken
+end
+
+behaviorLib.PickRuneBehavior["Execute"] = behaviorLib.newPickRuneExecute
+
+----------------
+--    Misc    --
+----------------
+
+------------------------
+-- helpers for bottle --
+------------------------
+
+function tBottle.getCharges()
+	local itemBottle = core.GetItem("Item_Bottle")
+	if itemBottle == nil then
+		return 0
+	end
+
+	local nCharges = nil
+	local modifier = itemBottle:GetActiveModifierKey()
+	if modifier == "bottle_empty" then
+		nCharges = 0
+	elseif modifier == "bottle_1" then
+		nCharges = 1
+	elseif modifier == "bottle_2" then
+		nCharges = 2
+	elseif modifier == "bottle_3" then
+		nCharges = 3
+	else
+		nCharges = 4 --rune
+	end
+	return nCharges
+end
+
+--damage stealth illusion movespeed regen
+function tBottle.getRune()
+	local itemBottle = core.GetItem("Item_Bottle")
+	if itemBottle == nil then
+		return ""
+	end
+	local modifier = itemBottle:GetActiveModifierKey()
+	local sKey = string.gmatch(modifier, "bottle_%w")
+	if sKey == "1" or sKey == "2" or sKey == "3" or sKey =="empty" then
+		return ""
+	else
+		return sKey
+	end
+end
 
 
 BotEcho('finished loading midas_main')
