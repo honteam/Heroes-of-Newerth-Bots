@@ -185,7 +185,7 @@ local function AbilitiesUpUtilityFn()
 end
 	--Ability has been used, add a bonus!
 function object:oncombateventOverride(EventData)
-self:oncombateventOld(EventData)
+	self:oncombateventOld(EventData)
 
 	local addBonus = 0
 	
