@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bot
 	name="PandamoniumBotBot"
-	description="Pandamonium is a Carry hero with amazing disable abilities and FaceSmashing techniques"
-	rootlua="Pandamonium_main.lua"
+	description="bot_description_pandanomium"
+	rootlua="../heroes/Pandamonium_main.lua"
 	heroname="Hero_Panda"
 	defaultplayername="PandaBot"
 	precachepath="/heroes/panda/"
