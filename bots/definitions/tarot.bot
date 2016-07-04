@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="TarotBot"
+	description="bot_description_tarot"
+	heroname="Hero_Tarot"
+	rootlua="../heroes/tarot_main.lua"
+	defaultplayername="CarrotBot"
+	precachepath="/heroes/tarot/"
+/>

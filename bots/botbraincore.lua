@@ -974,7 +974,7 @@ function core.FindItems(botBrain)
 				
 				if core.itemRoT == nil and curItem:GetName() == "Item_ManaRegen3" then
 					core.itemRoT = core.WrapInTable(curItem)
-					core.itemRoT.bHeroesOnly = (curItem:GetActiveModifierKey() == "ringoftheteacher_heroes")
+					core.itemRoT.bHeroesOnly = false
 					core.itemRoT.nNextUpdateTime = 0
 					core.itemRoT.Update = function() 
 						local nCurrentTime = HoN.GetGameTime()

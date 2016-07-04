@@ -2138,9 +2138,10 @@ function behaviorLib.PushExecute(botBrain)
 		if itemRoT then
 			itemRoT:Update()
 			
-			if itemRoT.bHeroesOnly then			
+			if itemRoT.bHeroesOnly then
 				if bDebugEchos then BotEcho("Turning on RoTeacher") end
 				bActionTaken = core.OrderItemClamp(botBrain, unitSelf, core.itemRoT)
+				core.itemRoT.bHeroesOnly = not core.itemRoT.bHeroesOnly
 			end
 		end
 	end
@@ -2405,6 +2406,7 @@ function behaviorLib.PositionSelfExecute(botBrain)
 		
 		if not itemRoT.bHeroesOnly then
 			local bSuccess = core.OrderItemClamp(botBrain, unitSelf, core.itemRoT)
+			core.itemRoT.bHeroesOnly = not core.itemRoT.bHeroesOnly
 			if bSuccess then
 				return
 			end
