@@ -5,5 +5,5 @@
 	rootlua="EmeraldWarden_main.lua"
 	heroname="Hero_EmeraldWarden"
 	defaultplayername="EmeraldWardenBot"
-	precachepath="/heroes/emeraldwarden/"
+	precachepath="/heroes/emerald_warden/"
 />
