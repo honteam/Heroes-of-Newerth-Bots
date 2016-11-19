@@ -281,7 +281,7 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 
 	local unitSelf = core.unitSelf
 	local unitSelfPosition = unitSelf:GetPosition()
-	local bCanSee = unitTarget and core.CanSeeUnit(botBrain, unitTarget)
+	local bCanSee = core.localUnits["EnemyHeroes"] and core.CanSeeUnit(botBrain, unitTarget)
 	
 	
 	if bCanSee then
