@@ -255,7 +255,7 @@ local function HarassHeroExecuteOverride(botBrain)
 				end
 			end	
 		end
-	end	
+	
 		
 
 	if not bActionTaken then
@@ -322,11 +322,11 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 				if bActionTaken then
 					object.bDefensiveGargantuan = true	-- Don't get aggressive if we're blinking away
 				end	
-			end
+
 			
 			
 		end
-		if abilFeint:CanActivate() and bCanSeeAlly
+		if abilFeint:CanActivate() and bCanSeeAlly then
 			bActionTaken = core.OrderAbility(botBrain, abilFeint, unitAlly)
 		end	
 	end
