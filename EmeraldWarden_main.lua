@@ -95,8 +95,12 @@ function object:SkillBuild()
 		skills.abilWolves = unitSelf:GetAbility(1)  -- 2nd Skill -> Hunter's Command
 		skills.abilOvergrowth = unitSelf:GetAbility(2)  -- 3rd Skill -> Overgrowth
 		skills.abilGawain = unitSelf:GetAbility(3)  -- Ultimate -> Summon Gawain
+		skills.abilStrike = unitSelf:GetAbility(5) -- Ultimate -> Strike
+		skills.abilHeal = unitSelf:GetAbility(6) -- Ultimate -> Heal
+		skills.abilStorm = unitSelf:GetAbility(7) -- Ultimate -> Storm
 		
-		if skills.abilSilence and skills.abilWolves and skills.abilOvergrowth and skills.abilGawain then
+		if skills.abilSilence and skills.abilWolves and skills.abilOvergrowth and skills.abilGawain 
+			and skills.abilStrike and skills.abilHeal and skills.abilStorm then
 			bSkillsValid = true
 		else
 			return
@@ -125,7 +129,9 @@ end
 object.nSilenceUp = 8
 object.nWolvesUp = 12
 object.nOvergrowthUp = 5
-object.nGawainUp = 10
+object.nStrikeUp = 10
+object.nHealUp = 5
+object.nStormUp = 5
 
 object.nSilenceUse = 15
 object.nWolvesUse = 10
@@ -176,8 +182,14 @@ local function CustomHarassUtilityOverride(hero)
 	if skills.abilOvergrowth:CanActivate() then
 		nUtility = nUtility + object.nOvergrowthUp       -- Overgrowth off CD will add bonus harass util
 	end
-	if skills.abilGawain:CanActivate() then
-		nUtility = nUtility + object.nGawainUp    -- Gawain has low CD, and will make EW more aggresive when is off CD
+	if skills.abilStrike:CanActivate() then
+		nUtility = nUtility + object.nStrikeUp    -- Gawain has low CD, and will make EW more aggresive when is off CD
+	end
+	if skills.abilHeal:CanActivate() then
+		nUtility = nUtility + object.nHealUp    -- Gawain has low CD, and will make EW more aggresive when is off CD
+	end
+	if skills.abilStorm:CanActivate() then
+		nUtility = nUtility + object.nStormUp    -- Gawain has low CD, and will make EW more aggresive when is off CD
 	end
 	return nUtility
 end
