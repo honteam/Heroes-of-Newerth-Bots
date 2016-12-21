@@ -74,9 +74,9 @@ function object:SkillBuild()
 
 	if not bSkillsValid then
 		skills.abilEntangle			= unitSelf:GetAbility(0)
-		skills.abilUnbreakable		= unitSelf:GetAbility(1)
+		skills.abilStormCloud		= unitSelf:GetAbility(1)
 		skills.abilHealingWave		= unitSelf:GetAbility(2)
-		skills.abilStormCloud		= unitSelf:GetAbility(3)
+		skills.abilUnbreakable		= unitSelf:GetAbility(3)
 		skills.abilAttributeBoost	= unitSelf:GetAbility(4)
 		
 		if skills.abilEntangle and skills.abilUnbreakable and skills.abilHealingWave and skills.abilStormCloud and skills.abilAttributeBoost then
@@ -98,10 +98,10 @@ function object:SkillBuild()
 		skills.abilHealingWave:LevelUp()
 	elseif skills.abilEntangle:CanLevelUp() then
 		skills.abilEntangle:LevelUp()
-	elseif skills.abilStormCloud:CanLevelUp() then
-		skills.abilStormCloud:LevelUp()
 	elseif skills.abilUnbreakable:CanLevelUp() then
 		skills.abilUnbreakable:LevelUp()
+	elseif skills.abilStormCloud:CanLevelUp() then
+		skills.abilStormCloud:LevelUp()
 	else
 		skills.abilAttributeBoost:LevelUp()
 	end
@@ -199,11 +199,11 @@ behaviorLib.TeamGroupBehavior["Utility"] = TeamGroupUtilityOverride
 --  Ability use increases harass util for a time
 ----------------------------------
 object.nEntangleUpBonus = 5  --change to 10 at level 3 entangle?
-object.nUltUpBonus = 10
+object.nStormCloudBonus = 10
 object.nSheepstickUp = 12
 
 object.nEntangleUseBonus = 10
-object.nUltUseBonus = 10
+object.nStormCloudBonus = 10
 object.nSheepstickUse = 16
 
 object.nEntangleThreshold = 35
@@ -238,8 +238,8 @@ function object:oncombateventOverride(EventData)
 		--BotEcho("ABILILTY EVENT!  InflictorName: "..EventData.InflictorName)
 		if EventData.InflictorName == "Ability_Shaman1" then
 			nAddBonus = nAddBonus + object.nEntangleUseBonus
-		elseif EventData.InflictorName == "Ability_Shaman4" then
-			nAddBonus = nAddBonus + object.nUltUseBonus
+		elseif EventData.InflictorName == "Ability_Shaman2" then
+			nAddBonus = nAddBonus + object.nStormCloudBonus
 		end
 	elseif EventData.Type == "Item" then
 		if core.itemSheepstick ~= nil and EventData.SourceUnit == core.unitSelf:GetUniqueID() and  EventData.InflictorName == core.itemSheepstick:GetName() then
@@ -280,35 +280,6 @@ behaviorLib.HarassHeroBehavior["Utility"] = HarassHeroUtilityOverride
 ----------------------------------
 --	DS harass actions
 ----------------------------------
-function object:funcStormCloudTargetWeighting(unit)
-	if unit and unit:GetTeam() ~= core.myTeam then
-		return 1.5
-	end
-	return 1.0
-end
-
-function object:GetStormCloudRadius()
-	--TODO: Staff of the Master detection
-	return 600
-end
-
-function object:StormCloudLogic()
-	local vecTarget = nil
-	--TODO: factor in mana true cost
-	local bShouldUse = false
-
-	if behaviorLib.lastHarassUtil > object.nStormCloudThreshold then
-		bShouldUse = true
-	end
-
-	if bShouldUse then
-		local nRange = skills.abilStormCloud and skills.abilStormCloud:GetRange()
-		vecTarget = core.AoETargeting(core.unitSelf, nRange, object.GetStormCloudRadius(), true, nil, nil, object.funcStormCloudTargetWeighting)
-	end
-
-	return bShouldUse, vecTarget
-end
-
 local function HarassHeroExecuteOverride(botBrain)
 	local bDebugEchos = false
 
@@ -330,26 +301,18 @@ local function HarassHeroExecuteOverride(botBrain)
 	--since we are using an old pointer, ensure we can still see the target for entity targeting
 	if core.CanSeeUnit(botBrain, unitTarget) then
 		if bDebugEchos then BotEcho("  Can see target!") end
-		--ult
+		--StormCloud
 		if not bActionTaken then
-			if bDebugEchos then BotEcho("  No action yet, checking storm cloud.") end
-			local abilStormCloud = skills.abilStormCloud
-			local nUltRange = (abilStormCloud and (abilStormCloud:GetRange() + nMyExtraRange)) or 0
-			if abilStormCloud:CanActivate() then
-				local bShouldUlt, vecTarget = botBrain.StormCloudLogic()
+			if bDebugEchos then BotEcho("  No action yet, checking entangle.") end
+			local bShouldStormCould = behaviorLib.lastHarassUtil > botBrain.nStormCloudThreshold
+			if bShouldStormCould then
+				local abilStormCloud = skills.abilStormCloud
+				
+				local bStormCloudUsable = abilStormCloud:CanActivate()
 
-				if bShouldUlt and vecTarget then
-					local nDistanceSq = Vector3.Distance2DSq(unitSelf:GetPosition(), vecTarget)
-					local bInRange = nDistanceSq < nUltRange * nUltRange
-
-					if bInRange then
-						if bDebugEchos then BotEcho("  Casting storm cloud!") end
-						bActionTaken = core.OrderAbilityPosition(botBrain, abilStormCloud, vecTarget)
-					else
-						if bDebugEchos then BotEcho("  Moving to cast storm cloud!") end
-						core.OrderMoveToPosClamp(botBrain, unitSelf, vecTarget, false)
-						bActionTaken = true
-					end
+				if bStormCloudUsable then
+					if bDebugEchos then BotEcho(format("  Casting entangle on %s!", unitTarget:GetTypeName())) end
+					bActionTaken = core.OrderAbilityEntity(botBrain, abilStormCloud, unitTarget)
 				end
 			end
 		end
@@ -511,6 +474,7 @@ function behaviorLib.HealUtility(botBrain)
 
 	local abilUnbreakable = skills.abilUnbreakable
 	local abilHealingWave = skills.abilHealingWave
+	local abilStormCloud = skills.abilStormCloud
 	local unitSelf = core.unitSelf
 
 	behaviorLib.unitHealTarget = nil
@@ -519,7 +483,7 @@ function behaviorLib.HealUtility(botBrain)
 	local unitTarget = nil
 	local nTargetTimeToLive = nil
 	local sAbilName = ""
-	if abilUnbreakable:CanActivate() or abilHealingWave:CanActivate() then
+	if abilUnbreakable:CanActivate() or abilHealingWave:CanActivate() or abilStormCloud:CanActivate() then
 		local tTargets = core.CopyTable(core.localUnits["AllyHeroes"])
 		tTargets[unitSelf:GetUniqueID()] = unitSelf --I am also a target
 		for key, hero in pairs(tTargets) do
@@ -566,6 +530,15 @@ function behaviorLib.HealUtility(botBrain)
 
 				sAbilName = "HealingWave"
 			end
+			
+			if nUtility == 0 and abilStormCloud:CanActivate() then
+				local nCostBonus = behaviorLib.AbilityCostBonusFn(core.unitSelf, abilStormCloud)
+
+				nUtility = nHighestUtility + nCostBonus
+				if bDebugEchos then BotEcho("  StormCloud bonus util - cost: "..nCostBonus) end
+
+				sAbilName = "StormCloud"
+			end
 
 			if nUtility ~= 0 then
 				behaviorLib.unitHealTarget = unitTarget
@@ -588,6 +561,7 @@ end
 function behaviorLib.HealExecute(botBrain)
 	local abilUnbreakable = skills.abilUnbreakable
 	local abilHealingWave = skills.abilHealingWave
+	local abilStormCloud = skills.abilStormCloud
 
 	local unitHealTarget = behaviorLib.unitHealTarget
 	local nHealTimeToLive = behaviorLib.nHealTimeToLive
@@ -597,6 +571,8 @@ function behaviorLib.HealExecute(botBrain)
 			core.OrderAbilityEntity(botBrain, abilUnbreakable, unitHealTarget)
 		elseif abilHealingWave:CanActivate() then
 			core.OrderAbilityEntity(botBrain, abilHealingWave, unitHealTarget)
+		elseif abilStormCloud:CanActivate() then
+			core.OrderAbilityEntity(botBrain, abilStormCloud, unitHealTarget)
 		else
 			return false
 		end
