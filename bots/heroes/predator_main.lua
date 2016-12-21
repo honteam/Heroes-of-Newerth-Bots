@@ -182,9 +182,9 @@ local function AbilitiesUpUtilityFn(hero)
 		val = val + object.nLeapUpBonus
 	end
 	
-	--if skills.abilStoneHide:CanActivate() then
-	--	val = val + object.stoneHideUpBonus
-	--end
+	if skills.abilStoneHide:CanActivate() then
+		val = val + object.stoneHideUpBonus
+	end
 	
 	local nTerrorLevel = skills.abilTerror:GetLevel()
 	if nTerrorLevel >= 1 then
@@ -263,6 +263,7 @@ local function HarassHeroExecuteOverride(botBrain)
 		
 		--leap
 		local leap = skills.abilLeap
+		local stonehide = skills.abilStoneHide
 		local leapRange = leap:GetRange() + core.GetExtraRange(unitSelf) + core.GetExtraRange(unitTarget)
 		if not bActionTaken then
 			if bDebugEchos then BotEcho("No action taken, considering Leap") end			
@@ -276,6 +277,8 @@ local function HarassHeroExecuteOverride(botBrain)
 			if bShouldLeap then
 				if bDebugEchos then BotEcho('LEAPIN!') end
 				bActionTaken = core.OrderAbilityEntity(botBrain, leap, unitTarget)
+					if stonehide:CanActivate() then
+						bActionTaken = core.OrderAbility(botBrain, stonehide) 
 			end
 		end
 	end
@@ -288,7 +291,14 @@ end
 object.harassExecuteOld = behaviorLib.HarassHeroBehavior["Execute"]
 behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 
-
+-----------------------
+-- Return to well
+-----------------------
+--this is a great function to override with using retreating skills, such as blinks, travels, stuns or slows.
+function behaviorLib.CustomReturnToWellExecute(botBrain)
+	local stonehide = skills.abilStoneHide
+	return  core.OrderAbility(botBrain, stonehide)
+end
 ----------------------------------
 --	Predator items
 ----------------------------------
