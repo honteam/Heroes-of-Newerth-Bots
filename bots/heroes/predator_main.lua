@@ -297,6 +297,7 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 -----------------------
 --this is a great function to override with using retreating skills, such as blinks, travels, stuns or slows.
 function behaviorLib.CustomReturnToWellExecute(botBrain)
+	local unitTarget = behaviorLib.heroTarget
 	local stonehide = skills.abilStoneHide
 	local bCanSee = core.CanSeeUnit(botBrain, unitTarget)
 	if bCanSee and abilGoldenSalvo:CanActivate() then
