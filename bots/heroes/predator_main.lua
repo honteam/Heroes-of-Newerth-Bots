@@ -297,23 +297,40 @@ behaviorLib.HarassHeroBehavior["Execute"] = HarassHeroExecuteOverride
 -----------------------
 --this is a great function to override with using retreating skills, such as blinks, travels, stuns or slows.
 function behaviorLib.CustomReturnToWellExecute(botBrain)
-	local stonehide = skills.abilStoneHide
-	local vecMyPosition = core.unitSelf:GetPosition()
-	local tLocalUnits = core.localUnits
-	local nEnemyHeroes = 0
-
 	bActionTaken = false
-	if stonehide and stonehide:CanActivate() then
-		for _, unitHero in pairs(tLocalUnits["EnemyHeroes"]) do
-			if Vector3.Distance2DSq(vecMyPosition, unitHero:GetPosition()) < 800*800 then
-				nEnemyHeroes = nEnemyHeroes + 1
-			end
-		end
 
-		if nEnemyHeroes > 0 then
-			bActionTaken = core.OrderAbility(botBrain, stonehide)
+	local unitSelf = core.unitSelf
+	local unitTarget = behaviorLib.heroTarget
+	if unitTarget == nil or not unitTarget:IsValid() then
+		return false
+	end
+
+	local vecMyPosition = unitSelf:GetPosition()       
+	local vecTargetPosition = unitTarget:GetPosition()
+	
+	local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
+	
+	--Counting the enemies
+	local tEnemies = core.localUnits["EnemyHeroes"]
+	local nCount = 0
+
+	local bCanSeeUnit = unitTarget and core.CanSeeUnit(botBrain, unitTarget)
+	
+	for id, unitEnemy in pairs(tEnemies) do
+		if core.CanSeeUnit(botBrain, unitEnemy) then
+			nCount = nCount + 1
 		end
 	end
+	
+	if unitSelf:GetHealthPercent() < .50 then
+		local stonehide = skills.abilStoneHide
+		-- BACK OFF!
+		if bCanSeeUnit and stonehide:CanActivate() then
+			bActionTaken = core.OrderAbility(botBrain, stonehide)
+			
+		end	
+	end
+
 	return bActionTaken
 end
 ----------------------------------
