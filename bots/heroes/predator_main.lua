@@ -302,18 +302,19 @@ function behaviorLib.CustomReturnToWellExecute(botBrain)
 	local tLocalUnits = core.localUnits
 	local nEnemyHeroes = 0
 
+	bActionTaken = false
+	if stonehide and stonehide:CanActivate() then
+		for _, unitHero in pairs(tLocalUnits["EnemyHeroes"]) do
+			if Vector3.Distance2DSq(vecMyPosition, unitHero:GetPosition()) < 800*800 then
+				nEnemyHeroes = nEnemyHeroes + 1
+			end
+		end
 
-	for _, unitHero in pairs(tLocalUnits["EnemyHeroes"]) do
-		if Vector3.Distance2DSq(vecMyPosition, unitHero:GetPosition()) < 800*800 then
-			nEnemyHeroes = nEnemyHeroes + 1
+		if nEnemyHeroes > 0 then
+			bActionTaken = core.OrderAbility(botBrain, stonehide)
 		end
 	end
-
-	if nEnemyHeroes == 0 then
-		return 0
-	else return  core.OrderAbility(botBrain, stonehide)
-	end
-	
+	return bActionTaken
 end
 ----------------------------------
 --	Predator items
