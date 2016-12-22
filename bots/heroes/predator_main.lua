@@ -300,21 +300,11 @@ function behaviorLib.CustomReturnToWellExecute(botBrain)
 	bActionTaken = false
 
 	local unitSelf = core.unitSelf
-	local unitTarget = behaviorLib.heroTarget
-	if unitTarget == nil or not unitTarget:IsValid() then
-		return false
-	end
-
-	local vecMyPosition = unitSelf:GetPosition()       
-	local vecTargetPosition = unitTarget:GetPosition()
-	
-	local nTargetDistanceSq = Vector3.Distance2DSq(vecMyPosition, vecTargetPosition)
 	
 	--Counting the enemies
 	local tEnemies = core.localUnits["EnemyHeroes"]
 	local nCount = 0
 
-	local bCanSeeUnit = unitTarget and core.CanSeeUnit(botBrain, unitTarget)
 	
 	for id, unitEnemy in pairs(tEnemies) do
 		if core.CanSeeUnit(botBrain, unitEnemy) then
@@ -325,7 +315,7 @@ function behaviorLib.CustomReturnToWellExecute(botBrain)
 	if unitSelf:GetHealthPercent() < .50 then
 		local stonehide = skills.abilStoneHide
 		-- BACK OFF!
-		if bCanSeeUnit and stonehide:CanActivate() then
+		if nCount > 0 and stonehide:CanActivate() then
 			bActionTaken = core.OrderAbility(botBrain, stonehide)
 			
 		end	
