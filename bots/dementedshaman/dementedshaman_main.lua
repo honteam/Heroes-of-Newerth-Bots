@@ -56,7 +56,7 @@ local Clamp = core.Clamp
 
 local sqrtTwo = math.sqrt(2)
 
-BotEcho('loading demetnedshaman_main...')
+BotEcho('loading dementedshaman_main...')
 
 object.heroName = 'Hero_Shaman'
 
@@ -665,4 +665,4 @@ behaviorLib.LateItems =
 	invisible
 --]]
 
-BotEcho('finished loading demetnedshaman_main')
+BotEcho('finished loading dementedshaman_main')
