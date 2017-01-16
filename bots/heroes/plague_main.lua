@@ -92,11 +92,11 @@ function object:SkillBuild()
 	local unitSelf = self.core.unitSelf
 	if not bSkillsValid then
 		skills.abilNuke = unitSelf:GetAbility(0)
-		skills.abilShield = unitSelf:GetAbility(1)
+		skills.abilEarthblight = unitSelf:GetAbility(1)
 		skills.abilMana = unitSelf:GetAbility(2)
 		skills.abilUltimate = unitSelf:GetAbility(3)
 		
-		if (skills.abilNuke and skills.abilShield and skills.abilMana and skills.abilUltimate) then
+		if (skills.abilNuke and skills.abilEarthblight and skills.abilMana and skills.abilUltimate) then
 			bSkillsValid = true
 		else
 			return
@@ -122,7 +122,7 @@ object.nNukeUp = 18
 object.nUltimateUp = 7
 -- bonus aggression points that are applied to the bot upon successfully using a skill/item
 object.nNukeUse = 24
-object.nShieldUse = 5
+object.nEarthblightUse = 15
 object.nUltimateUse = 28
 --thresholds of aggression the bot must reach to use these abilities
 object.nUltimateThreshold = 60
@@ -133,6 +133,10 @@ local function AbilitiesUpUtilityFn()
 	local val = 0
 
 	if skills.abilNuke:CanActivate() then
+		val = val + object.nNukeUp
+	end
+	
+	if skills.abilEarthblight:CanActivate() then
 		val = val + object.nNukeUp
 	end
 	
@@ -153,7 +157,7 @@ self:oncombateventOld(EventData)
 		end
 
 		if EventData.InflictorName == "Ability_DiseasedRider2" then
-			addBonus = addBonus + object.nShieldUse
+			addBonus = addBonus + object.nEarthblightUse
 		end
 
 		if EventData.InflictorName == "Ability_DiseasedRider4" then
@@ -169,27 +173,6 @@ self:oncombateventOld(EventData)
 end
 object.oncombateventOld = object.oncombatevent
 object.oncombatevent = object.oncombateventOverride
-
-----------------------------------
--- Use Shield
-----------------------------------
-local function UseShield(botBrain, bCheckNearAllies)
-	local nManaThresholdAlone = 0.90
-	local nManaThresholdNearAllies = 0.50
-	local nNumAlliesRequired = 2
-	local abilShield = skills.abilShield
-	if abilShield:CanActivate() then
-		local unitSelf = core.unitSelf
-		local tLocalAllyHeroes = core.localUnits["AllyHeroes"]
-		-- Assess if shield is worth casting
-		if ( unitSelf:GetManaPercent() > nManaThresholdAlone) or ( bCheckNearAllies and
-				unitSelf:GetManaPercent() > nManaThresholdNearAllies and core.NumberElements(tLocalAllyHeroes) > nNumAlliesRequired )  then
-			-- Order shield cast
-			return core.OrderAbilityEntity(botBrain, abilShield, unitSelf)
-		end
-	end
-	return false
-end
 
 ----------------------------------
 -- Use Extinguish
@@ -235,6 +218,7 @@ local function HarassHeroExecuteOverride(botBrain)
 	local nLastHarassUtility = behaviorLib.lastHarassUtil
 	local bActionTaken = false
 	local abilNuke = skills.abilNuke
+	local abilEarthblight = skills.abilEarthblight
 	local abilUltimate = skills.abilUltimate
 	local tLocalEnemyHeroes = core.localUnits["EnemyHeroes"]
 	local tLocalAllyHeroes = core.localUnits["AllyHeroes"]
@@ -246,6 +230,17 @@ local function HarassHeroExecuteOverride(botBrain)
 			-- Highest priority, not much reason to NOT cast this spell. If we have high mana, target has low health, or a gank/fight is happening, cast it.
 			if (unitTarget:GetHealthPercent() < (unitSelf:GetManaPercent() + 0.15)) or (core.NumberElements(tLocalAllyHeroes) > 2) or (core.NumberElements(tLocalEnemyHeroes) > 2) then
 				bActionTaken = core.OrderAbilityEntity(botBrain, abilNuke, unitTarget)
+			end
+		end
+	end
+	
+	--Earthblight
+	if abilEarthblight:CanActivate() and core.CanSeeUnit(botBrain, unitTarget) then
+		local nRange = abilEarthblight:GetRange()
+		if nTargetDistanceSq < (nRange * nRange) then
+			-- Highest priority, not much reason to NOT cast this spell. If we have high mana, target has low health, or a gank/fight is happening, cast it.
+			if (unitTarget:GetHealthPercent() < (unitSelf:GetManaPercent() + 0.15)) or (core.NumberElements(tLocalAllyHeroes) > 2) or (core.NumberElements(tLocalEnemyHeroes) > 2) then
+				bActionTaken = core.OrderAbilityPosition(botBrain, abilEarthblight, unitTarget:GetPosition())
 			end
 		end
 	end
@@ -279,11 +274,6 @@ local function AttackCreepsExecuteOverride(botBrain)
 	--Extinguish
 	bActionTaken = UseExtinguish(botBrain, 0.90)
 	
-	--Shield
-	if not bActionTaken then
-		-- Don't bother checking support utility if we're just hitting creeps
-		bActionTaken = UseShield(botBrain, false)
-	end
 	
 	if not bActionTaken then
 		return object.attackCreepsOld(botBrain)
@@ -299,10 +289,7 @@ behaviorLib.AttackCreepsBehavior["Execute"] = AttackCreepsExecuteOverride
 --------------------------------------------------------------
 function behaviorLib.customPushExecute(botBrain)
 	local bSuccess = false
-	
-	--Shield
-	bSuccess = UseShield(botBrain, true)
-	
+		
 	--Extinguish
 	if not bSuccess then
 		-- Only deny during push if low mana
@@ -337,11 +324,7 @@ function behaviorLib.CustomRetreatExecute(botBrain)
 		end
 	end
 	
-	--Shield
-	if not bSuccess then
-		-- Might as well throw up a defensive shield if we have high mana or teammates nearby
-		bSuccess = UseShield(botBrain, true)
-	end
+
 	
 	return bSuccess
 end
