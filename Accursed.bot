@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="Accursedbot"
+	description="bot_description"
+	rootlua="Accursed_main.lua"
+	heroname="Hero_Accursed"
+	defaultplayername="AccursedBot"
+	precachepath="/heroes/accursed/"
+/>
