@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="EmeraldWardenBot"
+	description="Best Carry EW by Sparks1992"
+	rootlua="EmeraldWarden_main.lua"
+	heroname="Hero_EmeraldWarden"
+	defaultplayername="EmeraldWardenBot"
+	precachepath="/heroes/emerald_warden/"
+/>
