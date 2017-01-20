@@ -1,0 +1,35 @@
+-------- Behavior Functions --------
+
+function wardExecute(botBrain)
+	local unitSelf = core.unitSelf
+	local debugMode = false
+	local wardlib = core.teamBotBrain.wardlib
+
+	local vecMyPos = unitSelf:GetPosition()
+	local botTeam = HoN.GetTeamBotBrain()
+	local vecTargetPos, nSpot = wardLib.getNearestWardPos(vecMyPos, botTeam)
+	
+	local itemWard = core.GetItem("Item_FlamingEye")
+	
+	-- If we have a ward in inventory -> go to place position to place it
+	if itemWard then
+		vecTargetPos = wardlib.tWardSpots[nSpot].vecHeroPlacePos
+		WardPos = wardlib.tWardSpots[nSpot].pos
+	end
+	
+	local nDistanceSq = Vector3.Distance2DSq(vecMyPos, vecTargetPos)
+	if debugMode then core.DrawDebugArrow(vecMyPos, vecTargetPos, 'green') end
+	
+	-- If hero's current position = ward place position -> place the ward at ward position
+	
+	if vecTargetPos == vecMyPos then 
+		core.OrderItemPosition(botBrain, unitSelf, itemWard, WardPos)
+	end
+	
+
+
+
+behaviorLib.wardBehavior = {}
+behaviorLib.wardBehavior["Execute"] = wardExecute
+behaviorLib.wardBehavior["Name"] = "ward"
+tinsert(behaviorLib.tBehaviors, behaviorLib.wardBehavior)
