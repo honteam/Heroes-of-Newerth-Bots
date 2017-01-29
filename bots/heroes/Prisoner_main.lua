@@ -87,7 +87,6 @@ function object:SkillBuild()
 	if not bSkillsValid then
 		skills.abilHook = unitSelf:GetAbility(0)   -- 1st Skill -> The Ol' Ball and Chain -> Hook
 		skills.abilShackle = unitSelf:GetAbility(1)  -- 2nd Skill -> Shackle
-		skills.abilRiot = unitSelf:GetAbility(2)  -- 3rd Skill -> Riot
 		skills.abilPrisonBreak = unitSelf:GetAbility(3)  -- Ultimate -> Prison Break
 		
 		if skills.abilHook and skills.abilShackle and skills.abilRiot and skills.abilPrisonBreak then
@@ -262,27 +261,26 @@ local function HarassHeroExecuteOverride(botBrain)
 		
 		
 		-- 1st Skill -> Hook
-		if not bActionTaken then
-			local abilHook = skills.abilHook
-			local bDebugEchoes = false
-			if abilHook:CanActivate() then
-				local nRange = abilHook:GetRange()
-				local vecTargetPredictPosition = vecTargetPosition + vecRelativeMov
-				if Vector3.Distance2DSq(vecMyPosition, vecTargetPredictPosition) < nRange * nRange then
-					bActionTaken = core.OrderAbilityPosition(botBrain, abilHook, vecTargetPredictPosition)
-					if bDebugEchoes then
+		local abilHook = skills.abilHook
+		local bDebugEchoes = false
+		if abilHook:CanActivate() then
+			local nRange = abilHook:GetRange()
+			local vecTargetPredictPosition = vecTargetPosition + vecRelativeMov
+			if Vector3.Distance2DSq(vecMyPosition, vecTargetPredictPosition) < nRange * nRange then
+				bActionTaken = core.OrderAbilityPosition(botBrain, abilHook, vecTargetPredictPosition)
+				if bDebugEchoes then
 						BotEcho("Casting HOOK!")
-					end
 				end
 			end
-
-			if bDebugEchoes then
-				local nRange = abilHook:GetRange()
-				core.DrawXPosition(vecTargetPosition + vecRelativeMov, 'red', 100) --vecTargetPredictPosition
-				core.DrawDebugArrow(vecTargetPosition, vecTargetPosition + vecRelativeMov, 'red') --predicted target movement path
-				core.DrawDebugArrow(vecMyPosition, vecMyPosition + (Vector3.Normalize((vecTargetPosition + vecRelativeMov) - vecMyPosition)) * nRange, 'green') --weed field range aimed at predicted position
-			end
 		end
+
+		if bDebugEchoes then
+			local nRange = abilHook:GetRange()
+			core.DrawXPosition(vecTargetPosition + vecRelativeMov, 'red', 100) --vecTargetPredictPosition
+			core.DrawDebugArrow(vecTargetPosition, vecTargetPosition + vecRelativeMov, 'red') --predicted target movement path
+			core.DrawDebugArrow(vecMyPosition, vecMyPosition + (Vector3.Normalize((vecTargetPosition + vecRelativeMov) - vecMyPosition)) * nRange, 'green') --weed field range aimed at predicted position
+		end
+
 
 		
 		-- 2nd Skill -> Shackle
