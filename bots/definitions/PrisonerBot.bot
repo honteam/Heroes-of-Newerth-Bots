@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+	name="Prisonerbot"
+	description="bot_description"
+	rootlua="Prisoner_main.lua"
+	heroname="Hero_Prisoner"
+	defaultplayername="PrisonerBot"
+	precachepath="/heroes/prisoner/"
+/>
